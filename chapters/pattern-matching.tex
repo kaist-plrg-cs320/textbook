@@ -1,0 +1,1012 @@
+\setchapterpreamble[u]{\margintoc}
+\chapter{Pattern Matching}
+\labch{pattern-matching}
+
+It is the fourth article about functional programming. The last article dealt
+with the \verb!List! and \verb!Option! types of the Scala standard library and
+\verb!for! expressions of Scala. This article is about pattern matching. The
+previous articles have already used pattern matching for lists and options, but
+the form of the pattern matching was simple. The article discusses the benefits
+of pattern matching and various patterns available in Scala. The homework of the
+course requires pattern matching, and understanding the article thus is crucial
+for the homework.
+
+\section{Algebraic Data Types}
+
+It is common to include values of various shapes in a single type.
+
+A natural number is
+
+\begin{itemize}
+\item zero or
+\item the successor of a natural number.
+\end{itemize}
+
+A list is
+
+\begin{itemize}
+\item the empty list or
+\item the pair of an element and a list.
+\end{itemize}
+
+A binary tree is
+
+\begin{itemize}
+\item the empty tree or
+\item a tree containing a root element and two child trees.
+\end{itemize}
+
+An arithmetic expression is
+
+\begin{itemize}
+\item a number,
+\item the sum of two arithmetic expressions,
+\item the difference of two arithmetic expressions,
+\item the product of two arithmetic expressions, or
+\item the ratio of two arithmetic expressions.
+\end{itemize}
+
+In general, an arithmetic expression is
+
+\begin{itemize}
+\item a number,
+\item an arithmetic expression with a unary operator, or
+\item two arithmetic expressions with a binary operator.
+\end{itemize}
+
+An expression of the \term{lambda} \term{calculus}, which is one of the topics of
+the course, is
+
+\begin{itemize}
+\item a variable,
+\item a function, which is the pair of a variable and an expression, or
+\item a function application, which is the pair of two expressions.
+\end{itemize}
+
+As the examples show, in computer science, a type often includes values of
+various shapes. Algebraic data types typically express such types. An algebraic
+data type is a \term{sum} \term{type} of \term{product} \term{types}. A product
+type is a type whose every element is an enumeration of values of types in the
+same specific order. Tuple types are typical product types. A sum type, whose
+another name is a \term{tagged} \term{union} \term{type}, has values of multiple
+types as its values. Unlike a union type, each \term{variant} of a sum type has a
+'tag' to be distinguished from other variants.
+
+For example, an arithmetic expression is
+
+\begin{itemize}
+\item an integer or
+\item the sum of two arithmetic expressions.
+\end{itemize}
+
+Therefore, the \verb!AE! type is the sum type of
+
+\begin{itemize}
+\item the \verb!Int! type tagged with \verb!Num! and
+\item the \verb!AE * AE! type (the product type of \verb!AE! and \verb!AE!) tagged
+with \verb!Sum!.
+\end{itemize}
+
+\section{Defining Algebraic Data Types in Scala}
+
+Algebraic data types are common in functional languages. Most functional
+languages allow users to define new algebraic data types. The following OCaml
+code defines arithmetic expressions:
+
+\begin{verbatim}
+type ae =
+| Num of int
+| UnOp of string * ae
+| BinOp of string \term{ ae } ae
+\end{verbatim}
+
+Scala is functional and object-oriented at the same time. A language defining
+types of objects and algebraic data types with two different ways is inconsistent
+and complex. Like many other object-oriented languages, Scala lets programmers
+define a new type by defining a new class. Types defined with classes can
+simulate algebraic data types.
+
+\verb!class [class name]! defines a class of a given name. \verb!class A! defines
+a class whose name is \verb!A!. \verb!A! is a name of the class and a type
+simultaneously, for defining a class is defining a type. Every instance of class
+\verb!A! belongs to type \verb!A!. The following code defines the \verb!AE! type,
+which is a type of algebraic expressions:
+
+\begin{verbatim}
+class AE
+\end{verbatim}
+
+Classes define variants belonging to \verb!AE!. \verb!Num!, \verb!UnOp!, and
+\verb!BinOp! are types denoting a number, an arithmetic expression with a unary
+operator, and two arithmetic expressions with a binary operator respectively.
+
+\begin{verbatim}
+class AE
+class Num
+class UnOp
+class BinOp
+\end{verbatim}
+
+However, the code does not inform that \verb!AE! subsumes the variants. Every
+value of the \verb!Num!, \verb!UnOp!, and \verb!BinOp! types is not a value of
+the \verb!AE! type.
+
+Defining a class by extending a class makes the latter subsume the former. Code
+like \verb!class [class name] extends [parent class name]! make the latter class
+be a parent of the former class. \verb!class A extends B! implies that class
+\verb!A! is a child class, or a \term{subclass}, of class \verb!B!, and class
+\verb!B! is a parent class, or a \term{superclass}, of class \verb!A!. The
+\verb!A! class \term{inherits} from the \verb!B! class. \verb!A! is a subtype of
+\verb!B!; \verb!B! is a \term{supertype} of \verb!A!; every element of type
+\verb!A! is an element of type \verb!B!.
+
+\begin{verbatim}
+class AE
+class Num extends AE
+class UnOp extends AE
+class BinOp extends AE
+\end{verbatim}
+
+\verb!Num!, \verb!UnOp!, and \verb!BinOp! are subtypes of \verb!AE!. Values of
+the types belong to \verb!AE!.
+
+Instances of the \verb!Num! class cannot express integers whom they denote. In
+the same manner, instances of \verb!UnOp! and \verb!BinOp! cannot express
+operators and arithmetic expressions. Class parameters allow objects to store
+additional information. Form \verb!class [class name](val [parameter name]: [parameter type], …)!
+specifies class parameters. \verb!val! is unnecessary for
+some usages but not in the article.
+
+\begin{verbatim}
+class AE
+class Num(val n: Int) extends AE
+class UnOp(val op: String, val e: AE) extends AE
+class BinOp(val op: String, val e0: AE, val e1: AE) extends AE
+\end{verbatim}
+
+The declarations of \verb!Num!, \verb!UnOp!, and \verb!BinOp! denote that their
+instances respectively store an integer, a string and an arithmetic expression,
+and a string and two arithmetic expressions.
+
+Calling a \term{constructor} creates an object. Constructor calls are in the form
+of \verb!new [class name]([expression], …)!.
+
+\begin{verbatim}
+new Num(1): AE
+new UnOp("-", new Num(2)): AE
+new BinOp("+", new Num(1), new UnOp("-", new Num(2))): AE
+\end{verbatim}
+
+Type \verb!AE! includes instances of the three child classes of \verb!AE!.
+
+The parameters of a class are the \term{fields} of the class. The values of
+arguments used for a constructor call are the values of fields. As method calls
+need periods, field accesses require periods. Expression
+\verb![expressions].[field name]! denotes the value of the field of an object
+obtained by evaluating the expression.
+
+\begin{verbatim}
+new Num(1).n  // 1
+new UnOp("-", new Num(2)).op  // "-"
+new BinOp("+", new Num(1), new UnOp("-", new Num(2))).op  // "+"
+\end{verbatim}
+
+The code is still problematic.
+
+\begin{verbatim}
+new AE: AE
+\end{verbatim}
+
+An arithmetic expression cannot be anything other than a number, an arithmetic
+expression with a unary operator, or two arithmetic expressions with a binary
+operator. Writing \verb!new AE! is meaningless. Therefore, it must be impossible
+to construct an instance of the \verb!AE! class directly.
+
+\begin{verbatim}
+trait AE
+class Num(val n: Int) extends AE
+class UnOp(val op: String, val e: AE) extends AE
+class BinOp(val op: String, val e0: AE, val e1: AE) extends AE
+\end{verbatim}
+
+Defining \verb!AE! as a \term{trait} instead of a class prevents creating an
+instance of \verb!AE! without the constructors of the child classes. Traits
+define new types as classes but differ from classes in several aspects. One
+difference is that traits forbid calling their constructors.
+
+\begin{verbatim}
+new AE
+// trait AE is abstract; cannot be instantiated
+\end{verbatim}
+
+Calling the constructor of \verb!AE! results in a compile error because it is a
+trait.
+
+\section{Treating Algebraic Data Types in Scala}
+
+The section defines function \verb!interpret!, which calculates an integer
+denoted by a given arithmetic expression, with different ways. For simplicity,
+assume that \verb!-! is the only possible unary operator, and \verb!+! is the
+only possible binary operator. Any other operators result in exceptions.
+
+\subsection{Dynamic Type Checking}
+
+The first approach is checking the type of a given arithmetic expression
+dynamically, or at run time.
+
+\begin{verbatim}
+def interpret(e: AE): Int = {
+  if (...) // e is a number
+    e.n
+  else if (...) // e has unary operator -
+    -interpret(e.e)
+  else if (...) // e has binary operator +
+    interpret(e.e0) + interpret(e.e1)
+  else
+    throw new Exception
+}
+\end{verbatim}
+
+In Scala, \verb!isInstanceOf! checks whether an object is a value of a type.
+Expression \verb![expression].isInstanceOf[[type]]! denotes \verb!true! if the
+value of the expression belongs to the type and \verb!false! otherwise.
+
+\begin{verbatim}
+def interpret(e: AE): Int = {
+  if (e.isInstanceOf[Num])
+    e.n
+  else if (e.isInstanceOf[UnOp] && e.op == "-")
+    -interpret(e.e)
+  else if (e.isInstanceOf[BinOp] && e.op == "+")
+    interpret(e.e0) + interpret(e.e1)
+  else
+    throw new Exception
+}
+\end{verbatim}
+
+The code results in a compile error. Compilers know only that a value referred by
+\verb!e! is an element of type \verb!AE! about \verb!e!; fields of \verb!e! are
+inaccessible. \verb!asInstanceOf!, which inform the compilers that an expression
+has a particular type, resolves the problem by \term{casting} \term{types}
+explicitly. To type \verb![expression].asInstanceOf[[type]]!, the compilers
+ignore a type calculated by themselves and rely on a type given by programmers.
+
+At run time, \verb!asInstanceOf! does not change the value of an expression but
+checks the type of the value. Evaluating \verb![expression].asInstanceOf[[type]]!
+results in a value denoted by the expression if the value belongs to the type but
+throws an exception otherwise.
+
+\begin{verbatim}
+def interpret(e: AE): Int = {
+  if (e.isInstanceOf[Num])
+    e.asInstanceOf[Num].n
+  else if (e.isInstanceOf[UnOp] &&
+    e.asInstanceOf[UnOp].op == "-")
+    -interpret(e.asInstanceOf[UnOp].e)
+  else if (e.isInstanceOf[BinOp] &&
+    e.asInstanceOf[BinOp].op == "+")
+    interpret(e.asInstanceOf[BinOp].e0) +
+      interpret(e.asInstanceOf[BinOp].e1)
+  else
+    throw new Exception
+}
+
+// -1 + 2
+interpret(new BinOp(
+  "+",
+  new UnOp("-", new Num(1)),
+  new Num(2)
+))
+// 1
+\end{verbatim}
+
+The code is long and complicated despite its simple functionality. Dynamic type
+checking and explicit type casting occupy most of the code, while real
+computation requires short code. Besides, such code is error-prone. Programmers
+give information whom compilers cannot find due to their imprecision---does not
+mean that the compilers are wrong but signifies that they fail to find all the
+information---with \verb!asInstanceOf!. However, they may be incorrect. Incorrect
+information might terminate programs abnormally because of type errors at run
+time. It is easy to check whether the code is correct as it is short. In
+contrast, complex types or computation increase the possibilities of errors.
+
+\subsection{Method Overloading}
+
+Method \term{overloading} allows defining methods of the same name with different
+types of parameters. Many object-oriented languages including Scala feature
+method overloading.
+
+\begin{verbatim}
+object Show {
+  def show(i: Int): String = i + ": Int"
+  def show(s: String): String = s + ": String"
+}
+Show.show(1)  // "1: Int"
+Show.show("1")  // "1: String"
+\end{verbatim}
+
+Singleton object \verb!Show! has the two \verb!show! methods. Their parameter
+types respectively are \verb!Int! and \verb!String!, which differ, and the
+compilation thus succeeds. Each invocation of the \verb!show! method chooses a
+method proper to the type of the argument.
+
+Is method overloading a correct solution for the \verb!interpret! method?
+
+\begin{verbatim}
+object Interpreter {
+  def interpret(e: AE): Int =
+    throw new Exception("What is it?")
+  def interpret(e: Num): Int = e.n
+  def interpret(e: UnOp): Int =
+    if (e.op == "-") -interpret(e.e)
+    else throw new Exception("Only -")
+  def interpret(e: BinOp): Int =
+    if (e.op == "+")
+      interpret(e.e0) + interpret(e.e1)
+    else throw new Exception("Only +")
+}
+
+Interpreter.interpret(new Num(1))  // 1
+\end{verbatim}
+
+It seems to work but, alas, does not.
+
+\begin{verbatim}
+// -1 + 2
+Interpreter.interpret(new BinOp(
+  "+",
+  new UnOp("-", new Num(1)),
+  new Num(2)
+))
+// java.lang.Exception: What is it?
+\end{verbatim}
+
+Surprisingly, the first method is invoked because the compile-time types rather
+than the run-time types of arguments between angle brackets affect dynamic method
+dispatch. At compile time, \verb!e.e0! in expression \verb!interpret(e.e0)! has
+type \verb!AE!, and the first method is therefore called, while its type is
+\verb!UnOp! at run time. As a consequence, method overloading is not a correct
+strategy to implement the \verb!interpret! method.
+
+\subsection{The Visitor Pattern}
+
+Object-oriented programmers usually use the \term{visitor} \term{pattern} to
+resolve such problems. The pattern is appropriate for the \verb!interpret! method
+as well but makes code long and complex and needs some boilerplate code. Despite
+the disadvantages, it is the most effective solution for languages without
+pattern matching like Java; it is popular. The article does not discuss the
+visitor pattern in detail and refers to an article of English
+Wikipedia\sidenote{\url{https://en.wikipedia.org/wiki/Visitor\_pattern}} instead.
+
+\subsection{Pattern Matching}
+
+Pattern matching is the best solution for such problems and a typical feature of
+functional languages. The following code defines the \verb!interpret! function in
+OCaml with pattern matching:
+
+\begin{verbatim}
+let rec interpret e =
+  match e with
+  | Num n -> n
+  | UnOp ("-", e0) -> -(interpret e0)
+  | BinOp ("+", e0, e1) -> (interpret e0) + (interpret e1)
+  | _ -> raise Exception
+\end{verbatim}
+
+The code is intuitive and concise even for those who are unknowledgeable about
+OCaml.
+
+Scala features pattern matching as well. Pattern matching requires types defined
+by \term{case} \term{classes} instead of regular classes. Actually, every type is
+available for pattern matching, but the article does not introduce how to do it.
+The following code defines arithmetic expressions with case classes:
+
+\begin{verbatim}
+trait AE
+case class Num(n: Int) extends AE
+case class UnOp(op: String, e: AE) extends AE
+case class BinOp(op: String, e0: AE, e1: AE) extends AE
+\end{verbatim}
+
+Compilers do not treat case classes as special cases but desugar them to simple
+classes. Case classes have a few features whom ordinary classes do not have:
+pattern matching is possible without additional code; constructing instances does
+not require the \verb!new! keyword; class parameters do not need the \verb!val!
+keyword. More exist but are out of the scope of the article.
+
+\begin{verbatim}
+def interpret(e: AE): Int = e match {
+  case Num(n) => n
+  case UnOp(op, e0) =>
+    if (op == "-") -interpret(e0)
+    else throw new Exception
+  case BinOp(op, e0, e1) =>
+    if (op == "+") interpret(e0) + interpret(e1)
+    else throw new Exception
+}
+
+// -1 + 2
+interpret(BinOp(
+  "+",
+  UnOp("-", Num(1)),
+  Num(2)
+))
+// 1
+\end{verbatim}
+
+The function uses pattern matching. It is more concise than the code using
+dynamic type checking and safe due to the lack of explicit type casting.
+
+\section{Advantages of Pattern Matching and Patterns in Scala}
+
+\subsection{Exhaustivity Checking}
+
+Pattern matching checks the exhaustivity of patterns. At run time, a match error
+occurs when a given value matches none of patterns.
+
+\begin{verbatim}
+def interpret(e: AE): Int = e match {
+  case UnOp(op, e0) =>
+    if (op == "-") -interpret(e0)
+    else throw new Exception
+  case BinOp(op, e0, e1) =>
+    if (op == "+") interpret(e0) + interpret(e1)
+    else throw new Exception
+}
+\end{verbatim}
+
+The function lacks the \verb!Num! pattern.
+
+\begin{verbatim}
+interpret(Num(3))
+// scala.MatchError: Num(3) (of class Num)
+\end{verbatim}
+
+An argument of type \verb!Num! results in a match error.
+
+Scala compilers check whether patterns are exhaustive and warn if they are not.
+However, the compilers do not warn about the function, for they cannot know all
+the child classes of the \verb!AE! trait. Every file can define classes extending
+\verb!AE!. The unit of compilation is a single file, but it is impossible to find
+all the child classes by scanning a single file. The \verb!sealed! keyword
+resolves the problem. A \term{sealed} class or trait forbids defining its
+children outside a file defining it. As a result, the compilers identify all the
+child classes by reading one file and check the exhaustivity of patterns
+successfully.
+
+\begin{verbatim}
+sealed trait AE
+case class Num(n: Int) extends AE
+case class UnOp(op: String, e: AE) extends AE
+case class BinOp(op: String, e0: AE, e1: AE) extends AE
+
+def interpret(e: AE): Int = e match {
+  case UnOp(op, e0) =>
+    if (op == "-") -interpret(e0)
+    else throw new Exception
+  case BinOp(op, e0, e1) =>
+    if (op == "+") interpret(e0) + interpret(e1)
+    else throw new Exception
+}
+// warning: match may not be exhaustive.
+// It would fail on the following input: Num(_)
+//       def interpret(e: AE): Int = e match {
+//                                   ^
+\end{verbatim}
+
+The compilers warn about inexhaustive patterns as \verb!AE! is a sealed trait.
+Exhaustivity checking is beneficial for complex programs. It helps to make safe
+programs and thus is a crucial strength of pattern matching.
+
+\subsection{Constant and Wildcard Patterns}
+
+\verb!switch-case! statements divide a given value into multiple cases in
+imperative languages. Pattern matching is a general form of \verb!switch-case!.
+The following code is an example using a \verb!switch-case! statement in Java:
+
+\begin{verbatim}
+String grade(int score) {
+  switch (score / 10) {
+    case 10: return "A";
+    case 9: return "A";
+    case 8: return "B";
+    case 7: return "C";
+    case 6: return "D";
+    default: return "F";
+  }
+}
+\end{verbatim}
+
+Constant and wildcard patterns exist in Scala. Constant patterns are
+\term{literals} like integers and strings. A constant pattern matches a given
+value if a value denoted by the pattern equals the given value. The underscore
+denotes the wildcard pattern, which matches every value, and is equivalent to
+\verb!default! of \verb!switch-case!. The following function rewrites the
+previous function with pattern matching:
+
+\begin{verbatim}
+def grade(score: Int): String =
+  (score / 10) match {
+    case 10 => "A"
+    case 9 => "A"
+    case 8 => "B"
+    case 7 => "C"
+    case 6 => "D"
+    case _ => "F"
+  }
+
+grade(85)  // "B"
+\end{verbatim}
+
+\subsection{Or Patterns}
+
+\verb!switch-case! statements use the fall-through semantics; if \verb!break!
+does not exist, after executing code corresponding to a case, the flow of the
+execution moves to code corresponding to the next case. Since the results of
+cases \verb!10! and \verb!9! are identical, the function can use fall-through.
+
+\begin{verbatim}
+String grade(int score) {
+  switch (score / 10) {
+    case 10:
+    case 9: return "A";
+    case 8: return "B";
+    case 7: return "C";
+    case 6: return "D";
+    default: return "F";
+  }
+}
+\end{verbatim}
+
+In contrast, pattern matching disallows fall-through. Instead, \term{or} patterns
+give a way to write the same expression only once for multiple patterns. Or
+patterns are in the form of \verb![pattern] | [pattern] …!, which is a sequence
+of multiple patterns with vertical bars in between. \verb!A | B! matches values
+that match \verb!A! or \verb!B!.
+
+\begin{verbatim}
+def grade(score: Int): String =
+  (score / 10) match {
+    case 10 | 9 => "A"
+    case 8 => "B"
+    case 7 => "C"
+    case 6 => "D"
+    case _ => "F"
+  }
+
+grade(100)  // "A"
+\end{verbatim}
+
+\subsection{Nested Patterns}
+
+Nested patterns are patterns containing patterns. Nested patterns simplify the
+\verb!interpret! function.
+
+\begin{verbatim}
+def interpret(e: AE): Int = e match {
+  case Num(n) => n
+  case UnOp("-", e0) => -interpret(e0)
+  case BinOp("+", e0, e1) =>
+    interpret(e0) + interpret(e1)
+  case _ => throw new Exception
+}
+\end{verbatim}
+
+As the \verb!UnOp! pattern contains constant pattern \verb!"-"!, the second
+pattern matches an arithmetic expression only with unary operator \verb!"-"!.
+Similarly, the third pattern matches an arithmetic expression only with binary
+operator \verb!"+"!.
+
+It is possible to nest multiple patterns. The \verb!optimizeAdd! function
+optimizes a given arithmetic expression by eliminating additions of zeros.
+
+\begin{verbatim}
+def optimizeAdd(e: AE): AE = e match {
+  case Num(_) => e
+  case UnOp(op, e0) => UnOp(op, optimizeAdd(e0))
+  case BinOp("+", Num(0), e1) => optimizeAdd(e1)
+  case BinOp("+", e0, Num(0)) => optimizeAdd(e0)
+  case BinOp(op, e0, e1) =>
+    BinOp(op, optimizeAdd(e0), optimizeAdd(e1))
+}
+
+// 0 + 1 + 2
+optimizeAdd(BinOp(
+  "+",
+  Num(0),
+  BinOp("+", Num(1), Num(2))
+))
+// 1 + 2
+\end{verbatim}
+
+Assume that \verb!"abs"!, a unary operator, is available. It denotes the absolute
+value of an operand. Optimizing an arithmetic expression decorated by two
+consecutive \verb!"abs"! operators results in the arithmetic expression with only
+one \verb!"abs"! operator.
+
+\begin{verbatim}
+def optimizeAbs(e: AE): AE = e match {
+  case Num(_) => e
+  case UnOp("abs", UnOp("abs", e0)) =>
+    optimizeAbs(UnOp("abs", e0))
+  case UnOp(op, e0) => UnOp(op, optimizeAbs(e0))
+  case BinOp(op, e0, e1) =>
+    BinOp(op, optimizeAbs(e0), optimizeAbs(e1))
+}
+
+// | | -1 | |
+optimizeAbs(UnOp("abs",
+  UnOp("abs",
+    UnOp("-", Num(1))
+  )
+))
+// | - 1 |
+\end{verbatim}
+
+A flaw of the implementation is that a value matching \verb!UnOp("abs", e0)!
+cannot be an argument of \verb!optimizeAbs! directly, and constructing a new
+\verb!UnOp! instance containing a value matching \verb!e0! is essential. The at
+sign makes code efficient by binding a value matching to a pattern to a variable.
+Pattern \verb![variable] @ [pattern]! makes the variable refer to a value
+matching the pattern.
+
+\begin{verbatim}
+def optimizeAbs(e: AE): AE = e match {
+  case Num(_) => e
+  case UnOp("abs", e0 @ UnOp("abs", _)) =>
+    optimizeAbs(e0)
+  case UnOp(op, e0) => UnOp(op, optimizeAbs(e0))
+  case BinOp(op, e0, e1) =>
+    BinOp(op, optimizeAbs(e0), optimizeAbs(e1))
+}
+\end{verbatim}
+
+Nested patterns and the at sign help to treat values of complex structures
+easily.
+
+\subsection{Unreachable Patterns}
+
+A value is likely to match more than one pattern when a pattern matching
+expression contains multiple nested patterns. Like \verb!switch-case!, pattern
+matching compares a value to patterns sequentially from top to bottom and selects
+the first matching pattern. If both a pattern handling a specific case and a
+pattern handling a general case exist, the former must occur earlier than the
+latter. However, if the number of patterns is large, the patterns might be in the
+wrong order so that a value matches an unintended pattern. Scala compilers warn
+when they find \term{unreachable} patterns to prevent such code.
+
+\begin{verbatim}
+def optimizeAbs(e: AE): AE = e match {
+  case Num(_) => e
+  case UnOp(op, e0) => UnOp(op, optimizeAbs(e0))
+  case UnOp("abs", e0 @ UnOp("abs", _)) =>
+    optimizeAbs(e0)
+  case BinOp(op, e0, e1) =>
+    BinOp(op, optimizeAbs(e0), optimizeAbs(e1))
+}
+// warning: unreachable code
+//         case UnOp("abs", e0 @ UnOp("abs", _)) => optimizeAbs(e0)
+//                                                             ^
+\end{verbatim}
+
+Checking the unreachability of patterns also is a significant advantage of
+pattern matching. It avoids programs behaving incorrectly because of patterns in
+the wrong order. However, not every wrong pattern results in an unreachable
+pattern. In some code, values match unintended patterns, but every pattern is
+reachable. The compilers do not warn about such code, and programmers thus need
+to be careful.
+
+\subsection{Type Patterns}
+
+The \verb!optimizeNeg! function optimizes arithmetic expression by removing two
+consecutive \verb!"-"! unary operators.
+
+\begin{verbatim}
+def optimizeNeg(e: AE): AE = e match {
+  case Num(_) => e
+  case UnOp("-", UnOp("-", e0)) => e0
+  case UnOp(op, e0) => UnOp(op, optimizeNeg(e0))
+  case BinOp(op, e0, e1) =>
+    BinOp(op, optimizeNeg(e0), optimizeNeg(e1))
+}
+
+// -(-(1 + 1))
+optimizeNeg(UnOp("-",
+  UnOp("-",
+    BinOp("+", Num(1), Num(1))
+  )
+))
+// 1 + 1
+\end{verbatim}
+
+The first \verb!Num(_)! pattern does no more than checking whether a value
+belongs to type \verb!Num!. A type pattern helps to rewrite the function. Type
+patterns are in the form of \verb![variable]: [type]!. If a value belongs to the
+type, it matches the pattern, and the variable refers to the value. The wildcard
+pattern can substitute the variable if the variable is unnecessary.
+
+\begin{verbatim}
+def optimizeNeg(e: AE): AE = e match {
+  case _: Num => e
+  case UnOp("-", UnOp("-", e0)) => e0
+  case UnOp(op, e0) => UnOp(op, optimizeNeg(e0))
+  case BinOp(op, e0, e1) =>
+    BinOp(op, optimizeNeg(e0), optimizeNeg(e1))
+}
+\end{verbatim}
+
+Type patterns are useful for dynamic type checking.
+
+\begin{verbatim}
+def show(x: Any): String = x match {
+  case i: Int => i + ": Int"
+  case s: String => s + ": String"
+  case _ => x + ": Any"
+}
+
+show(1)  // "1: Int"
+show("1")  // "1: String"
+show(1.0)  // "1.0: Any"
+\end{verbatim}
+
+\verb!Any! is the \term{top} type of the Scala type system; every value belongs
+to \verb!Any!.
+
+Note that type patterns cannot check type arguments of polymorphic types. Using
+pattern matching against polymorphic types is dangerous.
+
+\begin{verbatim}
+def show(x: Any): String = x match {
+  case l: List[Int] => l + ": List[Int]"
+  case l: List[String] => l + ": List[String]"
+  case _ => x + ": Any"
+}
+// warning: non-variable type argument Int
+// in type pattern List[Int] is unchecked
+// since it is eliminated by erasure
+//         case l: List[Int] => l + ": List[Int]"
+//                 ^
+// warning: non-variable type argument String
+// in type pattern List[String] is unchecked
+// since it is eliminated by erasure
+//         case l: List[String] => l + ": List[String]"
+//                 ^
+// warning: unreachable code
+//         case l: List[String] => l + ": List[String]"
+//                                   ^
+
+show("one" :: Nil)  // "List(one): List[Int]"
+\end{verbatim}
+
+Although the type of the argument is \verb!List[String]!, it matches the first
+pattern. As the warnings imply, the JVM uses the \term{type} \term{erasure}
+semantics, and type arguments are therefore not available at run time. A later
+article will deal with polymorphic types and type erasures in detail.
+
+\subsection{Tuple Patterns}
+
+The last article has already used tuple patterns. They are in the form of
+\verb!([pattern], … )!. The \verb!equals! function uses tuple patterns and checks
+whether two lists are identical.
+
+\begin{verbatim}
+def equal(l0: List[Int], l1: List[Int]): Boolean =
+  (l0, l1) match {
+    case (h0 :: t0, h1 :: t1) =>
+      h0 == h1 && equal(t0, t1)
+    case (Nil, Nil) => true
+    case _ => false
+  }
+
+equal(List(0, 1), List(0, 1))  // true
+equal(List(0, 1), List(0))  // false
+\end{verbatim}
+
+\subsection{Pattern Guards}
+
+A binary (search) tree is
+
+* the empty tree or
+* a tree containing an integral root element and two child trees.
+
+\begin{verbatim}
+sealed trait BST
+case object Empty extends BST
+case class Node(root: Int, left: BST, right: BST) extends BST
+\end{verbatim}
+
+Function \verb!add! takes a tree and an integer as arguments and returns a tree
+obtained by adding the integer to the tree. If the integer is an element of the
+given tree, the tree itself is the return value.
+
+\begin{verbatim}
+def add(t: BST, n: Int): BST =
+  t match {
+    case Empty => Node(n, Empty, Empty)
+    case Node(m, t0, t1) =>
+      if (n < m) Node(m, add(t0, n), t1)
+      else if (n > m) Node(m, t0, add(t1, n))
+      else t
+  }
+\end{verbatim}
+
+An expression corresponding to the second pattern uses \verb!if-else!. Pattern
+guards allow adding constraints to patterns. A pattern in the form of
+\verb![pattern] if [expression]! matches a value if the value matches the
+pattern, and the expression results in \verb!true!. The following \verb!add!
+function uses \term{pattern} \term{guards}:
+
+\begin{verbatim}
+def add(t: BST, n: Int): BST =
+  t match {
+    case Empty => Node(n, Empty, Empty)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, add(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, add(t1, n))
+    case _ => t
+  }
+\end{verbatim}
+
+Guarded patterns may be inexhaustive.
+
+\begin{verbatim}
+def add(t: BST, n: Int): BST =
+  t match {
+    case Empty => Node(n, Empty, Empty)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, add(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, add(t1, n))
+  }
+\end{verbatim}
+
+Compilers do not warn about the inexhaustivity of the code. However, since a
+pattern handling cases that a given integer is an element of a given tree is
+missing, a match error occurs in the cases.
+
+\subsection{Patterns with Backticks}
+
+Function \verb!remove! takes a tree and an integer as arguments and returns a
+tree obtained by removing the integer from the tree. If the integer is not an
+element of the tree, the given tree itself is the return value. \verb!removeMin!
+is a helper function used by \verb!remove!. It returns the pair of the smallest
+element of a given tree and a tree obtained by removing the element from the
+tree.
+
+\begin{verbatim}
+def removeMin(t: Node): (Int, BST) = {
+  t match {
+    case Node(n, Empty, t1) =>
+      (n, t1)
+    case Node(n, t0: Node, t1) =>
+      val (min, t2) = removeMin(t0)
+      (min, Node(n, t2, t1))
+  }
+}
+
+def remove(t: BST, n: Int): BST = {
+  t match {
+    case Empty =>
+      Empty
+    case Node(m, t0, Empty) if n == m =>
+      t0
+    case Node(m, t0, t1: Node) if n == m =>
+      val (min, t2) = removeMin(t1)
+      Node(min, t0, t2)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, remove(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, remove(t1, n))
+  }
+}
+\end{verbatim}
+
+\begin{verbatim} Node(\verb!n!, t0, Empty)\end{verbatim} can replace
+\verb!case None(m, t0, Empty) if n == m!. \verb!case Node(n, t0, Empty)! defines new
+\verb!n! other than parameter \verb!n! and makes new \verb!n! to refer to the
+root element; it does not check whether the root element equals \verb!n!.
+However, backticks prohibit to define new \verb!n! and allow to compare the root
+element to \verb!n! in the scope.
+
+\begin{verbatim}
+def remove(t: BinTree, n: Int): BinTree = {
+  t match {
+    case Empty =>
+      Empty
+    case Node(\verb!n!, t0, Empty) =>
+      t0
+    case Node(\verb!n!, t0, t1: Node) =>
+      val (min, t2) = removeMin(t1)
+      Node(min, t0, t2)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, remove(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, remove(t1, n))
+  }
+}
+\end{verbatim}
+
+\section{Applications of Pattern Matching}
+
+\subsection{Variable Declarations}
+
+It is possible to declare variables with pattern matching.
+
+\begin{verbatim}
+val (n, m) = (1, 2)
+// n = 1, m = 2
+val (a, b, c) = ("a", "b", "c")
+// a = "a", b = "b", c = "c"
+val h :: t = List(1, 2, 3, 4)
+// h = 1, t = List(2, 3, 4)
+val BinOp(op, e0, e1) = BinOp("+", Num(1), Num(2))
+// op = "+", e0 = Num(1), e1 = Num(2)
+\end{verbatim}
+
+Pattern matching helps to declare variables concisely, but a match error occurs
+when a pattern does not match a right-hand-side value. It is desirable to use
+pattern matching only when a guarantee that a pattern must match exists. Since
+tuple patterns always match tuple values, tuple patterns are typical for variable
+declarations.
+
+\subsection{Anonymous Functions}
+
+Function \verb!toSum! takes a list of pairs of two integers as arguments and
+returns a list whose elements are the sums of the integers in the pairs.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  l.map(p => p match {
+    case (n, m) => n + m
+  })
+
+toSum(List((0, 1), (2, 3), (3, 4)))
+// List(1, 5, 7)
+\end{verbatim}
+
+An anonymous function using parameter \verb!p! as a value matched is verbose.
+Scala compilers consider an expression in the form of \verb!{ case [pattern] => [expression] … }!
+as an anonymous function if the expression occurs where they
+expect a function. The following function is concise:
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  l.map({ case (n, m) => n + m })
+\end{verbatim}
+
+An argument that is an anonymous function defined by pattern matching does not
+require surrounding round brackets. It is a special rule.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  l.map { case (n, m) => n + m }
+\end{verbatim}
+
+The period also is unnecessary. It is not special; Scala allows using methods as
+infix operators; for example, \verb!Nil.::(0)! and \verb!0 :: Nil! are identical.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  l map { case (n, m) => n + m }
+\end{verbatim}
+
+\subsection{for}
+
+\verb!toSum! can use a \verb!for! expression instead of \verb!map!.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  for (p <- l) yield p match {
+    case (n, m) => n + m
+  }
+\end{verbatim}
+
+\verb!for! expressions can use pattern matching.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  for ((n, m) <- l) yield n + m
+\end{verbatim}
+
+The code is readable and concise.
