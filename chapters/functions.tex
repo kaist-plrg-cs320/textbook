@@ -417,15 +417,6 @@ An underscore makes \verb!inc1! concise.
 def inc1(l: List): List = list_map(l, _ + 1)
 \end{verbatim}
 
-Implement the \verb!incBy! function, which takes a list and an integer as
-arguments and increases every element of the list by the given integer. Use
-\verb!list_map!.
-
-\begin{verbatim}
-def incBy(l: List, n: Int): List = list_map(l, h => h + n)
-def incBy(l: List, n: Int): List = list_map(l, _ + n)
-\end{verbatim}
-
 \subsection{filter}
 
 Let us compare \verb!odd! and \verb!positive!.
@@ -807,3 +798,18 @@ def getAndDiv100(l: List, n: Int): Option =
 Option types are powerful tools to handle erroneous cases in a functional way.
 Functional programming uses lists, first-class functions, anonymous functions,
 and optional values a lot.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item
+Implement the \verb!incBy! function, which takes a list and an integer as
+arguments and increases every element of the list by the given integer. Use
+\verb!list_map!.
+
+\begin{verbatim}
+def incBy(l: List, n: Int): List = list_map(l, h => h + n)
+def incBy(l: List, n: Int): List = list_map(l, _ + n)
+\end{verbatim}
+
+\end{enumerate}
