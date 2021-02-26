@@ -45,7 +45,7 @@
 %\usepackage{showlabels} % Uncomment to output the content of \label commands to the document where they are used
 
 % Load the bibliography package
-\usepackage{styles/kaobiblio}
+\usepackage[style=alphabetic]{styles/kaobiblio}
 \addbibresource{main.bib} % Bibliography file
 
 % Load mathematical packages for theorems and related environments. NOTE: choose only one between 'mdftheorems' and 'plaintheorems'.
@@ -53,6 +53,9 @@
 %\usepackage{styles/plaintheorems}
 
 \usepackage{mathpartir}
+\usepackage{dirtree}
+
+\newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\term}[1]{\textit{#1}\index{\MakeLowercase{#1}}}
 
 \graphicspath{{examples/documentation/images/}{images/}} % Paths in which to look for images
@@ -79,7 +82,7 @@
 
 % \title[Example and documentation of the {\normalfont\texttt{kaobook}} class]{Example and documentation \\ of the {\normalfont\texttt{kaobook}} class}
 \title{Introduction to Programming Languages}
-% \subtitle{Customise this page according to your needs}
+\subtitle{Part 1}
 
 % \author[Federico Marotta]{Federico Marotta \thanks{A \LaTeX\ lover}}
 \author{Jaemin Hong}
@@ -116,29 +119,20 @@
 \uppertitleback{\@titlehead} % Header
 
 \lowertitleback{
-	\textbf{Disclaimer}\\
-	You can edit this page to suit your needs. For instance, here we have a no copyright statement, a colophon and some other information. This page is based on the corresponding page of Ken Arroyo Ohori's thesis, with minimal changes.
+  % \textbf{License}\\
+	\copyright2021 Jaemin Hong
 
-	\medskip
+  \medskip
 
-	\textbf{No copyright}\\
-	\cczero\ This book is released into the public domain using the CC0 code. To the extent possible under law, I waive all copyright and related or neighbouring rights to this work.
+  All rights reserved. No part of this book may be reproduced in any form by any
+  electronic of mechanical means (including photocopying, recording, or
+  information storage and retrieval) without permission in writing from the
+  author.
 
-	To view a copy of the CC0 code, visit: \\\url{http://creativecommons.org/publicdomain/zero/1.0/}
+  % \medskip
 
-	\medskip
-
-	\textbf{Colophon} \\
-	This document was typeset with the help of \href{https://sourceforge.net/projects/koma-script/}{\KOMAScript} and \href{https://www.latex-project.org/}{\LaTeX} using the \href{https://github.com/fmarotta/kaobook/}{kaobook} class.
-
-	The source code of this book is available at:\\\url{https://github.com/fmarotta/kaobook}
-
-	(You are welcome to contribute!)
-
-	\medskip
-
-	\textbf{Publisher} \\
-	First printed in May 2019 by \@publishers
+  % \textbf{Published Date}\\
+  % \today
 }
 \makeatother
 
@@ -210,9 +204,8 @@
 \pagelayout{margin} % Restore margins
 
 \input{chapters/introduction-to-scala.tex}
-\input{chapters/functional-programming.tex}
+\input{chapters/immutability.tex}
 \input{chapters/functions.tex}
-\input{chapters/scala-collections.tex}
 \input{chapters/pattern-matching.tex}
 
 \pagelayout{wide} % No margins

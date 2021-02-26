@@ -2,330 +2,900 @@
 \chapter{Introduction to Scala}
 \labch{introduction-to-scala}
 
-\section{Scala}
+This book uses Scala as an implementation language, and
+this chapter thus introduces the Scala programming language. Scala stands for a
+\textbf{sca}lable \textbf{la}nguage~\cite{programming-in-scala}. It is a
+multi-paradigm language that allows both functional and object-oriented styles.
+This book focuses on the functional nature of Scala. In this chapter, we will
+see what functional programming is and why this book uses functional
+programming. In addition, we will install Scala and write simple programs in
+Scala.
 
-Professor Odersky and his students in LAMP at EPFL have developed Scala. Scala
-stands for ``\textbf{Sca}lable \textbf{La}nguage.'' The
-``Growing a Language''\sidenote{\url{https://www.youtube.com/watch?v=_ahvzDzKdB0}}
-talk given by Guy Steele has influenced Scala.
-Scala supports both \term{functional} and \term{object-oriented} styles and aims a
-growable language. Later articles will discuss functional programming more.
+\section{Functional Programming}
 
-\begin{kaobox}[frametitle=Compilers and interpreters]
-\term{Compilers} and \term{interpreters} are out of the topic but I believe that it is
-the best point to discuss them.
+What is functional programming?\index{functional programming}
+According to Wikipedia,
 
-Compilers are programs that translate one programming language into another
-language. Usually, the term ``compilers'' is used for a narrower range of
-programs: compilers get code written in high-level languages, whom people can
-easily understand, as input and generate code written in low-level languages
-like \term{machine languages} and \term{bytecode}. Physical machines can directly
-interpret machine languages and \term{virtual machines} can directly interpret
-bytecode. For example, GCC translates C and C++ into machine languages and
-\verb+javac+ translates Java into Java bytecode. Since machines can directly
-interpret the low-level languages, compiled forms of programs guarantee fast
-execution. However, when programmers modify their code, they must re-compile
-the code to execute programs so that checking results immediately after
-changing the code takes a long time.
+\begin{quote}
+Functional programming is a programming paradigm that treats computation as the
+evaluation of mathematical functions and avoids changing-state and mutable data.
+\end{quote}
 
-On the other hand, interpreters directly interpret code given as input and
-show results instead of generating new code. Python and JavaScript are typical
-languages using interpreters. Since given code is a \term{string}, interpreters do
-complex procedures including \term{parsing} at run time and therefore execution
-takes a long time. However, because changing code does not require compiling,
-checking results after changing the code takes a short time.
-\end{kaobox}
+According to the book Functional Programming in Scala~\cite{fp-in-scala},
 
-Scala compilers compile Scala code into Java bytecode executable by Java
-virtual machines (JVM). Every Scala project can use the Java standard library
-and any external Java libraries. Not only using compiled Java code but also
-mixing Java code and Scala code in a single project is possible. In addition,
-the Scala standard library supports
-conversion\sidenote{\url{https://www.scala-lang.org/api/current/scala/jdk/CollectionConverters\$.html}}
-between Java \term{collections} and
-Scala collections. In practice, interoperability with Java is useful a lot.
-Lack of Scala libraries is not problematic since libraries from the Java
-ecosystem are available.
+\begin{quote}
+Functional programming (FP) is based on a simple premise with far-reaching
+implications: we construct our programs using only pure functions---in other words,
+functions that have no side effects.
+\end{quote}
 
-The most recent Scala version in July 2019 is 2.13.0. At the same time, Scala
-, as known as Dotty, is coming. The most recent Dotty version in July 2019 is
-.16.0. The official GitHub repositories are
-\url{https://github.com/scala/scala}
-and \url{https://github.com/lampepfl/dotty}, respectively.
+The above two sentences are enough to describe functional programming.
 
-\section{Scala in Industry}
+Firstly,
+consider the phrase ``the evaluation of mathematical functions.''
+In the perspective of functional programming, a
+program is a single mathematical expression and the execution of the program is
+finding a value denoted by the expression.
+Each expression consists of zero or more subexpressions and evaluates to a value.
 
-Unfortunately, Scala is not one of the most popular languages. According to
-GitHub Octoverse 2017\sidenote{\url{https://octoverse.github.com/2017}},
-Scala was ranked the thirteenth place. The criterion was
-the number of PRs in one year.
-GitHub Octoverse 2018\sidenote{\url{https://octoverse.github.com/2018}}
-and after showed until the tenth place and Scala did not appear on the list.
-According to Stackoverflow Developer Survey 2019\sidenote{\url{https://insights.stackoverflow.com/survey/2019}},
-Scala was ranked the twentieth place.
+Let us discuss how
+functional programming is different from imperative programming with
+code examples.
 
-However, we can find several places using Scala. PLRG at KAIST has developed
-JavaScript static analyzer
-SAFE 2.0\sidenote{\url{https://github.com/sukyoung/safe}}
-in Scala. Trivially, the official Scala and Dotty compilers have been
-developed in Scala. In industry, Scala is popular for concurrent programming
-and distributed computing.
+\begin{verbatim}
+int x = 1;
+int y = 2;
+if (y < 3)
+    x = x + 4;
+else
+    x = x - 5;
+\end{verbatim}
+
+The above code is written in C, which represents imperative languages. Imperative
+programming mimics a way in which computers operate. During the execution of a
+program, a state, which can be interpreted as a memory of a computer,
+exists and the execution modifies the state. The execution of the C program has
+the following steps:
+
+\begin{enumerate}
+\item A state that both \code{x} and \code{y} are uninitialized
+\item A state that \code{x} is \code{1} and \code{y} is uninitialized
+\item A state that \code{x} is \code{1} and \code{y} is \code{2}
+\item Since \code{y < 3} is \code{true} under the state of the third step, go to
+the next line.
+\item A state that \code{x} is \code{5} and \code{y} is \code{2}
+\end{enumerate}
+
+\begin{verbatim}
+let x = 1 in
+let y = 2 in
+if y < 3 then x + 4 else x - 5
+\end{verbatim}
+
+The above code is written in OCaml, which represents functional languages. A
+program is an expression and the result of the execution is the result of
+evaluating the expression. The execution does not require a notion of a state.
+The execution of the OCaml program has the following steps:
+
+\begin{enumerate}
+\item Given a fact that \code{x} equals \code{1}, evaluate
+\code{let y = 2 in if y < 3 then x + 4 else x - 5}.
+\item Given a fact that \code{x} equals \code{1} and \code{y} equals \code{2},
+evaluate \code{if y < 3 then x + 4 else x - 5}.
+\item Given a fact that \code{x} equals \code{1} and \code{y} equals \code{2},
+evaluating \code{y < 3} yields \code{true} and thus evaluate \code{x + 4}.
+\item Given a fact that \code{x} equals \code{1} and \code{y} equals \code{2},
+evaluate \code{x + 4}.
+\item The result is \code{5}.
+\end{enumerate}
+
+Since the programs are simple, two programs look similar, but it is important to
+understand two different perspectives of what a program is.
+
+Secondly, look at the phrases ``avoids changing-state and mutable data'' and ``using
+only pure functions.'' Functional programming avoids mutable variables.
+Functional programming does not modify data including variables and objects.
+States, which change throughout the execution of programs, do not exist.
+Due to the lack of states, a function always does the same stuff
+and always returns the same value for the same arguments. Such functions
+are called pure functions.
+
+In practice, especially for large-scale projects, using only immutable things in
+the whole code is often inefficient. Most real-world functional languages
+provide mutable variables or structures like \code{var} of Scala, \code{ref} of
+OCaml, and \code{set!} and \code{box} of Racket. However,
+functional programming uses immutable things in most cases but can
+still express a lot of programs without difficulties.
+
+As we have seen so far,
+immutability is the most important concept of functional programming.
+Immutability allows modular programming and ease reasoning of programs.
+Due to immutability, programs that have to be trustworthy or require parallel computing
+are good applications of function programming.
+\refch{immutability} will discuss the advantages of immutability in detail and
+how to write interesting programs without mutating things.
+
+There are other important characteristics of functional programming as well as
+immutability. Use of first-class functions and pattern matching also take the
+key roles in functional programming. Both first-class functions and pattern matching
+are valuable as they help abstraction. First-class functions allow programmers
+to abstact computation, and pattern matching allows programmers to abstract
+data. Because of the ability of abstraction,
+programs whose input has complicated and abstract structures like source code
+are typically written in functional languages.
+\refch{functions} and \refch{pattern-matching} will respectively discuss first-class
+functions and pattern matching in Scala.
+
+This book implements interpreters and type checkers. They take source code as
+input and process the input according to mathematical semantics of programming
+languages. It is important
+to reason about the correctness of interpreters and type checkers. These
+properties exactly matches the strengths of functional programming. It is why
+this book use functional programming and Scala, which is a functional language.
+
+Before moving on to the next section,
+let us see how people use functional programming in industry.
+
 Akka\sidenote{\url{https://akka.io/}} is a concurrent,
 distributed computing library written in Scala. Many companies have been using Akka.
-Apache Spark\sidenote{\url{https://spark.apache.org/}}, a well-known library for data
+Apache Spark,\sidenote{\url{https://spark.apache.org/}} a well-known library for data
 processing, also is written in Scala.
 Play\sidenote{\url{https://www.playframework.com/}}
 is a widely-used web framework based on Akka.
 
-In another point of view, Scala is valuable since it is a good introduction to
-functional programming. Nowadays, functional programming is popular in
-industry as well as academia. Using one of functional languages like OCaml and
-Haskell in future is highly possible for undergraduate students studying
-computer science of these days. Therefore, if you started programming with
-imperative* languages like C, Java, and Python, experiencing Scala will
-increase the choices of your future job.
+Facebook has developed Infer,\sidenote{\url{https://fbinfer.com/}} a static analyzer for Java,
+C, C++, and Objective-C, in OCaml. Facebook and other companies including Amazon
+and Mozila use Infer to find bugs statically in their programs. Facebook has
+developed also Flow,\sidenote{\url{https://flow.org/}} a static type checker for JavaScript.
+Jane Street\sidenote{\url{https://www.janestreet.com/}} is a financial company well-known in
+the PL community and has developed its own software in OCaml.
+According to the official OCaml web
+site\sidenote{\url{http://ocaml.org/learn/companies.html}}, various companies including Docker
+use OCaml.
 
-\section{Programming in Scala}
+Haskell Wiki\sidenote{\url{http://wiki.haskell.org/Haskell_in_industry}} mentions that Google,
+Facebook, Microsoft, Nvidia, and many others use Haskell.
 
-The official Scala web site\sidenote{\url{https://www.scala-lang.org/}} provides
-instructions for installation. The site discusses also possible IDEs for
-Scala.
+Erlang is a functional language for concurrent and parallel computing. Elixir
+operates on Erlang virtual machines and is used for the same purpose as Erlang.
+An article from Code
+Sync\sidenote{\url{https://codesync.global/media/successful-companies-using-elixir-and-erlang/}}
+introduced companies including WhatsApp, Pinterest, and Goldman Sachs using
+Erlang and Elixir.
 
-\subsection{Scala REPL}
+\section{Installation}
 
-After installing Scala, type \verb+scala+ in a command line to execute the Scala
-REPL. The term ``REPL'' stands for ``\textbf{r}ead, \textbf{e}val, \textbf{p}rint, and
+As Scala programs are compiled to Java bytecode, which runs on Java Virtual
+Machines (JVMs), you must
+install Java before installing Scala. Java has various versions, and Scala 2.13,
+which is used in this book, needs JDK 8 or higher. JDK 8 is the most recommended
+one. The Scala website\sidenote{\url{https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html}}
+mentions compatibility issues regarding the other versions.
+
+The Oracle website\sidenote{\url{https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html}}
+provies an installation file for JDK 8.
+
+You can donwload an installation file for Scala 2.13 on the Scala
+website.\sidenote{\url{https://www.scala-lang.org/download/}} Note that you need a
+file in the ``Other resources'' section at the bottom of the page.
+On macOS, you may use Homebrew instead. By installing Scala, you can use the
+Scala REPL, interpreter, and compiler. \refsec{scala-repl},
+\refsec{scala-interpreter}, and \refsec{scala-compiler} will discuss
+their usages respectively.
+
+Another thing to install is SBT. SBT is a build tool for Scala. An installation
+file for SBT can be found on the SBT
+website.\sidenote{\url{https://www.scala-sbt.org/download.html}}
+Section~\refsec{sbt} will discuss the usage of SBT.
+
+\section{REPL}
+\labsec{scala-repl}
+
+Once you install Scala, you can launch Scala REPL by typing \code{scala} in
+your command line.
+
+\begin{verbatim}
+$ scala
+Welcome to Scala 2.13.5.
+Type in expressions for evaluation. Or try :help.
+
+scala>
+\end{verbatim}
+
+The term ``REPL'' stands for ``\textbf{r}ead, \textbf{e}val, \textbf{p}rint, and
 \textbf{l}oop''.
-It is a program that reads a line from a user, evaluates the code, prints
-the result, and goes back to the first. Languages with interpreters used to
-support REPLs but, nowadays, languages with compilers also supports REPLs. In
-the Scala REPL, for every line of input, the Scala compiler compiles the code
-and the REPL shows the result of the execution.
+It is a program that iterativley reads a line from a user, evaluates the code,
+and prints the result. REPL is not a place to write a program but is a good
+place to write short code and see how it works.
+
+If you input an integer to REPL, it will evaluate the integer and show the
+result.
 
 \begin{verbatim}
 scala> 0
-res0: Int = 0
+val res0: Int = 0
 \end{verbatim}
 
-For input \term{expression} \verb+0+, the resulting \term{value} is \verb+0+ and the type of \verb+0+
-is \verb+Int+.
+It means that the expression \code{0} evaluates to the value \code{0} and the type of
+\code{0} is \code{Int}.
+You can try some arithmetic expressions as well.
 
 \begin{verbatim}
-scala> 1 * 1
-res1: Int = 1
+scala> 1 + 2
+val res1: Int = 3
 \end{verbatim}
 
-It works well for more complex expressions.
-
-\subsection{Variable Declarations}
+Booleans are \code{true} and \code{false} in Scala.
 
 \begin{verbatim}
-scala> val x = 2
-x: Int = 2
+scala> true
+val res2: Boolean = true
 \end{verbatim}
 
-To declare a variable, \verb+val+ can be used. \verb+val [name] = [expression]+ implies
-that the result of evaluating the expression becomes the thing referred by the
-name of the variable. The type of \verb+x+ is inferred as \verb+Int+.
+You can also use basic logical operators.
 
 \begin{verbatim}
-scala> x = 3
-<console>:12: error: reassignment to val
-       x = 3
+scala> true && false
+val res3: Boolean = false
 \end{verbatim}
 
-Since \verb+val+ declares \term{immutable} variables, assigning an expression to an
-already defined variable is impossible. Immutability is the most important
-property of functional programming.
+String literals require double quotation marks.
 
 \begin{verbatim}
-scala> val x = 4
-x: Int = 4
+scala> "hello"
+val res4: String = hello
 \end{verbatim}
 
-On the other hand, we can declare \verb+x+ again because, in the REPL, two \verb+x+'s
-belong to different scopes. It is impossible to define two local variables of
-the same name in a single scope.
+Operations regarding strings can be done by calling methods.
 
 \begin{verbatim}
-scala> val y: Int = x + 1
-y: Int = 5
+scala> "hello".length
+val res5: Int = 5
+
+scala> "hello".substring(0, 4)
+val res6: String = hell
 \end{verbatim}
 
-Mentioning explicitly the type of a variable is possible. Usually, due to
-type inference*, type annotations are unnecessary but they are required in rare cases.
+Strings in Scala provide the same methods as those in
+Java.\sidenote{\url{https://docs.oracle.com/javase/8/docs/api/java/lang/String.html}}
+
+The \code{println} function prints a given message into the console.
 
 \begin{verbatim}
-scala> var z = 6
-z: Int = 6
-
-scala> z = 7
-z: Int = 7
+scala> println("Hello world!")
+Hello world!
 \end{verbatim}
 
-\verb+var+ allows to declare \term{mutable} variables.
+Note that there is no result of \code{println("Hello world!")}. Actually,
+\code{println("Hello world!")} evaluates to \code{()}, which is called unit.
+Unit implies that the result does not have any meaningful information. It is
+similar to \code{None} in Python and \code{undefined} in JavaScript. At the
+same time, functions returning unit are similar to functions whose return types
+are \code{void} in C or Java. Since unit does not have meaningful information,
+REPL omits the result when it is unit.
+
+The remainder of this section introduces basic features of Scala, such as
+variables and functions, with REPL.
+
+\subsection{Variables}
+
+The syntax of a variable definition is as follows:
 
 \begin{verbatim}
-scala> z = "8"
-<console>:12: error: type mismatch;
- found   : String("8")
- required: Int
-       z = "8"
+val [name]: [type] = [expression]
+\end{verbatim}
+
+It defines a variable whose name is \code{[name]}.
+The result of \code{[expression]} becomes the value denoted by the variable and
+must be a value of the \code{[type]}.
+
+\begin{verbatim}
+scala> val x: Int = 1
+val x: Int = 1
+\end{verbatim}
+
+If the type of the result does not match a given type, the variable will not be
+defined due to a type mismatch.
+
+\begin{verbatim}
+scala> val y: Boolean = 2
+                        ^
+       error: type mismatch;
+        found   : Int(2)
+        required: Boolean
+\end{verbatim}
+
+You can omit the \code{: [type]} part and simply write \code{val [name] =
+[expression]} instead. In this case, a type mimatch never happens, and the
+type of the variable becomes the same as the type of its value.
+People usually omit the type annotations of local variables.
+
+\begin{verbatim}
+scala> val y = 3
+val x: Int = 3
+\end{verbatim}
+
+Variables defined by \code{val} cannot be mutated, i.e. their values never
+change. Reassignment will incur an error. We call such variables immutable
+variables. Most variables are immutable in functional programming.
+
+\begin{verbatim}
+scala> x = 4
+         ^
+       error: reassignment to val
+\end{verbatim}
+
+Sometimes, mutable variables, i.e. variables whose values can change ease programming.
+Scala provides mutable variables as well as immutable variables. You need to use
+\code{var} instead of \code{val} to define mutable variables. You may or may not write
+the type of a variable.
+
+\begin{verbatim}
+scala> var z = 5
+var z: Int = 5
+
+scala> z = 6
+// mutated z
+
+scala> z
+val res8: Int = 6
+\end{verbatim}
+
+To assign a new value to a mutable variable, the value must follow the
+type of the variable. Otherwise, a type mismatch will happen.
+
+\begin{verbatim}
+scala> z = true
            ^
+       error: type mismatch;
+        found   : Boolean(true)
+        required: Int
 \end{verbatim}
 
-To assign an expression to a mutable variable, the expression must follow the
-type of the variable. Functional programming avoids using mutable variables.
-Actually, and surprisingly, prohibiting mutable variables does not decrease
-expressivity of programs at all. Therefore, \verb+val+ should be used in most cases
-but, for efficiency, \verb+var+ might be used. In the course, if there is no
-special instruction, students cannot use \verb+var+ in their homework.
+\subsection{Functions}
 
-\subsection{Function Declarations}
+The syntax of a function definition is as follows:
 
 \begin{verbatim}
-scala> def add(x: Int, y: Int) = x + y
-add: (x: Int, y: Int)Int
+def [name]([name]: [type], …): [type] = [expression]
 \end{verbatim}
 
-\verb+def+ declares functions. \verb+def [name]([name]: [type], …) = [expression]+ is
-the form. Like functions in mathematics, \verb+return+ is unnecessary. The return
-value of a function call is the result of evaluating the expression at the
-right-hand side. Since \verb+x + y+ has type \verb+Int+, the return type of \verb+add+ is
-also \verb+Int+ due to type inference.
-
-\begin{verbatim}
-scala> add(4, 5)
-res2: Int = 9
-\end{verbatim}
-
-The return value is correct.
+Many programming languages require \code{return} to sepcify the return value of a function.
+On the other hand, functions in Scala are like functions in mathematics: \code{return} is unnecessary.
+The return value of a function is the result of the body expression, which is the expression
+at the right side of \code{=} in the definition. The type annotation after each parameter specifies
+the type of the parameter. The type after the parentheses is the return type, which must be the
+same as the type of the return value.
 
 \begin{verbatim}
 scala> def add(x: Int, y: Int): Int = x + y
-add: (x: Int, y: Int)Int
+def add(x: Int, y: Int): Int
+
+scala> add(3, 7)
+val res9: Int = 10
 \end{verbatim}
 
-Like variables, it is possible to annotate return types of functions.
+Like variables, the return types of functions can be omitted.
 
 \begin{verbatim}
-scala> def add(x, y): Int = x + y
-<console>:1: error: ':' expected but ',' found.
-       def add(x, y): Int = x + y
+scala> def add(x: Int, y: Int) = x + y
+def add(x: Int, y: Int): Int
+\end{verbatim}
+
+However, parameter types cannot be omitted.
+
+\begin{verbatim}
+scala> def add(x, y) = x + y
                 ^
+       error: ':' expected but ',' found.
 \end{verbatim}
 
-Unlike some languages including OCaml, types of function \term{parameters} are essential.
+To write multiple expressions including variable and functions definitions
+inside the body of a function, we put expressions separated by line breaks
+inside curly braces.
+Each line will be evaluated in the order, and the result of the last line will
+be the return value.
 
 \begin{verbatim}
-scala> def f(x: Int) = {
-     |   val y = x + 1
-     |   val z = x + 2
-     |   y * y + z * z
+scala> def quadruple(x: Int): Int = {
+     |   val y = x + x
+     |   y + y
      | }
-f: (x: Int)Int
+def quadruple(x: Int): Int
 \end{verbatim}
 
-If a function needs to use local variables, the body of the function is a
-sequence of multiple expressions bundled in a pair of curly brackets. Every
-expression inside the brackets is sequentially evaluated from top to bottom.
-The result is equal to the result of the last expression.
+Inside \code{quadruple}, the variable \code{y} is defined and used for the
+computation of
+the return value.\sidenote{Vertical bars (\code{|}) at the beginning of lines are
+not part of code. They has been automatically inserted by REPL.}
+
+Multiple expressions inside curly braces collectively treated as a single
+expression. We call such an expression a sequenced expression. Like any other
+expressions, a sequenced expression can occur anywhere an expression is needed.
+For example, it can be used to define a variable.
 
 \begin{verbatim}
-scala> def g(x: Int) = {
-     |   println(x)
-     |   x * x
-     |   x
-     | }
-g: (x: Int)Int
-
-scala> g(10)
-10
-res3: Int = 10
-\end{verbatim}
-
-\verb+g+ shows the evaluation of bundled multiple expressions more clearly. \verb+g+
-prints \verb+10+, calculates \verb+x * x+, whose result is discarded, and returns \verb+10+,
-the result of evaluating \verb+x+.
-
-\begin{verbatim}
-scala> val w = {
-     |   val a = 5
-     |   a + a + 1
-     | }
-w: Int = 11
-
-scala> add({
-     |   val x = 6
+scala> val a = {
+     |   val x = 1 + 1
      |   x + x
-     | }, 0)
-res4: Int = 12
+     | }
+val a: Int = 4
 \end{verbatim}
 
-Since a sequence of bundled expressions is an expression, it can be used
-anywhere expecting expressions.
+There are many other things related to functions: recursion, first-class
+functions, closures, and anonymous functions. \refch{immutability} will
+discuss recursion, and \refch{functions} will discuss the other topics.
 
 \subsection{Conditionals}
 
-\begin{verbatim}
-scala> if (true) 13 else 14
-res5: Int = 13
-\end{verbatim}
-
-\term{Conditional} expressions use \verb+if+ and \verb+else+ like many other languages.
-Evaluating a conditional expression results in a value.
+A conditional expression performs computation depending on a certain
+condition, i.e. a boolean value. The syntax of a conditional expression is as
+follows:
 
 \begin{verbatim}
-scala> val a = if (false) 13 else 14
-a: Int = 14
-
-scala> var b = 0
-b: Int = 0
-
-scala> if (false) b = 14 else b = 15
-
-scala> b
-res6: Int = 15
+if ([expression]) [expression] else [expression]
 \end{verbatim}
 
-In Scala, immutable variables are enough to assign conditional values. On the
-other hand, imperative languages require mutable variables and reassignment.
-\verb+if+ and \verb+else+ in Scala look similar to the ternary operator \verb+? :+ in
-  imperative languages but are more general.
+The first expression is the condition; the second expression is the true branch;
+the last expression is the false branch.
+
+\begin{verbatim}
+scala> if (true) 1 else 2
+val res10: Int = 1
+\end{verbatim}
+
+A conditional expression evaluates to a value. It is more similar to the ternary
+operator \code{? :} in C than a \code{if} statement.
+We do not need make a variable
+mutable to initialize the variable with a conditional value.
+
+\begin{verbatim}
+scala> val x = if (true) 1 else 2
+val x: Int = 1
+\end{verbatim}
+
+On the other hand, people write code like below in languages like C.
+
+\begin{verbatim}
+int x;
+if (true)
+    x = 1;
+else
+    x = 2;
+\end{verbatim}
+
+Conditional expressions in Scala are more expressive than the ternary operator
+in C because we can make complex computation a single expression with expression
+sequencing, which is impossible in C.
 
 \begin{verbatim}
 scala> if (true) {
-     |   val x = 8
+     |   val x = 2
      |   x + x
      | } else {
-     |   val x = 9
+     |   val x = 3
      |   x * x
      | }
-res7: Int = 16
+val res11: Int = 4
 \end{verbatim}
 
-Since a sequence of bundled expressions is an expression, conditional
-expressions can use curly brackets to express complex computation while it is
-impossible in imperative languages.
+\subsection{Lists}
 
-\subsection{Compiling Scala Code}
+A list is a collection of zero or more elements. A list maintains the order between
+its elements. Lists in Scala are immutable. Once a list is created, its elements
+never changes. There are two ways to create a new list in Scala:
 
-The Scala compiler \verb+scalac+ compiles Scala code into Java bytecode.
+\begin{itemize}
+  \item \code{List([expression], …, [expression])}
+  \item \code{[expression] :: … :: [expression] :: Nil}
+\end{itemize}
+
+The type of a list whose elements have type \code{T} is \code{List[T]}.
 
 \begin{verbatim}
-object App {
-  def main(args: Array[String]) = println("Hello world!")
+scala> List(1, 2, 3)
+val res12: List[Int] = List(1, 2, 3)
+
+scala> 1 :: 2 :: 3 :: Nil
+val res13: List[Int] = List(1, 2, 3)
+\end{verbatim}
+
+\code{List(…)} is more convenient than \code{::} for creating a new list from
+scratch. However, \code{::} is more flexible since it can prepend a new element
+in front of an existing list.\sidenote{It does not mutate the existing list to
+prepend the new element. It creates a new list with the element and the list.}
+
+\begin{verbatim}
+scala> val l = List(1, 2, 3)
+val l: List[Int] = List(1, 2, 3)
+
+scala> 0 :: l
+val res14: List[Int] = List(0, 1, 2, 3)
+\end{verbatim}
+
+The \code{length} method computes the length of a list; parentheses are used
+to fetch the element at a specific index.\sidenote{The first index is \code{0}.}
+
+\begin{verbatim}
+scala> l.length
+val res15: Int = 3
+
+scala> l(0)
+val res16: Int = 1
+\end{verbatim}
+
+In functional programming, accessing an arbitrary element of a list by an index
+is rare. We use pattern matching in most cases. The syntax of pattern matching
+for a list is as follows:\sidenote{The order between the cases can vary, which
+means that the \code{Nil} may come first}
+
+\begin{verbatim}
+[expression] match {
+  case Nil => [expression]
+  case [name] :: [name] => [expression]
 }
 \end{verbatim}
 
-Save the above code into \verb+App.scala+ file and type \verb+scala App.scala+ and
-\verb+scala App+ in a command line. The console will print \verb+"Hello world!"+. \verb+scalac+
-compiles \verb+App.scala+ and generates \verb+App.class+. \verb+scala+ uses JVM to execute
-\verb+App.class+.
+The \code{[expression]} in front of \code{match} is the target of pattern matching.
+If it is an empty list, it matches \code{case Nil}. The \code{[expression]}
+of the \code{Nil} case will be evalauted.
+Otherwise, it is a nonempty list and matches \code{case [name] :: [name]}. The first
+\code{[name]} denotes the head (the first element) of the list, and the second
+\code{[name]} denotes the tail (a list consisting of all the elements except the
+head) of the list. The \code{[expression]} of the case will be evalauted.
 
-Like Java, the \verb+main+ \term{method} is the entry point of every Scala program. The
-main` method must contain code has to be executed.
+The following function takes a list of integers as an argument and returns the
+head. The return value is zero when the list is empty.
 
-In practice, like other languages, programmers use build tools for their Scala
-projects. Like CMake for C and C++ and Ant, Maven, and Gradle for Java, Scala
-projects usually use SBT.
+\begin{verbatim}
+scala> def headOrZero(l: List[Int]): Int = l match {
+     |   case Nil => 0
+     |   case h :: t => h
+     | }
+def headOrZero(l: List[Int]): Int
+
+scala> headOrZero(l)
+val res17: Int = 1
+
+scala> headOrZero(List())
+val res18: Int = 0
+\end{verbatim}
+
+\refch{immutability} will show various use of pattern matching for lists, and
+\refch{pattern-matching} will discuss pattern matching in detail.
+
+\subsection{Tuples}
+
+A tuple contains two or more elements and maintains the order between its
+elements. We use parentheses to create a new tuple:
+
+\begin{verbatim}
+([expression], …, [expression])
+\end{verbatim}
+
+The type of a tuple whose elements have types from \code{T1} to \code{Tn}
+respectively is \code{(T1, …, Tn)}. For example, the type of a tuple
+whose first element is \code{Int} and second element is \code{Boolean} is
+\code{(Int, Boolean)}.
+
+\begin{verbatim}
+scala> (1, true)
+val res19: (Int, Boolean) = (1,true)
+\end{verbatim}
+
+To fetch the \code{i}th element of a tuple, we can use \verb+._i+.\sidenote{The
+first index is 1.}
+
+\begin{verbatim}
+scala> (1, true)._1
+val res20: Int = 1
+\end{verbatim}
+
+Tuples look similar to lists but have important differences from
+lists. First, a tuple's elements can vary in their types, while a list's
+elements cannot. For example, a tuple of the type \code{(Int, Boolean)} has
+one integer and one boolean, while a list of the type \code{List[Int]} can have
+only integers. We say that tuples are heterogenous, while lists are homogeneous.
+Second, a list allows accessing an arbitrary index of a list,
+while a tuple does not. For example, \code{l(f())} is possible where \code{l} is
+a list and \code{f} returns an integer, while there is no way to access the
+\code{f()}th element of a tuple since the return value of \code{f} is unknown
+before execution.
+
+We use lists and tuples for different purposes. Lists are appropriate when the
+number of elements can vary and an arbitrary index should be able to accessed.
+For instance, a list should be used to represent a collection of the heights of
+students in a certain class.
+
+\begin{verbatim}
+List(189, 167, 156, 170, 183)
+\end{verbatim}
+
+It allows us to fetch the height of the \code{i}th
+student. On the other hand, tuples are appropriate when the number of elements
+are fixed and each index has a specific meaning and own type. For instance,
+a tuple can represent the information of a single student, where the information
+consists of one's name, one's height, and whether one has payed the school
+expenses or not.
+
+\begin{verbatim}
+("John Doe", 173, true)
+\end{verbatim}
+
+We can use \verb+._1+ to find the name, \verb+._2+ to find the height, and
+\verb+._3+ to check whether one has payed.
+
+We call a length-2 tuple a pair and a length-3 tuple a triple. Also, we can
+consider unit as a length-0 tuple.
+
+\subsection{Maps}
+
+A map is a collection of pairs, where each pair consists of a key and a value.
+Its provides the corresponding value when a key is given.
+Maps in Scala are immutable as well. Below is the syntax to create a new map:
+
+\begin{verbatim}
+Map([expression] -> [expression], …)
+\end{verbatim}
+
+The type of a map whose keys have type \code{T} and values have type \code{S} is
+\code{Map[T, S]}.
+
+\begin{verbatim}
+scala> val m = Map(1 -> "one", 2 -> "two", 3 -> "three")
+val m: Map[Int,String] = Map(1 -> one, 2 -> two, 3 -> three)
+\end{verbatim}
+
+To find the value corresponding to a certain key, we use parentheses.
+
+\begin{verbatim}
+scala> m(2)
+val res21: String = two
+\end{verbatim}
+
+Maps provide various
+methods.\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/Map.html}}
+
+\subsection{Classes and Objects}
+
+An object is a value with fields and methods. Fields stores values, and methods
+are operations related to the object. A class is a blueprint of objects. We can
+easily create multiple objects of the same structure by defining a single class.
+This book uses only ``case'' classes of Scala. Case classes are similar to
+classes but more convenient, e.g. automatic support for pretty printing and
+pattern matching.
+
+The syntax of a class definition is as follows:
+
+\begin{verbatim}
+case class [name]([name]: [type], …)
+\end{verbatim}
+
+The first \code{[name]} is the name of a new class. The \code{[name]}s inside
+the parentheses are the names of the fields of the class.
+
+\begin{verbatim}
+scala> case class Student(name: String, height: Int)
+class Student
+\end{verbatim}
+
+Creating new objects is similar to function calls.
+
+\begin{verbatim}
+scala> val s = Student("John Doe", 173)
+val s: Student = Student(John Doe,173)
+\end{verbatim}
+
+Fields can be accessed by \code{.[name]}.
+
+\begin{verbatim}
+scala> s.name
+val res22: String = John Doe
+\end{verbatim}
+
+Objects in Scala are immutable by default. If we add \code{var} to a field when
+defining a class, that field becomes mutable.
+
+\begin{verbatim}
+scala> case class Student(name: String, var height: Int)
+class Student
+
+scala> val s = Student("John Doe", 173)
+val s: Student = Student(John Doe,173)
+
+scala> s.height = 180
+// mutated s.height
+
+scala> s.height
+val res23: Int = 180
+\end{verbatim}
+
+\section{Interpreter}
+\labsec{scala-interpreter}
+
+An interpreter is a program that takes source code as input and runs the code. A
+Scala interpreter takes Scala source code as input. To use the interpreter,
+we need to save source code into a file. Make a file with the following code, and
+save it as \code{Hello.scala}.
+
+\begin{verbatim}
+println("Hello world!")
+\end{verbatim}
+
+You can excute the interpreter by typing \code{scala} with the name of a file in
+your command line. Here, we need \code{scala Hello.scala}.
+
+\begin{verbatim}
+$ scala Hello.scala
+Hello world!
+\end{verbatim}
+
+You can write multiple lines in a single file. Fix \code{Hello.scala} like
+below.
+
+\begin{verbatim}
+val x = 2
+println(x)
+val y = x * x
+println(y)
+\end{verbatim}
+
+Then, excute the interpreter again.
+
+\begin{verbatim}
+$ scala Hello.scala
+2
+4
+\end{verbatim}
+
+\section{Compiler}
+\labsec{scala-compiler}
+
+A compiler is a program that takes source code as input and translates it into
+another language. Usually, the target language is a low-level language like
+machine code or bytecode of a particular virtual machine.
+A Scala compiler takes Scala source code as input and translates it into Java
+bytecode. Once code is compiled, we can run the generated bytecode with a JVM.
+
+For compilation, we need to define the main method of a program. The main method
+is the entrypoint of every program running on JVMs.
+Make a file with the following code, and save it as \code{Hello.scala}.
+
+\begin{verbatim}
+object Hello {
+  def main(args: Array[String]): Unit = {
+    println("Hello world!")
+  }
+}
+\end{verbatim}
+
+You can make the compiler compile the code by typing \code{scalac} in your
+command line.
+
+\begin{verbatim}
+$ scalac Hello.scala
+\end{verbatim}
+
+After compilation, you will be able to find the \code{Hello.class} file
+in the same directory. The file contains Java bytecode.
+
+You can run the bytecode with a JVM by the \code{scala} command. In this time,
+it is enough to write only the class name.
+
+\begin{verbatim}
+$ scala Hello
+Hello world!
+\end{verbatim}
+
+You can change the behavior of the program by modifying the main method.
+Each time you modify, you need to re-compile the program to re-generate the
+bytecode.
+
+Running bytecode is much more efficient than interpreting Scala source code.
+You can easily notice that \code{scala Hello} takes much less than \code{scala
+Hello.scala} even though their results are the same.
+
+\section{SBT}
+\labsec{sbt}
+
+SBT is a build tool for Scala. Build tools help programmers work on large
+projects with lots of files by tracking dependencies between files and managing
+third-party libraries. There are various build tools in the world, and SBT is
+the most popular one for Scala.
+
+You can create a new Scala project by the \code{sbt new} command.
+
+\begin{verbatim}
+$ sbt new scala/scala-seed.g8
+[info] welcome to sbt 1.4.7
+[info] loading global plugins from ~/.sbt/1.0/plugins
+[info] set current project to ~/ (in build file:~/)
+[info] set current project to ~/ (in build file:~/)
+
+
+A minimal Scala project.
+
+name [Scala Seed Project]: hello
+
+Template applied in ~/hello
+\end{verbatim}
+
+After the creation, the directory structure is as follows:
+
+\dirtree{%
+  .1 hello.
+  .2 build.sbt.
+  .2 project.
+  .3 Dependencies.scala.
+  .3 build.properties.
+  .2 src.
+  .3 main.
+  .4 scala.
+  .5 example.
+  .6 Hello.scala.
+  .3 test.
+  .4 scala.
+  .5 example.
+  .6 HelloSpec.scala.
+}
+
+The \code{build.sbt} file configures the project. It manages the Scala version
+of the project, third-party libraries used in the project, and many other
+things.
+Source files are under the \code{src} directory. Files under \code{main} are
+main source files, while files under \code{test} are only for testing.
+You can add files into \code{src/main/scala} and edit files in the directory
+to write code.
+
+An SBT console can be started by the \code{sbt} command. The current working
+directory of your shell should be the base directory of the project.
+
+\begin{verbatim}
+[info] welcome to sbt 1.4.7
+[info] loading global plugins from ~/.sbt/1.0/plugins
+[info] loading project definition from ~/hello/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to hello (in build file:~/hello/)
+
+[info] sbt server started at
+local:///~/.sbt/1.0/server/d4cd702f998423203dfe/sock
+[info] started sbt server
+sbt:hello>
+\end{verbatim}
+
+You can compile, run, and test the project by executing SBT commands in the
+console.
+
+\begin{itemize}
+  \item \code{compile}: compile the project.
+  \item \code{run}: run the project (re-compile if necessary).
+  \item \code{test}: test the project (re-compile if necessary).
+  \item \code{exit}: terminate the console.
+\end{itemize}
+
+\begin{verbatim}
+sbt:hello> compile
+[info] compiling 1 Scala source to ~/hello/target/scala-2.13/classes ...
+
+| => root / Compile / compileIncremental 0s
+[success] Total time: 4 s
+sbt:hello> test
+[info] compiling 1 Scala source to ~/hello/target/scala-2.13/test-classes ...
+[info] HelloSpec:
+[info] The Hello object
+[info] - should say hello
+[info] Run completed in 455 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[success] Total time: 2 s
+sbt:hello> run
+[info] running example.Hello
+hello
+[success] Total time: 0 s
+sbt:hello> exit
+[info] shutting down sbt server
+\end{verbatim}
+
+To learn SBT more, refer to the SBT website.\sidenote{\url{https://www.scala-sbt.org/learn.html}}
