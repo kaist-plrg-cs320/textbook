@@ -2,6 +2,54 @@
 \chapter{Solutions to Selected Exercises}
 \labch{solutions}
 
+\textbf{\refch{immutability}}
+\begin{enumerate}
+\item[1.]
+\begin{verbatim}
+def names(l: List[Student]): List[String] = l match {
+  case Nil => Nil
+  case h :: t => h.name :: names(t)
+}
+\end{verbatim}
+\item[2.]
+\begin{verbatim}
+def tall(l: List[Student]): List[Student] = l match {
+  case Nil => Nil
+  case h :: t =>
+    if (h.height > 170)
+      h :: tall(t)
+    else
+      tall(t)
+}
+\end{verbatim}
+\item[3.]
+\begin{verbatim}
+def length(l: List[Int]): Int = l match {
+  case Nil => 0
+  case h :: t => 1 + length(t)
+}
+\end{verbatim}
+\item[4.]
+\begin{verbatim}
+def append(l: List[Int], n: Int): List[Int] = l match {
+  case Nil => n :: Nil
+  case h :: t => h :: append(t, n)
+}
+\end{verbatim}
+$O(n)$
+\item[5.]
+\begin{verbatim}
+def product(l: List[Int]): Int = l match {
+  @tailrec def aux(l: List[Int], inter: Int): Int = l match {
+    case Nil => inter
+    case h :: t => aux(t, inter * h)
+  }
+  aux(l, 1)
+}
+\end{verbatim}
+
+\end{enumerate}
+
 \textbf{\refch{functions}}
 
 \begin{enumerate}
