@@ -291,9 +291,9 @@ def positive(l: List[Int]): List[Int] = l match {
 The following function calculates the sum of the elements of a given list.
 
 \begin{verbatim}
-def sum(l: List): Int = l match {
+def sum(l: List[Int]): Int = l match {
   case Nil => 0
-  case Cons(h, t) => h + sum(t)
+  case h :: t => h + sum(t)
 }
 \end{verbatim}
 
@@ -305,9 +305,9 @@ Similarly, \code{product} calculates the product of the elements of a given
 list.
 
 \begin{verbatim}
-def product(l: List): Int = l match {
+def product(l: List[Int]): Int = l match {
   case Nil => 1
-  case Cons(h, t) => h * product(t)
+  case h :: t => h * product(t)
 }
 \end{verbatim}
 
@@ -517,6 +517,18 @@ def sum(l: List[Int]): Int = {
 
 \code{aux(l, n)} calculates \code{n} plus the sum of \code{l}'s elements.
 
+Similarly, \code{product} can be implemented in a tail-recursive way.
+
+\begin{verbatim}
+def product(l: List[Int]): Int = l match {
+  @tailrec def aux(l: List[Int], inter: Int): Int = l match {
+    case Nil => inter
+    case h :: t => aux(t, inter * h)
+  }
+  aux(l, 1)
+}
+\end{verbatim}
+
 \section{Exercises}
 
 \begin{enumerate}
@@ -536,11 +548,8 @@ def sum(l: List[Int]): Int = {
     and returns the length of the list.
 
   \item
-    Implement a function that takes a list and an integer as arguments
-    and return a list obtained by appending the integer at the end of the list.
+    Implement a function that takes a list of integers and an integer as arguments
+    and returns a list obtained by appending the integer at the end of the list.
     Then, compare the time complexity of appending a new element to that of
     prepending a new element by \code{::}, which is $O(1)$.
-
-  \item
-    Implement \code{product} in a tail-recursive way.
 \end{enumerate}

@@ -1010,3 +1010,179 @@ def toSum(l: List[(Int, Int)]): List[Int] =
 \end{verbatim}
 
 The code is readable and concise.
+
+\section{Option Types}
+
+Consider the \verb!list_get! function, which takes a list and integer \code{n} as
+arguments and returns the \code{n}th element of the list. The case when \code{n}
+is negative or exceeds the length of a list is troublesome. Throwing exceptions
+is a widely used solution in imperative languages.
+
+\begin{verbatim}
+def list_get(l: List, n: Int): Int =
+  if (n < 0)
+    throw new Exception("Negative index.")
+  else l match {
+    case Nil =>
+      throw new Exception("Index out of bound.")
+    case Cons(h, t) =>
+      if (n == 0) h else list_get(t, n - 1)
+  }
+\end{verbatim}
+
+It is simple and effective, but the program terminates abnormally if
+\term{exception handlers} do not exist at call sites of the function. Most type
+systems do not check exceptions. They do not enforce programmers to handle
+exceptions. For this reason, Java has introduced \term{checked exceptions}, whom
+compilers check. However, programmers usually do not adequately handle exceptions
+but use only conventional \code{try-catch} statements to make programs pass type
+checking. Many people have criticized the concept of a checked exception. Another
+problem of throwing exceptions is that exception handling is not local.
+Exceptions spread through function call stacks so that the \term{control flow} of
+programs suddenly jumps to the positions of exception handlers. It disturbs
+programmers to understand code. Implementing \verb!list_get! without exceptions
+is desirable.
+
+\begin{verbatim}
+def list_get(l: List, n: Int): Int =
+  if (n < 0) null
+  else l match {
+    case Nil => null
+    case Cons(h, t) =>
+      if (n == 0) h else list_get(t, n - 1)
+  }
+\end{verbatim}
+
+The first attempt is using \code{null}. \code{null} is a value that denotes that
+it does not refer to any existing object. In Java and therefore Scala, \code{Int}
+is a primitive type, and \code{null} is not an element of \code{Int}. The code is
+invalid. Even though we assume that \code{null} belongs to \code{Int}, without
+checking whether a return value is \code{null}, using the return value may lead
+to \code{NullPointerException}. Like exceptions, \code{null} is beyond the scopes
+of type systems of Java and Scala. Some modern languages including Kotlin have
+introduced \term{nullable types} and \term{non-null types} to make programs safe
+from \code{NullPointerException}. The concept of a nullable type is similar to an
+option type, the subject of the section.
+
+\begin{verbatim}
+def list_get(l: List, n: Int): Int =
+  if (n < 0) -1
+  else l match {
+    case Nil => -1
+    case Cons(h, t) =>
+      if (n == 0) h else list_get(t, n - 1)
+  }
+\end{verbatim}
+
+The second attempt is using a particular error-indicating value, \code{-1} for
+example. The strategy has an obvious problem: at call-sites, programs cannot
+judge whether lists contain \code{-1} as elements or indices are wrong. It can be
+successful for certain purposes but does not fit the \verb!list_get! function in
+general.
+
+\begin{verbatim}
+def list_getOrElse(l: List, n: Int, default: Int): Int =
+  if (n < 0) default
+  else l match {
+    case Nil => default
+    case Cons(h, t) =>
+      if (n == 0) h else list_getOrElse(t, n - 1, default)
+}
+\end{verbatim}
+
+Instead of using a fixed particular value, specifying default values for failures
+at call sites is possible. It works well when an appropriate default value
+exists. However, when checking failures is per se important, the new strategy is
+as bad as the previous strategy. There is no way to distinguish an element and a
+default value.
+
+Functional languages provide option types to handle erroneous situations safely
+without any mutation. Many languages including Scala use \code{Option} as the
+name, but some call them \code{Maybe}. As the name implies, an option type
+represents an optional existence of a value. The article defines an option type
+for \code{Int} and functions treating values of the type.
+
+\begin{verbatim}
+trait Option
+case object None extends Option
+case class Some(n: Int) extends Option
+\end{verbatim}
+
+The code is similar to the code defining \code{List}, \code{Nil}, and
+\code{Cons}. A value of the \code{Option} type either is \code{None} or belongs
+to \code{Some}. \code{None} is a value that does not denote any value and similar
+to \code{null}. It indicates a problematic situation. Like \code{Nil}, it is a
+singleton object defined by \code{object}. \code{Some} constructs a value that
+denotes that a value exists. It is similar to a reference to a real object and
+indicates that computation succeeds without exceptions.
+
+The following defines \verb!list_getOption! using the \code{Option} type:
+
+\begin{verbatim}
+def list_getOption(l: List, n: Int): Option =
+  if (n < 0) None
+  else l match {
+    case Nil => None
+    case Cons(h, t) =>
+      if (n == 0) Some(h) else list_getOption(t, n - 1)
+  }
+\end{verbatim}
+
+For wrong indices, the return value is \code{None}. Otherwise, the function packs
+an element inside \code{Some} to make the return value.
+
+Define the \code{div100} function, which takes an integer as an argument and
+returns an optional value to handle a division by zero safely.
+
+\begin{verbatim}
+def div100(n: Int): Option =
+  if (n == 0) None else Some(100 / n)
+\end{verbatim}
+
+Pattern matching allows programmers to deal with optional values by
+distinguishing the \code{None} and the \code{Some} cases. Like the functions for
+lists, common patterns handling optional values exist. It is desirable to define
+functions generalizing the patterns.
+
+\begin{verbatim}
+def option_map(opt: Option, f: Int => Int): Option = opt match {
+  case None => None
+  case Some(n) => Some(f(n))
+}
+\end{verbatim}
+
+Consider computation that might fail. After the computation, one wants to do
+additional computation only if the computation has succeeded and to do nothing
+otherwise. The situation is the typical usage of the \verb!option_map! function.
+It takes an optional value and a function as arguments and applies the function
+to a value wrapped in the optional value only if the value belongs to
+\code{Some}.
+
+Define the \code{getSquare} function, which takes a list and integer \code{n} as
+arguments and returns the square of the \code{n}th element of the list. The
+return type of the function must be \code{Option}. Use \verb!list_getOption! and
+\verb!option_map!.
+
+\begin{verbatim}
+def getSquare(l: List, n: Int): Option =
+  option_map(list_getOption(l, n), n => n * n)
+\end{verbatim}
+
+In this time, consider a situation that additional computation also can fail. It
+is the place for the \verb!option_flatMap! function. It takes a function whose
+return type is \code{Option} as the second argument. If every computation
+succeeds, the result belongs to \code{Some}. Otherwise, it is \code{None}.
+
+Define the \code{getAndDiv100} function, which takes a list and integer \code{n}
+as arguments and returns an integer obtained by dividing \code{100} by the
+\code{n}th element of the list. The function must return an optional value. Use
+\verb!list_getOption!, \code{div100}, and \verb!option_flatMap!.
+
+\begin{verbatim}
+def getAndDiv100(l: List, n: Int): Option =
+  option_flatMap(list_getOption(l, n), div100)
+\end{verbatim}
+
+Option types are powerful tools to handle erroneous cases in a functional way.
+Functional programming uses lists, first-class functions, anonymous functions,
+and optional values a lot.
