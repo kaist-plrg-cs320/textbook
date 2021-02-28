@@ -2,14 +2,14 @@
 \chapter{Pattern Matching}
 \labch{pattern-matching}
 
-It is the fourth article about functional programming. The last article dealt
-with the \verb!List! and \verb!Option! types of the Scala standard library and
-\verb!for! expressions of Scala. This article is about pattern matching. The
-previous articles have already used pattern matching for lists and options, but
-the form of the pattern matching was simple. The article discusses the benefits
-of pattern matching and various patterns available in Scala. The homework of the
-course requires pattern matching, and understanding the article thus is crucial
-for the homework.
+This section explains pattern matching of Scala.
+Pattern matching is one of the key features of functional programming.
+It helps programmers handle complex, but structured data.
+We have already used a simple form of pattern matching for lists.
+This section discusses the benefits
+of pattern matching and various patterns available in Scala.
+In addition, it will introduce the option type, which is widely-used in
+functional programming.
 
 \section{Algebraic Data Types}
 
@@ -26,7 +26,7 @@ A list is
 
 \begin{itemize}
 \item the empty list or
-\item the pair of an element and a list.
+\item a pair of an element and a list.
 \end{itemize}
 
 A binary tree is
@@ -40,469 +40,376 @@ An arithmetic expression is
 
 \begin{itemize}
 \item a number,
-\item the sum of two arithmetic expressions,
-\item the difference of two arithmetic expressions,
-\item the product of two arithmetic expressions, or
-\item the ratio of two arithmetic expressions.
+\item the sum of two arithmetic expressions, or
+\item the difference of two arithmetic expressions.
 \end{itemize}
 
-In general, an arithmetic expression is
-
-\begin{itemize}
-\item a number,
-\item an arithmetic expression with a unary operator, or
-\item two arithmetic expressions with a binary operator.
-\end{itemize}
-
-An expression of the \term{lambda} \term{calculus}, which is one of the topics of
-the course, is
+An expression of the lambda calculus, which is the topic of
+\refch{lambda-calculus}, is
 
 \begin{itemize}
 \item a variable,
-\item a function, which is the pair of a variable and an expression, or
-\item a function application, which is the pair of two expressions.
+\item a function, which is a pair of a variable and an expression, or
+\item a function application, which is a pair of two expressions.
 \end{itemize}
 
-As the examples show, in computer science, a type often includes values of
-various shapes. Algebraic data types typically express such types. An algebraic
-data type is a \term{sum} \term{type} of \term{product} \term{types}. A product
-type is a type whose every element is an enumeration of values of types in the
-same specific order. Tuple types are typical product types. A sum type, whose
-another name is a \term{tagged} \term{union} \term{type}, has values of multiple
-types as its values. Unlike a union type, each \term{variant} of a sum type has a
-'tag' to be distinguished from other variants.
+As the examples show, in computer science, a single type often includes values of
+various shapes. \textit{Algebraic data types}\index{algebraic data type}
+(\acrshort{adtLabel}) express such types. An ADT
+is the sum type of product types. That is why it is called ``algebraic.''
+A \textit{product type}\index{product type}
+is a type whose every element is an enumeration of values of types in the
+same specific order. Tuple types are typical product types. A \textit{sum
+type}\index{sum type}, whose
+another name is a \textit{tagged union type}\index{tagged union type},
+has values of multiple types as its values. Unlike a union type,
+each component of a sum type has a
+tag to be distinguished from other components.
+In an ADT, one form of values that can be distinguished from the other forms is
+called a \textit{variant}\index{variant}.
 
-For example, an arithmetic expression is
+For example, an arithmetic expression, which have three variants, is
 
 \begin{itemize}
-\item an integer or
-\item the sum of two arithmetic expressions.
+\item a number,
+\item the sum of two arithmetic expressions, or
+\item the difference of two arithmetic expressions.
 \end{itemize}
 
-Therefore, the \verb!AE! type is the sum type of
+Therefore, we can define the \code{AE} type, which is the type of an arithmetic
+expression, as the sum type of
 
 \begin{itemize}
-\item the \verb!Int! type tagged with \verb!Num! and
-\item the \verb!AE * AE! type (the product type of \verb!AE! and \verb!AE!) tagged
-with \verb!Sum!.
+\item the \code{Int} type tagged with \code{Num},
+\item the \code{AE * AE} type tagged with \code{Add}, and
+\item the \code{AE * AE} type tagged with \code{Sub},
 \end{itemize}
 
-\section{Defining Algebraic Data Types in Scala}
+where \code{AE * AE} denotes the product type of \code{AE} and \code{AE}.
 
-Algebraic data types are common in functional languages. Most functional
-languages allow users to define new algebraic data types. The following OCaml
+ADTs are common in functional languages. Most functional
+languages allow users to define new ADTs. The following OCaml
 code defines arithmetic expressions:
 
 \begin{verbatim}
 type ae =
 | Num of int
-| UnOp of string * ae
-| BinOp of string \term{ ae } ae
+| Add of ae * ae
+| Sub of ae * ae
 \end{verbatim}
 
-Scala is functional and object-oriented at the same time. A language defining
-types of objects and algebraic data types with two different ways is inconsistent
-and complex. Like many other object-oriented languages, Scala lets programmers
-define a new type by defining a new class. Types defined with classes can
-simulate algebraic data types.
+Scala does not provide a direct way to define ADTs. Instead, Scala provides
+traits and classes, which are more general mechanism to define new types,
+and programmers can express ADTs with traits and classes.
 
-\verb!class [class name]! defines a class of a given name. \verb!class A! defines
-a class whose name is \verb!A!. \verb!A! is a name of the class and a type
-simultaneously, for defining a class is defining a type. Every instance of class
-\verb!A! belongs to type \verb!A!. The following code defines the \verb!AE! type,
-which is a type of algebraic expressions:
+A new type can be defined as a trait.
+The syntax of a trait definition is as follows:
 
 \begin{verbatim}
-class AE
+trait [name]
 \end{verbatim}
 
-Classes define variants belonging to \verb!AE!. \verb!Num!, \verb!UnOp!, and
-\verb!BinOp! are types denoting a number, an arithmetic expression with a unary
-operator, and two arithmetic expressions with a binary operator respectively.
+It defines a type whose name is \code{[name]}.
+The following code defines the \code{AE} type,
+which is the type of arithmetic expressions:
 
 \begin{verbatim}
-class AE
-class Num
-class UnOp
-class BinOp
+sealed trait AE
 \end{verbatim}
 
-However, the code does not inform that \verb!AE! subsumes the variants. Every
-value of the \verb!Num!, \verb!UnOp!, and \verb!BinOp! types is not a value of
-the \verb!AE! type.
+The \code{sealed} modifier prevents \code{AE} being extended outside the file
+that defines \code{AE}. We will get back to this point when we discuss the
+exhaustivity checking of pattern matching.
 
-Defining a class by extending a class makes the latter subsume the former. Code
-like \verb!class [class name] extends [parent class name]! make the latter class
-be a parent of the former class. \verb!class A extends B! implies that class
-\verb!A! is a child class, or a \term{subclass}, of class \verb!B!, and class
-\verb!B! is a parent class, or a \term{superclass}, of class \verb!A!. The
-\verb!A! class \term{inherits} from the \verb!B! class. \verb!A! is a subtype of
-\verb!B!; \verb!B! is a \term{supertype} of \verb!A!; every element of type
-\verb!A! is an element of type \verb!B!.
+Once a type is defined as a trait, the type can be used just like any other
+types. For example, we can define an identity function for arithmetic
+expressions.
 
 \begin{verbatim}
-class AE
-class Num extends AE
-class UnOp extends AE
-class BinOp extends AE
+def identity(ae: AE): AE = ae
 \end{verbatim}
 
-\verb!Num!, \verb!UnOp!, and \verb!BinOp! are subtypes of \verb!AE!. Values of
-the types belong to \verb!AE!.
-
-Instances of the \verb!Num! class cannot express integers whom they denote. In
-the same manner, instances of \verb!UnOp! and \verb!BinOp! cannot express
-operators and arithmetic expressions. Class parameters allow objects to store
-additional information. Form \verb!class [class name](val [parameter name]: [parameter type], …)!
-specifies class parameters. \verb!val! is unnecessary for
-some usages but not in the article.
+However, traits do not have ability to construct new values. It means that there
+is no way to create a value of the type \code{AE} yet. We need to define the
+variants of \code{AE} as case classes by extending \code{AE}.
 
 \begin{verbatim}
-class AE
-class Num(val n: Int) extends AE
-class UnOp(val op: String, val e: AE) extends AE
-class BinOp(val op: String, val e0: AE, val e1: AE) extends AE
+case class Num(value: Int) extends AE
+case class Add(left: AE, right: AE) extends AE
+case class Sub(left: AE, right: AE) extends AE
 \end{verbatim}
 
-The declarations of \verb!Num!, \verb!UnOp!, and \verb!BinOp! denote that their
-instances respectively store an integer, a string and an arithmetic expression,
-and a string and two arithmetic expressions.
-
-Calling a \term{constructor} creates an object. Constructor calls are in the form
-of \verb!new [class name]([expression], …)!.
+As you have seen in \refch{introduction-to-scala}, we can easily create values of case classes.
 
 \begin{verbatim}
-new Num(1): AE
-new UnOp("-", new Num(2)): AE
-new BinOp("+", new Num(1), new UnOp("-", new Num(2))): AE
+val n = Num(10)
+val m = Num(5)
+val e1 = Add(n, m)
+val e2 = Sub(e1, Num(3))
 \end{verbatim}
 
-Type \verb!AE! includes instances of the three child classes of \verb!AE!.
-
-The parameters of a class are the \term{fields} of the class. The values of
-arguments used for a constructor call are the values of fields. As method calls
-need periods, field accesses require periods. Expression
-\verb![expressions].[field name]! denotes the value of the field of an object
-obtained by evaluating the expression.
+Like traits, case classes also define types. The name of each class is the name
+of the defined type. Every instance of a class belongs to the type corresponding
+to the class.
 
 \begin{verbatim}
-new Num(1).n  // 1
-new UnOp("-", new Num(2)).op  // "-"
-new BinOp("+", new Num(1), new UnOp("-", new Num(2))).op  // "+"
+val n: Num = Num(10)
+val m: Num = Num(5)
+val e1: Add = Add(n, m)
+val e2: Sub = Sub(e1, Num(3))
 \end{verbatim}
 
-The code is still problematic.
+In addition, becuase of the \code{extends} keyword, \code{Num}, \code{Add}, and
+\code{Sub} are subtypes of \code{AE}. It means that any value of the types
+\code{Num}, \code{Add}, or \code{Sub} is also a value of the type \code{AE}.
 
 \begin{verbatim}
-new AE: AE
+val n: AE = Num(10)
+val m: AE = Num(5)
+val e1: AE = Add(n, m)
+val e2: AE = Sub(e1, Num(3))
 \end{verbatim}
 
-An arithmetic expression cannot be anything other than a number, an arithmetic
-expression with a unary operator, or two arithmetic expressions with a binary
-operator. Writing \verb!new AE! is meaningless. Therefore, it must be impossible
-to construct an instance of the \verb!AE! class directly.
+We know that we can access the fields of objects with their names.
 
 \begin{verbatim}
-trait AE
-class Num(val n: Int) extends AE
-class UnOp(val op: String, val e: AE) extends AE
-class BinOp(val op: String, val e0: AE, val e1: AE) extends AE
+val n: Num = Num(10)
+n.value
 \end{verbatim}
 
-Defining \verb!AE! as a \term{trait} instead of a class prevents creating an
-instance of \verb!AE! without the constructors of the child classes. Traits
-define new types as classes but differ from classes in several aspects. One
-difference is that traits forbid calling their constructors.
+However, we cannot access the fields of an object when its type becomes \code{AE}.
 
 \begin{verbatim}
-new AE
-// trait AE is abstract; cannot be instantiated
+val m: AE = Num(10)
+m.value
 \end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+  ^
+error: value value is not a member of AE
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time error}
+\end{flushright}
+\end{mdframed}
 
-Calling the constructor of \verb!AE! results in a compile error because it is a
-trait.
+The reason is that \code{m} can be \code{Add} or \code{Sub}, which do not have
+the field \code{value}, as \code{AE} consists of not only \code{Num} but also
+\code{Add} and \code{Sub}. The compiler thinks that \code{m} may not have the
+field \code{value} and considers \code{m.value} as an unsafe expression, which
+should be rejected.
 
-\section{Treating Algebraic Data Types in Scala}
-
-The section defines function \verb!interpret!, which calculates an integer
-denoted by a given arithmetic expression, with different ways. For simplicity,
-assume that \verb!-! is the only possible unary operator, and \verb!+! is the
-only possible binary operator. Any other operators result in exceptions.
-
-\subsection{Dynamic Type Checking}
-
-The first approach is checking the type of a given arithmetic expression
-dynamically, or at run time.
+The best way to use ADTs is pattern matching. The following function evaluates a
+given arithmetic expression and returns the number denoted by the arithmetic
+expression.
 
 \begin{verbatim}
-def interpret(e: AE): Int = {
-  if (...) // e is a number
-    e.n
-  else if (...) // e has unary operator -
-    -interpret(e.e)
-  else if (...) // e has binary operator +
-    interpret(e.e0) + interpret(e.e1)
-  else
-    throw new Exception
+def eval(e: AE): Int = e match {
+  case Num(n) => n
+  case Add(l, r) => eval(l) + eval(r)
+  case Sub(l, r) => eval(l) - eval(r)
 }
+
+assert(eval(Sub(Add(Num(3), Num(7)), Num(5))) == 5)
 \end{verbatim}
 
-In Scala, \verb!isInstanceOf! checks whether an object is a value of a type.
-Expression \verb![expression].isInstanceOf[[type]]! denotes \verb!true! if the
-value of the expression belongs to the type and \verb!false! otherwise.
+When \code{e} is \code{Num(n)}, \code{eval} simply returns \code{n}.
+When \code{e} is \code{Add(l, r)}, \code{eval} respectively evaluates \code{l}
+and \code{r}, which are arithmetic expressions. \code{eval} returns the sum of
+the results of \code{l} and \code{r}.
+The \code{Sub(l, r)} case is similar. \code{eval} returns the difference of
+the results of \code{l} and \code{r}.
+
+The list type is another good example of an ADT. The Scala standard library defines
+lists similar to the following code:
 
 \begin{verbatim}
-def interpret(e: AE): Int = {
+sealed trait List[+A]
+case object Nil extends List[Nothing]
+case class ::[A](head: A, tail: List[A]) extends List[A]
+\end{verbatim}
+
+This code omits some details but clearly shows the high-level idea to define
+lists.\sidenote{We will not see what \code{[+A]} and \code{Nothing} are here.
+You can understand the overall ADT structure without knowing those concepts.}
+A list is either the empty
+list or a nonempty list, which is a pair of its head and tail. \code{Nil} is
+defined as a case object, not a case class, since there is only one empty list.
+Every empty list is identical. We use a case object to express this idea.
+\code{Nil} is created only once during entire execution, and every \code{Nil} is
+identitcal. The name \code{::} looks a bit weird, but it is for
+readability of pattern matching. Scala allows writing class names as infix
+operators in patterns. It means that both \code{case ::(h, t) =>} and \code{case
+h :: t =>} are allowed. Due to the class name \code{::}, we can write \code{case
+h :: t =>} in pattern matching.
+
+\section{Advantages}
+
+\subsection{Conciseness}
+
+Without pattern matching, handling ADTs becomes a complicated job. We need to
+use dynamic type tests to distinguish variants and type casting to access the
+fields of values.
+
+Below is \code{eval} without pattern matching:
+
+\begin{verbatim}
+def eval(e: AE): Int =
   if (e.isInstanceOf[Num])
-    e.n
-  else if (e.isInstanceOf[UnOp] && e.op == "-")
-    -interpret(e.e)
-  else if (e.isInstanceOf[BinOp] && e.op == "+")
-    interpret(e.e0) + interpret(e.e1)
-  else
-    throw new Exception
-}
+    e.asInstanceOf[Num].value
+  else if (e.isInstanceOf[Add]) {
+    val e0 = e.asInstanceOf[Add]
+    eval(e0.left) + eval(e0.right)
+  } else {
+    val e0 = e.asInstanceOf[Sub]
+    eval(e0.left) - eval(e0.right)
+  }
 \end{verbatim}
 
-The code results in a compile error. Compilers know only that a value referred by
-\verb!e! is an element of type \verb!AE! about \verb!e!; fields of \verb!e! are
-inaccessible. \verb!asInstanceOf!, which inform the compilers that an expression
-has a particular type, resolves the problem by \term{casting} \term{types}
-explicitly. To type \verb![expression].asInstanceOf[[type]]!, the compilers
-ignore a type calculated by themselves and rely on a type given by programmers.
-
-At run time, \verb!asInstanceOf! does not change the value of an expression but
-checks the type of the value. Evaluating \verb![expression].asInstanceOf[[type]]!
-results in a value denoted by the expression if the value belongs to the type but
-throws an exception otherwise.
-
-\begin{verbatim}
-def interpret(e: AE): Int = {
-  if (e.isInstanceOf[Num])
-    e.asInstanceOf[Num].n
-  else if (e.isInstanceOf[UnOp] &&
-    e.asInstanceOf[UnOp].op == "-")
-    -interpret(e.asInstanceOf[UnOp].e)
-  else if (e.isInstanceOf[BinOp] &&
-    e.asInstanceOf[BinOp].op == "+")
-    interpret(e.asInstanceOf[BinOp].e0) +
-      interpret(e.asInstanceOf[BinOp].e1)
-  else
-    throw new Exception
-}
-
-// -1 + 2
-interpret(new BinOp(
-  "+",
-  new UnOp("-", new Num(1)),
-  new Num(2)
-))
-// 1
-\end{verbatim}
+\code{e.isInstanceOf[Num]} tests whether \code{e} is an instance of class
+\code{Num}. If it is true, \code{eval} should return the value of the field
+\code{value} of \code{e}. However, \code{value} cannot be directly accessed
+since \code{e}'s type is \code{AE}. Because \code{e.isInstanceOf[Num]} is true,
+we are sure that \code{e}'s actual type is \code{Num}. In this case, we can
+inform this knowledge to the compiler with type casting. \code{e.isInstanceOf[Num]}
+does not change the value denoted by \code{e} but lets the compiler know that
+the programmer guarantees the type of \code{e} to be \code{Num}. Therefore, the
+compiler considers \code{e.isInstanceOf[Num]} to belong \code{Num} and allows
+accessing the field \code{value}. These type tests and casting processes should
+be done for the other variants, \code{Add} and \code{Sub}, too.
 
 The code is long and complicated despite its simple functionality. Dynamic type
-checking and explicit type casting occupy most of the code, while real
-computation requires short code. Besides, such code is error-prone. Programmers
-give information whom compilers cannot find due to their imprecision---does not
-mean that the compilers are wrong but signifies that they fail to find all the
-information---with \verb!asInstanceOf!. However, they may be incorrect. Incorrect
-information might terminate programs abnormally because of type errors at run
-time. It is easy to check whether the code is correct as it is short. In
-contrast, complex types or computation increase the possibilities of errors.
-
-\subsection{Method Overloading}
-
-Method \term{overloading} allows defining methods of the same name with different
-types of parameters. Many object-oriented languages including Scala feature
-method overloading.
+tests and explicit type casting occupy most of the code, while real
+computation requires short code. Besides, such code is error-prone.
+For example, programmers may write code like below by a mistake:
 
 \begin{verbatim}
-object Show {
-  def show(i: Int): String = i + ": Int"
-  def show(s: String): String = s + ": String"
+else if (e.isInstanceOf[Add]) {
+  val e0 = e.asInstanceOf[Sub]
+  eval(e0.left) + eval(e0.right)
 }
-Show.show(1)  // "1: Int"
-Show.show("1")  // "1: String"
 \end{verbatim}
 
-Singleton object \verb!Show! has the two \verb!show! methods. Their parameter
-types respectively are \verb!Int! and \verb!String!, which differ, and the
-compilation thus succeeds. Each invocation of the \verb!show! method chooses a
-method proper to the type of the argument.
+While the condition checks whether \code{e} is an instance of \code{Add},
+\code{e} becomes casted to \code{Sub}. Such code will trigger an error at run
+time and terminate the execution abnormally.
+It is easy to check whether \code{eval} is correct because it is short.
+However, complex types and computation will increase the possibility of
+mistakes.
 
-Is method overloading a correct solution for the \verb!interpret! method?
-
-\begin{verbatim}
-object Interpreter {
-  def interpret(e: AE): Int =
-    throw new Exception("What is it?")
-  def interpret(e: Num): Int = e.n
-  def interpret(e: UnOp): Int =
-    if (e.op == "-") -interpret(e.e)
-    else throw new Exception("Only -")
-  def interpret(e: BinOp): Int =
-    if (e.op == "+")
-      interpret(e.e0) + interpret(e.e1)
-    else throw new Exception("Only +")
-}
-
-Interpreter.interpret(new Num(1))  // 1
-\end{verbatim}
-
-It seems to work but, alas, does not.
-
-\begin{verbatim}
-// -1 + 2
-Interpreter.interpret(new BinOp(
-  "+",
-  new UnOp("-", new Num(1)),
-  new Num(2)
-))
-// java.lang.Exception: What is it?
-\end{verbatim}
-
-Surprisingly, the first method is invoked because the compile-time types rather
-than the run-time types of arguments between angle brackets affect dynamic method
-dispatch. At compile time, \verb!e.e0! in expression \verb!interpret(e.e0)! has
-type \verb!AE!, and the first method is therefore called, while its type is
-\verb!UnOp! at run time. As a consequence, method overloading is not a correct
-strategy to implement the \verb!interpret! method.
-
-\subsection{The Visitor Pattern}
-
-Object-oriented programmers usually use the \term{visitor} \term{pattern} to
-resolve such problems. The pattern is appropriate for the \verb!interpret! method
-as well but makes code long and complex and needs some boilerplate code. Despite
-the disadvantages, it is the most effective solution for languages without
-pattern matching like Java; it is popular. The article does not discuss the
-visitor pattern in detail and refers to an article of English
-Wikipedia\sidenote{\url{https://en.wikipedia.org/wiki/Visitor\_pattern}} instead.
-
-\subsection{Pattern Matching}
-
-Pattern matching is the best solution for such problems and a typical feature of
-functional languages. The following code defines the \verb!interpret! function in
-OCaml with pattern matching:
-
-\begin{verbatim}
-let rec interpret e =
-  match e with
-  | Num n -> n
-  | UnOp ("-", e0) -> -(interpret e0)
-  | BinOp ("+", e0, e1) -> (interpret e0) + (interpret e1)
-  | _ -> raise Exception
-\end{verbatim}
-
-The code is intuitive and concise even for those who are unknowledgeable about
-OCaml.
-
-Scala features pattern matching as well. Pattern matching requires types defined
-by \term{case} \term{classes} instead of regular classes. Actually, every type is
-available for pattern matching, but the article does not introduce how to do it.
-The following code defines arithmetic expressions with case classes:
-
-\begin{verbatim}
-trait AE
-case class Num(n: Int) extends AE
-case class UnOp(op: String, e: AE) extends AE
-case class BinOp(op: String, e0: AE, e1: AE) extends AE
-\end{verbatim}
-
-Compilers do not treat case classes as special cases but desugar them to simple
-classes. Case classes have a few features whom ordinary classes do not have:
-pattern matching is possible without additional code; constructing instances does
-not require the \verb!new! keyword; class parameters do not need the \verb!val!
-keyword. More exist but are out of the scope of the article.
-
-\begin{verbatim}
-def interpret(e: AE): Int = e match {
-  case Num(n) => n
-  case UnOp(op, e0) =>
-    if (op == "-") -interpret(e0)
-    else throw new Exception
-  case BinOp(op, e0, e1) =>
-    if (op == "+") interpret(e0) + interpret(e1)
-    else throw new Exception
-}
-
-// -1 + 2
-interpret(BinOp(
-  "+",
-  UnOp("-", Num(1)),
-  Num(2)
-))
-// 1
-\end{verbatim}
-
-The function uses pattern matching. It is more concise than the code using
-dynamic type checking and safe due to the lack of explicit type casting.
-
-\section{Advantages of Pattern Matching and Patterns in Scala}
+Pattern matching gives us a much better solution. Pattern matching hides type
+tests and casting and makes code concise. At the same time, pattern matching
+removes the possibility of mistakes.
 
 \subsection{Exhaustivity Checking}
 
 Pattern matching checks the exhaustivity of patterns. At run time, a match error
-occurs when a given value matches none of patterns.
+occurs when a given value matches none of given patterns.
 
 \begin{verbatim}
-def interpret(e: AE): Int = e match {
-  case UnOp(op, e0) =>
-    if (op == "-") -interpret(e0)
-    else throw new Exception
-  case BinOp(op, e0, e1) =>
-    if (op == "+") interpret(e0) + interpret(e1)
-    else throw new Exception
+def eval(e: AE): Int = e match {
+  case Add(l, r) => eval(l) + eval(r)
+  case Sub(l, r) => eval(l) - eval(r)
 }
 \end{verbatim}
 
-The function lacks the \verb!Num! pattern.
+The function lacks the \code{Num} pattern.
 
 \begin{verbatim}
-interpret(Num(3))
-// scala.MatchError: Num(3) (of class Num)
+eval(Num(3))
 \end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+scala.MatchError: Num(3) (of class Num)
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Run-time error}
+\end{flushright}
+\end{mdframed}
 
-An argument of type \verb!Num! results in a match error.
+An argument of type \code{Num} results in a match error at run time.
 
-Scala compilers check whether patterns are exhaustive and warn if they are not.
-However, the compilers do not warn about the function, for they cannot know all
-the child classes of the \verb!AE! trait. Every file can define classes extending
-\verb!AE!. The unit of compilation is a single file, but it is impossible to find
-all the child classes by scanning a single file. The \verb!sealed! keyword
-resolves the problem. A \term{sealed} class or trait forbids defining its
-children outside a file defining it. As a result, the compilers identify all the
-child classes by reading one file and check the exhaustivity of patterns
-successfully.
+Fortunately, we can easily avoid such mistakes.
+The Scala compiler checks whether patterns are exhaustive and warns if they are not.
 
 \begin{verbatim}
-sealed trait AE
-case class Num(n: Int) extends AE
-case class UnOp(op: String, e: AE) extends AE
-case class BinOp(op: String, e0: AE, e1: AE) extends AE
-
-def interpret(e: AE): Int = e match {
-  case UnOp(op, e0) =>
-    if (op == "-") -interpret(e0)
-    else throw new Exception
-  case BinOp(op, e0, e1) =>
-    if (op == "+") interpret(e0) + interpret(e1)
-    else throw new Exception
+def eval(e: AE): Int = e match {
+  case Add(l, r) => eval(l) + eval(r)
+  case Sub(l, r) => eval(l) - eval(r)
 }
-// warning: match may not be exhaustive.
-// It would fail on the following input: Num(_)
-//       def interpret(e: AE): Int = e match {
-//                                   ^
 \end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=yellow!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+                       ^
+warning: match may not be exhaustive.
+It would fail on the following input: Num(_)
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time warning}
+\end{flushright}
+\end{mdframed}
 
-The compilers warn about inexhaustive patterns as \verb!AE! is a sealed trait.
-Exhaustivity checking is beneficial for complex programs. It helps to make safe
-programs and thus is a crucial strength of pattern matching.
+The compiler warns programmers about that the patterns are not exhaustive. Moreover, it precisely
+informs which patterns are missing to help debugging.
+Exhaustivity checking is beneficial for complex programs. It helps programmers make
+error-free programs and thus is a crucial strength of pattern matching.
+
+For exhaustivity checking, the \code{sealed} modifier of traits is necessary.
+Wihtout \code{sealed}, a trait can be extended outside the file that defines it.
+The unit of compilation is a single file, so it is impossible to find
+all the variants by scanning a single file when a trait is not sealed.
+Exhaustivity checking during pattern matching will be impossible.
+The \code{sealed} keyword resolves the problem. Since sealed traits cannot be
+extended further, it is enough to check only the file defines a sealed trait to find
+every variant of the trait. It is why we uses sealed traits to define ADTs.
+
+\subsection{Reachability Checking}
+
+Like \code{switch-case}, pattern
+matching compares a value to patterns sequentially from top to bottom and selects
+the first matching pattern. If there are duplicated patterns, the latter will
+not be reachable.
+The compiler warns programmers when they find unreachable patterns to prevent such code.
+
+\begin{verbatim}
+def eval(e: AE): Int = e match {
+  case Num(n) => 0
+  case Add(l, r) => eval(l) + eval(r)
+  case Num(n) => n
+  case Sub(l, r) => eval(l) - eval(r)
+}
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=yellow!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+  case Num(n) => n
+                 ^
+warning: unreachable code
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time warning}
+\end{flushright}
+\end{mdframed}
+
+When code is simple and short, it is easy check whether there are unreachable
+patterns. However, in complex code, programmers often insert unreachable
+patterns by mistakes and make critical bugs. Reachability checking of the
+compiler is an important feature to prevent such bugs.
+
+\section{Patterns in Scala}
 
 \subsection{Constant and Wildcard Patterns}
 
-\verb!switch-case! statements divide a given value into multiple cases in
-imperative languages. Pattern matching is a general form of \verb!switch-case!.
-The following code is an example using a \verb!switch-case! statement in Java:
+\code{switch-case} statements divide a given value into multiple cases in
+imperative languages. Pattern matching is a general form of \code{switch-case}.
+The following code is an example using a \code{switch-case} statement in Java:
 
 \begin{verbatim}
 String grade(int score) {
@@ -518,10 +425,10 @@ String grade(int score) {
 \end{verbatim}
 
 Constant and wildcard patterns exist in Scala. Constant patterns are
-\term{literals} like integers and strings. A constant pattern matches a given
+literals like integers and strings. A constant pattern matches a given
 value if a value denoted by the pattern equals the given value. The underscore
 denotes the wildcard pattern, which matches every value, and is equivalent to
-\verb!default! of \verb!switch-case!. The following function rewrites the
+\code{default} of \code{switch-case}. The following function rewrites the
 previous function with pattern matching:
 
 \begin{verbatim}
@@ -535,15 +442,15 @@ def grade(score: Int): String =
     case _ => "F"
   }
 
-grade(85)  // "B"
+assert(grade(85) == "B")
 \end{verbatim}
 
 \subsection{Or Patterns}
 
-\verb!switch-case! statements use the fall-through semantics; if \verb!break!
+\code{switch-case} statements use the fall-through semantics; if \code{break}
 does not exist, after executing code corresponding to a case, the flow of the
 execution moves to code corresponding to the next case. Since the results of
-cases \verb!10! and \verb!9! are identical, the function can use fall-through.
+cases \code{10} and \code{9} are identical, the function can use fall-through.
 
 \begin{verbatim}
 String grade(int score) {
@@ -558,11 +465,11 @@ String grade(int score) {
 }
 \end{verbatim}
 
-In contrast, pattern matching disallows fall-through. Instead, \term{or} patterns
-give a way to write the same expression only once for multiple patterns. Or
-patterns are in the form of \verb![pattern] | [pattern] …!, which is a sequence
-of multiple patterns with vertical bars in between. \verb!A | B! matches values
-that match \verb!A! or \verb!B!.
+In contrast, pattern matching disallows fall-through. Instead, or patterns
+give a way to write the same expression only once for multiple patterns. The
+syntax of an or pattern is \code{[pattern] | [pattern] | …}, which is a sequence
+of multiple patterns with vertical bars in between. \code{A | B} matches values
+that match \code{A} or \code{B}.
 
 \begin{verbatim}
 def grade(score: Int): String =
@@ -574,220 +481,139 @@ def grade(score: Int): String =
     case _ => "F"
   }
 
-grade(100)  // "A"
+assert(grade(100) == "A")
 \end{verbatim}
 
 \subsection{Nested Patterns}
 
-Nested patterns are patterns containing patterns. Nested patterns simplify the
-\verb!interpret! function.
-
-\begin{verbatim}
-def interpret(e: AE): Int = e match {
-  case Num(n) => n
-  case UnOp("-", e0) => -interpret(e0)
-  case BinOp("+", e0, e1) =>
-    interpret(e0) + interpret(e1)
-  case _ => throw new Exception
-}
-\end{verbatim}
-
-As the \verb!UnOp! pattern contains constant pattern \verb!"-"!, the second
-pattern matches an arithmetic expression only with unary operator \verb!"-"!.
-Similarly, the third pattern matches an arithmetic expression only with binary
-operator \verb!"+"!.
-
-It is possible to nest multiple patterns. The \verb!optimizeAdd! function
+Nested patterns are patterns containing patterns.
+The \code{optimizeAdd} function
 optimizes a given arithmetic expression by eliminating additions of zeros.
 
 \begin{verbatim}
 def optimizeAdd(e: AE): AE = e match {
   case Num(_) => e
-  case UnOp(op, e0) => UnOp(op, optimizeAdd(e0))
-  case BinOp("+", Num(0), e1) => optimizeAdd(e1)
-  case BinOp("+", e0, Num(0)) => optimizeAdd(e0)
-  case BinOp(op, e0, e1) =>
-    BinOp(op, optimizeAdd(e0), optimizeAdd(e1))
+  case Add(Num(0), r) => optimizeAdd(r)
+  case Add(l, Num(0)) => optimizeAdd(r)
+  case Add(l, r) => Add(optimizeAdd(l), optimizeAdd(r))
+  case Sub(l, r) => Sub(optimizeAdd(l), optimizeAdd(r))
 }
-
-// 0 + 1 + 2
-optimizeAdd(BinOp(
-  "+",
-  Num(0),
-  BinOp("+", Num(1), Num(2))
-))
-// 1 + 2
 \end{verbatim}
 
-Assume that \verb!"abs"!, a unary operator, is available. It denotes the absolute
-value of an operand. Optimizing an arithmetic expression decorated by two
-consecutive \verb!"abs"! operators results in the arithmetic expression with only
-one \verb!"abs"! operator.
+Nested patterns help programmers treat values with complex structures easily.
+
+\subsection{Patterns with Binders}
+
+Assume that we have one more variant of \code{AE}:
+
+\begin{verbatim}
+case class Abs(e: AE) extends AE
+\end{verbatim}
+
+It denotes the absolute value of an operand.
+Optimizing an arithmetic expression decorated by two
+consecutive \code{Abs} operators results in the arithmetic expression with only
+one \code{Abs} operator.
 
 \begin{verbatim}
 def optimizeAbs(e: AE): AE = e match {
   case Num(_) => e
-  case UnOp("abs", UnOp("abs", e0)) =>
-    optimizeAbs(UnOp("abs", e0))
-  case UnOp(op, e0) => UnOp(op, optimizeAbs(e0))
-  case BinOp(op, e0, e1) =>
-    BinOp(op, optimizeAbs(e0), optimizeAbs(e1))
+  case Add(l, r) => Add(optimizeAbs(l), optimizeAbs(r))
+  case Sub(l, r) => Sub(optimizeAbs(l), optimizeAbs(r))
+  case Abs(Abs(e0)) => optimizeAbs(Abs(e0))
+  case Abs(e0) => Abs(optimizeAbs(e0))
 }
-
-// | | -1 | |
-optimizeAbs(UnOp("abs",
-  UnOp("abs",
-    UnOp("-", Num(1))
-  )
-))
-// | - 1 |
 \end{verbatim}
 
-A flaw of the implementation is that a value matching \verb!UnOp("abs", e0)!
-cannot be an argument of \verb!optimizeAbs! directly, and constructing a new
-\verb!UnOp! instance containing a value matching \verb!e0! is essential. The at
-sign makes code efficient by binding a value matching to a pattern to a variable.
-Pattern \verb![variable] @ [pattern]! makes the variable refer to a value
+A flaw of the implementation is that a value matching \code{Abs(e0)}
+cannot be an argument of \code{optimizeAbs} directly, and constructing a new
+\code{Abs} instance containing a value matching \code{e0} is essential.
+The \code{@} symbol makes code efficient by binding a value matching to a pattern to a variable.
+Pattern \code{[variable] @ [pattern]} makes the variable refer to a value
 matching the pattern.
 
 \begin{verbatim}
 def optimizeAbs(e: AE): AE = e match {
   case Num(_) => e
-  case UnOp("abs", e0 @ UnOp("abs", _)) =>
-    optimizeAbs(e0)
-  case UnOp(op, e0) => UnOp(op, optimizeAbs(e0))
-  case BinOp(op, e0, e1) =>
-    BinOp(op, optimizeAbs(e0), optimizeAbs(e1))
+  case Add(l, r) => Add(optimizeAbs(l), optimizeAbs(r))
+  case Sub(l, r) => Sub(optimizeAbs(l), optimizeAbs(r))
+  case Abs(e0 @ Abs(_)) => optimizeAbs(e0)
+  case Abs(e0) => Abs(optimizeAbs(e0))
 }
 \end{verbatim}
-
-Nested patterns and the at sign help to treat values of complex structures
-easily.
-
-\subsection{Unreachable Patterns}
-
-A value is likely to match more than one pattern when a pattern matching
-expression contains multiple nested patterns. Like \verb!switch-case!, pattern
-matching compares a value to patterns sequentially from top to bottom and selects
-the first matching pattern. If both a pattern handling a specific case and a
-pattern handling a general case exist, the former must occur earlier than the
-latter. However, if the number of patterns is large, the patterns might be in the
-wrong order so that a value matches an unintended pattern. Scala compilers warn
-when they find \term{unreachable} patterns to prevent such code.
-
-\begin{verbatim}
-def optimizeAbs(e: AE): AE = e match {
-  case Num(_) => e
-  case UnOp(op, e0) => UnOp(op, optimizeAbs(e0))
-  case UnOp("abs", e0 @ UnOp("abs", _)) =>
-    optimizeAbs(e0)
-  case BinOp(op, e0, e1) =>
-    BinOp(op, optimizeAbs(e0), optimizeAbs(e1))
-}
-// warning: unreachable code
-//         case UnOp("abs", e0 @ UnOp("abs", _)) => optimizeAbs(e0)
-//                                                             ^
-\end{verbatim}
-
-Checking the unreachability of patterns also is a significant advantage of
-pattern matching. It avoids programs behaving incorrectly because of patterns in
-the wrong order. However, not every wrong pattern results in an unreachable
-pattern. In some code, values match unintended patterns, but every pattern is
-reachable. The compilers do not warn about such code, and programmers thus need
-to be careful.
 
 \subsection{Type Patterns}
 
-The \verb!optimizeNeg! function optimizes arithmetic expression by removing two
-consecutive \verb!"-"! unary operators.
-
-\begin{verbatim}
-def optimizeNeg(e: AE): AE = e match {
-  case Num(_) => e
-  case UnOp("-", UnOp("-", e0)) => e0
-  case UnOp(op, e0) => UnOp(op, optimizeNeg(e0))
-  case BinOp(op, e0, e1) =>
-    BinOp(op, optimizeNeg(e0), optimizeNeg(e1))
-}
-
-// -(-(1 + 1))
-optimizeNeg(UnOp("-",
-  UnOp("-",
-    BinOp("+", Num(1), Num(1))
-  )
-))
-// 1 + 1
-\end{verbatim}
-
-The first \verb!Num(_)! pattern does no more than checking whether a value
-belongs to type \verb!Num!. A type pattern helps to rewrite the function. Type
-patterns are in the form of \verb![variable]: [type]!. If a value belongs to the
+In \code{optimizeAbs},
+the first \verb!Num(_)! pattern does no more than checking whether a value
+belongs to type \code{Num}. A type pattern helps to rewrite the function. Type
+patterns are in the form of \code{[name]: [type]}. If a value belongs to the
 type, it matches the pattern, and the variable refers to the value. The wildcard
-pattern can substitute the variable if the variable is unnecessary.
+pattern can substitute the name if the variable is unnecessary.
 
 \begin{verbatim}
-def optimizeNeg(e: AE): AE = e match {
+def optimizeAbs(e: AE): AE = e match {
   case _: Num => e
-  case UnOp("-", UnOp("-", e0)) => e0
-  case UnOp(op, e0) => UnOp(op, optimizeNeg(e0))
-  case BinOp(op, e0, e1) =>
-    BinOp(op, optimizeNeg(e0), optimizeNeg(e1))
+  case Add(l, r) => Add(optimizeAbs(l), optimizeAbs(r))
+  case Sub(l, r) => Sub(optimizeAbs(l), optimizeAbs(r))
+  case Abs(e0 @ Abs(_)) => optimizeAbs(e0)
+  case Abs(e0) => Abs(optimizeAbs(e0))
 }
 \end{verbatim}
 
-Type patterns are useful for dynamic type checking.
+Type patterns are useful for dynamic type checking. The following function takes
+any value as an argument and check whether it is a string or
+not.\sidenote{Every type is a subtype of \code{Any}, i.e. every value belongs to
+\code{Any}.}
 
 \begin{verbatim}
 def show(x: Any): String = x match {
-  case i: Int => i + ": Int"
-  case s: String => s + ": String"
-  case _ => x + ": Any"
+  case s: String => s + " is a string"
+  case _ => "not a string"
 }
 
-show(1)  // "1: Int"
-show("1")  // "1: String"
-show(1.0)  // "1.0: Any"
+assert(show("1") == "1 is a string")
+assert(show(1) == "not a string")
 \end{verbatim}
-
-\verb!Any! is the \term{top} type of the Scala type system; every value belongs
-to \verb!Any!.
 
 Note that type patterns cannot check type arguments of polymorphic types. Using
-pattern matching against polymorphic types is dangerous.
+type patterns against polymorphic types is dangerous.
 
 \begin{verbatim}
 def show(x: Any): String = x match {
-  case l: List[Int] => l + ": List[Int]"
-  case l: List[String] => l + ": List[String]"
-  case _ => x + ": Any"
+  case _: List[String] => "a list of strings"
+  case _ => "not a list of strings"
 }
-// warning: non-variable type argument Int
-// in type pattern List[Int] is unchecked
-// since it is eliminated by erasure
-//         case l: List[Int] => l + ": List[Int]"
-//                 ^
-// warning: non-variable type argument String
-// in type pattern List[String] is unchecked
-// since it is eliminated by erasure
-//         case l: List[String] => l + ": List[String]"
-//                 ^
-// warning: unreachable code
-//         case l: List[String] => l + ": List[String]"
-//                                   ^
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=yellow!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+          ^
+warning: non-variable type argument String in type pattern
+List[String] is unchecked since it is eliminated by erasure
+\end{verbatim}
+\vspace{-1.5em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time warning}
+\end{flushright}
+\end{mdframed}
 
-show("one" :: Nil)  // "List(one): List[Int]"
+\begin{verbatim}
+val l: List[Int] = List(1, 2, 3)
+assert(show(l) == "a list of strings")  // weird result
 \end{verbatim}
 
-Although the type of the argument is \verb!List[String]!, it matches the first
-pattern. As the warnings imply, the JVM uses the \term{type} \term{erasure}
-semantics, and type arguments are therefore not available at run time. A later
-article will deal with polymorphic types and type erasures in detail.
+Although the type of the argument is \code{List[Int]}, it matches the first
+pattern. As the warnings imply, the JVM uses type erasure
+semantics, and type arguments are unavailable at run time.
 
 \subsection{Tuple Patterns}
 
-The last article has already used tuple patterns. They are in the form of
-\verb!([pattern], … )!. The \verb!equals! function uses tuple patterns and checks
-whether two lists are identical.
+The syntax of a tuple pattern is \code{([pattern], …, [pattern])}.
+It matches a tuple whose elements respectively matches the internal patterns.
+
+The following function uses tuple patterns to check
+whether two lists are identical:
 
 \begin{verbatim}
 def equal(l0: List[Int], l1: List[Int]): Boolean =
@@ -797,47 +623,49 @@ def equal(l0: List[Int], l1: List[Int]): Boolean =
     case (Nil, Nil) => true
     case _ => false
   }
-
-equal(List(0, 1), List(0, 1))  // true
-equal(List(0, 1), List(0))  // false
 \end{verbatim}
 
 \subsection{Pattern Guards}
 
-A binary (search) tree is
+A binary search tree is
 
-* the empty tree or
-* a tree containing an integral root element and two child trees.
+\begin{itemize}
+\item the empty tree or
+\item a tree containing an integral root element and two child trees.
+\end{itemize}
 
 \begin{verbatim}
-sealed trait BST
-case object Empty extends BST
-case class Node(root: Int, left: BST, right: BST) extends BST
+sealed trait Tree
+case object Empty extends Tree
+case class Node(root: Int, left: Tree, right: Tree) extends Tree
 \end{verbatim}
 
-Function \verb!add! takes a tree and an integer as arguments and returns a tree
+The function \code{add} takes a tree and an integer as arguments and returns a tree
 obtained by adding the integer to the tree. If the integer is an element of the
 given tree, the tree itself is the return value.
 
 \begin{verbatim}
-def add(t: BST, n: Int): BST =
+def add(t: Tree, n: Int): Tree =
   t match {
     case Empty => Node(n, Empty, Empty)
     case Node(m, t0, t1) =>
-      if (n < m) Node(m, add(t0, n), t1)
-      else if (n > m) Node(m, t0, add(t1, n))
-      else t
+      if (n < m)
+        Node(m, add(t0, n), t1)
+      else if (n > m)
+        Node(m, t0, add(t1, n))
+      else
+        t
   }
 \end{verbatim}
 
-An expression corresponding to the second pattern uses \verb!if-else!. Pattern
+An expression corresponding to the second pattern uses \code{if-else}. Pattern
 guards allow adding constraints to patterns. A pattern in the form of
-\verb![pattern] if [expression]! matches a value if the value matches the
-pattern, and the expression results in \verb!true!. The following \verb!add!
-function uses \term{pattern} \term{guards}:
+\code{[pattern] if [expression]} matches a value if the value matches the
+pattern, and the expression results in \code{true}. The following version of \code{add}
+uses pattern guards:
 
 \begin{verbatim}
-def add(t: BST, n: Int): BST =
+def add(t: Tree, n: Int): Tree =
   t match {
     case Empty => Node(n, Empty, Empty)
     case Node(m, t0, t1) if n < m =>
@@ -848,10 +676,10 @@ def add(t: BST, n: Int): BST =
   }
 \end{verbatim}
 
-Guarded patterns may be inexhaustive.
+Guarded patterns may be inexhaustive and need care.
 
 \begin{verbatim}
-def add(t: BST, n: Int): BST =
+def add(t: Tree, n: Int): Tree =
   t match {
     case Empty => Node(n, Empty, Empty)
     case Node(m, t0, t1) if n < m =>
@@ -861,21 +689,20 @@ def add(t: BST, n: Int): BST =
   }
 \end{verbatim}
 
-Compilers do not warn about the inexhaustivity of the code. However, since a
-pattern handling cases that a given integer is an element of a given tree is
-missing, a match error occurs in the cases.
+The patterns in the above code is not exhaustive, but
+the compiler does not warn programmers about the inexhaustivity.
 
 \subsection{Patterns with Backticks}
 
-Function \verb!remove! takes a tree and an integer as arguments and returns a
+The function \code{remove} takes a tree and an integer as arguments and returns a
 tree obtained by removing the integer from the tree. If the integer is not an
-element of the tree, the given tree itself is the return value. \verb!removeMin!
-is a helper function used by \verb!remove!. It returns the pair of the smallest
+element of the tree, the given tree itself is the return value. \code{removeMin}
+is a helper function used by \code{remove}. It returns the pair of the smallest
 element of a given tree and a tree obtained by removing the element from the
 tree.
 
 \begin{verbatim}
-def removeMin(t: Node): (Int, BST) = {
+def removeMin(t: Node): (Int, Tree) = {
   t match {
     case Node(n, Empty, t1) =>
       (n, t1)
@@ -885,14 +712,16 @@ def removeMin(t: Node): (Int, BST) = {
   }
 }
 
-def remove(t: BST, n: Int): BST = {
+def remove(t: Tree, n: Int): Tree = {
   t match {
     case Empty =>
       Empty
     case Node(m, t0, Empty) if n == m =>
       t0
     case Node(m, t0, t1: Node) if n == m =>
-      val (min, t2) = removeMin(t1)
+      val res = removeMin(t1)
+      val min = res._1
+      val t2 = res._2
       Node(min, t0, t2)
     case Node(m, t0, t1) if n < m =>
       Node(m, remove(t0, n), t1)
@@ -902,22 +731,24 @@ def remove(t: BST, n: Int): BST = {
 }
 \end{verbatim}
 
-\begin{verbatim} Node(\verb!n!, t0, Empty)\end{verbatim} can replace
-\verb!case None(m, t0, Empty) if n == m!. \verb!case Node(n, t0, Empty)! defines new
-\verb!n! other than parameter \verb!n! and makes new \verb!n! to refer to the
-root element; it does not check whether the root element equals \verb!n!.
-However, backticks prohibit to define new \verb!n! and allow to compare the root
-element to \verb!n! in the scope.
+\code{Node(`n`, t0, Empty)} can replace
+\code{case None(m, t0, Empty) if n == m}. The pattern \code{Node(n, t0, Empty)} defines
+a new variable \code{n} and makes \code{n} refer to the
+root element; it does not check whether the root element equals \code{n}.
+However, backticks prohibit defining a new variable and allow to compare the root
+element to \code{n} in the scope.
 
 \begin{verbatim}
 def remove(t: BinTree, n: Int): BinTree = {
   t match {
     case Empty =>
       Empty
-    case Node(\verb!n!, t0, Empty) =>
+    case Node(`n`, t0, Empty) =>
       t0
-    case Node(\verb!n!, t0, t1: Node) =>
-      val (min, t2) = removeMin(t1)
+    case Node(`n`, t0, t1: Node) =>
+      val res = removeMin(t1)
+      val min = res._1
+      val t2 = res._2
       Node(min, t0, t2)
     case Node(m, t0, t1) if n < m =>
       Node(m, remove(t0, n), t1)
@@ -935,24 +766,27 @@ It is possible to declare variables with pattern matching.
 
 \begin{verbatim}
 val (n, m) = (1, 2)
-// n = 1, m = 2
+assert(n == 1 && m == 2)
+
 val (a, b, c) = ("a", "b", "c")
-// a = "a", b = "b", c = "c"
+assert(a == "a" && b == "b" && c == "c")
+
 val h :: t = List(1, 2, 3, 4)
-// h = 1, t = List(2, 3, 4)
-val BinOp(op, e0, e1) = BinOp("+", Num(1), Num(2))
-// op = "+", e0 = Num(1), e1 = Num(2)
+assert(h == 1 && t == List(2, 3, 4))
+
+val Add(l, r) = Add(Num(1), Num(2))
+assert(l == Num(1) && r == Num(2))
 \end{verbatim}
 
-Pattern matching helps to declare variables concisely, but a match error occurs
-when a pattern does not match a right-hand-side value. It is desirable to use
-pattern matching only when a guarantee that a pattern must match exists. Since
-tuple patterns always match tuple values, tuple patterns are typical for variable
-declarations.
+Pattern matching helps programmers declare variables concisely, but a match error occurs
+when the pattern does not match the right-hand-side value. It is desirable to use
+pattern matching only when there is a guarantee that the match succeeds. Since
+a tuple pattern always matches a tuple value of the same length,
+tuple patterns are widely used for variable declarations.
 
 \subsection{Anonymous Functions}
 
-Function \verb!toSum! takes a list of pairs of two integers as arguments and
+The function \code{toSum} takes a list of pairs of two integers as arguments and
 returns a list whose elements are the sums of the integers in the pairs.
 
 \begin{verbatim}
@@ -961,228 +795,323 @@ def toSum(l: List[(Int, Int)]): List[Int] =
     case (n, m) => n + m
   })
 
-toSum(List((0, 1), (2, 3), (3, 4)))
-// List(1, 5, 7)
+val l = List((0, 1), (2, 3), (3, 4))
+assert(toSum(l), List(1, 5, 7))
 \end{verbatim}
 
-An anonymous function using parameter \verb!p! as a value matched is verbose.
-Scala compilers consider an expression in the form of \verb!{ case [pattern] => [expression] … }!
-as an anonymous function if the expression occurs where they
-expect a function. The following function is concise:
+The anonymous function directly uses parameter \code{p} as the target of the
+pattern matching. Scala allows simplification of \verb!x => x match { … }! to
+\verb!{ … }!. Therefore, we can use an enumeration of patterns as an anonymous
+function.
 
 \begin{verbatim}
 def toSum(l: List[(Int, Int)]): List[Int] =
   l.map({ case (n, m) => n + m })
 \end{verbatim}
 
-An argument that is an anonymous function defined by pattern matching does not
-require surrounding round brackets. It is a special rule.
+\subsection{For Loops}
+
+\code{toSum} can use a for expression instead of \code{map}.
 
 \begin{verbatim}
 def toSum(l: List[(Int, Int)]): List[Int] =
-  l.map { case (n, m) => n + m }
+  for (p <- l)
+    yield p match { case (n, m) => n + m }
 \end{verbatim}
 
-The period also is unnecessary. It is not special; Scala allows using methods as
-infix operators; for example, \verb!Nil.::(0)! and \verb!0 :: Nil! are identical.
+For expressions directly support pattern matching.
 
 \begin{verbatim}
 def toSum(l: List[(Int, Int)]): List[Int] =
-  l map { case (n, m) => n + m }
-\end{verbatim}
-
-\subsection{for}
-
-\verb!toSum! can use a \verb!for! expression instead of \verb!map!.
-
-\begin{verbatim}
-def toSum(l: List[(Int, Int)]): List[Int] =
-  for (p <- l) yield p match {
-    case (n, m) => n + m
-  }
-\end{verbatim}
-
-\verb!for! expressions can use pattern matching.
-
-\begin{verbatim}
-def toSum(l: List[(Int, Int)]): List[Int] =
-  for ((n, m) <- l) yield n + m
+  for ((n, m) <- l)
+    yield n + m
 \end{verbatim}
 
 The code is readable and concise.
 
-\section{Option Types}
+\section{Options}
 
-Consider the \verb!list_get! function, which takes a list and integer \code{n} as
-arguments and returns the \code{n}th element of the list. The case when \code{n}
-is negative or exceeds the length of a list is troublesome. Throwing exceptions
-is a widely used solution in imperative languages.
+The option type is a widely-used ADT. It represents a value whose existence is
+optional. This section introduces the option type and explains the usage of
+options.
+
+Consider the function \code{get}, which takes a list and integer \code{n} as
+arguments and returns the \code{n}th element of the list. It is problematic
+when \code{n} is negative or exceeds the length of the list. Throwing exceptions
+is a widely used solution in imperative languages. In Scala, \code{throw
+[expression]} throws an exception. For convenience, we define the function
+\code{error}, which throws an exception, like below and use it throughout the
+book.
 
 \begin{verbatim}
-def list_get(l: List, n: Int): Int =
+def error(msg: String) = throw new Exception(msg)
+
+def get(l: List[Int], n: Int): Int =
   if (n < 0)
-    throw new Exception("Negative index.")
+    error("index out of bounds")
   else l match {
     case Nil =>
-      throw new Exception("Index out of bound.")
-    case Cons(h, t) =>
-      if (n == 0) h else list_get(t, n - 1)
+      error("index out of bounds")
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        get(t, n - 1)
   }
 \end{verbatim}
 
-It is simple and effective, but the program terminates abnormally if
-\term{exception handlers} do not exist at call sites of the function. Most type
-systems do not check exceptions. They do not enforce programmers to handle
-exceptions. For this reason, Java has introduced \term{checked exceptions}, whom
-compilers check. However, programmers usually do not adequately handle exceptions
-but use only conventional \code{try-catch} statements to make programs pass type
-checking. Many people have criticized the concept of a checked exception. Another
-problem of throwing exceptions is that exception handling is not local.
-Exceptions spread through function call stacks so that the \term{control flow} of
-programs suddenly jumps to the positions of exception handlers. It disturbs
-programmers to understand code. Implementing \verb!list_get! without exceptions
-is desirable.
+Throwing an excpeion is a simple and effective solution. However, exceptions
+have two problems. First, exceptions should be handled by exception handlers.
 
 \begin{verbatim}
-def list_get(l: List, n: Int): Int =
-  if (n < 0) null
+try {
+  get(List(1, 2), 2)
+} catch {
+  case e: Exception =>
+    // prints "index out of bounds"
+    println(e.getMessage)
+}
+\end{verbatim}
+
+If an exception is not handled properly, it will eventually cause a run-time
+error and terminate the execution.
+
+\begin{verbatim}
+get(List(1, 2), 2)
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+java.lang.Exception: index out of bounds
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Run-time error}
+\end{flushright}
+\end{mdframed}
+
+The Scala compiler does not check whether exceptions are handled properly.
+It means that there will not be any compile-time error even if there is a
+possibility of unhandled exceptions.
+
+Another problem of exceptions is that exception handling is not local.
+When an exception is thrown, the control flow suddenly jumps to the position of
+the nearest exception handler. Non-local transition of the control flow usually
+hinder programmers from understanding code.
+Therefore, implementing \code{get} without exceptions is desirable.
+
+The first attempt is to use \code{null}. \code{null} is a value that denotes that
+it does not refer to any existing object. We can try to make \code{get} return
+\code{null} when a given index is invalid.
+
+\begin{verbatim}
+def get(l: List[Int], n: Int): Int =
+  if (n < 0)
+    null
   else l match {
     case Nil => null
-    case Cons(h, t) =>
-      if (n == 0) h else list_get(t, n - 1)
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        get(t, n - 1)
+  }
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+    null
+    ^
+error: an expression of type Null is ineligible
+for implicit conversion
+
+    case Nil => null
+                ^
+error: an expression of type Null is ineligible
+for implicit conversion
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Run-time error}
+\end{flushright}
+\end{mdframed}
+
+Unfortunately, \code{null} is not an element of \code{Int} in Scala.
+The compiler rejects the code.
+Even with the assumption that we can treat \code{null} as \code{Int},
+using \code{null} is a bad solution. Dereferencing \code{null} causes a
+run-time error, which is the well-known \code{NullPointerException}.
+The compiler does not check whether \code{null} is dereferenced.
+Therefore, using \code{null} is nothing better than using exceptions.
+Use of \code{null} has been criticized a lot because \code{null} is extremely
+error-prone. Even Tony Hoare, the inventor of \code{null}, said that inventing
+\code{null} was a terrible mistake:
+
+\begin{quote}
+I call it my billion-dollar mistake. It was the invention of the null reference
+in 1965.\sidenote{\url{https://en.wikipedia.org/wiki/Null\_pointer\#History}}
+\end{quote}
+
+The second attempt is to use a particular error-indicating value, e.g. \code{-1}.
+
+\begin{verbatim}
+def get(l: List[Int], n: Int): Int =
+  if (n < 0)
+    -1
+  else l match {
+    case Nil =>
+      -1
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        get(t, n - 1)
   }
 \end{verbatim}
 
-The first attempt is using \code{null}. \code{null} is a value that denotes that
-it does not refer to any existing object. In Java and therefore Scala, \code{Int}
-is a primitive type, and \code{null} is not an element of \code{Int}. The code is
-invalid. Even though we assume that \code{null} belongs to \code{Int}, without
-checking whether a return value is \code{null}, using the return value may lead
-to \code{NullPointerException}. Like exceptions, \code{null} is beyond the scopes
-of type systems of Java and Scala. Some modern languages including Kotlin have
-introduced \term{nullable types} and \term{non-null types} to make programs safe
-from \code{NullPointerException}. The concept of a nullable type is similar to an
-option type, the subject of the section.
+The strategy has an obvious problem. The caller cannot distinguish two
+situations:
+\begin{itemize}
+  \item The list contains \code{-1}.
+  \item The index is invalid.
+\end{itemize}
+Default values can be successful solutions for certain purposes but do not fit \code{get}.
+
+Instead of using a fixed particular value in \code{get}, the caller can specify the default value.
 
 \begin{verbatim}
-def list_get(l: List, n: Int): Int =
-  if (n < 0) -1
+def getOrElse(l: List[Int], n: Int, default: Int): Int =
+  if (n < 0)
+    default
   else l match {
-    case Nil => -1
-    case Cons(h, t) =>
-      if (n == 0) h else list_get(t, n - 1)
-  }
-\end{verbatim}
-
-The second attempt is using a particular error-indicating value, \code{-1} for
-example. The strategy has an obvious problem: at call-sites, programs cannot
-judge whether lists contain \code{-1} as elements or indices are wrong. It can be
-successful for certain purposes but does not fit the \verb!list_get! function in
-general.
-
-\begin{verbatim}
-def list_getOrElse(l: List, n: Int, default: Int): Int =
-  if (n < 0) default
-  else l match {
-    case Nil => default
-    case Cons(h, t) =>
-      if (n == 0) h else list_getOrElse(t, n - 1, default)
+    case Nil =>
+      default
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        getOrElse(t, n - 1, default)
 }
 \end{verbatim}
 
-Instead of using a fixed particular value, specifying default values for failures
-at call sites is possible. It works well when an appropriate default value
+It works well when an appropriate default value
 exists. However, when checking failures is per se important, the new strategy is
-as bad as the previous strategy. There is no way to distinguish an element and a
-default value.
+as bad as the previous strategy. There is no way to distinguish an element and
+the default value.
 
-Functional languages provide option types to handle erroneous situations safely
-without any mutation. Many languages including Scala use \code{Option} as the
-name, but some call them \code{Maybe}. As the name implies, an option type
-represents an optional existence of a value. The article defines an option type
-for \code{Int} and functions treating values of the type.
+Functional languages provide the option type to handle erroneous situations
+safely. As the name implies, it represents an optional existence of a value.
+The Scala standard library defines the option type like below.\sidenote{
+We will not see what \code{[+A]} and \code{Nothing} are here.
+You can understand the overall ADT structure without knowing those concepts.}
 
 \begin{verbatim}
-trait Option
-case object None extends Option
-case class Some(n: Int) extends Option
+sealed trait Option[+A]
+case object None extends Option[Nothing]
+case class Some[A](value: A) extends Option[A]
 \end{verbatim}
 
-The code is similar to the code defining \code{List}, \code{Nil}, and
-\code{Cons}. A value of the \code{Option} type either is \code{None} or belongs
-to \code{Some}. \code{None} is a value that does not denote any value and similar
-to \code{null}. It indicates a problematic situation. Like \code{Nil}, it is a
-singleton object defined by \code{object}. \code{Some} constructs a value that
+An option that may have a value of type \code{T} has type \code{Option[T]}.
+An option is either \code{None} or \code{Some}.
+\code{None} is a value that does not denote any value and similar
+to \code{null}. It indicates a problematic situation. Like \code{Nil}, it is
+defined as a case object because every \code{None} is identical. \code{Some} constructs a value that
 denotes that a value exists. It is similar to a reference to a real object and
-indicates that computation succeeds without exceptions.
+indicates that computation has succeeded.
 
-The following defines \verb!list_getOption! using the \code{Option} type:
+The following code defines \code{getOption}, which returns an option.
 
 \begin{verbatim}
-def list_getOption(l: List, n: Int): Option =
-  if (n < 0) None
+def getOption(l: List[Int], n: Int): Option[Int] =
+  if (n < 0)
+    None
   else l match {
-    case Nil => None
-    case Cons(h, t) =>
-      if (n == 0) Some(h) else list_getOption(t, n - 1)
+    case Nil =>
+      None
+    case h :: t =>
+      if (n == 0)
+        Some(h)
+      else
+        getOption(t, n - 1)
   }
+
+assert(getOption(List(1, 2), 0) == Some(1))
+assert(getOption(List(1, 2), 2) == None)
 \end{verbatim}
 
-For wrong indices, the return value is \code{None}. Otherwise, the function packs
+For an invalid index, the return value is \code{None}. The caller can notice
+that the operation has failed by \code{None}.
+Otherwise, the function packs
 an element inside \code{Some} to make the return value.
 
-Define the \code{div100} function, which takes an integer as an argument and
-returns an optional value to handle a division by zero safely.
+The Scala standard library uses options a lot. Many methods returns options.
+For example, \code{headOption} of a list returns \code{None} when the list is
+empty. Otherwise, \code{Some} containing the head of the list is returned.
 
 \begin{verbatim}
-def div100(n: Int): Option =
-  if (n == 0) None else Some(100 / n)
+assert(List().headOption == None)
+assert(List(1).headOption == Some(1))
 \end{verbatim}
 
-Pattern matching allows programmers to deal with optional values by
-distinguishing the \code{None} and the \code{Some} cases. Like the functions for
-lists, common patterns handling optional values exist. It is desirable to define
-functions generalizing the patterns.
+Also, \code{get} of a map returns \code{None} when the map does not have a given key.
+Otherwise, \code{Some} containing the value corresponding to the key is
+returned.
 
 \begin{verbatim}
-def option_map(opt: Option, f: Int => Int): Option = opt match {
-  case None => None
-  case Some(n) => Some(f(n))
-}
+val m = Map(1 -> "one", 2 -> "two")
+assert(m.get(0) == None)
+assert(m.get(1) == Some("one"))
 \end{verbatim}
 
-Consider computation that might fail. After the computation, one wants to do
-additional computation only if the computation has succeeded and to do nothing
-otherwise. The situation is the typical usage of the \verb!option_map! function.
-It takes an optional value and a function as arguments and applies the function
-to a value wrapped in the optional value only if the value belongs to
-\code{Some}.
+Pattern matching allows programmers to deal with options by
+distinguishing the \code{None} and \code{Some} cases. In addition, like the
+methods of lists, options also provide methods to abstract common patterns.
+We are going to see two methods: \code{map} and \code{flatMap}.
 
-Define the \code{getSquare} function, which takes a list and integer \code{n} as
-arguments and returns the square of the \code{n}th element of the list. The
-return type of the function must be \code{Option}. Use \verb!list_getOption! and
-\verb!option_map!.
+\code{map} can be used when we want to apply some computation only when the
+previous computation has succeeded. \code{map} takes a single argument, which
+must be a function. \code{opt.map(f)} results in \code{None} when \code{opt} is
+\code{None}. If \code{opt} is \code{Some(v)}, then \code{opt.map(f)} evaluates
+to \code{Some(f(v))}.
+
+As an example, let us consider a map containing students.
+Names are the keys, and students are the values. We want to find a student by a name and
+get one's height only when the student exists. It can be implemented with
+\code{map}.
 
 \begin{verbatim}
-def getSquare(l: List, n: Int): Option =
-  option_map(list_getOption(l, n), n => n * n)
+def getHeight(
+  m: Map[String, Student],
+  name: String
+): Option[Int] =
+  m.get(name).map(_.height)
 \end{verbatim}
 
-In this time, consider a situation that additional computation also can fail. It
-is the place for the \verb!option_flatMap! function. It takes a function whose
-return type is \code{Option} as the second argument. If every computation
-succeeds, the result belongs to \code{Some}. Otherwise, it is \code{None}.
+If \code{m.get(name)} is \code{None}, then \code{m.get(name).map(\_.height)} also
+is \code{None}. Otherwise, \code{m.get(name)} should be \code{Some(student)}, and
+\code{m.get(name).map(\_.height)} will result in \code{Some(student.height)}.
 
-Define the \code{getAndDiv100} function, which takes a list and integer \code{n}
-as arguments and returns an integer obtained by dividing \code{100} by the
-\code{n}th element of the list. The function must return an optional value. Use
-\verb!list_getOption!, \code{div100}, and \verb!option_flatMap!.
+In summary, \code{map} is useful when the computation consists of two steps, and
+the first step can fail.
+
+\code{flatMap} is similar to \code{map} but a bit different. It is useful when
+the computation consists of two steps, and both steps can fail.
+\code{flatMap} takes a single argument, which must be a function that returns an option.
+\code{opt.flatMap(f)} results in \code{None} when \code{opt} is
+\code{None}. If \code{opt} is \code{Some(v)}, then \code{opt.map(f)} evaluates
+to \code{f(v)}.
+
+Let us consider a list of names and a map like before.
+When the list is nonempty, we will find a student with the first name in the
+list from the map. It is a typical application of \code{flatMap}.
 
 \begin{verbatim}
-def getAndDiv100(l: List, n: Int): Option =
-  option_flatMap(list_getOption(l, n), div100)
+def getStudent(
+  l: List[String],
+  m: Map[String, Student]
+): Option[Student] =
+  l.headOption.flatMap(m.get)
 \end{verbatim}
 
-Option types are powerful tools to handle erroneous cases in a functional way.
-Functional programming uses lists, first-class functions, anonymous functions,
-and optional values a lot.
+The standard library provide many other useful methods for
+options.\sidenote{\url{https://www.scala-lang.org/api/current/scala/Option.html}}

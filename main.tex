@@ -56,7 +56,7 @@
 \usepackage{dirtree}
 
 \newcommand{\code}[1]{\texttt{#1}}
-\newcommand{\term}[1]{\textit{#1}\index{\MakeLowercase{#1}}}
+\newcommand{\term}[1]{#1}
 
 \graphicspath{{examples/documentation/images/}{images/}} % Paths in which to look for images
 
@@ -82,7 +82,6 @@
 
 % \title[Example and documentation of the {\normalfont\texttt{kaobook}} class]{Example and documentation \\ of the {\normalfont\texttt{kaobook}} class}
 \title{Introduction to Programming Languages}
-\subtitle{Part 1}
 
 % \author[Federico Marotta]{Federico Marotta \thanks{A \LaTeX\ lover}}
 \author{Jaemin Hong}
@@ -180,13 +179,13 @@
 
 \tableofcontents % Output the table of contents
 
-\listoffigures % Output the list of figures
+% \listoffigures % Output the list of figures
 
 % Comment both of the following lines to have the LOF and the LOT on different pages
-\let\cleardoublepage\bigskip
-\let\clearpage\bigskip
+% \let\cleardoublepage\bigskip
+% \let\clearpage\bigskip
 
-\listoftables % Output the list of tables
+% \listoftables % Output the list of tables
 
 \endgroup
 
@@ -223,9 +222,9 @@
 \input{chapters/mutable-variables.tex}
 \input{chapters/lazy-evaluation.tex}
 
-\pagelayout{wide} % No margins
-\addpart{Typed Languages}
-\pagelayout{margin} % Restore margins
+% \pagelayout{wide} % No margins
+% \addpart{Typed Languages}
+% \pagelayout{margin} % Restore margins
 
 \appendix % From here onwards, chapters are numbered with letters, as is the appendix convention
 
@@ -255,20 +254,20 @@
 
 % The nomenclature needs to be compiled on the command line with 'makeindex main.nlo -s nomencl.ist -o main.nls' from the template directory
 
-\nomenclature{$c$}{Speed of light in a vacuum inertial frame}
-\nomenclature{$h$}{Planck constant}
+% \nomenclature{$c$}{Speed of light in a vacuum inertial frame}
+% \nomenclature{$h$}{Planck constant}
 
-\renewcommand{\nomname}{Notation} % Rename the default 'Nomenclature'
-\renewcommand{\nompreamble}{The next list describes several symbols that will be later used within the body of the document.} % Prepend this text to the nomenclature
+% \renewcommand{\nomname}{Notation} % Rename the default 'Nomenclature'
+% \renewcommand{\nompreamble}{The next list describes several symbols that will be later used within the body of the document.} % Prepend this text to the nomenclature
 
-\printnomenclature % Output the nomenclature
+% \printnomenclature % Output the nomenclature
 
 %----------------------------------------------------------------------------------------
 %	GREEK ALPHABET
 % 	Originally from https://gitlab.com/jim.hefferon/linear-algebra
 %----------------------------------------------------------------------------------------
 
-\vspace{1cm}
+% \vspace{1cm}
 
 % {\usekomafont{chapter}Greek Letters with Pronounciation} \\[2ex]
 % \begin{center}
@@ -308,9 +307,12 @@
 % % Glossary entries (used in text with e.g. \acrfull{fpsLabel} or \acrshort{fpsLabel})
 % \newacronym[longplural={Frames per Second}]{fpsLabel}{FPS}{Frame per Second}
 % \newacronym[longplural={Tables of Contents}]{tocLabel}{TOC}{Table of Contents}
+\newacronym[longplural={algebraic data types}]{adtLabel}{ADT}{algebraic data type}
+\newacronym[longplural={real-eval-print-loop}]{replLabel}{REPL}{read-eval-print-loop}
+\newacronym[longplural={Java Virtual Machines}]{jvmLabel}{JVM}{Java Virtual Machine}
 
-% \setglossarystyle{listgroup} % Set the style of the glossary (see https://en.wikibooks.org/wiki/LaTeX/Glossary for a reference)
-% \printglossary[title=Special Terms, toctitle=List of Terms] % Output the glossary, 'title' is the chapter heading for the glossary, toctitle is the table of contents heading
+\setglossarystyle{listgroup} % Set the style of the glossary (see https://en.wikibooks.org/wiki/LaTeX/Glossary for a reference)
+\printglossary[title=Special Terms, toctitle=List of Terms] % Output the glossary, 'title' is the chapter heading for the glossary, toctitle is the table of contents heading
 
 %----------------------------------------------------------------------------------------
 %	INDEX

@@ -28,7 +28,7 @@ mutable object is mutated after it is placed into a \code{HashSet}, for example,
 that object may not be found the next time you look into the \code{HashSet}.
 \end{quote}
 
-This book focuses the first two advantages:
+We will focus on the first two advantages:
 easier reasoning and no need for defensive copies.
 
 First, let us see why immutability makes things easy to reason about.
@@ -53,17 +53,12 @@ On the other hand, if \code{x} is a mutable variable, one should read every line
 of code in the middle to find the value of \code{x} at the time when the function
 call happens.
 
-For small programs written by one person, whether \code{x} is immutable or
-mutable is unimportant. If the program does not expect any future usages, mutable
-\code{x} is fine. However, suppose the situation reading the code without any
-prior knowledge about the code. A big difference between immutable and mutable
-\code{x} exists even though there is no person who reads only the first and the
-last line of course. When \code{x} is mutable, without tracking every
+When \code{x} is mutable, without tracking every
 modification of \code{x} throughout the code, the value of \code{x} at the last
-line is unknown. It makes programmers feel difficulties to understand the code so
-possibly leads to more bugs. The program with immutable \code{x} does not suffer
-from such a problem. Remembering only one line of the code is enough to track the
-value of \code{x}.
+line is unknown. It hampers programmers from understanding the code
+and possibly leads to more bugs.
+The program with immutable \code{x} does not suffer from such problems.
+Remembering only one line of the code is enough to track the value of \code{x}.
 
 Mutable data structures cause similar problems.
 
@@ -75,8 +70,8 @@ f(x)
 x
 \end{verbatim}
 
-\code{List} is an immutable data structure came from the Scala standard library.
-\code{x} is always a list containing \code{1} and \code{2}.
+As \code{List} is immutable,
+\code{x} is a list always containing \code{1} and \code{2}.
 
 \begin{verbatim}
 import scala.collection.mutable.ListBuffer
@@ -88,9 +83,9 @@ x
 \end{verbatim}
 
 On the other hand, \code{ListBuffer} is a mutable data structure in the Scala
-standard library. It is possible to add an item to or to remove an item from a
-list referred by \code{x}. Programmers are not sure about the content of \code{x}
-unless they read all the lines in between. Besides, function \code{f} also is
+standard library. It is possible to add an item to or remove an item from the
+list referred by \code{x}. Programmers cannot be certain about the content of \code{x}
+unless they read all the lines in between. Besides, a function \code{f} also is
 able to change the content of \code{x}. If one writes a program with a wrong
 assumption that \code{f} does not modify \code{x}, then the program might be
 buggy.
@@ -102,14 +97,14 @@ variables.
 def f(x: Int) = g(x, y)
 \end{verbatim}
 
-The return value of function \code{f} depends on the value of global variable
+The return value of function \code{f} depends on the value of a global variable
 \code{y}. If \code{y} is mutable, \code{f} is not a pure function and expecting
 the behavior of \code{f} is nontrivial. \code{y} can be declared in any arbitrary
-file and all files are able to access \code{y} and to change the value of
-\code{y}. In the worst case, an external library defines \code{y} and source code
+file and all files are able to change the value of \code{y}.
+In the worst case, an external library defines \code{y} and source code
 modifying \code{y} is not available for reading.
 
-The examples are small and seem artificial but immutability greatly improves
+The examples are small and seem artificial, but immutability greatly improves
 maintainability and readability of code in practice, especially for large
 projects.
 
@@ -124,7 +119,7 @@ x
 \end{verbatim}
 
 Since \code{ListBuffer} creates mutable lists, there is no guarantee that the
-content of \code{x} does not change by \code{f}. If it is necessary to prevent
+content of \code{x} does not be changed by \code{f}. If it is necessary to prevent
 modification, copying \code{x} is essential.
 
 \begin{verbatim}
@@ -140,26 +135,27 @@ In cases that \code{x} has many elements and the code is executed multiple times
 copying \code{x} increases the execution time significantly.
 
 In the code, using the \code{clone} method is enough to copy the list because the
-list contains only integral values. However, to pass lists containing mutable
+list contains only integers. However, to pass lists containing mutable
 objects safely to functions, defining additional methods for deep copy is
 inevitable.
 
-Immutability has several clear advantages. Immutability is important in
+Immutability has several clear advantages. Immutability is an important concept in
 functional programming. Functional programs use immutable variables and data
-structures
-in most cases. However, mind that immutability is not the silver bullet for every
-program. For example, implementing algorithms like sorts in a functional style is
-highly inefficient. Use mutable data structures like arrays, mutable variables,
-and loops like \code{for} and \code{while} to implement algorithms. It makes
-programs much more readable and faster. Choosing a proper programming paradigm to
+structures in most cases. If you write a large program whose logic is complex
+and correctness is important, you should adopt the functional paradigm.
+However, mind that immutability is not the silver bullet for every
+program. For example, implementing algorithms in a functional style is usually
+inefficient. It would be better to use mutable data structures like arrays,
+mutable variables, and loops to implement algorithms. They make
+programs much more efficient and faster. Choosing a programming proper paradigm to
 the purpose of a program is the key to write good code.
 
 \section{Recursion}
 
 Repeating the same computation multiple times is a common pattern in programming.
 Loops allow concise code expressing such cases. However, if everything is
-immutable, going back to the beginnings of loops does not change any states and
-therefore it is impossible to apply the same operation on different values for
+immutable, going back to the beginnings of loops does not change any states.
+Therefore, it is impossible to apply the same operation on different values for
 each iteration or to terminate the loops. As a consequence, loops are useless in
 functional programming. Functional programs use recursive functions instead of
 loops to rerun computation. A \textit{recursive}\index{recursion}
@@ -167,11 +163,11 @@ function is a function that calls itself.\sidenote{In general, a definition that
 refers to itself is a recursive definition. There can be recursive variables,
 recursive types, and so on.}
 To do more computation, the function calls itself with proper arguments.
-Otherwise, it terminates with some return value.
+Otherwise, it terminates the computation by returning some value.
 
-The below \code{factorial} function calculates the factorial of a given integral
-argument. For simplicity, we do not consider when the input is negative.
-This implementation uses an imperative style.
+The below \code{factorial} function calculates the factorial of a given integer.
+For simplicity, we do not consider when the input is negative.
+The following implementation uses an imperative style:
 
 \begin{verbatim}
 def factorial(n: Int) = {
@@ -195,7 +191,7 @@ def factorial(n: Int): Int =
 \end{verbatim}
 
 Note that recursive functions always require explicit return types in Scala,
-unlike non-recursive functions whose return types can be omitted.
+unlike non-recursive functions, whose return types can be omitted.
 
 The recursive version is preferred over the imperative version since its
 correctness is easy to be verified.
@@ -208,19 +204,20 @@ $((\code{i}-1)!=\code{res})\land(\code{i}\le\code{n}+1)$.
 By using this invariant, we can conclude that $\code{i}=\code{n}+1$ and,
 therefore, $\code{res}=(\code{i}-1)!=\code{n}!$ at the last line of the
 function, which implies that it correctly implements factorial.
-It is nontrival to find a proper loop invariant and the loop invariant holds at
-the beginning of each iteration.
+It is nontrival to find a proper loop invariant and show that the loop invariant
+holds at the beginning of each iteration.
 
 On the other hand,
 recursive functions usually reveal their mathematical definitions more clearly
-then functions using loops.
+than functions using loops. Consider the following mathematical definition of
+factorial:
 
 \[n!=\begin{cases}1 & \text{if } n=0\\n \times (n-1)! &
 \text{otherwise}\end{cases}\]
 
 You can see that the implementation of the \code{factorial} function using recursion
 is identical to the mathematical definition of factorial. It is almost trivial
-to shot that the recursive \code{factorial} function is correct.
+to show that the recursive \code{factorial} function is correct.
 Recursion allows concise and intuitive descriptions of mathematical functions.
 In many cases, functions with recursion is much easier to be verified formally
 or informally than functions with loops.
@@ -271,7 +268,7 @@ def odd(l: List[Int]): List[Int] = l match {
 \end{verbatim}
 
 For a nonempty list, the function checks whether the head is odd or not. If the
-head is odd, the resulting list contains the head and its tail is the tail with
+head is odd, the resulting list contains the head, and its tail  has
 only odd integers. Otherwise, the head is removed.
 
 Similarly, \code{positive} takes a list of integers as an argument and returns a
@@ -299,7 +296,7 @@ def sum(l: List[Int]): Int = l match {
 
 The sum of elements in the empty list is zero, as there are no elements.
 When a list is nonempty, the sum of its elements can be calculated by adding the
-value of the head to the some of its tail's elements.
+value of the head to the sum of its tail's elements.
 
 Similarly, \code{product} calculates the product of the elements of a given
 list.
@@ -313,29 +310,29 @@ def product(l: List[Int]): Int = l match {
 
 Recursion has some disadvantages: overheads of function calls and stack
 overflow. Most modern CPUs have enough computing power to ignore function call
-overheads but loops are ideal for functions with short computation time in
-programs whose performance is extremely important. Stack overflow happens when a
+overheads. However, loops are still ideal for functions in performance-critical
+programs. Stack overflow happens when a
 stack lacks space due to repetitive function calls. It is a critical problem
 since it causes immediate termination of execution without yielding meaningful
-output. Moreover, programs like web servers do not finish their execution so that
-stack overflow must happen. To resolve the problem, many functional languages try
-tail call optimization to prevent stack overflow. The next section
-explains tail call optimization in detail.
+output. Moreover, programs like web servers do not finish their execution, and
+their stacks will eventually overflow. To prevent stack overflow, many functional
+languages provide tail call optimization.
+The following section explains tail call optimization in detail.
 
 \section{Tail Call Optimization}
 \labsec{tco}
 
-If the last action of a function is calling a function, then the call is a tail
-call. When a tail call happens, after the call, the callee does every
-computation and thus the local variables of the caller have no need to
-remain. The stack frame of the caller can be destroyed. Most functional languages
-optimize tail calls. This optimization is called \textit{tail call optimization}.
-\index{tail call optimization}
-At compile time, compilers check whether calls are tail
-calls. If a call is a tail call, the compilers generate code that eliminates the
+If the last action of a function is a function call, then the call is a tail
+call. When a tail call happens, the callee does every computation, and thus the
+local variables of the caller have no need to remain after the call. The stack
+frame of the caller can be destroyed. Most functional languages exploit this
+fact to optimize tail calls. This optimization is called
+\textit{tail call optimization}.\index{tail call optimization}
+At compile time, compilers check whether calls are tail calls.
+If a call is a tail call, the compilers generate code that eliminates the
 stack frame of the caller before the call. They do not optimize non-tail function
-calls because the local variables of the callers can be used after returning from
-the callees. If every function call in a program is a tail call, a stack never
+calls because the local variables of the callers can be used after the callees
+return. If every function call in a program is a tail call, the stack never
 grows so that the program is safe from stack overflow.
 
 \begin{verbatim}
@@ -347,7 +344,7 @@ def factorial(n: Int): Int =
 \end{verbatim}
 
 The previous \code{factorial} function multiplies \code{n} and the return value
-of the recursive \code{factorial(n -1)} call. The multiplication is the last
+of the recursive \code{factorial(n - 1)} call. The multiplication is the last
 action. The recursive call is not a tail call. The stack frame of the caller must
 remain. The following process computes \code{factorial(3)}:
 
@@ -366,18 +363,24 @@ At most four stack frames coexist. For a large argument, a stack grows
 again and again and finally overflows.
 
 \begin{verbatim}
-scala> def factorial(n: Int): Int = if (n <= 0) 1 else n * factorial(n - 1)
-def factorial(n: Int): Int
-
-scala> factorial(10000)
+factorial(10000)
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
 java.lang.StackOverflowError
   at .factorial
 \end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Run-time error}
+\end{flushright}
+\end{mdframed}
 
-To implement the function using a tail call, instead of multiplying \code{n} and
+To implement the function with a tail call, instead of multiplying \code{n} and
 \code{factorial(n - 1)}, the function has to pass both \code{n} and \code{n - 1}
-as arguments and to make the callee multiply them. One can interpret the strategy
-as passing an intermediate result.
+as arguments and make the callee multiply \code{n} and $(\code{n - 1})!$.
+This strategy can be interpreted as passing an intermediate result.
 
 \begin{itemize}
 \item \code{factorial(3)}
@@ -391,8 +394,8 @@ as passing an intermediate result.
 
 There is no need to return to the caller. The below code shows the
 \code{factorial} function with a tail call. The function needs one more parameter
-that takes an intermediate result. \code{factorial(n, i)} computes \(\code{n}!\times
-\code{i}\).
+that takes an intermediate result as an argument.
+\code{factorial(n, i)} computes \(\code{n}!\times\code{i}\).
 
 \begin{verbatim}
 def factorial(n: Int, inter: Int): Int =
@@ -402,18 +405,16 @@ def factorial(n: Int, inter: Int): Int =
     factorial(n - 1, inter * n)
 \end{verbatim}
 
-The function uses the tail call. More precisely, the function is
+The function uses a tail call. More precisely, the function is
 tail-recursive. Its last action is calling itself. Unlike most functional
 languages, Scala cannot optimize general tail calls. Scala optimizes only
 tail-recursive calls.
-
-Scala compilers generate Java bytecode, whom JVMs execute. The JVMs does not
-allow to jump to the beginning of another function. In the JVMs, functions can
-only either return or call functions. The Scala compilers cannot generate
-optimized code by removing the stack frame of the caller. Instead, they transform
-tail-recursive calls into loops. \code{javap} disassembles Java bytecode files.
-The compiled and disassembled \code{factorial} function using tail recursion does
-not call any function but jumps to instructions inside the function.
+The Scala compiler generates Java bytecode, which is excuted by the JVM. The JVM does not
+allow bytecode to jump to the beginning of another function. In the JVM, functions can
+only either return or call functions. Therefore, the Scala compiler cannot generate
+optimized code by removing the stack frame of a caller. Instead, they transform
+tail-recursive calls into loops.
+The \code{factorial} function is compiled to the following bytecode:
 
 \begin{verbatim}
 public int factorial(int, int);
@@ -435,11 +436,19 @@ public int factorial(int, int);
     20: ireturn
 \end{verbatim}
 
-The function does not result in stack overflow.
+We can check that there is no function call at
+all.\sidenote{\code{invokevirtual} is a function call instruction.}
+The function just jumps to instructions inside the function.
+Due to the tail call optimization, the function never incurs stack overflow.
 
 Even with tail recursion,
-the result is still abnormal due to integer overflow. The \code{BigInt} type
-resolves it.
+the result is still incorrect because of integer overflow.
+
+\begin{verbatim}
+assert(factorial(10000, 1) == 0)  // weird result
+\end{verbatim}
+
+The \code{BigInt} type resolves integer overflow.
 
 \begin{verbatim}
 def factorial(n: BigInt, inter: BigInt): BigInt =
@@ -447,22 +456,25 @@ def factorial(n: BigInt, inter: BigInt): BigInt =
     inter
   else
     factorial(n - 1, inter * n)
+
+assert(factorial(10000, 1) > 0)
 \end{verbatim}
 
-The transformation not only prevents stack overflow but also removes the
+The optimization of the Scala compiler not only prevents stack overflow but also removes the
 overheads of function calls. The downside is that mutually recursive
-functions using tail calls lie beyond the scope of the transformation.
+functions using tail calls lie beyond the scope of the optimization.
 Mutual recursion is recursion involving two or more definitions.
-The below functions can cause stack overflow.
+The following functions can cause stack overflow in Scala even though they use tail
+calls because they are not tail-recursive:
 
 \begin{verbatim}
 def even(n: Int): Boolean = if (n <= 0) true else odd(n - 1)
 def odd(n: Int): Boolean = if (n == 1) true else even(n - 1)
 \end{verbatim}
 
-In Scala, by using annotations, programmers ask the compilers to check
-whether functions are tail-recursive. The annotations prevent non-tail-recursive
-function made by mistakes.
+In Scala, programmers can ask the compiler to check
+whether functions are tail-recursive with annotations. The annotations prevent
+programmers from making functions non-tail-recursive by mistakes.
 
 \begin{verbatim}
 import scala.annotation.tailrec
@@ -474,18 +486,31 @@ import scala.annotation.tailrec
 \end{verbatim}
 
 A non-tail-recursive function with the \code{tailrec} annotation results in a
-compile error.
+compile-time error.
 
 \begin{verbatim}
-scala> @tailrec def factorial(n: Int): Int =
-     |   if (n <= 0) 1 else n * factorial(n - 1)
-                              ^
-       error: could not optimize @tailrec annotated method factorial:
-              it contains a recursive call not in tail position
+@tailrec def factorial(n: Int): Int =
+  if (n <= 0)
+    1
+  else
+    n * factorial(n - 1)
 \end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+      ^
+error:
+could not optimize @tailrec annotated method factorial:
+it contains a recursive call not in tail position
+\end{verbatim}
+\vspace{-1.5em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time error}
+\end{flushright}
+\end{mdframed}
 
-The annotation does not affect the behaviors of the compilers.
-Regardless of the existence of the annotation, the compilers always optimize
+The annotation does not affect the behavior of the resulting bytecode.
+Regardless of the existence of the annotation, the compiler always optimizes
 tail-recursive functions. Still, using the annotations is desirable to prevent
 mistakes.
 
@@ -497,7 +522,10 @@ function.
 \begin{verbatim}
 def factorial(n: BigInt): BigInt = {
   @tailrec def aux(n: BigInt, inter: BigInt): BigInt =
-    if (n <= 0) inter else aux(n - 1, inter * n)
+    if (n <= 0)
+      inter
+    else
+      aux(n - 1, inter * n)
   aux(n, 1)
 }
 \end{verbatim}

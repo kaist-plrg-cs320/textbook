@@ -14,13 +14,13 @@ will re-implement the functions in \refch{immutability} (\code{inc1},
 \section{First-Class Functions}
 
 An entity in a programming language is \textit{first-class}\index{first-class} if it satisfies the
-following three conditions:
+following conditions:
 
-\begin{enumerate}
+\begin{itemize}
 \item It can be an argument of a function call.
 \item It can be a return value of a function.
 \item A variable can refer to it.
-\end{enumerate}
+\end{itemize}
 
 Anything that is first-class can be used as a value. Functions are highly important and
 treated as values in functional languages.
@@ -48,17 +48,20 @@ examples.
 \begin{verbatim}
 def f(x: Int): Int = x
 def g(h: Int => Int): Int = h(0)
-g(f)
+
+assert(g(f) == 0)
 \end{verbatim}
 
 The function \code{g} has one parameter \code{h}. The type of \code{h} is \code{Int => Int}.
-An argument passed to \code{g} is a function that takes one integral
-parameter and returns an integral value. In Scala, \code{=>} expresses the types
-of functions. Functions without parameters have types of form \code{() => [return type]}.
+An argument passed to \code{g} is a function that receives one integer
+and returns an integer. In Scala, \code{=>} expresses the types
+of functions. Functions without parameters have types of the form \code{() => [return type]}.
 \code{[parameter type] => [return type]} is the type of a function with a
-single parameter. Round brackets express the types of functions with more than
-one parameter: \code{([parameter type], … ) => [return type]}. Function \code{f}
-has one integral parameter and returns an integer so can be an argument for
+single parameter. Parentheses are required to express the types of functions
+with two or more parameters:
+\code{([parameter type], … ) => [return type]}. The function \code{f}
+has one integral parameter and returns an integer, i.e. its type is \code{Int =>
+Int}. Thus, it can be an argument for
 \code{g}. Evaluating \code{g(f)} equals evaluating \code{f(0)}, which results
 in \code{0}.
 
@@ -67,18 +70,20 @@ def f(y: Int): Int => Int = {
   def g(x: Int): Int = x
   g
 }
-f(0)(0)
+
+assert(f(0)(0) == 0)
 \end{verbatim}
 
-Function \code{f} returns function \code{g}. Since \code{f} has return type
-\code{Int => Int}, a return value must be a function that takes an integer as a
-parameter and returns an integer. \code{g} satisfies the condition. \code{f(0)}
-is same as \code{g} and therefore is a function. \code{f(0)(0)} is \code{g(0)},
+The function \code{f} returns the function \code{g}. Since the return type of \code{f}
+is \code{Int => Int}, its return value must be a function that takes an integer
+as an argument and returns an integer. \code{g} satisfies the condition. \code{f(0)}
+is the same as \code{g} and therefore is a function. \code{f(0)(0)} equals \code{g(0)},
 which returns \code{0}.
 
 \begin{verbatim}
 val h0 = f(0)
-h0(0)
+
+assert(h0(0) == 0)
 \end{verbatim}
 
 A variable can refer to \code{f(0)}. \code{h0} refers to the return value of
@@ -88,6 +93,10 @@ function values is possible. \code{h0(0)} is a valid expression and results in
 
 \begin{verbatim}
 val h1 = f
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
          ^
 error: missing argument list for method f
 
@@ -97,16 +106,22 @@ when a function type is expected.
 You can make this conversion explicit
 by writing `f _` or `f(_)` instead of `f`.
 \end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time error}
+\end{flushright}
+\end{mdframed}
 
 On the other hand, defining a variable referring to \code{f} results in a compile
-error. In Scala, a function defined by \code{def} is not a value. Since \code{f}
+error. In Scala, a function defined by \code{def} is not a value per se. Since \code{f}
 is the name of a function but not a variable referring to a value, \code{h1}
 cannot refer to the value of \code{f}. As the above error message implies,
 underscores convert function names into function values.
 
 \begin{verbatim}
 val h1 = f _
-h1(0)(0)
+
+assert(h1(0)(0) == 0)
 \end{verbatim}
 
 Compiling the above code succeeds. The type of \code{h1} is \code{Int => (Int => Int)}.
@@ -114,49 +129,57 @@ Compiling the above code succeeds. The type of \code{h1} is \code{Int => (Int =>
 a right-associative type operator. \code{h1(0)(0)} is valid and yields \code{0}.
 
 Actually, expressions except \code{val h1 = f} use function names as values
-successfully. The Scala compiler transforms function names into function values if
-they occur where function types are expected. Therefore, enforcing the type of
-\code{h1} to be a function type corrects the code without underscores. The
+successfully. The Scala compiler transforms function names into function values
+when they occur where function types are expected. Therefore, enforcing the type of
+\code{h1} to be a function type corrects the code without the underscore. The
 following code works well:
 
 \begin{verbatim}
 val h1: Int => Int => Int = f
-h1(0)(0)
 \end{verbatim}
 
 When programmers use function names as values, they usually place the names where
 function types are expected. In these cases, underscores and explicit type
-annotations are unnecessary. Rarely code becomes problematic and needs
-modifications like the above to enforce the transformations.
+annotations are unnecessary. Code rarely becomes problematic and needs
+underscores or type annotations like the above to enforce the transformations.
 
 How does the compiler create function values from function names? If the parameter
 type of function \code{f} is \code{Int}, the corresponding function value is
-\code{(x: Int) => f(x)}. The transformation is called eta expansion. \code{(x: Int) => f(x)}
-is a function value without a name and does the same thing as
+\code{(x: Int) => f(x)}. The transformation is called \textit{eta expansion}.
+\index{eta expansion}
+\code{(x: Int) => f(x)} is a function value without a name and does the same thing as
 \code{f}. The following section covers functions without names.
 
 \section{Anonymous Functions}
 
 In functional programming, functions often appear only once as an argument or a
-return value. Naming the functions used only once is unnecessary. The meanings of
-function values are how they act. The parameters and bodies of functions decide
-the meanings, but the names do not have a role. Naturally, most functional
+return value. Naming functions used only once is unnecessary. The meaning of
+a function value are how it behave. While the parameters and body of a function
+decide its behavior, its name does not affect the behavior. Naturally, functional
 languages provide syntax to define functions without giving them names. Such
 functions are \textit{anonymous functions}.\index{anonymous function}
 
-Anonymous functions in Scala have form \code{([parameter name]: [parameter type], …) => [expression]}.
-Since curly brackets bundle multiple expressions and create
-a single expression, the bodies of anonymous functions can have multiple
-expressions: \code{(…) => { … }}. Like functions declared by \code{def},
+The syntax of an anonymous function in Scala is as follows:
+
+\begin{verbatim}
+([parameter name]: [parameter type], …) => [expression]
+\end{verbatim}
+
+Like functions declared by \code{def},
 anonymous functions can be arguments, return values, or values referred by
 variables. Directly calling them is possible as well.
 
 \begin{verbatim}
-((x: Int) => x)(0)
 def g(h: Int => Int): Int = h(0)
 g((x: Int) => x)
+
 def f(): Int => Int = (x: Int) => x
+f()(0)
+
 val h = (x: Int) => x
+h(0)
+
+((x: Int) => x)(0)
 \end{verbatim}
 
 The code does similar things to the previous code but uses anonymous functions.
@@ -172,43 +195,48 @@ g(x => x)
 \end{verbatim}
 
 Since \code{g} has a parameter of type \code{Int => Int}, the compiler expects
-\code{x => x} to have type \code{Int => Int}. It infers the type of \code{x} as
+\code{x => x} to have the type \code{Int => Int}. It infers the type of \code{x} as
 \code{Int}.
 
 \begin{verbatim}
-def f0(): Int => Int = x => x
-def f1() = (x: Int) => x
-def f2() = x => x  // a compile error
+val h: Int => Int = x => x
 \end{verbatim}
 
-\code{f0} has the explicit return type. \code{Int => Int} is the expected type of
-\code{x => x}. The compiler infers the type of \code{x} as \code{Int}. While
-\code{f1} does not result in a compile error, \code{f2} is problematic. Since
-\code{(x: Int) => Int} specifies the parameter type, the compiler knows that its
-type is \code{Int => Int}. In contrast, there is no information to infer the type
-of \code{x => x}, the body of \code{f2}.
+\code{h} has an explicit type annotation. \code{Int => Int} is the expected type of
+\code{x => x}. The compiler infers the type of \code{x} as \code{Int}.
 
 \begin{verbatim}
-val h0: Int => Int = x => x
-val h1 = (x: Int) => x
-val h2 = x => x  // a compile error
+val h = x => x
 \end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+         ^
+error: missing parameter type
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time error}
+\end{flushright}
+\end{mdframed}
 
-As shown in the previous example, \code{h0} and \code{h1} are valid, but
-\code{h2} is not.
+Unlike previous one, this code is problematic. Since
+there is no information to infer the type of \code{x} in \code{x => x},
+the compiler generates an error.
 
-Most cases using anonymous functions are arguments for function calls so that the
-functions do not require explicit parameter types. However, beginners might not
-be sure about whether omitting parameter types is allowed or not. Specifying
-parameter types is safe when it is not assured.
+Most cases using anonymous functions are arguments for function calls.
+Those functions do not require explicit parameter types. However, beginners might not
+be sure about whether parameter types can be omitted or not. Specifying
+parameter types is safe when you are not sure.
 
-Scala provides one more syntax for anonymous functions. The syntax uses
-underscores. Underscores help programmers to define concise and intuitive
-anonymous functions. They make code readable but can appear only in particular
-situations. Every parameter occurs exactly once in the body of a function in the
-order. Moreover, the function is not an identity function like \code{(x: Int) => x}.
-In such a function, underscores can replace parameters in the body.
-Otherwise, it is impossible to use underscores to define anonymous functions.
+Scala provides one more syntax for anonymous functions: syntax using
+underscores. Underscores help programmers to create anonymous functions in a
+concise and intuitive way.
+Underscores can be used only when certain conditions are satisfied.
+Every parameter must occur exactly once in the body of a function in the
+order. Moreover, the function must not be an identity function like \code{(x: Int) => x}.
+In functions satisfying the conditions, underscores can replace parameters in the body.
+Otherwise, it is impossible to use underscores to create anonymous functions.
 
 \begin{verbatim}
 def g0(h: Int => Int): Int = h(0)
@@ -218,11 +246,11 @@ def g1(h: (Int, Int) => Int): Int = h(0, 0)
 g1(_ + _)
 \end{verbatim}
 
-The compiler desugars \verb!_ + 1! and obtain \code{x => x + 1}.
-\verb!_ + _!
+The compiler transforms \verb!_ + 1! into \code{x => x + 1}.
+Similarly, \verb!_ + _!
 becomes \code{(x, y) => x + y}. The compiler automatically creates parameters
-as many as underscores and substitute the underscores with the parameters. The
-mechanism clearly shows why the restriction exists.
+as many as underscores and substitutes the underscores with the parameters. The
+mechanism clearly shows why the aforementioned conditions exist.
 
 \begin{verbatim}
 val h0 = (_: Int) + 1
@@ -230,31 +258,72 @@ val h1 = (_: Int) + (_: Int)
 \end{verbatim}
 
 Underscores can have explicit types.
-
-In the code, the compiler cannot infer parameter types and therefore require
-explicit parameter types to succeed compiling.
+Programmers should supply parameter types to succeed compiling when
+the compiler cannot infer them.
 
 The transformation happens for the shortest expression containing underscores.
-Expressing anonymous functions with complex bodies using underscores is tricky.
+Expressing anonymous functions with underscores is sometimes tricky.
 
 \begin{verbatim}
 def f(x: Int): Int = x
 def g1(h: Int => Int): Int = h(0)
-def g2(h: (Int, Int) => Int): Int = h(0, 0)
-g(f(_))
-g1(f(_ + 1))  // a compile error
-g2(f(_) + _)
-g2(f(_ + 1) + _)  // a compile error
+g1(f(_))
 \end{verbatim}
 
-As intended, \verb!f(_)! becomes \code{x => f(x)}, and \verb!f(_) + _! becomes
-\code{(x, y) => f(x) + y}. (Actually, there is no need to write \verb!g(f(_))!
-because it is equal to \code{g(f)}.) On the other hand, \verb!f(_ + 1)! becomes
-\code{f(x => x + 1)} but not \code{x => f(x + 1)}. \verb!f(_ + 1) + _! becomes
+As intended, \verb!f(_)! becomes \code{x => f(x)}, whose type is \code{Int =>
+Int}.\sidenote{Actually, there is no need to write
+\code{g(f(\_))} because it is equal to \code{g(f)}.}
+
+\begin{verbatim}
+g1(f(_ + 1))
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+     ^
+error: missing parameter type for expanded function
+((<x$1: error>) => x$1.$plus(1))
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time error}
+\end{flushright}
+\end{mdframed}
+
+On the other hand, \verb!f(_ + 1)! becomes
+\code{f(x => x + 1)} but not \code{x => f(x + 1)}.
+As \code{f} takes an integer, not a function, it results in a compile-time error.
+
+\begin{verbatim}
+def g2(h: (Int, Int) => Int): Int = h(0, 0)
+g2(f(_) + _)
+\end{verbatim}
+
+\verb!f(_) + _! becomes \code{(x, y) => f(x) + y}, whose type is \code{(Int,
+Int) => Int}, and the compilation succeeds.
+
+\begin{verbatim}
+g2(f(_ + 1) + _)
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+              ^
+error: missing parameter type for expanded function
+((<x$2: error>) => f(((<x$1: error>) => x$1.$plus(1)))
+  .<$plus: error>(x$2))
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{Compile-time error}
+\end{flushright}
+\end{mdframed}
+
+\verb!f(_ + 1) + _! becomes
 \code{y => f(x => x + 1) + y} but not \code{(x, y) => f(x + 1) + y}.
 
 Like type inference of parameter types, novices may not be sure about how
-anonymous functions with underscores change. It is recommended to use normal anonymous
+anonymous functions with underscores are transformed. It is recommended to use normal anonymous
 functions without underscores for those who are not confident about the mechanism
 of underscores.
 
@@ -278,21 +347,22 @@ define but uses \code{x}. However, the code is correct.
 
 \begin{verbatim}
 val add1 = makeAdder(1)
-add1(2)
+assert(add1(2), 3)
+
 val add2 = makeAdder(2)
-add2(2)
+assert(add2(2), 4)
 \end{verbatim}
 
 \code{add1} and \code{add2} refer to the same \code{adder} function, but the
 former returns an integer one larger than an argument, and the latter returns an
-integer two larger than an argument. The results of \code{add(1)} and
-\code{add(2)} are \code{3} and \code{4}, respectively. It is possible because the
+integer two larger than an argument. The results of \code{add1(2)} and
+\code{add2(2)} are \code{3} and \code{4}, respectively. It is possible because the
 closures capture the environments when they are created. \code{add1} refers to a
-thing like \code{(adder, x = 1)} instead of simple \code{adder}. Similarly,
+thing like \code{(adder, x = 1)} instead of just \code{adder}. Similarly,
 \code{add2} is actually \code{(adder, x = 2)}. Since the environment of
 \code{add1} stores the fact that \code{x} is \code{1}, \code{add1(2)} results in
 \code{3}. Under the environment of \code{add2}, \code{x} denotes \code{2}, and
-thus \code{x + y}, or \code{add2(2)}, is \code{4}.
+thus \code{x + y} is \code{4} when \code{y} is \code{2}.
 
 \section{First-Class Functions and Lists}
 
@@ -346,7 +416,8 @@ g(l, h => h * h)
 \end{verbatim}
 
 This function is called \code{map}. The returned list
-has elements \textbf{map}ped by a given function.
+has elements obtained \textbf{map}ping a given function to the elements of a
+given list to the elements of a given list.
 
 \begin{verbatim}
 def map(l: List[Int], f: Int => Int): List[Int] = l match {
@@ -355,14 +426,14 @@ def map(l: List[Int], f: Int => Int): List[Int] = l match {
 }
 \end{verbatim}
 
-\code{inc1} and \code{square} can be redefined using \code{map}.
+\code{inc1} and \code{square} can be redefined with \code{map}.
 
 \begin{verbatim}
 def inc1(l: List[Int]): List[Int] = map(l, h => h + 1)
 def square(l: List[Int]): List[Int] = map(l, h => h * h)
 \end{verbatim}
 
-An underscore makes \code{inc1} concise.
+An underscore makes \code{inc1} conciser.
 
 \begin{verbatim}
 def inc1(l: List[Int]): List[Int] = map(l, _ + 1)
@@ -405,16 +476,18 @@ def filter(l: List[Int], f: Int => Boolean): List[Int] = l match {
 
 
 The function is called \code{filter} because it \textbf{filter}s
-unwanted elements in an argument.
+unwanted elements out from a given list.
 
-\code{odd} and \code{positive} can be redefined using \code{filter}.
+\code{odd} and \code{positive} can be redefined with \code{filter}.
 
 \begin{verbatim}
-def odd(l: List[Int]): List[Int] = filter(l, h => h % 2 != 0)
-def positive(l: List[Int]): List[Int] = filter(l, h => h > 0)
+def odd(l: List[Int]): List[Int] =
+  filter(l, h => h % 2 != 0)
+def positive(l: List[Int]): List[Int] =
+  filter(l, h => h > 0)
 \end{verbatim}
 
-Underscores make the functions concise.
+Underscores make the functions conciser.
 
 \begin{verbatim}
 def odd(l: List[Int]): List[Int] = filter(l, _ % 2 != 0)
@@ -441,21 +514,27 @@ initial value and a function taking \code{h} and \code{g(t)} as arguments, the
 functions become identical.
 
 \begin{verbatim}
-def foldRight(l: List, n: Int, f: (Int, Int) => Int): Int = l match {
+def foldRight(
+  l: List[Int],
+  n: Int,
+  f: (Int, Int) => Int
+): Int = l match {
   case Nil => n
-  case Cons(h, t) => f(h, foldRight(t, n, f))
+  case h :: t => f(h, foldRight(t, n, f))
 }
 \end{verbatim}
 
 This function is called \code{foldRight} since it
 appends an initial value at the right side of a list and
-\textbf{fold}s the list from the \textbf{right} side using a given function.
+\textbf{fold}s the list from the \textbf{right} side with a given function.
 
-\code{sum} and \code{product} can be redefined using \code{foldRight}.
+\code{sum} and \code{product} can be redefined with \code{foldRight}.
 
 \begin{verbatim}
-def sum(l: List[Int]): Int = foldRight(l, 0, (h, gt) => h + gt)
-def product(l: List[Int]): Int = foldRight(l, 1, (h, gt) => h * gt)
+def sum(l: List[Int]): Int =
+  foldRight(l, 0, (h, gt) => h + gt)
+def product(l: List[Int]): Int =
+  foldRight(l, 1, (h, gt) => h * gt)
 \end{verbatim}
 
 They may use underscores for conciseness.
@@ -465,7 +544,7 @@ def sum(l: List[Int]): Int = foldRight(l, 0, _ + _)
 def product(l: List[Int]): Int = foldRight(l, 1, _ * _)
 \end{verbatim}
 
-The following gives an intuitive interpretation of the function:
+The following equations give an intuitive interpretation of \code{foldRight}:
 
 \begin{verbatim}
   foldRight(List(a, b, .., y, z), n, f)
@@ -482,7 +561,7 @@ Let us compare tail-recursive \code{sum} and \code{product}.
 
 \begin{verbatim}
 def sum(l: List[Int]): Int = {
-  @tailrec def aux(l: List[Int], inter: Int): Int = l match {
+  def aux(l: List[Int], inter: Int): Int = l match {
     case Nil => inter
     case h :: t => aux(t, inter + h)
   }
@@ -490,7 +569,7 @@ def sum(l: List[Int]): Int = {
 }
 
 def product(l: List[Int]): Int = l match {
-  @tailrec def aux(l: List[Int], inter: Int): Int = l match {
+  def aux(l: List[Int], inter: Int): Int = l match {
     case Nil => inter
     case h :: t => aux(t, inter * h)
   }
@@ -503,10 +582,14 @@ and \code{0} versus \code{1}. Similarly, adding two parameters makes the
 functions identical.
 
 \begin{verbatim}
-def foldLeft(l: List, n: Int, f: (Int, Int) => Int): Int = {
-  @tailrec def aux(l: List, inter: Int): Int = l match {
+def foldLeft(
+  l: List[Int],
+  n: Int,
+  f: (Int, Int) => Int
+): Int = {
+  def aux(l: List[Int], inter: Int): Int = l match {
     case Nil => inter
-    case Cons(h, t) => aux(t, f(inter, h))
+    case h :: t => aux(t, f(inter, h))
   }
   aux(l, n)
 }
@@ -516,7 +599,7 @@ This function is called \code{foldLeft}. Its semantics is different from
 \code{foldRight}. While \code{foldRight} appends an initial value at
 the right side and folds a list from the right side, \code{foldLeft}
 prepends an initial value at the left side and \textbf{fold}s
-a list from the \textbf{left} side. The following gives an intuitive
+a list from the \textbf{left} side. The following equations give an intuitive
 interpretation:
 
 \begin{verbatim}
@@ -544,7 +627,8 @@ decimal number obtained by concatenating the digits.
 \code{foldLeft} is the easiest way to implement this function.
 
 \begin{verbatim}
-def digitToDecimal(l: List[Int]) = foldLeft(l, 0, _ * 10 + _)
+def digitToDecimal(l: List[Int]) =
+  foldLeft(l, 0, _ * 10 + _)
 
   foldLeft(List(1, 2, 3), 0, f)
 = f(f(f(0, 1), 2), 3)
@@ -558,7 +642,8 @@ Using \code{foldRight} with the same arguments will yield completely different
 result.
 
 \begin{verbatim}
-def digitToDecimal(l: List[Int]) = foldRight(l, 0, _ * 10 + _)
+def digitToDecimal(l: List[Int]) =
+  foldRight(l, 0, _ * 10 + _)
 
   foldRight(List(1, 2, 3), 0, f)
 = f(1, f(2, f(3, 0)))
@@ -570,8 +655,8 @@ def digitToDecimal(l: List[Int]) = foldRight(l, 0, _ * 10 + _)
 
 \code{map}, \code{filter}, \code{foldRight}, and
 \code{foldLeft} are powerful functions. The four functions offer concise
-implementation for most procedures dealing with lists.
-Since they are so useful, the Scala standard library provies \code{map},
+implementation for many procedures dealing with lists.
+Since they are so useful, the Scala standard library provides \code{map},
 \code{filter}, \code{foldRight}, and \code{foldLeft} as the methods of the
 \code{List} class. You do not need to implement \code{map},
 \code{filter}, \code{foldRight}, and \code{foldLeft} by yourself.
@@ -621,13 +706,16 @@ case class Student(name: String, height: Int)
 def heights(l: List[Student]): List[Int] = l.map(_.height)
 \end{verbatim}
 
+The standard library provide many other useful methods for
+lists.\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/List.html}}
+
 \section{For Loops}
 
 Scala has for loops.
 In Scala, a for loop is an expression, which evalautes to a value.
 For expressions are highly expressive.
 Unlike \code{while}, which work with mutable variables or objects,
-\code{for} Scala helps programmers to write code in a functional and readable way.
+\code{for} of Scala helps programmers to write code in a functional and readable way.
 
 The syntax of a for expression is as follows:
 
@@ -636,17 +724,17 @@ for ([name] <- [expression])
   yield [expression]
 \end{verbatim}
 
-For expressions can replace use of the \code{map} method.
+The first expression should result in a collection.
+Its result is a collection containing the result of evaluating the second expression
+at each iteration.
+Therefore, for expressions can replace use of the \code{map} method.
 
 \begin{verbatim}
-for (n <- List(0, 1, 2))
-  yield n * n
+val l = for (n <- List(0, 1, 2)) yield n * n
+assert(l == List(0, 1, 4))
 \end{verbatim}
 
-It results in \code{List(0, 1, 4)}. The result of \code{for (…) yield [expressions]}
-is a collection containing the result of evaluating the \code{[expression]}
-at each iteration. For expressions can appear at any places expecting
-expressions.
+For expressions can appear at any places expecting expressions.
 
 \begin{verbatim}
 def square(l: List[Int]): List[Int] =
@@ -656,12 +744,10 @@ def square(l: List[Int]): List[Int] =
 
 In Scala, \code{for} is just syntactic sugar. Instead of giving specific
 semantics to \code{for}, syntactic rules transform code using \code{for} into the
-code using methods of collections and anonymous functions. The above code becomes
-code using and \code{map} by the transformation.
+code using methods of collections and anonymous functions. The above function becomes
+the following function, which uses \code{map}, by the transformation:
 
 \begin{verbatim}
-List(0, 1, 2).map(n => n * n)
-
 def square(l: List[Int]): List[Int] =
   l.map(n => n * n)
 \end{verbatim}

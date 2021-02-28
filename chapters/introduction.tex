@@ -18,10 +18,10 @@ Syntax and semantics are principal concepts to understand programming languages.
 Syntax determines how a language looks like, and semantics fills the inside. If
 we consider a programming language as a human, we can say that syntax is one’s
 appearance, and semantics is one’s thoughts. Programmers write programs
-according to syntax. Syntax decides characters used in programs. Once programs
+according to syntax. Syntax decides characters used in source code. Once programs
 are written, semantics decides what each program does. Without semantics, all
 the programs are useless. Programs can work as being expected only after
-semantics fills the inside of them. A programming language with syntax and
+semantics determines the meaning of them. A programming language with syntax and
 semantics is complete. Programmers using that language can write programs with
 the syntax and execute the programs with the semantics. From a theoretical
 perspective, syntax and semantics are all of a programming language.
@@ -36,10 +36,10 @@ language. At the same time, clothes are important to humans as they make bodies
 warm and protect bodies from dangerous objects. Similarly, a standard library is
 important to a programming language as it supplies diverse functionalities for
 applications. Each person wears clothes different from others, and each language
-puts things different from other languages in its standard library. Some
+puts different things from other languages in its standard library. Some
 languages include lots of utilities in their standard libraries, while others
 include much less. Some languages treat lists and maps as built-in concepts in
-their semantics, while others provide them with their standard libraries.
+their semantics, while others define them with other primitives in their standard libraries.
 Programmers avoid using a language without a standard library because such a
 language increases the effort to write programs.
 
@@ -59,7 +59,7 @@ important to programmers.
 Practically, the standard library and the ecosystem of a language are important
 elements. Unlike syntax and semantics, they are not essential. A programming
 language can exist even without its standard library and ecosystem. However,
-developers consider standard libraries and ecosystems as well as syntax and
+developers take standard libraries and ecosystems into account as well as syntax and
 semantics to choose languages they use. From a practical perspective, a
 programming language consists of syntax, semantics, a standard library, and an
 ecosystem.
@@ -87,7 +87,7 @@ how to use a computer. It is a big problem if he cannot distinguish a keyboard
 from a computer. For example, he thinks ``to say hello, my right index finger
 presses the keyboard, my left middle finger presses the keyboard, my right ring
 finger presses the keyboard three times.'' If the layout of the keyboard changes,
-he should learn the computer again. On the other hand, if he knows that a
+he should learn the whole computer again. On the other hand, if he knows that a
 keyboard is just a tool to input text, he will less suffer from the change of
 the keyboard layout. As he thinks ``to say hello, I press H, E, L, L, and O,'' he
 does not need to learn the whole computer again. Of course, he should learn the
@@ -100,12 +100,12 @@ cannot distinguish syntax and semantics believe that they should learn the whole
 language again when the syntax changes. On the other hand, people who can
 distinguish syntax and semantics know that semantics remains the same even if
 syntax may vary. They know that understanding the principles of semantics is
-important to learn languages. To use a new language, becoming familiar with the
-new syntax is all they need to use the language fluently.
+important to learn languages. Becoming familiar with the
+new syntax is all they need to use a new language fluently.
 
 This book explains the semantics of principal concepts in programming languages.
-\refch{introduction-to-scala}, \refch{functional-programming},
-\refch{functions}, \refch{scala-collections}, and \refch{pattern-matching}
+\refch{introduction-to-scala}, \refch{immutability},
+\refch{functions}, and \refch{pattern-matching}
 introduce the Scala programming language. This book
 uses Scala to implement interpreters of languages introduced in the book.
 \refch{syntax} and \refch{semantics} respectively explain syntax and
