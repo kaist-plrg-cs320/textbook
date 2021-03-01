@@ -1,0 +1,1377 @@
+\setchapterpreamble[u]{\margintoc}
+\chapter{Syntax and Semantics}
+\labch{syntax-and-semantics}
+
+\renewcommand{\lang}{\code{AE}\xspace}
+
+This chapter is about syntax and semantics.
+
+\textit{Syntax}\index{syntax} of a programming language decides the
+appearance of the language. Syntax consists of concrete syntax and abstract
+syntax. While concrete syntax describes programs as strings, abstract syntax
+describes the structures of programs as trees. Parsing is the process bridging
+the gap between concrete syntax and abstract syntax. A string is transformed to
+a tree by parsing. This chapter explains concrete syntax, abstract syntax, and
+parsing.
+
+\textit{Semantics}\index{semantics} of a programming langauge determines the
+behavior of each program. This chapter explains how we can define the semantics
+of a language. In addition, we will see what syntactic sugar is.
+
+\section{Concrete Syntax}
+
+People write programs with strings. Some strings are valid programs, while other
+strings are not. For example, consider the following code:
+
+\begin{verbatim}
+println()
+\end{verbatim}
+
+It is a valid Scala program. On the other hand, the following code is not a
+valid Scala program.
+
+\begin{verbatim}
+println(
+\end{verbatim}
+
+\textit{Concrete syntax}\index{concrete syntax} determines whether a certain string is a program or not.
+According to the concrete syntax of Scala, \code{println()} is a
+program, but \code{println(} is not because the closing
+parenthesis is missing. Without concrete syntax, programmers cannot know whether
+a given string is a program or not. Concrete syntax is one of the essential
+elements of a programming language. This section defines concrete syntax
+formally and explains how concrete syntax can be specified.
+
+The first thing to do is to define strings since programs are represented as
+strings. A string is a finite sequence of characters. The definition of a
+character varies in programming languages. In some languages, a character is
+limited to those expressed by the ASCII code. In other cases, every Unicode symbol
+is considered as a character. As we want to deal with general programming
+languages, we do not fix the characters to be a specific set. Instead, we assume
+that a set of characters is given and do not care about which characters exactly
+exist in the set. From now on, $C$ is the set of every character:
+
+\[C = \text{the set of every character} = \{ c\ |\ c\text{ is a character} \}\]
+
+Now, a character is an element of $C$.
+
+Once characters are defined, we can define strings with the definition of
+characters. $S$ is the set of every string:
+
+\[S = \text{the set of every string} = \{ \code{"}c_1\cdots c_n\code{"}\ |\
+c_1,\ldots,c_n\in C \}\]
+
+A string is an element of $S$, which is a
+sequence of zero or more characters. For example, if $\code{'a'},\code{'b'}\in
+C$, then $\code{"aba"}\in S$.
+
+The definition of strings differs from the definition of programs because some
+strings are not programs. As we have seen already, $\code{"println()"}$ is a program,
+but $\code{"println("}$ is not although both are strings.
+
+Defining concrete syntax is to define which strings are programs. Therefore,
+we can say that concrete syntax determines the set of every program.
+Let $P$ be the set of every program.
+
+\[P = \text{the set of every program} = \{ p\ |\ p\text{ is a program} \}\]
+
+A program is an element of $P$.
+Then, $P$ has only one restriction: $P$ should be a subset of $S$, as
+every program is a string.
+
+\[P\subseteq S\]
+
+The concrete syntax of each language defines its own $P$ as a subset of
+$S$. Each language has different $P$ from each other. For instance,
+$\code{"println()"} \in P$ and $\code{"println("}\not\in P$,
+where $P$ is defined by the concrete syntax of Scala. At the same
+time, there can be a language whose $P$ does not have $\code{"println()"}$ as an element.
+
+To define the concrete syntax of a language, we need to define the set $P$. The
+problem is that $P$ is usually an infinite set. There are infinitely many
+programs in each language. Defining an infinite set is difficult because we
+cannot enumerate every element of an infinite set. We need a way to define
+infinite sets to define concrete syntax.
+
+The most popular way to define concrete syntax is \textit{Backus-Naur
+form}\index{Backus-Naur form} (\acrshort{bnfLabel}). It defines a set of strings
+in an intuitive way. It provides a constructive definition, i.e. it lets us know
+how we can construct an element of the set. To define concrete syntax with BNF,
+we need to discuss the concepts used in BNF first.
+
+BNF has three concepts: terminals, nonterminals, and expressions. A
+\textit{terminal}\index{terminal} is a string. For example, \code{"0"} and
+\code{"ab"} are terminals. A \textit{nonterminal}\index{nonterminal} is a name
+between a pair of angle brackets and denotes a set of strings. For instance,
+\code{<digit>} is a nonterminal and may denote the set
+$\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$.
+An \textit{expression}\index{expression} is an enumeration of one or more
+terminals/nonterminals. Therefore, all of the following are expressions:
+
+\begin{itemize}
+  \item \code{"abc"} (a single terminal)
+  \item \code{"0"} \code{"1"} (multiple terminals)
+  \item \code{<digit>} (a single nonterminal)
+  \item \code{<digit>} \code{<number>} (multiple nonterminals)
+  \item \code{"-"} \code{<number>} (a single terminal and a single nonterminal)
+\end{itemize}
+
+An expression also denotes a set of strings. The set denoted by an expression is
+the concatenation of strings denoted by its components. For example, in the
+expression \code{"0"} \code{"1"}, \code{"0"} denotes \code{"0"}, and \code{"1"}
+denotes \code{"1"}. Therefore, \code{"0"} \code{"1"} denotes the set $\{
+  \code{"01"} \}$. If \code{<digit>} denotes the set
+$\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$,
+then \code{"0"} \code{<digit>} denotes
+$\{\code{"00"},\code{"01"},\code{"02"},\code{"03"},\code{"04"},\code{"05"},\code{"06"},\code{"07"},\code{"08"},\code{"09"}\}$.
+
+Now, let us see how we can define a new set from scratch. BNF allow us to define
+the set denoted by a nonterminal with the following form:
+
+\begin{verbatim}
+[nonterminal] ::= [expression] | [expression] | …
+\end{verbatim}
+
+The vertical bars in the right hand side separate distinct expressions.
+The expressions define the set denoted by the nonterminal. The union of the set
+denoted by the expressions equals the set denoted by the nonterminal. For
+example, the following definition makes \code{<digit>} denote
+$\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$:
+
+\begin{verbatim}
+<digit> ::= "0" | "1" | "2" | "3" | "4"
+          | "5" | "6" | "7" | "8" | "9"
+\end{verbatim}
+
+From now on, we are going to define the concrete syntax of a tiny language named
+\lang to show example usage of BNF. \lang stands for arithmetic expressions. Its
+features is limited to addition and subtraction of decimal integers.
+
+\lang programs should be able to express decimal integers. Thus, the
+following strings should be programs of \lang:
+
+\begin{itemize}
+  \item \code{"0"}
+  \item \code{"1"}
+  \item \code{"-10"}
+  \item \code{"42"}
+\end{itemize}
+
+At the same time, programs should be able to express addition and subtraction.
+Thus, the following strings also should be programs:
+
+\begin{itemize}
+  \item \code{"0+1"}
+  \item \code{"-2-1"}
+  \item \code{"1+-3+42"}
+  \item \code{"4-3+2-1"}
+\end{itemize}
+
+First, we can define the set of every string that represents a decimal integer
+in BNF. It can be done with the following definitions:
+
+\begin{verbatim}
+<digit>  ::= "0" | "1" | "2" | "3" | "4"
+           | "5" | "6" | "7" | "8" | "9"
+<nat>    ::= <digit> | <digit> <nat>
+<number> ::= <nat> | "-" <nat>
+\end{verbatim}
+
+We know that \code{<digit>} denotes
+$\{$\code{"0"}, \code{"1"}, \code{"2"}, \code{"3"}, \code{"4"},
+\code{"5"}, \code{"6"}, \code{"7"}, \code{"8"}, \code{"9"}$\}$.
+Since \code{<digit>} is one way to construct an element of \code{<nat>}, every
+string denoted by \code{<digit>} is also a string of \code{<nat>}. Hence,
+$\{$\code{"0"}, \code{"1"}, \code{"2"}, \code{"3"}, \code{"4"},
+\code{"5"}, \code{"6"}, \code{"7"}, \code{"8"}, \code{"9"}$\}$
+is a subset of the set denoted by \code{<nat>}. At the same time, \code{<digit>}
+\code{nat} is the other way to construct an element. We can make a new element
+of \code{<nat>} by selecting strings from \code{<digit>} and \code{<nat>}
+respectively. For example, \code{<digit>} can denote \code{"1"}, and
+\code{<num>} can denote \code{"0"}. Therefore, \code{"10"} is an element of
+\code{<num>}. By repeating this process, we can construct infinitely many
+strings, e.g. \code{"110"} by concatenating \code{"1"} and \code{"10"},
+\code{"1110"} by concatenating \code{"1"} and \code{"110"}, and so on. In the
+end, we can conclude that \code{<nat>} denotes the set of every string that
+consists of the characters from \code{'0'} to \code{'9'}, i.e. every string that
+represents a decimal natural number.\sidenote{This book considers zero as a
+natural number.}
+
+Finding the set denoted by \code{<number>} is easier. Since \code{<nat>} is one
+way to construct an element of \code{<number>}, the set denoted by \code{<nat>}
+is a subset of the set denoted by \code{<number>}. The expression \code{"-"} \code{<nat>} is
+the other way to construct an element. It implies that if we concatenate
+\code{"-"} and a string denoted by \code{<nat>}, we can get a new element of
+\code{<number>}. In conclusion, \code{<number>} denotes the set of every string
+that represents a decimal integer.
+
+It is enough to add only addition and subtraction to complete the definition of
+the concrete syntax.
+
+\begin{verbatim}
+<expr> ::= <number> | <expr> "+" <expr> | <expr> "-" <expr>
+\end{verbatim}
+
+In a similar way, we can figure out which set is denoted by \code{<expr>}. The
+set includes every string that represents arithmetic expression consisting of
+decimal integers, addition, and subtraction. We can say that \code{<expr>}
+defines $P$ of \lang, and the concrete syntax of \lang has been defined now.
+
+\section{Abstract Syntax}
+
+Defining syntax solely with concrete syntax has problems from both language
+users' and language designers' perspectives.
+
+Programmers usually learn multiple languages. Languages vary in their concrete
+syntax a lot. Consider a function that takes two integers as arguments and
+returns the sum of the integers. We can implement the function in four different
+languages like below.
+
+\begin{itemize}
+  \item Python
+
+\begin{verbatim}
+def add(n, m):
+    return n + m
+\end{verbatim}
+
+  \item JavaScript
+
+\begin{verbatim}
+function add(n, m) {
+    return n + m;
+}
+\end{verbatim}
+
+  \item Racket
+
+\begin{verbatim}
+(define (add n m) (+ n m))
+\end{verbatim}
+
+  \item OCaml
+
+\begin{verbatim}
+let add n m = n + m
+\end{verbatim}
+\end{itemize}
+
+They look so different even though they define the same function. The
+keyword to define a function is \code{def} in Python, \code{function} in
+JavaScript, \code{define} in Racket, and \code{let} in OCaml. It is not
+the only difference. Python and JavaScript need parentheses and commas
+for parameters, while Racket and OCaml do not. JavaScript puts function
+bodies inside curly braces. Racket treats \code{+} as a prefix operator,
+while the others treat \code{+} as a infix operator. These differences
+are the differences between the concrete syntax of each language.
+Various forms of concrete syntax hinder programmers from learning
+multiple languages easily.
+
+However, their structures are quite the same. In every language, a
+function definition consists of a name, parameters, and a body
+expression. The above example defines a function whose name is \code{add},
+parameters are \code{n} and \code{m}, and body is an expression that
+adds \code{n} and \code{m}. In every language, an addition expression
+consists of two operands. The body expression uses \code{n} and \code{m}
+as the operands of the addition.
+
+Thus, programmers should focus on the structures of programs, rather
+than strings per se, to learn multiple languages easily. The structures
+remain the same even when the strings vary.
+
+At the same time, concrete syntax cares about tedious details that
+language designers want to ignore. For example, both \code{"2+1"} and
+\code{"02+001"} are \lang programs. They are different strings but
+represent the same arithmetic expression: $2+1$. When the designers of
+\lang define logic to evaluate arithmetic expressions, distinction
+between $2+1$ and $2-1$ is important, but distinction between
+\code{"2+1"} and \code{"02+001"} is completely unnecessary. The
+designers want to focus only on the structures of programs but not
+strings.
+
+For both programmers and designers, concrete syntax is problematic
+because it describes only strings and does not give good abstraction of
+structures even though people want to focus on the structures. Of
+course, we cannot discard the notion of concrete syntax. Everyone write
+programs as strings, and concrete syntax is essential for that step. At
+the same time, we need a way to describe the structures of programs
+without being affected by differences in strings. To meet the need, we
+introduce another notion of syntax: abstract syntax. Concrete syntax and
+abstract syntax are complementary. They collectively construct the
+syntax of a language.
+
+\textit{Abstract syntax}\index{abstract syntax} describes the structure of a program as a tree. A program
+consists of multiple components. Each component consists of subcomponents again.
+Trees formally express such recursive structures. A component can be represented
+as a tree whose root describes the sort of a component and children are the
+trees representing the subcomponents.
+
+As an example, let us express the function \code{add} as a tree. The function
+definition has four components: the name \code{add}, the first parameter
+\code{n}, the second parameter \code{m}, and the body expression. The following
+tree represents the function definition:
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\scriptsize FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_w] {}
+  };
+\end{tikzpicture}
+\end{center}
+
+The root of the tree is the symbol FunDef, which explains that this tree
+represents a function definition. The tree has four children: \code{add},
+\code{n}, \code{m}, and the body expression. We do not know how to draw the tree
+representing the body expression yet.
+
+The body expression is an addition expression. It has two components: the
+operands of the addition.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+    level 2/.style={sibling distance=1.2cm}
+]
+  \node [arn_u] {\scriptsize FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_w] {}
+    }
+    child{
+      node [arn_w] {}
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+The root of the tree is Add, as the expression is addition. It has two
+children: the operand expressions.
+
+The first operand expression consists of a single component: \code{n}.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+    level 2/.style={sibling distance=1.2cm}
+]
+  \node [arn_u] {\scriptsize FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_u] {\small Name}
+      child{
+        node [arn_u] {\code{n}}
+      }
+    }
+    child{
+      node [arn_w] {}
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+The root of the tree is Name, since the expression is just a name. The
+only child is \code{n}.
+
+The second operand expression can be similarly represented as a tree.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+    level 2/.style={sibling distance=1.2cm}
+]
+  \node [arn_u] {\scriptsize FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_u] {\small Name}
+      child{
+        node [arn_u] {\code{n}}
+      }
+    }
+    child{
+      node [arn_u] {\small Name}
+      child{
+        node [arn_u] {\code{m}}
+      }
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+The above tree represents the structure of the function definition. It is
+independent of its underlying programming language. The tree can be a Python
+function definition and a JavaScript function definition at the same time. By
+expressing programs with trees, we can ignore unnecessary details in strings and
+focus on the structures of programs.
+
+As abstract syntax treats programs as trees, defining the abstract syntax of a
+language is to define the set of every tree that represents a program. Let us
+define the abstract syntax of \lang. In \lang, every natural number is a
+program. A natural number program has only one component: the natural number
+itself. Therefore, the following fact is true, where $E$ denotes the set of
+every program:
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2,-0.6) {$\text{If }n\in\mathbb{Z}\text{, then}$};
+  \node [arn_u] at (0,0) {\small Num}
+  child{
+    node [arn_u] {$n$}
+  };
+  \node at (1,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+Addition of two arithmetic expressions is also a program. Such a program has
+two components: the left and right operands. Each operand is an arithmetic
+expression and thus a program. Therefore, the following fact is true:
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{If }e_1,e_2\in T\text{, then}$};
+  \node [arn_u] at (0,0) {\small Add}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+Subtraction is similar.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{If }e_1,e_2\in E\text{, then}$};
+  \node [arn_u] at (0,0) {\small Sub}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+By collecting all the above facts, we can define the abstract syntax of \lang as
+the smallest set $E$ satisfying the following conditions.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2,-0.6) {$\text{If }n\in\mathbb{Z}\text{, then}$};
+  \node [arn_u] at (0,0) {\small Num}
+  child{
+    node [arn_u] {$n$}
+  };
+  \node at (1,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{If }e_1,e_2\in E\text{, then}$};
+  \node [arn_u] at (0,0) {\small Add}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{If }e_1,e_2\in E\text{, then}$};
+  \node [arn_u] at (0,0) {\small Sub}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+For example, the following tree represents an \lang program:
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.8cm},
+    level 2/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\small Add}
+  child{
+    node [arn_u] {\small Sub}
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$5$}
+      }
+    }
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$1$}
+      }
+    }
+  }
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$3$}
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+We call a tree that is an element of the set defined by abstract syntax an
+\textit{abstract syntax tree}\index{abstract syntax tree} (\acrshort{astLabel}).
+
+Abstract syntax can be easily implemented with ADTs in Scala. The following code
+implements the abstract syntax of \lang:
+
+\begin{verbatim}
+sealed trait AE
+case class Num(value: Int) extends AE
+case class Add(left: AE, right: AE) extends AE
+case class Sub(left: AE, right: AE) extends AE
+\end{verbatim}
+
+\code{Num($n$)} corresponds to
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\small Num}
+  child{
+    node [arn_u] {$n$}
+  };
+\end{tikzpicture}
+\end{center}
+
+\code{Add($e_1$, $e_2$)} corresponds to
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\small Add}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+\end{tikzpicture}
+\end{center}
+
+\code{Sub($e_1$, $e_2$)} corresponds to
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\small Sub}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+\end{tikzpicture}
+\end{center}
+
+The previous AST can be written as \code{Add(Sub(Num(3),
+Num(1)), Num(3))} in Scala.
+
+It is inconvenient to draw a tree every time we need to express a program. For
+this reason, people usually use notations that look like code to represent
+trees. For example, we can simply write $n$ instead of drawing a tree whose root
+is Num and only child is Num when it is clear that $n$ denotes an AST
+from the context. Similarly, we can use $e_1+e_2$ and $e_1-e_2$
+instead of trees that represent addition and subtraction respectively. Note that
+$+$ and $-$ in the notations are not the mathematical addition and subtraction
+operators. They are just parts of the notations and do not have any meaning.
+
+We can define the abstract syntax of \lang again by using the above notations.
+$E$ is the smallest set satisfying the following conditions:
+
+\begin{itemize}
+  \item If $n\in\mathbb{Z}$, then $n\in E$.
+  \item If $e_1,e_2\in E$, then $e_1+e_2\in E$.
+  \item If $e_1,e_2\in E$, then $e_1-e_2\in E$.
+\end{itemize}
+
+Even though the notations themselves do not look like trees at all, they still
+represent ASTs. Also, symbols like $+$ and $-$ do not have any meaning. It
+is extremely important to keep these points in your mind. Otherwise, you will
+mix abstract syntax using notations up with concrete syntax in the end.
+
+Notations are just notations. You can define different notations and use them.
+For example, one may use $\embox{ADD}\ e_1\ e_2$ instead of $e_1 + e_2$ to represent
+addition. You can freely choose notations, but once you define them, you should
+consistently use them not to make other peoples confused.
+
+To make the definition of abstract syntax more concise, we adopt BNF to the
+definition of abstract syntax. We can re-define the abstract syntax of \lang with
+BNF:
+
+\[e\ ::=\ n\ |\ e+e\ |\ e-e\]
+
+We call each symbol that denotes a particular element in abstract syntax a
+\textit{metavariable}.\index{metavariable}
+It is called \textbf{meta}variable because it is a variable at the
+meta-level, not the level of the defined programming language. For example, $e$
+is a metavariable that ranges over programs, and $n$ is a metavariable that
+ranges over integers.
+
+We often use parentheses to express elements of abstract syntax without
+ambiguity. For instance, $3-1+2$ can be interpreted in two ways:
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.8cm},
+    level 2/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] at (-3,0) {\small Add}
+  child{
+    node [arn_u] {\small Sub}
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$3$}
+      }
+    }
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$1$}
+      }
+    }
+  }
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$2$}
+    }
+  };
+  \node at (0,-2) {or};
+  \node [arn_u] at (3,0) {\small Sub}
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$3$}
+    }
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$1$}
+      }
+    }
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$2$}
+      }
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+If we write $(3-1)+2$, it is clear that it denotes the former. Otherwise, we
+write $3-(1+2)$ to denote the latter.
+
+\section{Parsing}
+
+Concrete syntax considers programs as strings, while abstract syntax considers
+programs as trees. Parsing bridges this gap. \textit{Parsing}\index{parsing} is
+a process of transforming a string following concrete syntax into an AST. A
+parser is a program that parses input. We can consider a parser as a partial
+function from $S$ (the set of every string) to $E$ (the set of
+every AST).
+
+\[\embox{parse}: S\pto E\]
+
+\begin{kaobox}[frametitle=Partial functions]
+  A partial function from a set $A$ to a set $B$ is a function from a subset of
+  $A$ to $B$.
+  While $A\rightarrow B$ is a set of functions from $A$ to $B$, $A\pto B$ is a set
+  of partial functions from $A$ to $B$.
+
+  Let $f$ be a partial function from $A$ to $B$. Then, there can be $a\in A$ such
+  that $f(a)$ is undefined. From a programmers' perspective, $f$ can be
+  interpreted as a function from $A$ to \code{Option[$B$]}, where \code{None}
+  means that the image is undefined and \code{Some($b$)} means that the image is
+  $b$.
+\end{kaobox}
+
+The result of $\embox{parse}$
+is undefined when the input does not belong to $P$ (the set of every
+program). That is why $\embox{parse}$ is a partial function. When the input
+belongs to $P$, $\embox{parse}$ results in the corresponding AST.
+
+Consider the parser of \lang. The results of $\embox{parse}$ are undefined for
+the following strings, as they are not \lang programs:
+
+\begin{itemize}
+  \item \code{1+}
+  \item \code{2*4}
+  \item \code{0++3}
+\end{itemize}
+
+On the other hand, below is an example of when $\embox{parse}$ succeeds.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.5,-1.2) {$\embox{parse}(\code{"-1+002"})=$};
+  \node [arn_u] at (0,0) {\small Add}
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$-1$}
+    }
+  }
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$2$}
+    }
+  };
+  \node at (1.8,-1.2) {$=-1+2$};
+\end{tikzpicture}
+\end{center}
+
+This book does not discuss implementation of parsers.
+
+\section{Semantics}
+
+Syntax is an essential element of a programming language. It allows us to know
+which strings are programs and what the structures of programs are. However,
+syntax does not explain execution of programs. Programmers write programs to
+execute them. They should know what will happen when their programs are
+executed. Therefore, we need semantics in addition to syntax. Semantics is the
+other essential element of a programming language. It defines the behaviors of
+programs.
+
+Let us define the semantics of \lang. Semantics is defined based on abstract
+syntax. The structure of a program determines its behavior. Since abstract
+syntax represents the structure, it is natural to use abstract syntax for
+semantics. The semantics of \lang defines the semantics of each \lang program,
+where the semantics of a program means things that happen when the program is
+executed. When an \lang program is executed, it does one thing: outputs the
+result of the evaluation of the arithmetic expression.
+For example, $0+1$ should result
+in $1$ if the semantics is defined correctly. Note that $+$ in $0+1$ does not
+mean addition, and we cannot say anything about the result of $0+1$ until the
+semantics is defined. To make \lang a reasonable language, we must define the
+semantics of \lang so that $0+1$ results in $1$.
+
+There are infinitely many programs. We cannot define the semantics of each
+program separately. We need to utilize the structures of programs defined by the
+abstract syntax. According to the abstract syntax, programs can split into three
+groups: $n$, $e_1+e_2$, and $e_1-e_2$. By defining the semantics of each group
+at once, we can complete the semantics of infinitely many programs in a finite
+method.
+
+The simplest case is $n$. $n$ is an expression consisting of an integer. An
+integer evaluates to itself. We represent this semantics as the following rule:
+
+\semanticrule{Num}{
+$n$ evaulates to $n$.
+}
+
+We can conclude the following facts by using Rule \textsc{Num}.
+
+\begin{itemize}
+  \item $1$ evaulates to $1$.
+  \item $5$ evaulates to $5$.
+\end{itemize}
+
+The next case is $e_1+e_2$. As $e_1$ is an arithmetic expression, it results in
+some integer. Let $n_1$ be the integer. Similarly, $e_2$ also results in some
+integer. Let $n_2$ be the integer. Then, the result of $e_1+e_2$ is the sum of
+$n_1$ and $n_2$. In this chapter, we use $\iadd$ instead of $+$ to denote
+mathematical addition. It will help you distinguish mathematical addition from
+$+$ used for the abstract syntax. Once you become familiar with syntax and
+semantics, you can easily distinguish them by checking the context even if both
+are denoted by $+$. From the next chapter, we will use $+$ for both abstract
+syntax and mathematical addition. The following rule defines the semantics of
+$e_1+e_2$.
+
+\semanticrule{Add}{
+If $e_1$ evaluates to $n_1$ and $e_2$ evaluates to $n_2$,\\
+then $e_1+e_2$ evaluates to $n_1\iadd n_2$.
+}
+
+We can define the semantics of $e_1-e_2$ in a similar way. Like $\iadd$,
+we use $\isub$ for mathematical subtraction in this chapter. The
+following rule defines the semantics of $e_1-e_2$.
+
+\semanticrule{Sub}{
+If $e_1$ evaluates to $n_1$ and $e_2$ evaluates to $n_2$,\\
+then $e_1-e_2$ evaluates to $n_1\isub n_2$.
+}
+
+These three rules are all of the semantics of \lang. We now know the behavior of
+every \lang program. For example, consider $(3-1)+2$. The following steps
+show why $(3-1)+2$ evaluates to $4$.
+
+\begin{enumerate}
+  \item (By Rule \textsc{Num}) $3$ evaluates to $3$.
+  \item (By Rule \textsc{Num}) $1$ evaluates to $1$.
+  \item (By Rule \textsc{Sub}) If $3$ evaluates to $3$ and $1$ evaluates to $1$, then $3-1$
+    evaluates to $2$.
+  \item (By 1, 2, and 3) $3-1$ evaluates to $2$.
+  \item (By Rule \textsc{Num}) $2$ evaluates to $2$.
+  \item (By Rule \textsc{Add}) If $3-1$ evaluates to $2$ and $2$ evaluates to $2$, then
+    $(3-1)+2$ evaluates to $4$.
+  \item (By 4, 5, and 6) $(3-1)+2$ evaluates to $4$.
+\end{enumerate}
+
+Now, let us define the semantics of \lang in a more mathematical way. The
+semantics defines the result of the execution of each program. Here, the result
+is an integer. We can say that semantics outputs an integer when a program is
+given. Thus, the semantics can be considered as a function from a program to an
+integer.
+
+\[\embox{eval}:E\rightarrow \mathbb{Z}\]
+
+For each $e\in E$, there should exist a unique integer $\embox{eval}(e)$. It
+is obviously true in \lang. Every arithmetic expression evaluates to a unique
+integer.
+
+However, defining semantics as a function is a bad choice in other languages.
+Some programs do not produce any results. Nonterminating programs are such
+examples. Programs that incur run-time errors also belong to this category. You
+will see programs with run-time errors in the next chapter. Moreover, there is a
+program whose result is not unique. We call such programs nondeterministic
+programs. For example, the behavior of a concurrent program with multiple
+threads depends on how the threads are interleaved during execution. If the
+threads are interleaved differently, the result may change. Programs without
+results and nondeterministic programs prevent us from defining semantics as a
+function. We should define semantics as a relation. Even though the semantics of
+\lang can be defined as a function, we define the semantics as a relation to
+make the discussion of this chapter easily extendable to other languages.
+
+We define the semantics of \lang as $\Rightarrow$, a binary relation over $E$
+and $\mathbb{Z}$.
+
+\begin{kaobox}[frametitle=Binary relations]
+A binary relation over sets $A$ and $B$ is a subset of $A\times B$,
+where $A\times B=\{(a,b)\ |\ a\in A\land b\in B\}$.
+
+Let $R$ be a binary relation over $A$ and $B$. Then, $R \subseteq A\times B$. For $a\in
+A$ and $b\in B$, we write $a\ R\ b$ when $(a,b)\in R$. For example, $<$ is a
+binary relation over $\mathbb{Z}$ and $\mathbb{Z}$, and we can write $1<2$ instead of
+$(1,2)\in<$.
+\end{kaobox}
+
+\[\Rightarrow\subseteq E\times\mathbb{Z}\]
+
+$(e,n)\in\Rightarrow$, i.e. $e\Rightarrow n$ implies that $e$ evaluates to $n$.
+
+Let us define the semantics again with mathematical concepts.
+
+\semanticrule{Num}{
+$n\Rightarrow n$.
+}
+
+\vspace{-1em}
+
+\semanticrule{Add}{
+If $e_1\Rightarrow n_1$ and $e_2\Rightarrow n_2$,\\
+then $e_1+e_2\Rightarrow n_1\iadd n_2$.
+}
+
+\vspace{-1em}
+
+\semanticrule{Sub}{
+If $e_1\Rightarrow n_1$ and $e_2\Rightarrow n_2$,\\
+then $e_1-e_2\Rightarrow n_1\isub n_2$.
+}
+
+We use one more mathematical concept: inference rules. An \textit{inference
+rule}\index{inference rule} is a rule to prove a new proposition from given
+propositions. An inference rule has the following form:
+
+\[
+  \inferrule
+  { \embox{premise}_1 \\ \embox{premise}_2 \\ \cdots \\ \embox{premise}_n }
+  { \embox{conclusion} }
+\]
+
+It consists of a horizontal line, propositions above the line, and a proposition
+below the line. We call the propositions above the line the
+\textit{premises}\index{premise} and the proposition below the line the
+\textit{conclusion}\index{conclusion}. The rule means that if every premise is
+true, then also the conclusion is true. A single inference rule can have zero or
+more premises. A rule without premises implies that its conclusion is always
+true. When a rule does not have any premises, we can omit the horizontal line.
+
+Let us define the semantics of \lang with inference rules.
+
+\[
+  n\Rightarrow n
+  \quad\textsc{[Num]}
+\]
+
+\[
+  \inferrule
+  { e_1\Rightarrow n_1 \\ e_2\Rightarrow n_2 }
+  { e_1+e_2\Rightarrow n_1\iadd n_2 }
+  \quad\textsc{[Add]}
+\]
+
+\[
+  \inferrule
+  { e_1\Rightarrow n_1 \\ e_2\Rightarrow n_2 }
+  { e_1-e_2\Rightarrow n_1\isub n_2 }
+  \quad\textsc{[Sub]}
+\]
+
+As you can see, the rules are much clearer and more concise than the rules
+written in a natural language.
+
+We can prove $(3-1)+2\Rightarrow4$ with the rules. We usually draw a proof tree
+when we prove a proposition with inference rules. A \textit{proof
+tree}\index{proof tree} is a tree whose root is the proposition to be proven.
+Each node of the tree is a proposition, and the children node of a node are
+evidences supporting that the proposition of the node is true. Unlike most trees in
+computer science, we place the root of a proof tree at the bottom. Every node is
+placed below its children.
+
+The following proof tree proves $3\Rightarrow3$.
+
+\[3\Rightarrow3\]
+
+The tree has only the root node because Rule \textsc{Num} does not have any
+premises.
+
+Similarly, the following proof tree proves $1\Rightarrow1$.
+
+\[1\Rightarrow1\]
+
+We draw the following proof tree with Rule \textsc{Sub} and the above trees
+to prove $3-1\Rightarrow2$.
+
+\[
+  \inferrule
+  { 3\Rightarrow3 \\ 1\Rightarrow1 }
+  { 3-1\Rightarrow2 }
+\]
+
+By using Rule \textsc{Num} again, we prove $2\Rightarrow2$.
+
+\[2\Rightarrow2\]
+
+Finally, we get the proof tree of $(3-1)+2\Rightarrow4$.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow4 }
+\]
+
+To explain what proof trees are, we have drawn the proof tree from its leaf
+nodes. However, we usually draw a proof tree from the root node.
+We start by drawing a horizontal line and writing the program we want to evaluate.
+
+\[
+  \inferrule
+  {
+    \color{white}
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    \color{white}
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+Then, we find which inference rule can be applied. In this case, we can use Rule
+\textsc{Add} since the program is addition.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { \color{white}3\Rightarrow3 \\ \color{white}1\Rightarrow1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+We need to evalaute $3-1$ and $2$ respectively. Let us focus on $3-1$ first.
+Since $3-1$ is subtraction, we use Rule \textsc{Sub}.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow\color{white}3 \\ 1\Rightarrow\color{white}1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+We can conclude that $3\Rightarrow3$ from Rule \textsc{Num}.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow\color{white}1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+Similarly, $1\Rightarrow1$.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+By subtracting $1$ from $3$, we get $2$.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+We use Rule \textsc{Num} agian and get $2\Rightarrow2$.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+Finally, we can complete the proof tree and prove $(3-1)+2\Rightarrow4$.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow4 }
+\]
+
+Sometimes, we call a proof tree proving the result of a program a \textit{derivation
+tree}\index{derivation tree} since the tree explains how the result of the
+program is derived.
+
+The way of defining semantics we have seen so far is \textit{big-step
+operational semantics}.\index{big-step operational semantics} It is called
+``operational'' because it focuses on which \textbf{operation}s happen during execution
+and ``big-step'' because it finds the result of a program by taking a single
+\textbf{big} step. There are other ways to define semantics: denotational
+semantics and small-step operational semantics. Most part of this book uses
+big-step operational semantics. However, it will use small-step operational
+semantics to deal with continuations later.
+
+An \textit{interpreter}\index{interpreter} is a program that takes a program as
+input and evaluates the program. We can easily implement an interpreter of
+\lang according to its semantics. The interpreter consists of a single function
+that takes an AST as an argument and returns an integer.
+
+\begin{verbatim}
+def interp(e: AE): Int = e match {
+  case Num(n) => n
+  case Add(l, r) => interp(l) + interp(r)
+  case Sub(l, r) => interp(l) - interp(r)
+}
+\end{verbatim}
+
+\section{Syntactic Sugar}
+
+\textit{Syntactic sugar}\index{syntactic sugar} adds a new feature to a language
+by defining syntactic transformation rules instead of changing the semantics.
+Syntactic sugar is widely used in real-world programming languages because it
+allows languages to provide useful features without increasing the burden of the
+language designers too much.
+
+Suppose that we want to add integer negation to \lang. It can be done by
+modifying both syntax and semantics of \lang. First, we fix the concrete syntax
+to add integer negation.
+
+\begin{verbatim}
+<expr> ::= <number> | <expr> "+" <expr>
+         | <expr> "-" <expr> | "-" "(" expr ")"
+\end{verbatim}
+
+Similarly, we fix the abstract syntax, too.
+
+\[e\ ::=\ n\ |\ e+e\ |\ e-e\ |\ -e\]
+
+The parser should be changed accordingly. For example, \code{-(03+4)} is parsed
+to $-(3+4)$.
+
+Finally, we add a new rule to the semantics to handle the $-e$ case.
+
+\semanticrule{Neg}{
+If $e$ evaluates to $n$,\\
+then $-e$ evaluates to $\isub n$.
+}
+
+Note that $\isub$ denotes mathematical negation.
+
+We can express the same thing as an inference rule.
+
+\[
+  \inferrule
+  { e\Rightarrow n}
+  { -e\Rightarrow\isub n }
+  \quad\textsc{Neg}
+\]
+
+It requires lots of work, as we need to fix every component of the language.
+
+Another way to add integer negation to \lang is to add it as syntactic sugar. It
+is enough to modify the concrete syntax and the parser. The change in the
+concrete syntax is the same as before. Now, we fix the parser to parse \code{"-"
+"(" expr ")"} to $0-e$ when \code{expr} is parsed to $e$. For example,
+\code{-(03+4)} is parsed to $0-(3+4)$. Since $0\isub n=\isub n$ for any integer
+$n$, we are done. It is the power of syntactic sugar. Language designers can
+easily add new features by syntactically transforming them to existing features.
+The procedure removing syntactic sugar by transformation is called
+\textit{desugaring}\index{desugaring}.
+
+We can find various examples of syntactic sugar in real-world languages. For
+instance, for loops in Scala are supported as syntactic sugar.
+
+\begin{quote}
+  A for comprehension \code{for ($p$ <- $e$) yield $e'$} is translated to
+  \code{$e$.map \{ case $p$ =>
+  $e'$ \}}.\sidenote{\url{https://www.scala-lang.org/files/archive/spec/2.13/06-expressions.html\#for-comprehensions-and-for-loops}}
+\end{quote}
+
+In addition, macros in languages like C, Scala, LISP, and Rust can be considered
+as user-defined syntactic sugar.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Consider the following concrete syntax:
+
+\begin{verbatim}
+<expr> ::= <num>
+         | "{" "+" <expr> <expr> "}"
+         | "{" "*" <expr> <expr> "}"
+         | "{" "let" "{" <id> <expr> "}" <expr> "}"
+         | <id>
+\end{verbatim}
+
+Describe whether each of the following is \code{expr} and why.
+Assume that it is allowed to add whitespaces among terminals freely.
+
+\begin{enumerate}
+  \item \verb!{let {x 5} {+ 8 {* x 2 3}}}!
+  \item \verb!{with {x 0} {with {x 7}}}!
+  \item \verb!{let {3 5} {+ 8 {- x 2}}}!
+  \item \verb!{let {3 y} {+ 8 {* x 2}}}!
+  \item \verb!{let {x y} {+ 8 {* x 2}}}!
+\end{enumerate}
+
+\item Consider the following concrete syntax:
+
+\newcommand{\BNF}[1]{\code{<#1>}}
+\newcommand{\coffee}{\mbox{\BNF{coffee}}}
+\newcommand{\milk}{\mbox{\BNF{milk}}}
+\newcommand{\flavor}{\mbox{\BNF{flavor}}}
+
+\[
+\begin{array}{ccc}
+  \code{espresso} \in \coffee
+  &&
+  \inferrule
+  { e_1 \in \milk \\ e_2 \in \coffee }
+  { e_1\ \code{"on"}\ e_2 \in \coffee }
+  \\[2em]
+  \inferrule
+  { e_1 \in \coffee \\ e_2 \in \milk }
+  { e_1\ \code{"on"}\ e_2 \in \coffee }
+  &&
+  \inferrule
+  { e_1 \in \flavor \\ e_2 \in \coffee }
+  { e_1\ \code{"on"}\ e_2 \in \coffee }
+  \\[2em]
+  \code{"milk-foam"} \in \milk
+  &&
+  \code{"steamed-milk"} \in \milk
+  \\[2em]
+  \code{"caramel"} \in \flavor
+  &&
+  \code{"cinnamon"} \in \flavor
+  \\[2em]
+  \code{"cocoa-powder"} \in \flavor
+  &&
+  \code{"chocolate-syrup"} \in \flavor
+\end{array}
+\]
+
+Assume that it is allowed to add whitespaces among terminals freely.
+
+\begin{enumerate}
+  \item Which of the following are elements of \BNF{coffee}?
+  \begin{enumerate}
+    \item \code{caramel latte macchiato}
+    \item \code{espresso}
+    \item \code{steamed-milk on caramel on milk-foam on espresso}
+    \item \code{chocolate-syrup on cocoa-powder on cinnamon on milk-foam on steamed-milk on espresso}
+    \item \code{steamed-milk on espresso on chocolate-syrup}
+  \end{enumerate}
+  \item Explain whether the following is \code{<coffee>} or not:
+
+  \code{cocoa-powder on milk-foam on steamed-milk on espresso}
+\end{enumerate}
+
+\item Consider the following concrete syntax:
+
+\begin{verbatim}
+<ice-cream> ::= "sprinkles" "on" <ice-cream>
+              | "cherry" "on" <ice-cream>
+              | "scoop" "of" <flavor> "on" <ice-cream>
+              | "sugar-cone"
+              | "waffle-cone"
+<flavor>    ::= "vanilla"
+              | "lettuce"
+\end{verbatim}
+
+Assume that it is allowed to add whitespaces among terminals freely.
+
+\begin{enumerate}
+  \item Which of the following are elements of \code{<ice-cream>}?
+  \begin{enumerate}
+    \item \code{sprinkles}
+    \item \code{sugar-cone}
+    \item \code{vanilla}
+    \item \code{scoop of vanilla on waffle-cone}
+    \item \code{sprinkles on lettuce on waffle-cone}
+    \item \code{scoop of vanilla on sprinkles on waffle-cone}
+  \end{enumerate}
+  \item Explain why the following is an element of \code{<ice-cream>}:
+
+  \code{cherry on scoop of lettuce on scoop of vanilla on sugar-cone}
+\end{enumerate}
+\end{enumerate}

@@ -310,8 +310,8 @@ def product(l: List[Int]): Int = l match {
 
 Recursion has some disadvantages: overheads of function calls and stack
 overflow. Most modern CPUs have enough computing power to ignore function call
-overheads. However, loops are still ideal for recursion in performance-critical
-programs. Stack overflow happens when a
+overheads. However, loops are still more ideal than recursive functions in
+performance-critical programs. Stack overflow happens when a
 stack lacks space due to repetitive function calls. It is a critical problem
 since it causes immediate termination of execution without yielding meaningful
 output. Moreover, programs like web servers do not finish their execution, and

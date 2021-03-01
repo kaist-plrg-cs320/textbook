@@ -54,17 +54,30 @@
 
 \usepackage{mathpartir}
 \usepackage{dirtree}
+\usepackage{xspace}
+\usepackage{tikz}
 
+\usetikzlibrary{arrows}
+\tikzset{
+  treenode/.style = {align=center, inner sep=0pt, text centered},
+  arn_u/.style = {treenode, circle, black, draw=black, text width=0.8cm, line width=0.25mm},
+  arn_w/.style = {treenode, circle, white, draw=white, text width=0.8cm, line width=0.25mm},
+  arn_nc/.style = {treenode, circle, black, draw=white, text width=0.8cm, line width=0.25mm},
+}
+
+\newcommand{\lang}{}
 \newcommand{\code}[1]{\texttt{#1}}
-\newcommand{\term}[1]{#1}
-
-\graphicspath{{examples/documentation/images/}{images/}} % Paths in which to look for images
-
-\makeindex[columns=3, title=Alphabetical Index, intoc] % Make LaTeX produce the files required to compile the index
-
-\makeglossaries % Make LaTeX produce the files required to compile the glossary
-
-\makenomenclature % Make LaTeX produce the files required to compile the nomenclature
+\newcommand{\pto}{\mathrel{\ooalign{\hfil$\mapstochar$\hfil\cr$\to$\cr}}}
+\newcommand{\embox}[1]{\mbox{\emph{#1}}}
+\newcommand{\finto}{\stackrel{\mbox{\tiny fin}}{\to}}
+\newcommand{\iadd}{+_{{}_{\mathbb{Z}}}}
+\newcommand{\isub}{-_{{}_{\mathbb{Z}}}}
+\newcommand{\semanticrule}[2]{
+\vspace{1em}
+\textbf{Rule \textsc{#1}}\\
+#2
+\vspace{1em}
+}
 
 \newcommand{\newfrac}[2] {
         \frac
@@ -77,8 +90,13 @@
     {\displaystyle #2}}
 }
 \newcommand{\derive}[2]{\ensuremath{\begin{array}{c}\infer{#1}{#2}\end{array}}}
-\newcommand{\embox}[1]{\mbox{\emph{#1}}}
-\newcommand{\finto}{\stackrel{\mbox{\tiny fin}}{\to}}
+\newcommand{\term}[1]{#1}
+
+\makeindex[columns=3, title=Alphabetical Index, intoc] % Make LaTeX produce the files required to compile the index
+
+\makeglossaries % Make LaTeX produce the files required to compile the glossary
+
+\makenomenclature % Make LaTeX produce the files required to compile the nomenclature
 
 % Reset sidenote counter at chapters
 %\counterwithin*{sidenote}{chapter}
@@ -225,8 +243,7 @@
 \addpart{Untyped Languages}
 \pagelayout{margin} % Restore margins
 
-\input{chapters/syntax.tex}
-\input{chapters/semantics.tex}
+\input{chapters/syntax-and-semantics.tex}
 \input{chapters/identifiers.tex}
 \input{chapters/first-order-functions.tex}
 \input{chapters/first-class-functions.tex}
@@ -325,6 +342,8 @@
 \newacronym[longplural={algebraic data types}]{adtLabel}{ADT}{algebraic data type}
 \newacronym[longplural={real-eval-print-loop}]{replLabel}{REPL}{read-eval-print-loop}
 \newacronym[longplural={Java Virtual Machines}]{jvmLabel}{JVM}{Java Virtual Machine}
+\newacronym[longplural={Backus-Naur forms}]{bnfLabel}{BNF}{Backus-Naur form}
+\newacronym[longplural={abstract syntax trees}]{astLabel}{AST}{abstract syntax tree}
 
 \setglossarystyle{listgroup} % Set the style of the glossary (see https://en.wikibooks.org/wiki/LaTeX/Glossary for a reference)
 \printglossary[title=Special Terms, toctitle=List of Terms] % Output the glossary, 'title' is the chapter heading for the glossary, toctitle is the table of contents heading
