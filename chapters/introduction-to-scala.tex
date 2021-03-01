@@ -65,7 +65,7 @@ the next line.
 \item A state that \code{x} is \code{5} and \code{y} is \code{2}
 \end{enumerate}
 
-The state keep changes throughout the exeuction of the program. Each line
+The state keeps changes throughout the execution of the program. Each line
 modifies the current state rather than resulting in some value.
 
 \begin{verbatim}
@@ -119,7 +119,7 @@ As we have seen so far,
 immutability is the most important concept of functional programming.
 Immutability allows modular programming and eases the reasoning of programs.
 Because of immutability, programs that have to be trustworthy or require parallel computing
-are good applications of function programming.
+are good applications of functional programming.
 \refch{immutability} will discuss the advantages of immutability in detail and
 how to write interesting programs without mutation.
 
@@ -129,7 +129,7 @@ key roles in functional programming. Both first-class functions and pattern matc
 are valuable as they help abstraction. First-class functions allow programmers
 to abstact computation; pattern matching allows programmers to abstract
 data. Because of the ability of abstraction,
-programs whose input has complicated and abstract structures like source code
+programs whose input has complex and abstract structures like source code
 are typically written in functional languages.
 \refch{functions} and \refch{pattern-matching} will respectively discuss first-class
 functions and pattern matching in Scala.
@@ -138,7 +138,7 @@ This book implements interpreters and type checkers. They take source code as
 input and process the input according to the mathematical semantics of programming
 languages. It is important
 to reason about the correctness of interpreters and type checkers. These
-properties exactly matches the strengths of functional programming. It is why
+properties exactly match the strengths of functional programming. It is why
 this book uses functional programming and Scala.
 
 Before moving on to the next section,
@@ -160,7 +160,7 @@ the programming language community and has developed its own software in OCaml.
 According to the OCaml website,\sidenote{\url{http://ocaml.org/learn/companies.html}}
 various companies including Docker use OCaml.
 
-Haskell Wiki\sidenote{\url{http://wiki.haskell.org/Haskell_in_industry}} mentions that Google,
+Haskell Wiki\sidenote{\url{http://wiki.haskell.org/Haskell_in_industry}} describes that Google,
 Facebook, Microsoft, Nvidia, and many other companies use Haskell.
 
 Erlang is a functional language for concurrent and parallel computing. Elixir
@@ -177,7 +177,7 @@ Machine (\acrshort{jvmLabel}), you must
 install Java before installing Scala. Java has various versions. Scala 2.13,
 which is used in this book, needs JDK 8 or higher. JDK 8 is the most recommended
 one. The Scala website\sidenote{\url{https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html}}
-mentions compatibility issues regarding the other versions.
+discusses compatibility issues regarding the other versions.
 
 The Oracle website\sidenote{\url{https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html}}
 provides an installation file for JDK 8.
@@ -191,7 +191,7 @@ Scala REPL, interpreter, and compiler. \refsec{scala-repl},
 their usages respectively.
 
 Another thing to install is SBT. SBT is a build tool for Scala. An installation
-file for SBT can be found at the SBT
+file for SBT is available at the SBT
 website.\sidenote{\url{https://www.scala-sbt.org/download.html}}
 \refsec{sbt} will discuss the usage of SBT.
 
@@ -323,7 +323,7 @@ type of the variable becomes the same as the type of its value.
 People usually omit the type annotations of local variables.
 
 \begin{verbatim}
-scala> val y = 3
+scala> val x = 3
 val x: Int = 3
 \end{verbatim}
 
@@ -353,7 +353,7 @@ scala> z
 val res8: Int = 6
 \end{verbatim}
 
-To assign a new value to a mutable variable, the value must conform the
+To assign a new value to a mutable variable, the value must conform to the
 type of the variable. Otherwise, a type mismatch will happen.
 
 \begin{verbatim}
@@ -419,9 +419,9 @@ def quadruple(x: Int): Int
 Inside \code{quadruple}, the variable \code{y} is defined and used for the
 computation of
 the return value.\sidenote{Vertical bars (\code{|}) at the beginning of lines are
-not part of code. They has been automatically inserted by REPL.}
+not part of code. They have been automatically inserted by REPL.}
 
-Multiple expressions inside curly braces collectively treated as a single
+Multiple expressions inside curly braces are collectively treated as a single
 expression. We call such an expression a sequenced expression. Like any other
 expressions, a sequenced expression can occur anywhere an expression is needed.
 For example, it can be used to define a variable.
@@ -458,7 +458,7 @@ val res10: Int = 1
 
 A conditional expression evaluates to a value. It is more similar to the ternary
 operator \code{? :} in C than a if statement.
-We do not need make a variable
+We do not need to make a variable
 mutable to initialize the variable with a conditional value.
 
 \begin{verbatim}
@@ -495,7 +495,7 @@ val res11: Int = 4
 
 A list is a collection of zero or more elements. A list maintains the order between
 its elements. Lists in Scala are immutable. Once a list is created, its elements
-never changes. There are two ways to create a new list in Scala:
+never change. There are two ways to create a new list in Scala:
 
 \begin{itemize}
   \item \code{List([expression], …, [expression])}
@@ -595,7 +595,7 @@ scala> (1, true)
 val res19: (Int, Boolean) = (1,true)
 \end{verbatim}
 
-To fetch the \code{i}th element of a tuple, we can use \verb+._i+.\sidenote{The
+To fetch the \code{i}-th element of a tuple, we can use \verb+._i+.\sidenote{The
 first index is 1.}
 
 \begin{verbatim}
@@ -604,18 +604,18 @@ val res20: Int = 1
 \end{verbatim}
 
 Tuples look similar to lists but have important differences from
-lists. First, a tuple's elements can vary in their types, while a list's
+lists. First, a tuple's elements can have different types, while a list's
 elements cannot. For example, a tuple of the type \code{(Int, Boolean)} has
 one integer and one boolean, while a list of the type \code{List[Int]} can have
 only integers. We say that tuples are heterogenous, while lists are homogeneous.
 Second, a list allows accessing an arbitrary index of a list,
 while a tuple does not. For example, \code{l(f())} is possible where \code{l} is
 a list and \code{f} returns an integer, while there is no way to access the
-\code{f()}th element of a tuple since the return value of \code{f} is unknown
+\code{f()}-th element of a tuple since the return value of \code{f} is unknown
 before execution.
 
 We use lists and tuples for different purposes. Lists are appropriate when the
-number of elements can vary and an arbitrary index should be able to be accessed.
+number of elements can vary and an arbitrary index should be accessible.
 For instance, a list should be used to represent a collection of the heights of
 students in a certain class.
 
@@ -623,7 +623,7 @@ students in a certain class.
 List(189, 167, 156, 170, 183)
 \end{verbatim}
 
-It allows us to fetch the height of the \code{i}th student.
+It allows us to fetch the height of the \code{i}-th student.
 
 On the other hand, tuples are appropriate when the number of elements
 are fixed and each index has a specific meaning. For instance,
@@ -671,7 +671,7 @@ methods.\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/i
 
 \subsection{Classes and Objects}
 
-An object is a value with fields and methods. Fields stores values, and methods
+An object is a value with fields and methods. Fields store values, and methods
 are operations related to the object. A class is a blueprint of objects. We can
 easily create multiple objects of the same structure by defining a single class.
 This book uses only ``case'' classes of Scala. Case classes are similar to

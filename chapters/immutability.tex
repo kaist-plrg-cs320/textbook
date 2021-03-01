@@ -119,7 +119,7 @@ x
 \end{verbatim}
 
 Since \code{ListBuffer} creates mutable lists, there is no guarantee that the
-content of \code{x} does not be changed by \code{f}. If it is necessary to prevent
+content of \code{x} is not changed by \code{f}. If it is necessary to prevent
 modification, copying \code{x} is essential.
 
 \begin{verbatim}
@@ -147,7 +147,7 @@ However, mind that immutability is not the silver bullet for every
 program. For example, implementing algorithms in a functional style is usually
 inefficient. It would be better to use mutable data structures like arrays,
 mutable variables, and loops to implement algorithms. They make
-programs much more efficient and faster. Choosing a programming proper paradigm to
+programs much more efficient and faster. Choosing a programming proper paradigm for
 the purpose of a program is the key to write good code.
 
 \section{Recursion}
@@ -194,7 +194,7 @@ Note that recursive functions always require explicit return types in Scala,
 unlike non-recursive functions, whose return types can be omitted.
 
 The recursive version is preferred over the imperative version since its
-correctness is easy to be verified.
+correctness is easily verified.
 
 To check the correctness of the imperative
 \code{factorial} function, one should find a \textit{loop invariant}\index{loop invariant},
@@ -223,9 +223,9 @@ In many cases, functions with recursion is much easier to be verified formally
 or informally than functions with loops.
 
 Recursive functions are also good at treating recursive data structures like
-lists. A list is recursive since a nonempty list consists of the head element
-and the tail list, which means that a nonempty list has another list as its component.
-Writing some functions regarding lists help understanding and practicing
+lists. A list is recursive since a nonempty list consists of a head element
+and a tail list, which means that a nonempty list has another list as its component.
+Writing some functions regarding lists helps understanding and practicing
 recursion.
 
 The following function takes a list as an argument and returns a list whose
@@ -310,7 +310,7 @@ def product(l: List[Int]): Int = l match {
 
 Recursion has some disadvantages: overheads of function calls and stack
 overflow. Most modern CPUs have enough computing power to ignore function call
-overheads. However, loops are still ideal for functions in performance-critical
+overheads. However, loops are still ideal for recursion in performance-critical
 programs. Stack overflow happens when a
 stack lacks space due to repetitive function calls. It is a critical problem
 since it causes immediate termination of execution without yielding meaningful
