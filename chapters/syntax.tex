@@ -382,3 +382,149 @@ Expr.parse("(4 + (2 - 1))")
 Expr.parse("1 + 2")
 // java.lang.Exception
 \end{verbatim}
+
+\newpage
+\section{Exercises}
+
+\begin{enumerate}
+\item Given the following grammar:
+%
+\begin{verbatim}
+    <WAE> ::= <num>
+            | {+ <WAE> <WAE>}
+            | {* <WAE> <WAE>}
+            | {let {<id> <WAE>} <WAE>}
+            | <id>
+\end{verbatim}
+%
+Describe whether each of the following is \verb+<WAE>+ and why:
+
+\begin{itemize}
+\item[a)]
+\begin{verbatim}
+{let {x 5} {+ 8 {* x 2 3}}}
+\end{verbatim}
+
+\item[b)]
+\begin{verbatim}
+{with {x 0} {with {x 7}}}
+\end{verbatim}
+
+\item[c)]
+\begin{verbatim}
+{let {3 5} {+ 8 {- x 2}}}
+\end{verbatim}
+
+\item[d)]
+\begin{verbatim}
+{let {3 y} {+ 8 {* x 2}}}
+\end{verbatim}
+
+\item[e)]
+\begin{verbatim}
+{let {x y} {+ 8 {* x 2}}}
+\end{verbatim}
+\end{itemize}
+
+\item Given the following grammar:
+%
+\newcommand{\BNF}[1]{$\langle$#1$\rangle$}
+\newcommand{\coffee}{\mbox{\BNF{coffee}}}
+\newcommand{\milk}{\mbox{\BNF{milk}}}
+\newcommand{\flavor}{\mbox{\BNF{flavor}}}
+
+\[
+\begin{array}{ccc}
+{\texttt{espresso} \in \coffee}
+&&
+\newinfrule
+{e_1 \in \milk\qquad
+e_2 \in \coffee
+}
+{\ e_1\ \texttt{on}\ e_2 \in \coffee}
+\\[2em]
+\newinfrule
+{e_1 \in \coffee\qquad
+e_2 \in \milk
+}
+{\ e_1\ \texttt{on}\ e_2 \in \coffee}
+&&
+\newinfrule
+{e_1 \in \flavor \qquad
+e_2 \in \coffee
+}
+{\ e_1\ \texttt{on}\ e_2 \in \coffee}
+\\[2em]
+{\texttt{milk-foam} \in \milk}
+&&
+{\texttt{steamed-milk} \in \milk}
+\\[2em]
+{\texttt{caramel} \in \flavor}
+&&
+{\texttt{cinnamon} \in \flavor}
+\\[2em]
+{\texttt{cocoa-powder} \in \flavor}
+&&
+{\texttt{chocolate-syrup} \in \flavor}
+\end{array}
+\]
+where \texttt{on} is right-associative.
+
+\begin{itemize}
+\item[a)] Which of the following are examples of \BNF{coffee}?
+%
+\begin{enumerate}
+
+  \item[1)] \texttt{caramel latte macchiato} % No
+
+  \item[2)] \texttt{espresso} % Yes
+
+  \item[3)] \texttt{steamed-milk on caramel on milk-foam on espresso} % Yes
+
+  \item[4)] \texttt{chocolate-syrup on cocoa-powder on cinnamon on milk-foam on steamed-milk on espresso} % Yes
+
+  \item[5)] \texttt{steamed-milk on espresso on chocolate-syrup} % No
+
+\end{enumerate}
+
+\item[b)] Draw a proof of why the following is or is not \BNF{coffee}:
+
+\begin{center}
+\texttt{cocoa-powder on milk-foam on steamed-milk on espresso}
+\end{center}
+\end{itemize}
+
+\item Given the following grammar:
+%
+\begin{center}
+\begin{tabular}{lll}
+ \BNF{ice-cream} & $::=$ & \texttt{sprinkles on \BNF{ice-cream}} \\
+  & $|$ & \texttt{cherry on \BNF{ice-cream}} \\
+  & $|$ & \texttt{scoop of \BNF{flavor} on \BNF{ice-cream}} \\
+  & $|$ & \texttt{sugar-cone} \\
+  & $|$ & \texttt{waffle-cone} \\
+ \BNF{flavor} & $::=$ & \texttt{vanilla} \\
+  & $|$ & \texttt{lettuce}
+\end{tabular}
+\end{center}
+%
+\begin{itemize}
+  \item[a)] Which of the following are examples of \BNF{ice-cream}?
+%
+\begin{itemize}
+  \item[1)] \texttt{sprinkles}
+  \item[2)] \texttt{sugar-cone}
+  \item[3)] \texttt{vanilla}
+  \item[4)] \texttt{scoop of vanilla on waffle-cone}
+  \item[5)] \texttt{sprinkles on lettuce on waffle-cone}
+  \item[6)] \texttt{scoop of vanilla on sprinkles on waffle-cone}
+\end{itemize}
+
+  \item[b)] Explain why the following is an \BNF{ice-cream}:
+
+\begin{center}
+\texttt{cherry on scoop of lettuce on scoop of vanilla on sugar-cone}
+\end{center}
+\end{itemize}
+
+\end{enumerate}

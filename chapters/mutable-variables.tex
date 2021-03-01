@@ -324,3 +324,92 @@ Execution of the code prints \verb!2!.
 In C or C++, programmers can mimic call by reference by explicitly passing pointers as arguments. In Java or Scala, if arguments are objects, their references are passed. One can say that it is call by reference. Many other object-oriented languages use call by reference. However, since they pass the addresses of objects instead of the addresses of variables, their call-by-reference semantics differs from call by reference of C++ or MFAE. Some people call such semantics of object-oriented languages \term{call by sharing}, but the terminology is unpopular.
 
 \term{Call by name} and \term{call by need} are other semantics for function applications. The next article deals with them.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item
+Consider the following language $e$:
+\[
+\begin{array}{rll}
+e ::= & n\\
+\mid& \verb!{+ ! e\ e\verb+}+\\
+\mid& x\\
+\mid& \verb+{* +x\verb+}+\\
+\mid& \verb+{& +x\verb+}+\\
+\mid& \verb!{with {! x\ e\verb+} +e\verb+}+\\
+\mid& \verb!{seqn ! e\ e\verb+}+\\
+\mid& \verb!{set ! e\ e\verb+}+\\
+\end{array}
+\]
+where a value of the language is either a number $n$ or an address $a$,
+an environment maps names to addresses, and a store maps addresses to values:
+\[
+\begin{array}{rrl}
+n \in \mathbb{Z}\\
+a \in \embox{Addr}\\
+v \in \embox{Val} & = & \mathbb{Z} + \embox{Addr}\\
+\sigma \in \embox{Env} & = & \embox{Var} \finto \embox{Addr}\\
+M \in \embox{Store} & = & \embox{Addr} \finto \embox{Val}
+\end{array}
+\]
+The semantics of some constructs are as follows:
+\begin{itemize}
+\item The value of \verb!{+ !$e_1\,e_2$\verb!}! is addition of the values of $e_1$ and $e_2$ with the following rules:
+\begin{itemize}
+\item Adding two numbers $n_1$ and $n_2$ evaluates to $n_1+n_2$.
+\item Adding two addresses $a_1$ and $a_2$ evaluates to $a_1+a_2$.
+\item Adding a number $n$ and an address $a$ evaluates to $n \times 8 +a$.
+\end{itemize}
+
+\item The value of an identifier $x$ is the value in the store at the address denoted by the identifier in the environment.
+\item The value of \verb+{* +$x$\verb+}+ is the value in the store at the address denoted by the value of the identifier.
+\item The value of \verb+{& +$x$\verb+}+ is the address denoted by the identifier in the environment.
+\item The evaluation of \verb+{set +$e_1\ e_2$\verb+}+ evaluates $e_2$ first, which is the value of the whole expression.  Then, it evaluates $e_1$, and it maps the address denoted by the value of $e_1$ to the value of $e_2$.
+\end{itemize}
+Write the operational semantics of the form \fbox{$\sigma, M\vdash e \Rightarrow v, M$} for the expressions.
+
+\item The following code is an excerpt from the implementation of the interpreter for
+BMFAE:
+%// interp : (BMFAE, Env, Sto) => (BMFAEValue, Sto)
+\begin{verbatim}
+def interp(bmfae:BMFAE, env:Env, sto:Sto): (BMFAEValue, Sto) = bmfae match { ...
+    case App(f, a) => a match {
+      case Id(name) =>
+        val (fv, fs) = interp(f, env, sto)
+        fv match {
+          case CloV(x, b, fenv) =>
+            val addr = lookup(name, env)
+            interp(b, fenv + (x -> addr), fs)
+          case _ => error(s"not a closure: $fv")
+        }
+      case _ =>
+        val (fv, fs) = interp(f, env, sto)
+        val (av, as) = interp(a, env, fs)
+        fv match {
+          case CloV(x, b, fenv) =>
+            val addr = malloc(as)
+            interp(b, fenv + (x -> addr), as + (addr -> av))
+          case _ => error(s"not a closure: $fv")
+        } } }
+\end{verbatim}
+
+\begin{itemize}
+  \item[a)] What is the calling convention of this semantics?
+%Is this semantics call-by-value, call-by-reference, or call-by-name?
+
+\hspace*{-2em}
+Consider the following expression in BMFAE:
+\begin{verbatim}
+{with {n 42}
+      {with {f {fun {g} {g n}}}
+            {f {fun {x} {+ x 8}}}}}
+\end{verbatim}
+
+\item[b)] Show the environment and store just before evaluating addition in the call-by-reference semantics.
+
+\item[c)] Show the environment and store just before evaluating addition in the call-by-value semantics.
+\end{itemize}
+
+
+\end{enumerate}

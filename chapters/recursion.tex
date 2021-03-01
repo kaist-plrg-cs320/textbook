@@ -399,3 +399,148 @@ interp(
 )
 // NumV(6)
 \end{verbatim}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Explain why the following code is an infinite loop and describe how to break the infinite loop:
+
+\begin{verbatim}
+ 1 val mkRec = { bodyProc => {
+ 2   val fX = {fY => {
+ 3     val f = fY(fY)
+ 4     bodyProc(f)
+ 5   }};
+ 6   fX(fX)
+ 7 }};
+ 8 val fac = mkRec({ fac => {
+ 9   n => if0 (n) { 1 } else { (n * fac((n - 1))) }
+10 }});
+11 fac(10)
+\end{verbatim}
+
+\item Consider the following definition of \texttt{mkRec} and its use to define the recursive
+function \texttt{fib}:
+
+\begin{verbatim}
+val mkRec = { bodyProc => {
+  val fX = {fY => {
+    val f = x => (fY(fY))(x)
+    bodyProc(f)
+  }};
+  fX(fX)
+}};
+val fib = mkRec({ fib => {
+  n => if ((n = 0) or (n = 1)) { 1 } else { (fib(n-1) + fib((n-2))) }
+}});
+fac(10)
+\end{verbatim}
+
+Describe what conditions \texttt{bodyProc} should satisfy so that \texttt{mkRec} can make its recursive version.
+
+\item Let's call the following code $A$:
+\begin{verbatim}
+val fac = val facX = {facX => {
+                       n => {
+                         val fac = facX(facX);
+                         if0 n 1 (n * fac(n-1))
+                     }}};
+          (facX facX);
+fac(5)
+\end{verbatim}
+and the following code $B$:
+\begin{verbatim}
+val fac = val facX = {facX => {
+                       val fac = facX(facX);
+                       n => {
+                         if0 n 1 (n * fac(n-1))
+                       }}};
+          (facX facX);
+fac(5)
+\end{verbatim}
+
+\begin{itemize}
+  \item[a)] What is the result of $A$?
+  \item[b)] What is the result of $B$?
+\end{itemize}
+
+\item Write the value of \texttt{fac} at line 11:
+
+\begin{verbatim}
+ 1 {with {fac
+ 2         {with {facX
+ 3                 {fun {facY}
+ 4                    {with {fac {fun {x} {{facY facY} x}}}
+ 5                          ; Exactly like original fac
+ 6                          {fun {n}
+ 7                             {if0 n
+ 8                                  1
+ 9                                  {* n {fac {- n 1}}}}}}}}
+10               {facX facX}}}
+11       {fac 10}}
+\end{verbatim}
+
+using the following Scala types:
+\begin{verbatim}
+trait FWAEValue
+case class NumV(n: Int) extends FWAEValue
+case class CloV(param: String, body: String, env: Env) extends FWAEValue
+type Env = Map[String, FWAEValue]
+\end{verbatim}
+Note that the type of the body  of \texttt{CloV} is \texttt{String}.
+
+\item Consider the following language $e$:
+\[
+\begin{array}{rll}
+e ::= & n\\
+\mid& \verb!{- ! e\ e\verb+}+\\
+\mid& b\\
+\mid& \verb!{and ! e\ e\verb+}+\\
+\mid& \verb!{not ! e\verb+}+\\
+\mid& \verb!{if ! e\ e\ e\verb+}+\\
+\mid& x\\
+\mid& \verb!{fun {! x^*\verb+} +e\verb+}+\\
+\mid& \verb!{! e\ e^*\verb+}+\\
+\mid& \verb!{rec {! x\ e\verb+} +e\verb+}+\\
+\end{array}
+\]
+where $n$ denotes a number, $b$ denotes a boolean, $x$ denotes an identifier,
+and a value $v$ of the language is one of a number, a boolean, or a closure
+$\langle \lambda x_1\ \cdots\ x_n .\ e,\ \sigma\rangle$.
+It does not support the short-circuiting semantics.
+\begin{itemize}
+  \item[a)]
+Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
+  \item[b)] Write the evaluation derivation of the following expressions:
+
+\hspace*{-5em}
+\derive {\hspace*{\textwidth}}
+{\emptyset\vdash \{\{\texttt{fun}\ \{f\ m\}\ \{f\ m\}\}\
+\{\texttt{fun}\ \{x\}\ x\}\ 8\} \Rightarrow~~~~~~~~}
+
+% To Add
+%%
+\hspace*{-5em}
+\derive
+{\hspace*{\textwidth}}
+{[\texttt{zero} \mapsto \langle 
+\lambda x_1\ x_2\ x_3 .\ 
+\texttt{\{if}\ x_1\ x_2\ x_3\texttt{\}},\
+\emptyset\rangle] \vdash \term{pgm}
+\Rightarrow~~~~~~~~
+}
+
+\bigskip
+where \term{pgm} is as follows:
+\[
+\begin{array}{l}
+\texttt{\{rec \{visit \{fun \{b\ n\} \{if b n \{visit \{not b\} \{zero n\}\}\}\}\}}\\
+\texttt{\phantom{\{rec }\{rec \{zero \{fun \{x\} \{- 42 x\}\}\}}\\
+\texttt{\phantom{\{rec \{rec }\{visit false 7\}\}\}}
+\end{array}
+\]
+
+\end{itemize}
+
+
+\end{enumerate}

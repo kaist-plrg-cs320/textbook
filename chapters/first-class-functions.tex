@@ -297,3 +297,294 @@ makes proofs easier or allows borrowing already proven facts.
 
 \term{Structural induction} proves the correctness of encodings. Such proofs are
 beyond the scope of the article and the course.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Given the following expression:
+
+\begin{verbatim}
+val x = 5
+in  val f = lambda y. y + x
+    in (lambda g.f (g 1)) (lambda x.x)
+\end{verbatim}
+
+Describe a trace of the evalaution in terms of arguments to an \texttt{interp}
+function for every call. (There will be 16 calls.) The \texttt{interp} function
+takes two arguments --- an expression and a
+   deferred substitution --- so show both for each call.  For number,
+   variable, and \texttt{fun} expressions, show the result value, which
+   is immediate. Use the back of the exam for additional space, and
+   use the following abbreviations and possibly more abbreviations
+ to save time:
+
+\begin{center}
+\begin{tabular}{lcl}
+$E_0$ & = & the whole expression \\
+$E_1$ & = & \texttt{lambda y. y + x} \\
+$E_2$ & = & \texttt{lambda g.f (g 1)} \\
+$E_3$ & = & \texttt{lambda x.x} \\
+$E_4$ & = & \texttt{val f = $E_1$ in $E_2$ $E_3$}
+\end{tabular}
+\end{center}
+
+\item The following code is an implementation of the interpreter for AEF.
+All the missing definitions are exactly the same as the ones for FAE.
+
+\begin{verbatim}
+def interp(e: Expr, env: Env): Value = e match {
+  case Num(n) => NumV(n)
+  case Add(l, r) =>
+    val NumV(n) = interp(l, env)
+    val NumV(m) = interp(r, env)
+    NumV(n + m)
+  case Sub(l, r) =>
+    val NumV(n) = interp(l, env)
+    val NumV(m) = interp(r, env)
+    NumV(n - m)
+  case Id(x) => lookup(x, env)
+  case Fun(x, b) => CloV(x, b, env)
+  case App(f, a) =>
+    val CloV(x, b, fEnv) = interp(f, env)
+    interp(b, __________ + (x -> interp(a, env)))
+}
+\end{verbatim}
+
+Describe the semantics of the \texttt{App} case in AEF in prose
+when we use each of the following for the blank above:
+\begin{itemize}
+  \item[a)] \texttt{env}
+  \item[b)] \texttt{Map()}
+  \item[c)] \texttt{fEnv}
+\end{itemize}
+
+\item Consider the following expression:
+\[
+\begin{array}{l@{~}l}
+\textsf{val}\ \term{fac} = \lambda m. &
+\textsf{val}\ \term{facX} = \lambda \term{facX}.
+\lambda m. \textsf{if0}\ m\ 1\ (n * ((\term{facX}\ \term{facX})\ (x - 1)))\\
+&\textsf{in}\ ((\term{facX}\ \term{facX})\ m)\\
+\textsf{in}\ (\term{fac}\ m)
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Draw arrows on the above expression from each bound variable to its binding occurrence.
+\item[b)] Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
+\end{itemize}
+
+\item Consider the following language $e$:
+\[
+\begin{array}{rll}
+e ::= & n\\
+\mid& x\\
+\mid& \verb!{fun {! x\ \cdots\ x\verb+} +e\verb+}+\\
+\mid& \verb!{! e\ \cdots\ e\verb+}+\\
+\end{array}
+\]
+where $n$ denotes a number and a value of the language is either a number or a closure.
+\begin{itemize}
+  \item[a)] Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
+  \item[b)] Write the evaluation derivation of the following expression:
+
+\derive
+{\hspace*{\textwidth}}
+{\emptyset\vdash \{\{\texttt{fun}\ \{f\ m\}\ \{f\ m\}\}\
+\{\texttt{fun}\ \{x\}\ x\}\ 8\} \Rightarrow~~~~~~~~}
+\end{itemize}
+
+\item Rewrite the following expressions without using \textsf{val}.
+You should not ``evaluate'' them.
+
+\begin{itemize}
+\item[a)] \(\textsf{val}\ x = \lambda n. 8 + n\ \textsf{in}\ \lambda n. (x\ (10 - n))\)
+\item[b)] \(\textsf{val}\ \term{fac} = (\term{mk-rec}\ (\lambda \term{fac}.\ \lambda n.\ (\textsf{if0}\ n\ 1 (n * (\term{fac}\ (n - 1))))))\ \textsf{in}\ (\term{fac}\ 10)\)
+\item[c)] \(\lambda\ \term{body-proc}.\
+\textsf{val}\ \term{fX} = \lambda\ \term{fX}.\
+(\textsf{val}\ f = \lambda\ x.\ ((\term{fX}\ \term{fX})\ x)\
+\textsf{in}\ (\term{body-proc}\ f))\
+\textsf{in}\ (\term{fX}\ \term{fX}) \)
+\end{itemize}
+
+\item Write the operational semantics of the form
+\fbox{$\sigma \vdash e \Rightarrow v$} for a function expression
+$\lambda x. e$, when the semantics of the function expression
+is as follows:
+\begin{enumerate}
+\item Check whether the body of the function expression $e$ contains
+any free identifiers.
+\item If it does not contain any free identifiers, its value is a pair
+  of the function expression and the environment.
+\item Otherwise, the value of the expression is a special value $\uparrow$.
+\end{enumerate}
+You may want to use the function \textit{fv} which takes an
+expression and returns a set of free identifiers in the expression.
+
+\item Consider the following language $e$:
+\begin{equation*}
+\begin{array}{llll}
+e & ::= 
+& x \\
+& \mid & \lambda x.e \\
+& \mid & e\ e \\
+& \mid & \{f\ e,\ \cdots,\ f\ e\}\\
+& \mid & e.f \\
+& \mid & e; e \\
+& \mid & (e)
+\end{array}
+\end{equation*}
+where a value of the language is either a record $\rho$
+or a closure $\langle\lambda x. e,\sigma\rangle$, and
+an environment maps names to values:
+\begin{equation*}
+\begin{gathered}
+\begin{array}{llll}
+x & \in & \embox{Var}\\
+f & \in & \embox{Field}\\
+\sigma & \in & \embox{Env} & = \embox{Var} \finto \embox{Value}\\
+\langle\lambda x.e, \sigma\rangle & \in & \embox{Closure} & = \embox{Expr} \times \embox{Env}\\
+\rho & \in & \embox{Record} & = \embox{Field} \finto \embox{Value} \\
+v & \in & \embox{Value} & = \embox{Closure} + \embox{Record}\\
+\end{array}
+\end{gathered}
+\end{equation*}
+
+The semantics of some constructs are as follows:
+\begin{itemize}
+  \item The value of a record $\{f_1\ e_1,\ \cdots,\ f_k\ e_k\}$
+    is a finite map $\rho$,
+which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
+to the value $v_i$ evaluated from the expression $e_i$.
+  \item The value of $e.f$ is the value of the field $f$ in the record $e$.
+\item The semantics of $e_1; e_2$ is to evaluate $e_1$ first and
+evaluate $e_2$ next, which is the value of $e_1; e_2$.
+\item The value of $(e)$ is the value of $e$.
+\end{itemize}
+
+Write the operational semantics of the form
+$\boxed{\sigma \vdash e \Rightarrow v}$
+
+\item Consider the following language $e$:
+\[
+\begin{array}{rll}
+e ::= & n\\
+\mid& \verb!{pair ! e\ e\verb+}+\\
+\mid& \verb!{first ! e\verb+}+\\
+\mid& \verb!{second ! e\verb+}+\\
+\end{array}
+\]
+where $n$ denotes a number and a value of the language is either a number or a pair of two values.
+\begin{itemize}
+  \item[a)] Write the grammar of the value $v$ and
+ the operational semantics of the form \fbox{$\vdash e \Rightarrow v$} for the expressions.
+  \item[b)] Write the evaluation derivation of the following expressions:
+
+\hspace*{-5em}
+ \derive
+{\hspace*{\textwidth}}
+{\vdash
+ \{\texttt{second}\ \{\texttt{pair}\ 8\ \{
+ \texttt{first}\ \{\texttt{pair}\ 320\ 42\}\}\}\}
+ \Rightarrow~~~~~~~~}
+\end{itemize}
+
+\item Consider the following language $e$:
+\[
+\begin{array}{rll}
+e ::= & n & \texttt{Num}\\
+\mid& \verb!{+ ! e\ e\verb+}+ & \texttt{Add}\\
+\mid& \verb!{- ! e\ e\verb+}+ & \texttt{Sub}\\
+\mid& \verb!{with {! x\ e\verb+} +e\verb+}+ & \texttt{With}\\
+\mid& x & \texttt{Id}\\
+\mid& \verb!{fun {! x\verb+} +e\verb+}+ & \texttt{Fun}\\
+\mid& \verb!{!e\ e\verb+}+ & \texttt{App}\\
+\end{array}
+\]
+where evaluation of $e$ results in either a number $n$ or a closure $\verb!{fun {!x\verb!} !e\verb!}!$.
+
+Consider the following implementation of $e$:
+\begin{verbatim}
+trait FWAES
+trait FWAESValue extends FWAES                                       // v ::= n | {fun {x} e}
+case class Num(num: Int) extends FWAES with FWAESValue               // e ::= n
+case class Add(left: FWAES, right: FWAES) extends FWAES              //     | {+ e e}
+case class Sub(left: FWAES, right: FWAES) extends FWAES              //     | {- e e}
+case class With(x: String, init: FWAES, body: FWAES) extends FWAES   //     | {with {x e} e}
+case class Id(name: String) extends FWAES                            //     | x
+case class Fun(x: String, body: FWAES) extends FWAES with FWAESValue //     | {fun {x} e}
+case class App(fun: FWAES, arg: FWAES) extends FWAES                 //     | {e e}
+
+// subst : (FWAES, String, FWAESValue) => FWAES
+def subst(fwaes: FWAES, x: String, v: FWAESValue): FWAES = fwaes match {
+  case Num(n) => fwaes
+  case Add(l, r) => Add(subst(l, x, v), subst(r, x, v))
+  case Sub(l, r) => Sub(subst(l, x, v), subst(r, x, v))
+  case With(y, i, b) => With(y, subst(i, x, v), if (y == x) b else subst(b, x, v))
+  case Id(name) => if (name == x) v else fwaes
+  case Fun(y, b) => Fun(y, if (y == x) b else subst(b, x, v))
+  case App(f, a) => App(subst(f, x, v), subst(a, x, v))
+}
+
+// interp : FWAES => FWAESValue
+def interp(fwaes: FWAES): FWAESValue = fwaes match {
+  case Num(n) => Num(n)
+  case Add(l, r) => numAdd(interp(l), interp(r))
+  case Sub(l, r) => numSub(interp(l), interp(r))
+  case With(x, i, b) => interp(subst(b, x, interp(i)))
+  case Id(x) => error(s"free identifier: $x")
+  case Fun(x, b) => Fun(x, b)
+  case App(f, a) => interp(f) match {
+    case Fun(x, b) => interp(subst(b, x, interp(a)))
+    case fv => error(s"not a closure: $fv")
+  }
+}
+\end{verbatim}
+
+\begin{itemize}
+  \item[a)]
+Write the operational semantics of the above implementation 
+of the form \fbox{$\vdash e \Rightarrow v$}
+where $e[x/v]$ denotes \verb!subst(e, x, v)! and a value $v$ is either a number $n$ or
+a closure $\verb!{fun {!x\verb!} !e\verb!}!$.
+
+\begin{itemize}
+  \item $e \equiv n$
+  \item $e \equiv \verb!{+ !e\ e\verb!}!$
+  \item $e \equiv \verb!{with {! x\ e\verb+} +e\verb+}+$
+  \item $e \equiv \verb!{fun {!x\verb!} !e\verb!}!$
+  \item $e \equiv \verb!{!e\ e\verb!}!$
+\end{itemize}
+
+  \item[b)] Write the definition of the substitution $e[x/v]$ denoting \verb!subst(e,x,v)!
+of the form \fbox{$e[x/v] \leadsto e$}:
+\begin{itemize}
+  \item $e \equiv n$
+%{\Large $n[x/v] \leadsto n$}
+  \item $e \equiv \verb!{+ ! e\ e\verb+}+$
+  \item $e \equiv \verb!{with {! x\ e\verb+} +e\verb+}+$
+  \item $e \equiv x$
+  \item $e \equiv \verb!{fun {!x\verb!} !e\verb!}!$
+  \item $e \equiv \verb!{!e\ e\verb!}!$
+\end{itemize}
+
+  \item[c)] Consider the following expression:
+
+\begin{verbatim}
+{with {z {fun {x} {- x y}}}
+      {with {y 10}
+            {z 32}}}
+\end{verbatim}
+
+\begin{itemize}
+\item What is the result of evaluating the expression under the empty environment?
+\item What is the result of evaluating the expression under the empty environment in FWAE?
+\item Why are the results different?
+\end{itemize}
+
+%\verb!subst(With("y", Num(10), Id("z")), "z", Fun("x", Add(Id("x"), Id("y"))))!
+%$[z/\verb!{fun {!z\verb!} {+ !x\ y\verb!}}!]\verb!{with {!y\ 10\verb!} !z\verb!}!$
+
+\end{itemize}
+
+\end{enumerate}

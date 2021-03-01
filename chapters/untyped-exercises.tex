@@ -1,0 +1,257 @@
+\setchapterpreamble[u]{\margintoc}
+\chapter{Exercises for Untyped Languages}
+\labch{untyped-exercises}
+
+\newcommand{\mtt}[1]{\texttt{#1}}
+\newcommand{\valnp}{\ensuremath{\embox{val}}}
+\newcommand{\Space}[1]{\vspace{#1ex}}
+
+\section{Pattern Matching}
+Consider the following language $e$:
+\[
+\begin{array}{rll}
+e ::= & a& \mbox{atomic expression}\\
+\mid& e\ a& \mbox{function application}\\
+\mid& \verb!fn!\ m& \mbox{function expression}\\
+a ::= & n & \mbox{number}\\
+\mid&x & \mbox{identifier}\\
+m ::= & p\ \leadsto\ e & \mbox{pattern matching}\\
+\mid& p\ \leadsto\ e\ \verb!|!\ m & \mbox{pattern matching sequence}\\
+p ::= & \verb!_! & \mbox{wildcard pattern}\\
+\mid&n& \mbox{number pattern}\\
+\mid&x& \mbox{identifier pattern}
+\end{array}
+\]
+where a value of the language $v$ is either a number $n$ or a closure $\langle m, \sigma\rangle$,
+a result of evaluation $r$ is either a value $v$ or a failure in pattern matching $\uparrow$,
+which is different from run-time errors,
+and an environment $\sigma$ maps identifiers to their values.
+
+The operational semantics rules for expressions and atomic expressions are as follows:
+
+\fbox{$\sigma\vdash e \Rightarrow r$}
+\[
+\begin{array}{c}
+\derive{\sigma \vdash a \Rightarrow v}{
+\sigma \vdash a \hookrightarrow v
+}
+\qquad
+\derive{\sigma \vdash e\ a \Rightarrow \uparrow}
+{\begin{array}{c}
+\sigma \vdash e \Rightarrow \uparrow
+\end{array}
+}
+\qquad
+\derive{\sigma \vdash e\ a \Rightarrow v'}
+{\begin{array}{c}
+\sigma \vdash e \Rightarrow \langle m, \sigma' \rangle \quad
+\sigma \vdash a \Rightarrow v \quad
+(\sigma', v) \vdash m \Rightarrow v'
+\end{array}
+}
+\\[1.5em]
+\derive{\sigma \vdash e\ a \Rightarrow \uparrow}
+{\begin{array}{c}
+\sigma \vdash e \Rightarrow \langle m, \sigma' \rangle \quad
+\sigma \vdash a \Rightarrow v \quad
+(\sigma', v) \vdash m \Rightarrow \uparrow
+\end{array}
+}
+\qquad
+\sigma \vdash \mtt{fn}\ m \Rightarrow \langle m, \sigma \rangle
+\end{array}
+\]
+
+\fbox{$\sigma\vdash a \hookrightarrow v$}
+\[
+\begin{array}{c}
+\sigma \vdash n \hookrightarrow n
+\hspace*{10em}
+\derive{\sigma \vdash x \hookrightarrow \sigma(x)}{
+x \in \emph{Domain}(\sigma)
+}
+\end{array}
+\]
+
+The semantics of pattern matching $m$ and pattern $p$ are as follows:
+\begin{itemize}
+\item Evaluation of $p\ \leadsto\ e$ under $(\sigma, v)$ has two possibilities.
+First, when evaluation of $p$ results in a new environment $\sigma'$,
+the result of this pattern matching is the result of evaluation of $e$ under $\sigma+\sigma'$,
+where $\sigma+\sigma'$ is a disjoint union of $\sigma$ and $\sigma'$.
+Second, when evaluation of $p$ produces $\uparrow$,
+the evaluation of this pattern matching produces $\uparrow$ as well.
+\item Evaluation of ``$p\ \leadsto\ e\ \verb!|!\ m$'' under $(\sigma, v)$
+also has two possibilities.
+First, when evaluation of $p\ \leadsto\ e$ succeeds with a value $v'$,
+the value of this pattern matching sequence is $v'$.
+Second, when evaluation of $p\ \leadsto\ e$ fails,
+the result of evaluation of this pattern matching sequence is
+the result of evaluation of $m$.
+\item Evaluation of the wildcard pattern \verb!_! under $(\sigma, v)$
+produces the empty environment.
+\item Evaluation of the number pattern $n$ under $(\sigma, v)$ has two possibilities.
+If $\valnp(n)=v$ where $\valnp(n)$ returns a number $n$ for a given number pattern $n$, 
+it produces the empty environment.  Otherwise, it produces $\uparrow$.
+\item Evaluation of the identifier pattern $x$ under $(\sigma, v)$
+produces a singleton environment $\{x \mapsto v\}$
+if $x$ is not in the domain of $\sigma$.
+\end{itemize}
+Write the operational semantics for $m$ and $p$
+of the forms \fbox{$(\sigma, v)\vdash m \Rightarrow r$} and
+\fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$}, respectively,
+where \fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$} denotes
+\fbox{$(\sigma, v)\vdash p \Rightarrow \sigma$} or
+\fbox{$(\sigma, v)\vdash p \Rightarrow \uparrow$}.
+Remember that the operational semantics do not specify run-time errors.
+
+\section{JavaScript Function Calls}
+
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\expr}{e}
+\newcommand{\vname}{x}
+\newcommand{\pname}{f}
+\newcommand{\addr}{a}
+\newcommand{\val}{v}
+\newcommand{\sto}{M}
+\newcommand{\seq}[1]{\overline{#1}}
+\newcommand{\semrule}[5]{\ensuremath{#1, #2 \vdash #3 \Rightarrow #4, #5}}
+%\newcommand{\derive}[2]{\ensuremath{\begin{array}{c}\infer{#1}{#2}\end{array}}}
+\newcommand{\rulesep}{\qquad}
+\newcommand{\seqn}{\texttt{seqn}}
+\newcommand{\fun}{\texttt{fun}}
+\newcommand{\app}{\texttt{app}}
+\newcommand{\rec}{\texttt{rec}}
+\newcommand{\get}{\texttt{get}}
+\newcommand{\set}{\texttt{set}}
+\newcommand{\fin}{\texttt{fin}}
+\newcommand{\env}{\sigma}
+\newcommand{\ccmd}[1]{\texttt{[}#1\texttt{]}}
+\newcommand{\cenc}[1]{\texttt{\{}#1\texttt{\}}}
+\newcommand{\args}{\ensuremath{\Lambda}}
+
+Consider the following language $\expr$:
+\begin{equation*}
+\begin{array}{llll}
+\expr & ::= 
+& n \\
+& \mid& \vname \\
+& \mid& \verb!{fun {! x^* \verb+} +e\verb+}+\\
+& \mid& \verb!{! e\ e^*\verb+}+\\
+& \mid & \verb!{get !e\verb!}!
+\end{array}
+\end{equation*}
+where $n$ denotes a number and
+a value of the language is one of the \verb!undefined! value, a number,
+or a closure $\langle\lambda \vname_1\ \cdots\ \vname_n. \expr,\env\rangle$, and
+an environment maps names to values:
+\begin{equation*}
+\begin{gathered}
+\begin{array}{r@{~}lr@{~}l@{~}l}
+x \in & \embox{Name} &
+\qquad\qquad
+  \val \in & \embox{Value} & = \{\verb!undefined!\} + \embox{Number} + \embox{Closure}\\
+n \in & \embox{Number} &
+  \sigma \in & \embox{Env} & = \embox{Name} \finto \embox{Value}\\
+\langle\lambda x_1\ \cdots\ x_n.\expr, \sigma\rangle \in & \embox{Closure} &
+  \alpha \in & \embox{Array} & = \embox{Number} \finto \embox{Value} \\
+\end{array}
+\end{gathered}
+\end{equation*}
+
+The semantics of some constructs are as follows:
+\begin{itemize}
+\item The value of a function expression $\verb!{fun {! x_1 \cdots x_n\verb+} +e\verb+}+$
+at an environment $\sigma$ is a closure $\langle\lambda \vname_1\ \cdots\ \vname_n. \expr,\env\rangle$.
+\item A function application $\verb!{! e_0\ \cdots\ e_n\verb+}+$ is evaluated as follows:
+\begin{itemize}
+\item Evaluate the subexpressions in order.
+The value of $e_0$ should be a closure 
+$\langle\lambda \vname_1\ \cdots\ \vname_m. \expr,\env\rangle$
+that has $m$ parameters.
+\item Create an array $\alpha$ of size $n$ and
+initialize the $i$-th value of the array with the value of $e_{i+1}$ where $0 \le i \le n-1$.
+\item Evaluate the closure body $e$ under the environment $\sigma$
+extended as follows:
+\begin{itemize}
+\item The value of the $i$-th parameter is the value of $e_i$ where $1 \le i \le m \le n$.
+\item The value of the $j$-th parameter is the \verb!undefined! value
+where $n < j \le m$.
+\end{itemize}
+and the array $\alpha$.
+\end{itemize}
+
+%   \item The value of an array $\alpha$ is a finite map,
+% which maps $\pname_i \in \ccmd{\pname_1\ \cdots,\ \pname_k}$
+% to the value $v_i$ evaluated from the expression $e_i$.
+
+  \item The value of $\verb!{get !e\verb!}!$ is the $n$-th value of the array $\alpha$
+where $n$ is the value of $e$ and the array indices start from $0$.
+\end{itemize}
+
+For example,
+$\cenc{\cenc{\texttt{fun}\ \cenc{x\ y}\ y}\ 4}$
+evaluates to \verb!undefined!, and
+$\cenc{\cenc{\texttt{fun}\ \cenc{x}\ \cenc{\texttt{get}\ 0}}\ 5}$
+evaluate to $5$.
+
+\begin{itemize}
+  \item[a)]
+Write the operational semantics of the form
+$\boxed{\sigma, \alpha \vdash \expr \Rightarrow \val}$
+
+
+  \item[b)] Write the evaluation derivation of the following expressions:
+
+\hspace*{-5em}
+\derive
+{\hspace*{\textwidth}}
+{\emptyset, \emptyset\vdash \cenc{\cenc{\texttt{fun}\ \cenc{x\ y}\ \cenc{\texttt{get}\ x}}\ 2\ 19\ 141}
+\Rightarrow~~~~~~~~}
+\end{itemize}
+
+\section{JavaScript Sequencing}
+
+The following quote describes the JavaScript sequencing semantics:
+\begin{quote}
+The value of a \embox{StatementList} is the value of the last
+value-producing them in the \embox{StatementList}.  For example, the
+following calls to the \verb!eval! function all return the value 1:
+\begin{verbatim}
+eval("1;;;;;")
+eval("1;()")
+eval("1;var a;")
+\end{verbatim}
+\end{quote}
+Consider the following language $e$:
+\[
+\begin{array}{rlllr@{~}c@{~}ll r@{~}c@{~}l}
+e ::= & \verb!()! & \texttt{Void}
+&\quad& e &\in& \texttt{Exp}
+&\quad& v \in \texttt{Val} &=& \texttt{Closure} \cup \lbrace \texttt{()} \rbrace\\
+\mid& x & \texttt{Id}
+&&  x &\in& \texttt{Var}
+&&\sigma \in \texttt{Env} &=& \texttt{Var} \xrightarrow{\texttt{fin}} \texttt{Val}\\
+\mid& \verb!{fun {! x\verb+} +e\verb+}+ & \texttt{Fun}
+&&&&
+&&\langle \lambda x. e, \sigma\rangle \in \texttt{Closure} &=& \texttt{Exp} \times \texttt{Env}\\
+\mid& \verb!{!e\ e\verb+}+ & \texttt{App}\\
+\mid& \verb!{!e\verb!; !\cdots\ \verb!; ! e\verb+}+ & \texttt{Seq}\\
+\end{array}
+\]
+where evaluation of $e$ results in either a closure
+$\langle \lambda x.e, \sigma\rangle$ or the void \verb!()!.
+The value of the sequence expression $\verb!{!e_1\verb!; !\cdots\ \verb!; ! e_n\verb+}+$
+is the value of the last expression whose value is not \verb!()!.
+If the values of all the expressions $e_1, \cdots, e_n$ are \verb!()!,
+the value of the sequence expression is \verb!()!.
+Write the operational semantics of each expression of the form
+$\sigma \vdash e \Rightarrow v$. 
+
+\begin{itemize}
+  \item \underline{$\texttt{()}$}:
+  \item \underline{$x$}:
+  \item \underline{\texttt{\string{fun \string{$x$\string} $e$\string}}}:
+  \item \underline{\texttt{\string{$e$ $e$\string}}}:
+  \item \underline{\texttt{\string{$e$; $\cdots$ ; $e$\string}}}:
+\end{itemize}

@@ -431,3 +431,51 @@ interp(
 )
 // (NumV(1), Map(1 -> NumV(1)))
 \end{verbatim}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Given the following expression:
+
+\begin{verbatim}
+(lambda b1. ((lambda b2. b1 := 8; !b2) b1)) (ref 7)
+\end{verbatim}
+
+write out the arguments to and results of \texttt{interp} each time it is called during
+the evaluation of a program.  Write them out in the order in which the calls to \texttt{interp}
+occur during evaluation.  Use the \texttt{interp} code at the end.
+
+Write down the environments and stores using the \verb+{}+ notation,
+not using the more verbose data constructors.
+Also, use an arrow notation for both the store and the environment.
+
+An example, if the first call to \texttt{interp} were:
+
+\begin{verbatim}
+interp(Add(Id("x"), Id("y")),
+       Map("x" -> NumV(3), "y" -> NumV(4)),
+       Map.empty)
+\end{verbatim}
+
+then a model solution would be:
+
+\begin{verbatim}
+exp: x + y
+env: {x -> NumV(3), y -> NumV(4)}
+sto: {}
+ans: NumV(7) {}
+
+exp: x
+env: {x -> NumV(3), y -> NumV(4)}
+sto: {}
+ans: NumV(3) {}
+
+exp: y
+env: {x -> NumV(3), y -> NumV(4)}
+sto: {}
+ans: NumV(4) {}
+\end{verbatim}
+
+Note that the environment and store read in order from left to right.
+
+\end{enumerate}

@@ -334,3 +334,49 @@ int main() {
     return f(0);
 }
 \end{verbatim}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item With the following list of function definitions in F1VAE:
+
+\begin{tabular}{l}
+\(\term{twice}(x) = x + x\) \\
+\( x(y) = y\) \\
+\( f(x) = x + 1\) \\
+\( g(g) = g\)
+\end{tabular}
+
+Show the results of evaluating the following expressions under the empty environment.
+When it is an error, describe which error it is.
+\begin{itemize}
+  \item[a)] \(\term{twice}\ \term{twice}\)
+
+  \item[b)] \(\textsf{val}\ x=5\ \textsf{in}\ x\ x\)
+
+  \item[c)] \(g\ 3\)
+
+  \item[d)] \(g\ f\)
+
+  \item[e)] \(g\ g\)
+\end{itemize}
+
+\item What are the results of the following expression:
+\begin{verbatim}
+{with {count {recfun {count n} {if0 n n {+ 1 {count {- n 1}}}}}}
+      {with {count {fun {x} {+ 42 {count x}}}}
+            {count 7}}}
+\end{verbatim}
+
+in different scoping semantics when we evaluate it under the following environment?
+\begin{verbatim}
+Map("count" -> CloV("y", Add(Num(13), Id("y")), Map()))
+\end{verbatim}
+
+\begin{itemize}
+  \item[a)] Dynamic scope
+  \item[b)] Static scope
+\end{itemize}
+
+
+\end{enumerate}

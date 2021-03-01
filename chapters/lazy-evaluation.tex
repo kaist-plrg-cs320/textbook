@@ -693,3 +693,145 @@ LFAE. Thus, the article omits formalization of call by need. One can find
 additionally from other articles, such as "An operational semantics of sharing in
 lazy evaluation." Since modifying the interpreter to use call by need is
 trivial, the article omits it as well.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Which of the following produce different results in a
+ call-by-value language and a call-by-name language? Both produce the
+ same result if they both produce the same number or they both produce
+ a procedure (even if the procedure doesn't behave exactly the same
+ when applied).
+
+\begin{itemize}
+  \item[a)] \verb!{{fun {y} {y 3}} {f {x} {1 2}}}!
+  \item[b)] \verb!{{fun {y} {y {fun {z} 10}}} {f {x} {x {1 2}}}}!
+  \item[c)] \verb!{{fun {y} {y {fun {z} 10}}} {f {x} {1 2}}}!
+  \item[d)] \verb!{{fun {y} y} {+ 1 {fun {x} x}}}!
+  \item[e)] \verb!{{fun {y} {+ 1 2}} {+ 1 {fun {x} x}}}!
+\end{itemize}
+
+\item Show the results of each expression in an eager language and a lazy language.
+\begin{itemize}
+
+  \item[a)] \((\lambda x. 8) + 10\)
+\\[1em]
+eager:
+\hspace*{5em}
+lazy:\\
+
+  \item[b)] \((\lambda n. 8)\ (1\ 2)\)
+\\[1em]
+eager:
+\hspace*{5em}
+lazy:\\
+
+  \item[c)] \(\lambda m.\ ((\lambda n. 42) (9\ 2))\)
+\\[1em]
+eager:
+\hspace*{5em}
+lazy:\\
+
+  \item[d)] \(1 + ((\lambda x.(x + 13))\ (1 + (\lambda z.7)))\)
+\\[1em]
+eager:
+\hspace*{5em}
+lazy:\\
+
+  \item[e)] \(1 + ((\lambda x. (1 + 13)) (1 + (\lambda z. 7)))\)
+\\[1em]
+eager:
+\hspace*{5em}
+lazy:\\
+
+\end{itemize}
+
+\item Note that there is a nested \texttt{strict} call in the following:
+
+\begin{verbatim}
+def strict(v: Value): Value = v match {
+  case ev @ ExprV(e, env, None) =>
+    val cache = strict(interp(e, env))
+    ev.v = Some(cache)
+    cache
+  case ExprV(_, _, Some(cache)) => cache
+  case _ => v
+}
+\end{verbatim}
+Write an example LFAE expression showing the need for the nested \texttt{strict} call.
+
+\item Consider the following language:
+\[
+\begin{array}{lll}
+\begin{array}{rrl}
+\\
+  e & ::= & n\\
+        & | & e + e\\
+        & | & x\\
+        & | & \lambda x.\ e\\
+        & | & e\ e\\
+\end{array}
+&\qquad&
+\begin{array}{rclcl}
+n & \in & \mbox{Num}&&\\
+  \sigma &\in& \mbox{Env} &=& {\mbox{Var}} \xrightarrow[]{\text{fin}} {\mbox{Val}}\\
+  x &\in& \mbox{Var} &&\\
+
+  \langle\lambda x. e,\ \sigma\rangle &\in& \mbox{Clo} &=& \mbox{Var} \times \mbox{Expr} \times \mbox{Env}\\
+  v &\in& \mbox{Val} &=& \mbox{Int} + \mbox{Clo} + \mbox{ExprV}\\
+  (e, \sigma) &\in& \mbox{ExprV} &=& \mbox{Expr} \times \mbox{Env}\\
+\end{array}
+\end{array}
+\]
+with the following ``strict'' evaluation of the form \fbox{$v \Downarrow v$}:
+\[
+\begin{array}{lll}
+n \Downarrow n
+&\qquad
+\langle\lambda x. e,\ \sigma\rangle \Downarrow \langle\lambda x. e,\ \sigma\rangle
+&\qquad
+\newinfrule
+{\sigma \vdash e \Rightarrow v_1 \qquad
+v_1 \Downarrow v_2 }
+{(e, \sigma) \Downarrow v_2}
+\end{array}
+\]
+Write the operational semantics of the language, where a value is strictly evaluted
+when it is used, that is, strict evaluation is deferred as much as possible.
+Thus, the evaluation of ``$\lambda x.x~y$'' is not an error.
+
+\item For each of the following LFAE expressions, show how it is evaluated and its result.
+
+\begin{itemize}
+  \item[a)] \((\lambda x.x\ 8) (42 + (\lambda y.y - x)) \)
+  \item[b)] \((\lambda y.((\lambda x.3 + x)\ y))\ 5\)
+\end{itemize}
+
+\item Consider the following expression:
+
+\[
+\begin{array}{l@{~}l}
+\textsf{val}& f = \lambda x. y + 7\\
+\textsf{in}& \textsf{val}\ y = 4\\
+& \textsf{in}\ (f\ (42 + \lambda y.3))
+\end{array}
+\]
+
+Explain the result of evaluating it under the following semantics:
+\begin{itemize}
+  \item[a)] Lazy evaluation with static scoping%2
+  \item[b)] Lazy evaluation with dynamic scoping%2
+  \item[c)] Eager evaluation with static scoping%1
+  \item[d)] Eager evaluation with dynamic scoping%1
+\end{itemize}
+
+\item For each of the following LFAE expressions, show how it is evaluated and its result.
+
+\begin{itemize}
+  \item[a)] \((\lambda x.x\ 8)\ (42 + (\lambda y. y - x))\)
+
+  \item[b)] \(((\lambda y. (\lambda x.3 + x)\ y)\ 5)\)
+\end{itemize}
+
+
+\end{enumerate}

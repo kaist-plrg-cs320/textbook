@@ -397,3 +397,31 @@ denotes \(2\) under \(\emptyset\), the empty environment:
 }
 { \emptyset\vdash \textsf{val}\ x=1\ \textsf{in}\ x+x\Rightarrow 2 }
 \]
+
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Which of the following are examples of shadowing?
+\begin{itemize}
+  \item[a)] \(\textsf{val}\ x = (\textsf{val}\ x = 3\ \textsf{in}\ 5 - x)\ \textsf{in}\ 1 + x\)
+  \item[b)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ y = 5\ \textsf{in}\ 1 + x\)
+  \item[c)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ x = 5\ \textsf{in}\ 1 + x\)
+\end{itemize}
+
+\item For each of the following expression:
+\bigskip
+\begin{itemize}
+  \item[a)] \(\textsf{val}\ x = (\textsf{val}\ x = 3\ \textsf{in}\ 5 - x)\ \textsf{in}\ 1 + x\)
+\bigskip
+  \item[b)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ y = 5\ \textsf{in}\ 1 + x\)
+\bigskip
+  \item[c)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ x = 5\ \textsf{in}\ 1 + x\)
+\end{itemize}
+\medskip
+\begin{itemize}
+\item[1)] Draw arrows from each bound variable to its binding occurrence.
+\item[2)] Draw dotted arrows from each shadowing variable to its shadowed variable.
+\end{itemize}
+
+\end{enumerate}
