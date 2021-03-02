@@ -26,7 +26,7 @@ denotes the box. A \term{low-level} interpretation of a box is a memory address
 where its value exists. \(\textsf{ref}\) is similar to \verb!malloc! of C or
 \verb!new! of object-oriented languages because it allocates spaces whom
 programmers can use in a memory. For example, rewriting \(\textsf{ref}\ 1\) in C
-yields \verb!int \term{p = (int }) malloc(sizeof(int)); *p = 1; return p;!.
+yields \verb!int p = (int) malloc(sizeof(int)); *p = 1; return p;!.
 
 \(:=\) modifies the content of a box. \(e_1:=e_2\) evaluates \(e_1\) and then
 \(e_2\) and puts a value denoted by \(e_2\) in a box denoted by \(e_1\). The
