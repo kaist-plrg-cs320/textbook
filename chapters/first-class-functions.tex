@@ -392,8 +392,8 @@ The semantics of some constructs are as follows:
 
 \derive
 {\hspace*{\textwidth}}
-{\emptyset\vdash ($\lambda \code{f}\ \code{m}.\code{f}(\code{m})$)\
-($\lambda \cx. \cx$,\ $8$) \Rightarrow~~~~~~~~}
+{\emptyset\vdash (\lambda \code{f}\ \code{m}.\code{f}(\code{m}))\
+(\lambda \cx. \cx,\ 8) \Rightarrow~~~~~~~~}
 \end{itemize}
 
 \item Rewrite the following FVAE expression to FAE expression by extending ``encode`` function in section 9.5.
@@ -453,7 +453,7 @@ The semantics of some constructs are as follows:
 which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
 to the value $v_i$ which is evaluated from the expression $e_i$ under $\sigma$.
   \item The evaluation of $e.f$ under $\sigma$ yields the value of the field $f$ in the record $\rho$,
-      where evaluation $e$ under $\sigma$ yields \rho$.
+      where evaluation $e$ under $\sigma$ yields $\rho$.
   \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation of $e_2$ yields $v$ under same environment,
       then evaluation of $e_1; e_2$ yields $v$ under $\sigma$.
 \item The evaluation of $(e)$ under any environment yields same value as evaluation of $e$.
@@ -544,7 +544,7 @@ def interp(fvaes: FVAES): FVAESValue = fvaes match {
 
 \begin{itemize}
   \item[a)]
-Write the operational semantics of the above implementation 
+Write the operational semantics of the above implementation
 of the form \fbox{$\vdash e \Rightarrow v$}
 where $e[x/v]$ denotes \verb!subst(e, x, v)! and a value $v$ is either a number $n$ or
 a closure $\efun{x}{e}$.
