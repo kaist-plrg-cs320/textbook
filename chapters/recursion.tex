@@ -484,21 +484,22 @@ Note that the type of the body  of \texttt{CloV} is \texttt{String}.
 \[
 \begin{array}{rll}
 e ::= & n\\
-\mid& \verb!{- ! e\ e\verb+}+\\
+\mid& \esub{e}{e}\\
 \mid& b\\
-\mid& \verb!{and ! e\ e\verb+}+\\
-\mid& \verb!{not ! e\verb+}+\\
-\mid& \verb!{if ! e\ e\ e\verb+}+\\
+\mid& e \wedge e\\
+\mid& \neg e\\
+\mid& \verb!if ! e\ e\ e\\
 \mid& x\\
-\mid& \verb!{fun {! x^*\verb+} +e\verb+}+\\
-\mid& \verb!{! e\ e^*\verb+}+\\
-\mid& \verb!{rec {! x\ e\verb+} +e\verb+}+\\
+\mid& \lambda x \cdots x. e\\
+\mid& e(e,\ \cdots,\ e)\\
+\mid& \textsf{def}\ x(x,\ \cdots,\ x)=e\ \textsf{in}\ e
 \end{array}
 \]
 where $n$ denotes a number, $b$ denotes a boolean, $x$ denotes an identifier,
 and a value $v$ of the language is one of a number, a boolean, or a closure
 $\langle \lambda x_1\ \cdots\ x_n .\ e,\ \sigma\rangle$.
 It does not support the short-circuiting semantics.
+It means, $e_2$ must be evaluated in expression $e_1 \wedge e_2$ whenever $e_1$ evaluates to true or not.
 \begin{itemize}
   \item[a)]
 Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
@@ -506,8 +507,9 @@ Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$
 
 \hspace*{-5em}
 \derive {\hspace*{\textwidth}}
-{\emptyset\vdash \{\{\texttt{fun}\ \{f\ m\}\ \{f\ m\}\}\
-\{\texttt{fun}\ \{x\}\ x\}\ 8\} \Rightarrow~~~~~~~~}
+{\emptyset\vdash (\lambda \code{f}\ \code{m}.\code{f}(\code{m}))\
+(\lambda \cx. \cx,\ 8) \Rightarrow~~~~~~~~}
+
 
 % To Add
 %%
@@ -516,20 +518,24 @@ Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$
 {\hspace*{\textwidth}}
 {[\texttt{zero} \mapsto \langle 
 \lambda x_1\ x_2\ x_3 .\ 
-\texttt{\{if}\ x_1\ x_2\ x_3\texttt{\}},\
+\texttt{if}\ x_1\ x_2\ x_3,\
 \emptyset\rangle] \vdash \term{pgm}
 \Rightarrow~~~~~~~~
 }
 
 \bigskip
 where \term{pgm} is as follows:
-\[
+
+$
 \begin{array}{l}
-\texttt{\{rec \{visit \{fun \{b\ n\} \{if b n \{visit \{not b\} \{zero n\}\}\}\}\}}\\
-\texttt{\phantom{\{rec }\{rec \{zero \{fun \{x\} \{- 42 x\}\}\}}\\
-\texttt{\phantom{\{rec \{rec }\{visit false 7\}\}\}}
+  \textsf{def}\ \code{visit}(\code{b},\ \code{n}) = \texttt{if}\ \code{b}\ \code{n}\ \code{visit} (\neg \code{b},\ \code{zero}(\code{n}))\ \textsf{in} \\
+  \textsf{def}\ \code{zero}(\cx) = \esub{42}{\cx}\ \textsf{in} \\
+  \code{visit}(\code{false},\ 7)
+%  \texttt{\{rec \{visit \{fun \{b\ n\} \{if b n \{visit \{not b\} \{zero n\}\}\}\}\}}\\
+%\texttt{\phantom{\{rec }\{rec \{zero \{fun \{x\} \{- 42 x\}\}\}}\\
+%\texttt{\phantom{\{rec \{rec }\{visit false 7\}\}\}}
 \end{array}
-\]
+$
 
 \end{itemize}
 
