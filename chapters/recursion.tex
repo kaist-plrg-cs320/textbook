@@ -405,87 +405,78 @@ interp(
 \begin{enumerate}
 \item Explain why the following code is an infinite loop and describe how to break the infinite loop:
 
-\begin{verbatim}
- 1 val mkRec = { bodyProc => {
- 2   val fX = {fY => {
- 3     val f = fY(fY)
- 4     bodyProc(f)
- 5   }};
- 6   fX(fX)
- 7 }};
- 8 val fac = mkRec({ fac => {
- 9   n => if0 (n) { 1 } else { (n * fac((n - 1))) }
-10 }});
-11 fac(10)
-\end{verbatim}
+$\begin{array}{l}
+    \ebind{\code{mkRec}}{(\efun{\code{bodyProc}}{
+        \\ \ \ \ebind{\code{fX}}{(\efun{\code{fY}}{
+            \\ \ \ \ \ \ebind{\code{f}}{\eapp{\code{fY}}{\code{fY}}}{\eapp{\code{bodyProc}}{\code{f}}}}) }{\\ \ \ \eapp{\code{fX}}{\code{fX}}}}) }{
+                \\ \ebind{\code{fac}}{\eapp{\code{mkRec}}{(\efun{\code{fac}}{\efun{\code{n}}{\code{if0}\ \code{n}\ 1\ (\code{n}\ *\ (\eapp{\code{fac}}{(\esub{\code{n}}{1})}) )}})}}{
+        \\ ( \eapp{\code{fac}}{10} )
+    }
+}
+\end{array}$
 
 \item Consider the following definition of \texttt{mkRec} and its use to define the recursive
 function \texttt{fib}:
 
-\begin{verbatim}
-val mkRec = { bodyProc => {
-  val fX = {fY => {
-    val f = x => (fY(fY))(x)
-    bodyProc(f)
-  }};
-  fX(fX)
-}};
-val fib = mkRec({ fib => {
-  n => if ((n = 0) or (n = 1)) { 1 } else { (fib(n-1) + fib((n-2))) }
-}});
-fac(10)
-\end{verbatim}
+$\begin{array}{l}
+    \ebind{\code{mkRec}}{(\efun{\code{bodyProc}}{
+        \\ \ \ \ebind{\code{fX}}{(\efun{\code{fY}}{
+            \\ \ \ \ \ \ebind{\code{f}}{ \efun{\cx}{\eapp{(\eapp{\code{fY}}{\code{fY}})}{\cx}} }{\eapp{\code{bodyProc}}{\code{f}}}}) }{\\ \ \ \eapp{\code{fX}}{\code{fX}}}}) }{
+                \\ \ebind{\code{fib}}{\eapp{\code{mkRec}}{(\efun{\code{fib}}{\efun{\code{n}}{\code{if}\ (\code{n = 0 or n = 1})\ 1\ (\eadd{\eapp{\code{fib}}{(\esub{\code{n}}{1})}}{\eapp{\code{fib}}{(\esub{\code{n}}{2})}} )}})}}{
+        \\ ( \eapp{\code{fib}}{10} )
+    }
+}
+\end{array}$
 
 Describe what conditions \texttt{bodyProc} should satisfy so that \texttt{mkRec} can make its recursive version.
 
 \item Let's call the following code $A$:
-\begin{verbatim}
-val fac = val facX = {facX => {
-                       n => {
-                         val fac = facX(facX);
-                         if0 n 1 (n * fac(n-1))
-                     }}};
-          (facX facX);
-fac(5)
-\end{verbatim}
+
+$\begin{array}{l}
+    \ebind{\code{fac}} {(\ebind{\code{facX}}{ (\efun{\code{facX}}{
+        \\ \ \ \efun{\code{n}}{
+            \\ \ \ \ \ \ebind{\code{fac}}{ \eapp{\code{facX}}{\code{facX}} }{
+                \\ \ \ \ \ \code{if0}\ \code{n}\ 1\ (\code{n} * \eapp{\code{fac}}{(\esub{\code{n}}{1})}) } } }) }{
+                \\ \ \ \eapp{\code{facX}}{\code{facX}}} )} {
+        \\ \eapp{\code{fac}}{5}}
+\end{array}$
+
 and the following code $B$:
-\begin{verbatim}
-val fac = val facX = {facX => {
-                       val fac = facX(facX);
-                       n => {
-                         if0 n 1 (n * fac(n-1))
-                       }}};
-          (facX facX);
-fac(5)
-\end{verbatim}
+
+$\begin{array}{l}
+    \ebind{\code{fac}} {(\ebind{\code{facX}}{ (\efun{\code{facX}}{
+        \\ \ \ \ebind{\code{fac}}{ \eapp{\code{facX}}{\code{facX}} }{
+        \\ \ \ \ \ \efun{\code{n}}{
+                \\ \ \ \ \ \code{if0}\ \code{n}\ 1\ (\code{n} * \eapp{\code{fac}}{(\esub{\code{n}}{1})}) } } }) }{
+                \\ \ \ \eapp{\code{facX}}{\code{facX}}} )} {
+        \\ \eapp{\code{fac}}{5}}
+\end{array}
+$
 
 \begin{itemize}
   \item[a)] What is the result of $A$?
   \item[b)] What is the result of $B$?
 \end{itemize}
 
-\item Write the value of \texttt{fac} at line 11:
+\item Write the value of \texttt{fac} at line 8:
 
 \begin{verbatim}
- 1 {with {fac
- 2         {with {facX
- 3                 {fun {facY}
- 4                    {with {fac {fun {x} {{facY facY} x}}}
- 5                          ; Exactly like original fac
- 6                          {fun {n}
- 7                             {if0 n
- 8                                  1
- 9                                  {* n {fac {- n 1}}}}}}}}
-10               {facX facX}}}
-11       {fac 10}}
+ 1 val fac =
+ 2         val facX =
+ 3                 lambda facY.
+ 4                    val fac = lambda x. (facY facY) x in
+ 5                    ; Exactly like original fac
+ 6                    lambda n. if0 n 1 (n * fac (n - 1)) in
+ 7         facX facX in
+ 8 fac 10
 \end{verbatim}
 
 using the following Scala types:
 \begin{verbatim}
-trait FWAEValue
-case class NumV(n: Int) extends FWAEValue
-case class CloV(param: String, body: String, env: Env) extends FWAEValue
-type Env = Map[String, FWAEValue]
+trait FVAEValue
+case class NumV(n: Int) extends FVAEValue
+case class CloV(param: String, body: String, env: Env) extends FVAEValue
+type Env = Map[String, FVAEValue]
 \end{verbatim}
 Note that the type of the body  of \texttt{CloV} is \texttt{String}.
 
@@ -547,9 +538,9 @@ where \term{pgm} is as follows:
 \begin{array}{l@{~}l}
 \textsf{val}\ \code{fac} = \lambda \code{m}. &
 \textsf{val}\ \code{facX} = \lambda \code{facX}.
-\lambda \code{m}. \textsf{if0}\ m\ 1\ (n * ((\term{facX}\ \term{facX})\ (x - 1)))\\
-&\textsf{in}\ ((\term{facX}\ \term{facX})\ m)\\
-\textsf{in}\ (\term{fac}\ m)
+\lambda \code{m}. \textsf{if0}\ m\ 1\ (n * ((\code{facX}\ \code{facX})\ (x - 1)))\\
+&\textsf{in}\ ((\code{facX}\ \code{facX})\ m)\\
+\textsf{in}\ (\code{fac}\ m)
 \end{array}
 \]
 
