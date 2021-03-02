@@ -257,7 +257,7 @@ The following rule defines the semantics of $x$:
 
 \semanticrule{Id}{
 If
-  $x$ is an element of the domain of $\sigma$,\\
+  $x$ is in the domain of $\sigma$,\\
 then
   \evaldn{x}{\sigma(x)}.
 }
@@ -307,7 +307,7 @@ The following rule defines the semantics of $\ebind{x}{e_1}{e_2}$:
 \semanticrule{Val}{
 If
   \evaldn{e_1}{v_1} and
-  \evaln{\sigma[x\mapsto v_1]}{e_2}{v_2},
+  \evaln{\sigma[x\mapsto v_1]}{e_2}{v_2},\\
 then
   \evaldn{\ebind{x}{e_1}{e_2}}{v_2}.
 }
@@ -344,7 +344,7 @@ Rules for those cases are basically identical to the rules of \plang.
 However, we need to additionally take environments into account.
 
 \semanticrule{Num}{
-  \evaldn{n}{n}
+  \evaldn{n}{n}.
 }
 
 \vspace{-1em}
@@ -365,7 +365,11 @@ then
   \evaldn{\esub{e_1}{e_2}}{n_1-n_2}.
 }
 
-We can express them as the inference rules:
+Integers, addition, and subtraction never update environments.
+An integer evaluates to itself. Addition and subtraction evaluates their
+subexpressions under the same environment.
+
+We can express the rules in a natural language as the inference rules:
 
 \[
   \evald{n}{n}\quad\textsc{[Num]}
@@ -474,14 +478,14 @@ terminates without producing any results.
 \begin{enumerate}
 \item Which of the following are examples of shadowing?
 \begin{enumerate}
-  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{x}})}{\eadd{1}{\cx}}$
+  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{\cx}})}{\eadd{1}{\cx}}$
   \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
   \item $\ebind{\cx}{3}{\ebind{\cx}{5}{\eadd{1}{\cx}}}$
 \end{enumerate}
 
 \item For each of the following expression:
 \begin{itemize}
-  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{x}})}{\eadd{1}{\cx}}$
+  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{\cx}})}{\eadd{1}{\cx}}$
   \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
   \item $\ebind{\cx}{3}{\ebind{\cx}{5}{\eadd{1}{\cx}}}$
 \end{itemize}
