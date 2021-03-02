@@ -564,20 +564,43 @@ def product(l: List[Int]): Int = l match {
 
     \code{case class Student(name: String, height: Int)}
 
-    Implement a function that takes a list of students as an argument
+    Implement a function \code{names}:
+
+    \code{def names(l: List[Student]): List[String] = ???}
+
+    that takes a list of students as an argument
     and returns a list containing the names of the students.
 
   \item Consider the same definition of \code{Student}.
-    Implement a function that takes a list of students as an argument
+    Implement a function \code{tall}:
+
+    \code{def tall(l: List[Student]): List[Student] = ???}
+
+    that takes a list of students as an argument
     and returns a list of students whose heights are greater than 170.
 
   \item
-    Implement a function that takes a list of integers as an argument
+    Implement a function \code{length}:
+
+    \code{def length(l: List[Int]): Int = ???}
+
+    that takes a list of integers as an argument
     and returns the length of the list.
 
+    Remark that there is a built-in method \code{l.length}, but try to implement
+    yourself using recursive function.
+
   \item
-    Implement a function that takes a list of integers and an integer as arguments
+    Implement a function \code{append}:
+
+    \code{def append(l: List[Int], n: Int): List[Int] = ???}
+
+    that takes a list of integers and an integer as arguments
     and returns a list obtained by appending the integer at the end of the list.
     Then, compare the time complexity of appending a new element to that of
     prepending a new element by \code{::}, which is $O(1)$.
+
+    Remark that there is a built-in method \code{l.appended(n)}, but try to implement
+    yourself using recursive function.
+
 \end{enumerate}
