@@ -303,12 +303,14 @@ beyond the scope of the article and the course.
 \begin{enumerate}
 \item Given the following expression:
 
-\begin{verbatim}
-val x = 5
-in  val f = lambda y. y + x
-    in (lambda g.f (g 1)) (lambda x.x)
-\end{verbatim}
-
+\[
+\ebind{\cx}{5}{
+    \ebind{\code{f}}{\efun{\cy}{\eadd{\cy}{\cx}}}{
+        \eapp{(\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}})}
+        {(\efun{\cx}{\cx})}
+    }
+}
+\]
 Describe a trace of the evalaution in terms of arguments to an \texttt{interp}
 function for every call. (There will be 16 calls.) The \texttt{interp} function
 takes two arguments --- an expression and a
@@ -321,14 +323,15 @@ takes two arguments --- an expression and a
 \begin{center}
 \begin{tabular}{lcl}
 $E_0$ & = & the whole expression \\
-$E_1$ & = & \texttt{lambda y. y + x} \\
-$E_2$ & = & \texttt{lambda g.f (g 1)} \\
-$E_3$ & = & \texttt{lambda x.x} \\
-$E_4$ & = & \texttt{val f = $E_1$ in $E_2$ $E_3$}
+$E_1$ & = & $\efun{\cy}{\eadd{\cy}{\cx}}$ \\
+$E_2$ & = & $\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}}$ \\
+$E_3$ & = & $\efun{\cx}{\cx}$ \\
+$E_4$ & = & $\ebind{\code{f}}{E_1}{\eapp{E_2}{E_3}}$
 \end{tabular}
 \end{center}
 
-\item The following code is an implementation of the interpreter for AEF.
+\item In this exercise, we examine differences of semantics by changing scope.
+The following code is an implementation of the interpreter for new language, AEF.
 All the missing definitions are exactly the same as the ones for FAE.
 
 \begin{verbatim}
@@ -358,120 +361,115 @@ when we use each of the following for the blank above:
   \item[c)] \texttt{fEnv}
 \end{itemize}
 
-\item Consider the following expression:
+\item In this exercise, we extend FAE to support multiple parameters. Consider the following language, MFAE:
 \[
-\begin{array}{l@{~}l}
-\textsf{val}\ \term{fac} = \lambda m. &
-\textsf{val}\ \term{facX} = \lambda \term{facX}.
-\lambda m. \textsf{if0}\ m\ 1\ (n * ((\term{facX}\ \term{facX})\ (x - 1)))\\
-&\textsf{in}\ ((\term{facX}\ \term{facX})\ m)\\
-\textsf{in}\ (\term{fac}\ m)
+\begin{array}{lrll}
+\text{Expression}& e ::= & n\\
+&\mid& x\\
+&\mid& \lambda x\ \cdots\ x. e\\
+&\mid& e\ (e,\ \cdots ,\ e)\\
+\text{Value}& v ::= & n \\
+&\mid& \langle \lambda x \cdots\ x.e,\sigma \rangle \\
 \end{array}
 \]
-
+where definition of $n,\ x,\ \sigma$ is same as FAE.
+The semantics of some constructs are as follows:
 \begin{itemize}
-\item[a)] Draw arrows on the above expression from each bound variable to its binding occurrence.
-\item[b)] Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
+  \item Evaluating $\lambda x_1\ \cdots\ x_n. e$ under $\sigma$
+      yields a closure $\langle \lambda x_1 \cdots\ x_n.e,\sigma \rangle$.
+  \item If :
+    \begin{itemize}
+    \item Evaluating $e_0$ under $\sigma$ yields a closure $\langle \lambda x_1 \cdots\ x_n.e,\sigma' \rangle$
+    \item Evaluating $e_i$ under $\sigma'$ yields $v_i$ for each $1 \leq i \leq n$
+    \item Evaluating $e$ under $\sigma'[x_1 \mapsto v_1, \cdots, x_n \mapsto v_n]$ yields $v$
+    \end{itemize}
+\item[] then evaluating $e_0\ (e_1,\ \cdots ,\ e_n)$ under $\sigma$ yields $v$.
 \end{itemize}
 
-\item Consider the following language $e$:
-\[
-\begin{array}{rll}
-e ::= & n\\
-\mid& x\\
-\mid& \verb!{fun {! x\ \cdots\ x\verb+} +e\verb+}+\\
-\mid& \verb!{! e\ \cdots\ e\verb+}+\\
-\end{array}
-\]
-where $n$ denotes a number and a value of the language is either a number or a closure.
 \begin{itemize}
   \item[a)] Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
   \item[b)] Write the evaluation derivation of the following expression:
 
 \derive
 {\hspace*{\textwidth}}
-{\emptyset\vdash \{\{\texttt{fun}\ \{f\ m\}\ \{f\ m\}\}\
-\{\texttt{fun}\ \{x\}\ x\}\ 8\} \Rightarrow~~~~~~~~}
+{\emptyset\vdash ($\lambda \code{f}\ \code{m}.\code{f}(\code{m})$)\
+($\lambda \cx. \cx$,\ $8$) \Rightarrow~~~~~~~~}
 \end{itemize}
 
-\item Rewrite the following expressions without using \textsf{val}.
-You should not ``evaluate'' them.
+\item Rewrite the following FVAE expression to FAE expression by extending ``encode`` function in section 9.5.
+You should not ``evaluate'' them. (Consider $\code{if0}$ as an identifier.)
 
 \begin{itemize}
-\item[a)] \(\textsf{val}\ x = \lambda n. 8 + n\ \textsf{in}\ \lambda n. (x\ (10 - n))\)
-\item[b)] \(\textsf{val}\ \term{fac} = (\term{mk-rec}\ (\lambda \term{fac}.\ \lambda n.\ (\textsf{if0}\ n\ 1 (n * (\term{fac}\ (n - 1))))))\ \textsf{in}\ (\term{fac}\ 10)\)
-\item[c)] \(\lambda\ \term{body-proc}.\
-\textsf{val}\ \term{fX} = \lambda\ \term{fX}.\
-(\textsf{val}\ f = \lambda\ x.\ ((\term{fX}\ \term{fX})\ x)\
-\textsf{in}\ (\term{body-proc}\ f))\
-\textsf{in}\ (\term{fX}\ \term{fX}) \)
+    \item[a)] \(\textsf{val}\ \cx = \lambda \code{n}. \eadd{8}{\code{n}}\ \textsf{in}\ \lambda \code{n}. (\eapp{\cx}{(\esub{10}{\code{n}})}) \)
+\item[b)] \(\textsf{val}\ \code{fac} = (\code{mk-rec}\
+    (\lambda \code{fac}.\ \lambda \code{n}.\ (\code{if0}\ \code{n}\ 1 (\code{n} * (\code{fac}\ (\code{n} - 1))))))\ \textsf{in}\ (\code{fac}\ 10)\)
+\item[c)] \(\lambda\ \code{body-proc}.\
+\textsf{val}\ \code{fX} = \lambda\ \code{fX}.\
+(\textsf{val}\ \code{f} = \lambda\ \cx.\ ((\code{fX}\ \code{fX})\ \cx)\
+\textsf{in}\ (\code{body-proc}\ \code{f}))\
+\textsf{in}\ (\code{fX}\ \code{fX}) \)
 \end{itemize}
 
-\item Write the operational semantics of the form
+\item In this exercise, we extend FAE to check body expression when evaluating function expression.
+Consider we extend value of FAE to include special value $\uparrow$ to represent error value at function body checking.
+Write the operational semantics of the form
 \fbox{$\sigma \vdash e \Rightarrow v$} for a function expression
 $\lambda x. e$, when the semantics of the function expression
-is as follows:
-\begin{enumerate}
-\item Check whether the body of the function expression $e$ contains
-any free identifiers.
-\item If it does not contain any free identifiers, its value is a pair
-  of the function expression and the environment.
-\item Otherwise, the value of the expression is a special value $\uparrow$.
-\end{enumerate}
-You may want to use the function \textit{fv} which takes an
+is changed as follows:
+\begin{itemize}
+\item If all free identifiers of $e$ is in $\sigma$ or is $x$, then evaluation of $\lambda x. e$ under $\sigma$ yields a closure
+  contains function expression and the environment.
+\item Otherwise, evaluation of $\lambda x. e$ under $\sigma$ yields a special value $\uparrow$.
+\end{itemize}
+You may use the function \textit{fv} which takes an
 expression and returns a set of free identifiers in the expression.
+For example, $fv(\lambda x. y\ x) = \{ y \}$.
 
-\item Consider the following language $e$:
-\begin{equation*}
-\begin{array}{llll}
-e & ::= 
-& x \\
-& \mid & \lambda x.e \\
-& \mid & e\ e \\
-& \mid & \{f\ e,\ \cdots,\ f\ e\}\\
-& \mid & e.f \\
-& \mid & e; e \\
-& \mid & (e)
+\item In this exercise, we extend FAE to have record value. Consider the following language, RecFAE:
+\[
+\begin{array}{lrcl}
+\text{Variable} & x & \in & \textit{Id} \\
+\text{Field} & f & \in & \textit{Field} \\
+\text{Record} & \rho & \in & \embox{Record} = \embox{Field} \finto \embox{Value} \\
+\text{Expression}& e & ::= & x \\
+&& \mid & \lambda x.e \\
+&& \mid & e\ e \\
+&& \mid & \{f\ e,\ \cdots,\ f\ e\}\\
+&& \mid & e.f \\
+&& \mid & e; e \\
+&& \mid & (e) \\
+\text{Value} & v & ::= & \rho \\
+&& | & \langle \lambda x.e,\sigma \rangle \\
 \end{array}
-\end{equation*}
+\]
 where a value of the language is either a record $\rho$
 or a closure $\langle\lambda x. e,\sigma\rangle$, and
 an environment maps names to values:
-\begin{equation*}
-\begin{gathered}
-\begin{array}{llll}
-x & \in & \embox{Var}\\
-f & \in & \embox{Field}\\
-\sigma & \in & \embox{Env} & = \embox{Var} \finto \embox{Value}\\
-\langle\lambda x.e, \sigma\rangle & \in & \embox{Closure} & = \embox{Expr} \times \embox{Env}\\
-\rho & \in & \embox{Record} & = \embox{Field} \finto \embox{Value} \\
-v & \in & \embox{Value} & = \embox{Closure} + \embox{Record}\\
-\end{array}
-\end{gathered}
-\end{equation*}
 
 The semantics of some constructs are as follows:
 \begin{itemize}
-  \item The value of a record $\{f_1\ e_1,\ \cdots,\ f_k\ e_k\}$
-    is a finite map $\rho$,
+  \item The evaluation of $\{f_1\ e_1,\ \cdots,\ f_k\ e_k\}$
+    under $\sigma$ yields a finite map $\rho$,
 which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
-to the value $v_i$ evaluated from the expression $e_i$.
-  \item The value of $e.f$ is the value of the field $f$ in the record $e$.
-\item The semantics of $e_1; e_2$ is to evaluate $e_1$ first and
-evaluate $e_2$ next, which is the value of $e_1; e_2$.
-\item The value of $(e)$ is the value of $e$.
+to the value $v_i$ which is evaluated from the expression $e_i$ under $\sigma$.
+  \item The evaluation of $e.f$ under $\sigma$ yields the value of the field $f$ in the record $\rho$,
+      where evaluation $e$ under $\sigma$ yields \rho$.
+  \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation of $e_2$ yields $v$ under same environment,
+      then evaluation of $e_1; e_2$ yields $v$ under $\sigma$.
+\item The evaluation of $(e)$ under any environment yields same value as evaluation of $e$.
 \end{itemize}
 
 Write the operational semantics of the form
 $\boxed{\sigma \vdash e \Rightarrow v}$
 
-\item Consider the following language $e$:
+\item In this exercise, we develop small language which only handles pair. Consider the following language Pair:
 \[
-\begin{array}{rll}
-e ::= & n\\
-\mid& \verb!{pair ! e\ e\verb+}+\\
-\mid& \verb!{first ! e\verb+}+\\
-\mid& \verb!{second ! e\verb+}+\\
+\begin{array}{lrcl}
+\text{Expression}& e & ::= & n \\
+&&\mid& \verb!{pair ! e\ e\verb+}+\\
+&&\mid& \verb!{first ! e\verb+}+\\
+&&\mid& \verb!{second ! e\verb+}+\\
+\text{Value} & v & ::= & \fbox{ (a) }
 \end{array}
 \]
 where $n$ denotes a number and a value of the language is either a number or a pair of two values.
@@ -489,49 +487,52 @@ where $n$ denotes a number and a value of the language is either a number or a p
  \Rightarrow~~~~~~~~}
 \end{itemize}
 
-\item Consider the following language $e$:
+\item In this exercise, we replace environment-baesd semantics of FVAE to subtitution-based semantics.
+Consider the following language, FVAES:
+
 \[
-\begin{array}{rll}
-e ::= & n & \texttt{Num}\\
-\mid& \verb!{+ ! e\ e\verb+}+ & \texttt{Add}\\
-\mid& \verb!{- ! e\ e\verb+}+ & \texttt{Sub}\\
-\mid& \verb!{with {! x\ e\verb+} +e\verb+}+ & \texttt{With}\\
-\mid& x & \texttt{Id}\\
-\mid& \verb!{fun {! x\verb+} +e\verb+}+ & \texttt{Fun}\\
-\mid& \verb!{!e\ e\verb+}+ & \texttt{App}\\
+\begin{array}{lrcl}
+\text{Expression} & e & ::= & n \\
+&& | & \eadd{e}{e}\\
+&& | & \esub{e}{e} \\
+&& | & \ebind{x}{e}{e} \\
+&& | & x \\
+&& | & \efun{x}{e} \\
+&& | & \eapp{e}{e} \\
 \end{array}
 \]
-where evaluation of $e$ results in either a number $n$ or a closure $\verb!{fun {!x\verb!} !e\verb!}!$.
 
-Consider the following implementation of $e$:
+where evaluation of $e$ results in either a number $n$ or a closure $\efun{x}{e}$.
+
+Consider the following implementation of FVAES:
 \begin{verbatim}
-trait FWAES
-trait FWAESValue extends FWAES                                       // v ::= n | {fun {x} e}
-case class Num(num: Int) extends FWAES with FWAESValue               // e ::= n
-case class Add(left: FWAES, right: FWAES) extends FWAES              //     | {+ e e}
-case class Sub(left: FWAES, right: FWAES) extends FWAES              //     | {- e e}
-case class With(x: String, init: FWAES, body: FWAES) extends FWAES   //     | {with {x e} e}
-case class Id(name: String) extends FWAES                            //     | x
-case class Fun(x: String, body: FWAES) extends FWAES with FWAESValue //     | {fun {x} e}
-case class App(fun: FWAES, arg: FWAES) extends FWAES                 //     | {e e}
+trait FVAES
+trait FVAESValue extends FVAES                                       // v ::= n | lambda x. e
+case class Num(num: Int) extends FVAES with FVAESValue               // e ::= n
+case class Add(left: FVAES, right: FVAES) extends FVAES              //     | e + e
+case class Sub(left: FVAES, right: FVAES) extends FVAES              //     | e - e
+case class Val(x: String, init: FVAES, body: FVAES) extends FVAES    //     | val x = e in e
+case class Id(name: String) extends FVAES                            //     | x
+case class Fun(x: String, body: FVAES) extends FVAES with FVAESValue //     | lambda x.e
+case class App(fun: FVAES, arg: FVAES) extends FVAES                 //     | e e
 
-// subst : (FWAES, String, FWAESValue) => FWAES
-def subst(fwaes: FWAES, x: String, v: FWAESValue): FWAES = fwaes match {
-  case Num(n) => fwaes
+// subst : (FVAES, String, FVAESValue) => FVAES
+def subst(fvaes: FVAES, x: String, v: FVAESValue): FVAES = fvaes match {
+  case Num(n) => fvaes
   case Add(l, r) => Add(subst(l, x, v), subst(r, x, v))
   case Sub(l, r) => Sub(subst(l, x, v), subst(r, x, v))
-  case With(y, i, b) => With(y, subst(i, x, v), if (y == x) b else subst(b, x, v))
-  case Id(name) => if (name == x) v else fwaes
+  case Val(y, i, b) => Val(y, subst(i, x, v), if (y == x) b else subst(b, x, v))
+  case Id(name) => if (name == x) v else fvaes
   case Fun(y, b) => Fun(y, if (y == x) b else subst(b, x, v))
   case App(f, a) => App(subst(f, x, v), subst(a, x, v))
 }
 
-// interp : FWAES => FWAESValue
-def interp(fwaes: FWAES): FWAESValue = fwaes match {
+// interp : FVAES => FVAESValue
+def interp(fvaes: FVAES): FVAESValue = fvaes match {
   case Num(n) => Num(n)
   case Add(l, r) => numAdd(interp(l), interp(r))
   case Sub(l, r) => numSub(interp(l), interp(r))
-  case With(x, i, b) => interp(subst(b, x, interp(i)))
+  case Val(x, i, b) => interp(subst(b, x, interp(i)))
   case Id(x) => error(s"free identifier: $x")
   case Fun(x, b) => Fun(x, b)
   case App(f, a) => interp(f) match {
@@ -546,14 +547,14 @@ def interp(fwaes: FWAES): FWAESValue = fwaes match {
 Write the operational semantics of the above implementation 
 of the form \fbox{$\vdash e \Rightarrow v$}
 where $e[x/v]$ denotes \verb!subst(e, x, v)! and a value $v$ is either a number $n$ or
-a closure $\verb!{fun {!x\verb!} !e\verb!}!$.
+a closure $\efun{x}{e}$.
 
 \begin{itemize}
   \item $e \equiv n$
-  \item $e \equiv \verb!{+ !e\ e\verb!}!$
-  \item $e \equiv \verb!{with {! x\ e\verb+} +e\verb+}+$
-  \item $e \equiv \verb!{fun {!x\verb!} !e\verb!}!$
-  \item $e \equiv \verb!{!e\ e\verb!}!$
+  \item $e \equiv \eadd{e}{e}$
+  \item $e \equiv \ebind{x}{e}{e}$
+  \item $e \equiv \efun{x}{e}$
+  \item $e \equiv \eapp{e}{e}$
 \end{itemize}
 
   \item[b)] Write the definition of the substitution $e[x/v]$ denoting \verb!subst(e,x,v)!
@@ -561,26 +562,30 @@ of the form \fbox{$e[x/v] \leadsto e$}:
 \begin{itemize}
   \item $e \equiv n$
 %{\Large $n[x/v] \leadsto n$}
-  \item $e \equiv \verb!{+ ! e\ e\verb+}+$
-  \item $e \equiv \verb!{with {! x\ e\verb+} +e\verb+}+$
+  \item $e \equiv \eadd{e}{e}$
+  \item $e \equiv \ebind{x}{e}{e}$
   \item $e \equiv x$
-  \item $e \equiv \verb!{fun {!x\verb!} !e\verb!}!$
-  \item $e \equiv \verb!{!e\ e\verb!}!$
+  \item $e \equiv \efun{x}{e}$
+  \item $e \equiv \eapp{e}{e}$
 \end{itemize}
 
   \item[c)] Consider the following expression:
 
-\begin{verbatim}
-{with {z {fun {x} {- x y}}}
-      {with {y 10}
-            {z 32}}}
-\end{verbatim}
+\[
+\ebind{\code{z}}{\efun{\cx}{\esub{\cx}{\cy}}}{
+    \ebind{\cy}{10}{
+        (\eapp{\code{z}}{32})
+    }
+}
+\]
 
 \begin{itemize}
 \item What is the result of evaluating the expression under the empty environment?
-\item What is the result of evaluating the expression under the empty environment in FWAE?
+\item What is the result of evaluating the expression under the empty environment in FVAE?
 \item Why are the results different?
 \end{itemize}
+    (Note: we can define equivalent semantics as FVAE using substitution
+    by modifying \verb!subst! function)
 
 %\verb!subst(With("y", Num(10), Id("z")), "z", Fun("x", Add(Id("x"), Id("y"))))!
 %$[z/\verb!{fun {!z\verb!} {+ !x\ y\verb!}}!]\verb!{with {!y\ 10\verb!} !z\verb!}!$

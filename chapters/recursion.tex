@@ -542,5 +542,21 @@ where \term{pgm} is as follows:
 
 \end{itemize}
 
+\item Consider the following expression:
+\[
+\begin{array}{l@{~}l}
+\textsf{val}\ \code{fac} = \lambda \code{m}. &
+\textsf{val}\ \code{facX} = \lambda \code{facX}.
+\lambda \code{m}. \textsf{if0}\ m\ 1\ (n * ((\term{facX}\ \term{facX})\ (x - 1)))\\
+&\textsf{in}\ ((\term{facX}\ \term{facX})\ m)\\
+\textsf{in}\ (\term{fac}\ m)
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Draw arrows on the above expression from each bound variable to its binding occurrence.
+\item[b)] Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
+\end{itemize}
+
 
 \end{enumerate}
