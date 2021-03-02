@@ -2,14 +2,49 @@
 \chapter{Identifiers}
 \labch{identifiers}
 
-AE defined by the last article features only integers, sums, and differences.
-This article defines VAE by adding local variables to AE.
+\renewcommand{\plang}{\textsf{AE}\xspace}
+\renewcommand{\lang}{\textsf{VAE}\xspace}
+
+Variables are one of the basic concepts of programming languages. A
+\textit{variable}\index{variable} relates a name to a value. We use the
+value by writing the name of the variable. For example, the following Scala program
+prints \code{3}.
+
+\begin{verbatim}
+val x = 3
+println(x)
+\end{verbatim}
+
+The program defines a variable whose name is \code{x} and value is \code{3}. At
+the second line, the name \code{x} denotes the value \code{3}.
+
+We call the names of variables identifiers. An
+\textit{identifier}\index{identifier} is a name related to a
+certain entity in a program. Not only the names of variables are identifiers;
+there are various kinds of identifiers:
+
+\begin{itemize}
+\item Function names, which are related to functions
+\item Parameter names, which are related to the values of arguments
+\item Fields names, which are related to values of fields
+\item Method names, which are related to methods
+\item Class names, which are related to classes
+\end{itemize}
+
+This chapter introduces identifiers. Identifiers in programs can split in to
+three groups: binding occurrences, bound occurrences, and free identifiers.
+We will see what they are. This chapter discusses identifiers based on use
+of variables in programs. We will define \lang by extending \plang of
+\refch{syntax-and-semantics} with variables. Variables of \lang are immutable.
+We will deal with mutable variables in \refch{mutable-variables}.
+In \lang, the name of variables are
+the only identifiers. However, as you have seen already, real-world programming
+languages have many kinds of identifiers.
 
 \section{Identifiers}
 
-\term{Identifiers} name entities such as variables, functions, types, and
-packages. Most languages use strings satisfying specific conditions as
-identifiers.
+Identifiers name entities like variables and functions.
+Let us discuss notions related to identifiers with the following Scala program:
 
 \begin{verbatim}
 f(0)
@@ -18,282 +53,364 @@ def f(x: Int): Int = {
   x + y
 }
 f(1)
-x - y
+x - z
 \end{verbatim}
 
-\verb!f!, \verb!x!, and \verb!y! are identifiers. Strictly speaking, \verb!Int!
-also is an identifier, but the article ignores it. \verb!f! is the name of a
-function; \verb!x! is the name of the parameter of \verb!f!; \verb!y! is the name
-of the local variable of \verb!f!.
+In this program, \code{f}, \code{x}, \code{y}, and \code{z} are identifiers. Strictly speaking,
+\code{Int} also is an identifier, but we ignore it because we do not want to take
+types into account here.
 
-Three kinds of identifiers exist.
+A single identifier can occur multiple times in a program. For instance,
+\code{f} occurs three times in the program: line 1, line 2, and line 6.
+We can classify occurrences of identifiers into three categories:
+binding occurrences, bound occurrences, and free identifiers.
 
-The first kind is a \term{binding occurrence}. If the occurrence associates an
-identifier with an entity, it is a binding occurrence. Both \verb!f! and \verb!x!
-in \verb!def f(x: Int): Int! are binding occurrences; \verb!y! in \verb!val y = 2!
-is a binding occurrence. \verb!f! refers to a function, \verb!(x: Int) => { val y = 2; x + y }!;
-\verb!x! refers to an argument passed to \verb!f!; \verb!y!
-refers to \verb!2!.
+An occurrence of an identifier is called a \textit{binding occurrence}\index{binding occurrence}
+if the identifier occurs to be defined. A binding occurrence relates the
+identifier to a particular entity. The program has three binding occurrences:
 
-The second kind is a \term{bound occurrence}. The \term{scope} of a binding
-occurrence means a code region where an identifier introduced by the binding
-occurrence can appear. An occurrence of an identifier in a scope is a bound
-occurrence. The identifier denotes an entity referred by the identifier. Both
-\verb!x! and \verb!y! in \verb!x + y! are bound occurrences; the binding
-occurrences of \verb!x! and \verb!y! respectively bind the bound occurrences.
-\verb!x! denotes an argument used at a function call-site; \verb!y! denotes
-\verb!2!. \verb!f! in \verb!f(1)! is a bound occurrence; the binding occurrence
-of \verb!f! binds the bound occurrence. \verb!f! denotes a function referred by
-\verb!f!, and \verb!f(1)! thus is a correct function call.
+\begin{itemize}
+  \item \code{f} at line 2
 
-The last kind is a \term{free identifier}. An identifier not belonging to any
-scopes of the binding occurrences of the identifier is a free identifier. The
-scope of the binding occurrence of \verb!f! includes the body of \verb!f! and
-every line below the definition of \verb!f!. Therefore, \verb!f! in \verb!f(0)!
-is a free identifier. The scope of \verb!x! equals the body of \verb!f!, and the
-scope of \verb!y! starts at a line defining \verb!y! and ends at the end of the
-definition of \verb!f!. Both \verb!x! and \verb!y! in \verb!x – y! are free
-identifiers. Unlike bound occurrences, free identifiers do not denote any
-entities. Evaluating an expression containing free identifiers causes an error in
-most languages; compiling code containing free identifiers results in a compile
-error.
+    It relates \code{f} to a function.
 
-Consider a bound occurrence that resides in the scopes of more than one binding
-occurrence simultaneously. Most languages regard an entity referred by a binding
-occurrence owning the smallest scope as whom the bound occurrence denotes.
-\term{Shadowing} means that a binding occurrence with a smaller scope takes
-priority over a binding occurrence with a larger scope.
+  \item \code{x} at line 2
+
+    It relates \code{x} to the value of an argument given to \code{f}.
+
+  \item \code{y} at line 3
+
+    It relates \code{y} to the value \code{2}.
+\end{itemize}
+
+Every binding occurrence has its own scope. The \textit{scope}\index{scope} of a binding
+occurrence means a code region where the indentifier defined by the binding
+occurrence is alive, i.e. usable. The scope of each identifier in the program is as follows:
+
+\begin{itemize}
+  \item \code{f}
+
+    A function can be used in its body (as Scala allows recursive function
+    definitions) and at the lines below its definition. The scope of
+    \code{f} is from line 3 to line 7.
+
+  \item \code{x}
+
+    A paramter of a function can be used only in the function body. The scope of
+    \code{x} is line 3 and 4.
+
+  \item \code{y}
+
+    A variable can be used at the lines below its definition. The scope of
+    \code{y} is line 4.
+\end{itemize}
+
+An occurrence of an identifier is called a \textit{bound occurrence}\index{bound occurrence}
+if the identifier occurs to use the entity related to itself. Since an
+identifier becomes related to an entity by its binding occurrence, any bound
+occurrences must reside in the scope of the binding occurrence.
+The program has three bound occurrences:
+
+\begin{itemize}
+  \item \code{f} at line 6
+
+    It denotes the function defined at line 2.
+
+  \item \code{x} at line 4
+
+    It denotes the value of an argument passed to \code{f}.
+
+  \item \code{y} at line 4
+
+    It denotes the value \code{2}.
+\end{itemize}
+
+An occurrence of an identifier is called a \textit{free identifier}\index{free
+identifier} if it is
+neither binding nor bound. A free identifier neither introduces a new name nor
+uses a name defined already. It is not in the scope of any binding occurrence of
+the same identifier. The program has three free identifiers:
+
+\begin{itemize}
+  \item \code{f} at line 1
+
+    It is outside the scope of \code{f}.
+
+  \item \code{x} at line 7
+
+    It is outside the scope of \code{x}.
+
+  \item \code{z} at line 7
+
+    The program never defines \code{z}.
+\end{itemize}
+
+We call a free identifier a \textit{free variable}\index{free variable} when it
+is the name of a variable. Therefore, both \code{x} and \code{z} at line 7 are
+free variables.
+
+Now, consider a binding occurrence that resides in the scope of a binding
+occurrence of the same identifier. For example, the following program has two
+binding occurrences of \code{x}, and the second binding occurrence is in the
+scope of the first binding occurrence.
 
 \begin{verbatim}
 def f(x: Int): Int = {
-  def g(x: Int): Int = x
+  def g(x: Int): Int =
+    x
   g(x)
 }
 \end{verbatim}
 
-The code is an example of shadowing. Both \verb!x!'s in \verb!def f(x: Int): Int!
-and \verb!def g(x: Int): Int! are binding occurrences. The occurrence of \verb!x!
-at the end of the second line is a bound occurrence. It belongs to the scopes of
-the two binding occurrences at the same time. As having a smaller scope than the
-first binding occurrence, the second binding occurrence binds the bound
-occurrence. The bound occurrence denotes an argument passed to \verb!g!. On the
-other hand, \verb!x! in \verb!g(x)! belongs to only the scope of the first
-binding occurrence of \verb!x!. The first binding occurrence binds it, and it
-denotes an argument passed to \verb!f!.
+In this case, shadowing happens. \textit{Shadowing}\index{shadowing} means that
+the innermost binding occurrence \textbf{shadow}s, i.e. temporarily invalidates,
+the outer binding occurrences of the same name. Therefore, \code{x} at line 2
+shadows \code{x} at line 1.
+\code{x} at line 3 belongs to the scope of both binding occurrences simultaenously.
+It denotes the value of an argument given to \code{g}, not \code{f}, because of
+the shadowing. On the other hand, \code{x} at line 4 denotes the value of an
+argument given to \code{f} since it belongs to the scope of only \code{x} at
+line 1.
 
-\section{VAE}
+\section{Syntax}
 
-Expressions of VAE are arithmetic expressions that can define immutable local
-variables and refer to variables.
+Let us define the abstract syntax of \lang. We do not consider the concrete
+syntax anymore. Therefore, the term syntax will be used to mean abstract
+syntax. Also, from now on, we use the term expressions rather than
+programs when we discuss languages like \lang. For example, we say that
+$1+2$ is an expression of \plang, and $1$ and $2$ are the subexpressions of
+$1+2$.
 
-\subsection{Syntax}
-
-The following is the abstract syntax of VAE:
-
-\[
-\begin{array}{lrcl}
-\text{Integer} & n & \in & \mathbb{Z} \\
-\text{Variable} & x & \in & \textit{Id} \\
-\text{Expression} & e & ::= & n \\
-&& | & e + e \\
-&& | & e - e \\
-&& | & \textsf{val}\ x = e\ \textsf{in}\ e \\
-&& | & x \\
-\text{Value} & v & ::= & n
-\end{array}
-\]
-
-Metavariable \(n\) ranges over integers.
-
-Metavariable \(x\) ranges over variables, which belong to set \(\mathit{Id}\).
-\(\mathit{Id}\) is a set of objects differing from elements of other sets; it is
-the set of every possible identifier.
-
-Metavariable \(e\) ranges over expressions. Expression \(\textsf{val}\ x=e_1\
-\textsf{in}\ e_2\) declares a local variable. The occurrence of \(x\) is a
-binding occurrence. \(x\) refers to a value denoted by \(e_1\). The scope of the
-occurrence covers entire \(e_2\) but not \(e_1\). Expression \(x\) is either a
-bound occurrence of \(x\) or a free identifier. If it is a bound occurrence, it
-denotes a value associated with the identifier. For example, the first occurrence
-of \(x\) in \(\textsf{val}\ x=1\ \textsf{in}\ x\) binds the second occurrence of
-\(x\). On the other hand, the second \(x\) in \(\textsf{val}\ x=x\ \textsf{in}\
-1\) is a free identifier.
-
-Metavariable \(v\) ranges over values. Values of VAE are integers as those of AE
-are.
-
-\subsection{Semantics}
-
-The natural semantics of AE defines the semantics of integers, sums, and
-differences. The natural semantics of VAE additionally requires the semantics of
-binding and bound occurrences. Consider \(\textsf{val}\ x=1\ \textsf{in}\ x\).
-The following Scala expression expresses the same thing:
+Recall the example at the beginning of the chapter:
 
 \begin{verbatim}
-{
-  val x = 1
-  x
-}
+val x = 3
+println(x)
 \end{verbatim}
 
-It denotes \verb!1!. Since the binding occurrence associates \verb!x! with
-\verb!1!, the bound occurrence denotes \verb!1!. The value denoted by the entire
-expression equals \verb!1!, the value of the bound occurrence.
+To add variables to \plang, we need two kinds of expressions. The first kind is
+expressions defining a variable, i.e. binding an identifier. In the example,
+\code{val x = 3; println(x)} is such an expression. It defines the
+variable \code{x} and starts the scope of \code{x} so that \code{x} can be used
+in \code{println(x)}. We can conclude that an expression defining a variable
+consists of three parts: the name of the variable, an expression determining the
+value of the variable, and an expression that can use the variable. These parts
+are \code{x}, \code{3}, and \code{println(x)} respectively in the example. The
+second kind is expressions using a variable, i.e. a bound occurrence. In the
+example, \code{x} at the second line is such an expression. It uses the variable \code{x} to denote
+the value \code{3}. Based on this observation, we can define the syntax of
+\lang.
 
-\(\textsf{val}\ x=1\ \textsf{in}\ x\) is evaluated in the same manner. The value
-denoted by the whole expression equals the value denoted by \(x\), the body of
-the expression. However, it is not possible to evaluate \(x\) without any
-information. A value associated with \(x\) by the binding occurrence is
-necessary. VAE newly defines \term{environments} to store such information. An
-environment is a dictionary of finite size; its keys are identifiers, and its
-values are values of VAE. Mathematically, it is a \term{partial function} from
-\(\mathit{Id}\) to \(\text{Value}\).
+First, we need to add a new syntactic element: identifiers. The metavariable
+$x$ ranges over identifiers. Let $\embox{Id}$ be the set of every
+identifier.
+
+\[x\in\embox{Id}\]
+
+We do not care what $\embox{Id}$ really is.
+
+The syntax of \lang is as follows:\sidenote{We omit the common part
+to \plang.}
+
+\[e\ ::=\ \cdots\ |\ \ebind{x}{e}{e}\ |\ x\]
+
+\begin{itemize}
+  \item $\ebind{x}{e_1}{e_2}$
+
+    It defines a new variable whose name is $x$. Therefore, the occurrence of $x$ is a
+    binding occurrence. $e_1$ decides the value denoted by the variable. The
+    scope of the variable includes $e_2$ but excludes $e_1$.
+
+  \item $x$
+
+    It uses a variable; it is either a bound occurrence of $x$ or a free identifier.
+    If it belongs to the scope of a binding occurrence of the same name, then it is a
+    bound occurrence and denotes the value associated with the identifier.
+    Otherwise, it is a free identifier, which denotes nothing.
+\end{itemize}
+
+\section{Semantics}
+
+To define the semantics of \lang, we need an additional semantic element that
+stores the values denoted by variables. Without such element, we cannot know the
+value of each variable. We call the element an
+\textit{environment}\index{environment}. An environment is a finite partial
+function.\sidenote{A finite partial function is a partial function whose domain
+is a finite set.} The metavariable $\sigma$ ranges over environments.
+
+\[\embox{Env}=\embox{Id}\finto\mathbb{Z}\]
+\[\sigma\in\embox{Env}\]
+
+For example, consider an environment $\sigma$.
+If $\sigma(\cx)=1$, the value of a variable named \code{x} is $1$.
+An environment is a partial function because it does not have the values
+related to free identifiers. If a variable named \code{y} is is free in
+$\sigma$, then $\sigma(\cy)$ is undefined.
+In addition, it is finite since every program
+defines only finitely many identifiers.
+
+Every expression in \lang can evaluate to an integer only under some
+environment. The reason is obvious: without environments, there is no way to
+find the values of variables, and thus environments are essential to evaluation.
+
+The following rule defines the semantics of $x$:
+
+\semanticrule{Id}{
+If
+  $x$ is an element of the domain of $\sigma$,\\
+then
+  \evaldn{x}{\sigma(x)}.
+}
+
+If $x$ is an element of the domain of $\sigma$, $x$ is a bound occurrence. The
+environment gives us the value denoted by $x$, which is $\sigma(x)$. Then, the
+result is $\sigma(x)$. Otherwise, $x$ is not in the domain and is a free
+identifier. In that case, we cannot evaluate $x$. The evaluation terminates
+immediately. It can be interpreted as a run-time error.
+
+Formally, the semantics of \lang is a
+ternary relation over $\embox{Env}$, $E$, and $\mathbb{Z}$ since it must take
+environments into account.
+
+\[\Rightarrow\subseteq\embox{Env}\times E\times\mathbb{Z}\]
+
+$(\sigma,e,n)\in\Rightarrow$ is true if and only if
+$e$ evaluates to $n$ under $\sigma$.
+We write $\sigma\vdash e\Rightarrow n$ instead of $(\sigma,e,n)\in\Rightarrow$.
+Intuitively, $\sigma$ and $e$ are input, and $n$ is the corresponding output.
+
+Rule \textsc{Id} can be formulated as the following inference rule:
+\sidenote{$\dom{\sigma}$ denotes the domain of $\sigma$.}
 
 \[
-\begin{array}{lrcl}
-\text{Environment} & \sigma & \in & \mathit{Id}\hookrightarrow \text{Value}
-\end{array}
+  \inferrule
+  { x\in\dom{\sigma} }
+  { \evald{x}{\sigma(x)} }
+  \quad\textsc{[Id]}
 \]
 
-Metavariable \(\sigma\) ranges over environments. Binding occurrences add
-information to environments, and bound occurrences use information in
-environments.
 
-The natural semantics of AE is a binary relation over \(\text{Expression}\) and
-\(\text{Value}\). The natural semantics of VAE is not a binary relation of the
-two sets since evaluating an expression requires an environment providing the
-values of identifiers in the expression. The natural semantics is a ternary
-relation over \(\text{Environment}\), \(\text{Expression}\), and
-\(\text{Value}\).
-
-
-\[\Rightarrow\subseteq\text{Environment}\times\text{Expression}\times\text{Value}\]
-
-\((\sigma,e,v)\in\Rightarrow\) implies that evaluating expression \(e\) under
-environment \(\sigma\) results in value \(v\). \(\sigma\vdash e\Rightarrow v\)
-replaces the notation. Intuitively, an environment and an expression are given
-input, and a value is output obtained by computation.
-
-Inference rules define the natural semantics of VAE.
+When a variable is defined, the value of the variable is added to the environment.
+We write $\sigma[x\mapsto n]$ to denote an environment obtained by adding the
+fact that $x$ denotes $v$ to $\sigma$. Then, the following property holds:
 
 \[
-\sigma\vdash n\Rightarrow n
-\]
-
-The rule equals that of AE.
-
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow n_1 \\ \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1+e_2\Rightarrow n_1+n_2 }
-\]
-
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow n_1 \\ \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1-e_2\Rightarrow n_1-n_2 }
-\]
-
-The rules equal those of AE except evaluating \term{subexpressions} \(e_1\) and
-\(e_2\) also requires environments. The premises and the conclusion use the same
-environment.
-
-The rule for a binding occurrence needs a way to add information to an
-environment. The following defines an extension of an environment.
-
-\[
-\sigma \lbrack x\mapsto
-v\rbrack=\sigma\setminus\{(x',v'):x'=x\land\sigma(x')=v'\}\cup\{(x,v)\}
-\]
-
-An environment obtained by adding that identifier \(x\) refers to value \(v\) to
-environment \(\sigma\) is \(\sigma\) with \((x,v)\) but without any other pairs
-about \(x\). It has the following property:
-
-\[
-\sigma \lbrack x\mapsto v\rbrack(x') =
+\sigma [ x\mapsto v](x') =
 \begin{cases}
-v & \text{if}\ x=x' \\
-v' & \text{if}\ x\neq x'\land\sigma(x')=v'
+  v & \text{if}\ x=x' \\
+  \sigma(x) & \text{if}\ x\neq x'
 \end{cases}
 \]
 
-The \(x=x'\) case shows shadowing.
+The following rule defines the semantics of $\ebind{x}{e_1}{e_2}$:
+
+\semanticrule{Val}{
+If
+  \evaldn{e_1}{v_1} and
+  \evaln{\sigma[x\mapsto v_1]}{e_2}{v_2},
+then
+  \evaldn{\ebind{x}{e_1}{e_2}}{v_2}.
+}
+
+To evaluate $\ebind{x}{e_1}{e_2}$, we need to determine the value of $x$ first.
+It can be done by evaluating $e_1$. Since the scope of $x$ excludes $e_1$,
+the evaluation proceeds under $\sigma$, which is a given environment.
+The result of $e_1$ is the value of $x$, and this information must be added to
+the environment. By adding the fact to $\sigma$, we get $\sigma[x\mapsto v_1]$.
+As $e_2$ is the scope of $x$, $e_2$ is evaluated under $\sigma[x\mapsto v_1]$.
+The result of $e_2$ is the final result.
+
+This semantics naturally explains shadowing. Let $x$ already be in the domain of
+$\sigma$. Suppose that $\sigma(x)=v$. However, $e_2$ is evaluated under
+$\sigma[x\mapsto v_1]$, and $\sigma[x\mapsto v_1](x)=v_1$. When $x$ is used in
+$e_2$, its value is $v_1$, not $v$. Therefore, we can say that the
+innermost definition of $x$ is used for the evaluation of $e_2$. This behavior
+exactly matches the concept of shadowing explained before.
+
+Rule \textsc{Val} can be expressed as the following inference rule:
 
 \[
 \inferrule
 {
-  \sigma\vdash e_1\Rightarrow v_1 \\
-  \sigma\lbrack x\mapsto v_1\rbrack\vdash e_2\Rightarrow v_2
+  \evald{e_1}{v_1} \\
+  \eval{\sigma[x\mapsto v_1]}{e_2}{v_2}
 }
-{ \sigma\vdash \textsf{val}\ x=e_1\ \textsf{in}\ e_2\Rightarrow v_2 }
+{ \evald{\ebind{x}{e_1}{e_2}}{v_2} }
+\quad\textsc{[Val]}
 \]
 
-Evaluating \(\textsf{val}\ x=e_1\ \textsf{in}\ e_2\) requires a value denoted by
-identifier \(x\). Firstly, evaluating \(e_1\) attains \(v_1\). The scope of the
-binding occurrence excludes \(e_1\) so that the evaluation uses \(\sigma\). A
-value denoted by the whole expression equals \(v_2\), denoted by \(e_2\). The
-evaluation of \(e_2\) uses \(\sigma\lbrack x\mapsto v_1\rbrack\), which knows
-that \(x\) refers to \(v_1\) in addition to information from \(\sigma\).
+The remaining cases are $n$, $\eadd{e_1}{e_2}$, and $\esub{e_1}{e_2}$.
+Rules for those cases are basically identical to the rules of \plang.
+However, we need to additionally take environments into account.
 
-If an expression is an identifier, it is essential to check whether the
-identifier is a bound occurrence or a free identifier. The following function
-calculates the domain of an environment:
+\semanticrule{Num}{
+  \evaldn{n}{n}
+}
 
-\[
-\mathit{Domain}(\sigma)=\{x:\exists v.(x,v)\in\sigma\}
-\]
+\vspace{-1em}
 
-\(\mathit{Domain}(\sigma)\) is the domain of \(\sigma\). An identifier that
-belongs to the domain is a bound occurrence. Otherwise, it is a free identifier.
+\semanticrule{Add}{
+If
+  \evaldn{e_1}{n_1} and \evaldn{e_2}{n_2},\\
+then
+  \evaldn{\eadd{e_1}{e_2}}{n_1+n_2}.
+}
 
-\[
-\inferrule
-{ x\in\mathit{Domain}(\sigma) }
-{ \sigma\vdash x\Rightarrow \sigma(x)}
-\]
+\vspace{-1em}
 
-The bound occurrence of \(x\) denotes a value whom \(x\) refers to in the
-environment. If \(x\) is a free identifier, the premise is false, and, therefore,
-an expression containing a free identifier does not denote any values. It
-explains that executing a program with free identifiers results in an error.
+\semanticrule{Sub}{
+If
+  \evaldn{e_1}{n_1} and \evaldn{e_2}{n_2},\\
+then
+  \evaldn{\esub{e_1}{e_2}}{n_1-n_2}.
+}
 
-The following inference rules are all of the natural semantics of VAE:
+We can express them as the inference rules:
 
 \[
-\sigma\vdash n\Rightarrow n
+  \evald{n}{n}\quad\textsc{[Num]}
 \]
 
 \[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow n_1 \\ \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1+e_2\Rightarrow n_1+n_2 }
+  \inferrule
+  { \evald{e_1}{n_1} \\ \evald{e_2}{n_2} }
+  { \evald{\eadd{e_1}{e_2}}{n_1+n_2} }
+  \quad\textsc{[Add]}
 \]
 
 \[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow n_1 \\ \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1-e_2\Rightarrow n_1-n_2 }
+  \inferrule
+  { \evald{e_1}{n_1} \\ \evald{e_2}{n_2} }
+  { \evald{\esub{e_1}{e_2}}{n_1-n_2} }
+  \quad\textsc{[Sub]}
 \]
+
+The following proof tree proves that $\ebind{\cx}{1}{\eadd{\cx}{\cx}}$ evaluates
+to $2$ under the empty environment. Note that $[x_1\mapsto n_1,\ldots,x_m\mapsto
+n_m]$ denotes an environment whose domain includes from $x_1$ to $x_m$ and each
+$x_i$ is mapped to $n_i$.
 
 \[
 \inferrule
 {
-  \sigma\vdash e_1\Rightarrow v_1 \\
-  \sigma\lbrack x\mapsto v_1\rbrack\vdash e_2\Rightarrow v_2
+  \emptyset\vdash 1\Rightarrow 1 \\
+  \inferrule
+  {
+    \inferrule
+    { \cx\in\dom{[ \cx\mapsto 1]} }
+    { [ \cx\mapsto 1]\vdash \cx\Rightarrow 1 } \\
+    \inferrule
+    { \cx\in\dom{[ \cx\mapsto 1]} }
+    { [ \cx\mapsto 1]\vdash \cx\Rightarrow 1 }
+  }
+  {[ \cx\mapsto 1]\vdash \eadd{\cx}{\cx}\Rightarrow 2 }
 }
-{ \sigma\vdash \textsf{val}\ x=e_1\ \textsf{in}\ e_2\Rightarrow v_2 }
+{ \emptyset\vdash \ebind{\cx}{1}{\eadd{\cx}{\cx}}\Rightarrow 2 }
 \]
 
-\[
-\inferrule
-{ x\in\mathit{Domain}(\sigma) }
-{ \sigma\vdash x\Rightarrow \sigma(x)}
-\]
+\section{Interpreter}
 
-\subsection{Implementing an Interpreter}
-
-The following Scala code expresses the abstract syntax of VAE:
+The following Scala code implements the abstract syntax of \lang:
 
 \begin{verbatim}
 sealed trait Expr
@@ -304,48 +421,36 @@ case class Val(x: String, i: Expr, b: Expr) extends Expr
 case class Id(x: String) extends Expr
 \end{verbatim}
 
-An identifier is an arbitrary string. \verb!Val! constructs an expression
-declaring a local variable; \verb!Id! constructs an expression using a local
-variable.
+An identifier is an arbitrary string.
+\code{Val($x$, $e_1$, $e_2$)} corresponds to $\ebind{x}{e_1}{e_2}$;
+\code{Id($x$)} corresponds to $x$.
 
-\verb!Map! in the Scala standard library can represent environments. \verb!Map!
-creates dictionaries.
-
-\begin{verbatim}
-val m0: Map[String, Int] = Map.empty
-val m1: Map[String, Int] = m0 + ("one" -> 1)
-m1.getOrElse("one", -1)  // 1
-m1.getOrElse("two", -1)  // -1
-\end{verbatim}
-
-The \verb!Map! type has two type parameters: the first one is the type of keys,
-and the second one is the type of values. \verb!Map[String, Int]! is the type of
-a dictionary whose keys and values are strings and integers respectively.
-\verb!Map.empty! is a dictionary without any keys and values. The library defines
-various methods: the \verb!+! method adds the pair of a key and a value to a
-dictionary; the \verb!getOrElse! method takes two arguments and returns a value
-corresponding to a key, the first argument, in a dictionary. \verb!getOrElse!
-evaluates the second argument and returns the result only if the first argument
-is not a key of the dictionary.
+We use a map to represent an environment. The type of an environment is
+\code{Map[String, Int]}.
 
 \begin{verbatim}
 type Env = Map[String, Int]
 \end{verbatim}
 
-An environment is a partial function from identifiers to values. Identifiers are
-strings; values are integers. Therefore, the type of an environment is
-\verb!Map[String, Int]!. The above expression defines \verb!Env!, a type alias of
-\verb!Map[String, Int]!. The two types are identical, and an environment thus has
-type \verb!Env!.
+The standard library provides various methods for maps.
+We use two methods to implement the interpreter.
 
-\begin{verbatim}
-def lookup(x: String, env: Env): Int =
-  env.getOrElse(x, throw new Exception)
-\end{verbatim}
+\begin{itemize}
+  \item \code{+}
 
-The \verb!lookup! function returns a value referred by an identifier, the first
-argument, in an environment, the second argument. It throws an exception if the
-environment lacks information about the identifier.
+    It allows us to add the pair of a key and a value to the map. For example,
+    where \code{m} is \code{Map(1 -> "one")}, we \code{m + (2 -> "two")} is the same as
+    \code{Map(1 -> "one", 2 -> "two")}
+
+  \item \code{getOrElse}
+
+    It takes two arguments. The first argument is a key, and the second argument
+    is a default value. If the map has the key, then the result is the
+    corresponding value. Otherwise, the default value is returned.
+    For instance, where \code{m} is \code{Map(1 -> "one")}, \code{m.getOrElse(1,
+    "?")} is \code{"one"}, and \code{m.getOrElse(2, "?")} is
+    \code{"?"}.
+\end{itemize}
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Int = e match {
@@ -353,75 +458,35 @@ def interp(e: Expr, env: Env): Int = e match {
   case Add(l, r) => interp(l, env) + interp(r, env)
   case Sub(l, r) => interp(l, env) - interp(r, env)
   case Val(x, i, b) => interp(b, env + (x -> interp(i, env)))
-  case Id(x) => lookup(x, env)
+  case Id(x) => env.getOrElse(x, error("free identifier"))
 }
 \end{verbatim}
 
-The \verb!Num! case equals that of the interpreter, implemented by the last
-article, of AE. The \verb!Add! and \verb!Sub! cases pass \verb!env! as arguments.
-The \verb!Val! case calculates the value of \verb!b! under an environment
-extended with the result of evaluating \verb!i! under \verb!env!. The \verb!Id!
-case calls the \verb!lookup! function to find a value denoted by an identifier.
-
-Calling the \verb!interp! function with arguments \(\textsf{val}\ x=1\
-\textsf{in}\ x+x\) and the empty environment yields \verb!2!.
-
-\begin{verbatim}
-// val x = 1 in x + x
-interp(
-  Val("x", Num(1),
-    Add(Id("x"), Id("x"))
-  ),
-  Map.empty
-)
-// 2
-\end{verbatim}
-
-The following proof tree proves that \(\textsf{val}\ x=1\ \textsf{in}\ x+x\)
-denotes \(2\) under \(\emptyset\), the empty environment:
-
-\[
-\inferrule
-{
-  \emptyset\vdash 1\Rightarrow 1 \\
-  \inferrule
-  {
-    \inferrule
-    { x\in\mathit{Domain}(\lbrack x\mapsto 1\rbrack) }
-    { \lbrack x\mapsto 1\rbrack\vdash x\Rightarrow 1 } \\
-    \inferrule
-    { x\in\mathit{Domain}(\lbrack x\mapsto 1\rbrack) }
-    { \lbrack x\mapsto 1\rbrack\vdash x\Rightarrow 1 }
-  }
-  {\lbrack x\mapsto 1\rbrack\vdash x+x\Rightarrow 2 }
-}
-{ \emptyset\vdash \textsf{val}\ x=1\ \textsf{in}\ x+x\Rightarrow 2 }
-\]
-
+Since the structure of the code is almost identical to the semantic rules, there
+is nothing much to explain. In the \code{Id} case, we use the function
+\code{error}, which is defined in \refsec{options}. When \code{x} is a key in
+\code{env}, the corresponding value becomes the result of \code{interp}.
+Otherwise, \code{error}, which throws an exception, is called, and the execution
+terminates without producing any results.
 
 \section{Exercises}
 
 \begin{enumerate}
 \item Which of the following are examples of shadowing?
-\begin{itemize}
-  \item[a)] \(\textsf{val}\ x = (\textsf{val}\ x = 3\ \textsf{in}\ 5 - x)\ \textsf{in}\ 1 + x\)
-  \item[b)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ y = 5\ \textsf{in}\ 1 + x\)
-  \item[c)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ x = 5\ \textsf{in}\ 1 + x\)
-\end{itemize}
+\begin{enumerate}
+  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{x}})}{\eadd{1}{\cx}}$
+  \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
+  \item $\ebind{\cx}{3}{\ebind{\cx}{5}{\eadd{1}{\cx}}}$
+\end{enumerate}
 
 \item For each of the following expression:
-\bigskip
 \begin{itemize}
-  \item[a)] \(\textsf{val}\ x = (\textsf{val}\ x = 3\ \textsf{in}\ 5 - x)\ \textsf{in}\ 1 + x\)
-\bigskip
-  \item[b)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ y = 5\ \textsf{in}\ 1 + x\)
-\bigskip
-  \item[c)] \(\textsf{val}\ x = 3\ \textsf{in}\ \textsf{val}\ x = 5\ \textsf{in}\ 1 + x\)
+  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{x}})}{\eadd{1}{\cx}}$
+  \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
+  \item $\ebind{\cx}{3}{\ebind{\cx}{5}{\eadd{1}{\cx}}}$
 \end{itemize}
-\medskip
-\begin{itemize}
-\item[1)] Draw arrows from each bound variable to its binding occurrence.
-\item[2)] Draw dotted arrows from each shadowing variable to its shadowed variable.
-\end{itemize}
-
+\begin{enumerate}
+  \item Draw arrows from each bound occurrence to its binding occurrence.
+  \item Draw dotted arrows from each shadowing variable to its shadowed variable.
+\end{enumerate}
 \end{enumerate}

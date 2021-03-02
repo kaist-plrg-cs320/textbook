@@ -66,12 +66,27 @@
 }
 
 \newcommand{\lang}{}
+\newcommand{\plang}{}
 \newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\cx}{\code{x}}
+\newcommand{\cy}{\code{y}}
+
 \newcommand{\pto}{\mathrel{\ooalign{\hfil$\mapstochar$\hfil\cr$\to$\cr}}}
+\newcommand{\finto}{\stackrel{\mbox{\tiny fin}}{\pto}}
 \newcommand{\embox}[1]{\mbox{\emph{#1}}}
-\newcommand{\finto}{\stackrel{\mbox{\tiny fin}}{\to}}
+\newcommand{\dom}[1]{\embox{Domain}(#1)}
 \newcommand{\iadd}{+_{{}_{\mathbb{Z}}}}
 \newcommand{\isub}{-_{{}_{\mathbb{Z}}}}
+
+\newcommand{\eadd}[2]{#1+#2}
+\newcommand{\esub}[2]{#1-#2}
+\newcommand{\ebind}[3]{\textsf{val}\ #1=#2\ \textsf{in}\ #3}
+\newcommand{\efun}[2]{\lambda#1.#2}
+
+\newcommand{\eval}[3]{#1\vdash#2\Rightarrow#3}
+\newcommand{\evaln}[3]{\ensuremath{#2} evaluates to \ensuremath{#3} under \ensuremath{#1}}
+\newcommand{\evald}[2]{\eval{\sigma}{#1}{#2}}
+\newcommand{\evaldn}[2]{\evaln{\sigma}{#1}{#2}}
 \newcommand{\semanticrule}[2]{
 \vspace{1em}
 \textbf{Rule \textsc{#1}}\\
@@ -84,11 +99,7 @@
                 {#1}
                 {#2 \rule{0pt}{11pt}}
 }
-\newcommand{\newinfrule}[2] {
-  \ensuremath{\newfrac
-    {\displaystyle #1}
-    {\displaystyle #2}}
-}
+\newcommand{\newinfrule}[2]{\inferrule{#1}{#2}}
 \newcommand{\derive}[2]{\ensuremath{\begin{array}{c}\infer{#1}{#2}\end{array}}}
 \newcommand{\term}[1]{#1}
 
