@@ -1,5 +1,5 @@
 main.pdf: main.tex chapters/*.tex
-	pdflatex -interaction=nonstopmode main && \
+	pdflatex -interaction=nonstopmode main; \
 	makeindex main && \
 	biber main && \
 	pdflatex main && \
