@@ -185,7 +185,7 @@ The \verb!Id! case calls both \verb!lookup! and \verb!storeLookup!.
 
 The below shows the whole code at once.
 
-<details><summary>See the code</summary>
+%<details><summary>See the code</summary>
 
 \begin{verbatim}
 sealed trait Expr
@@ -235,7 +235,7 @@ def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) = e match {
 }
 \end{verbatim}
 
-</details>
+%</details>
 
 The below example evaluates \((\lambda x.x+(x:=1)+x)0\) with the \verb!interp! function. The first \(x\) and the second \(x\) respectively denote \(0\) and \(1\). \(x:=1\) between two \(x\)'s results in \(1\). The result must be \(2\), and the final store must map the address of \(x\) onto \(1\).
 
@@ -303,7 +303,7 @@ The interpreter needs the following change:
 
 An example of call by reference is a parameter with the ampersand in C++. If the ampersand follows the name of a parameter, the parameter uses the call-by-reference semantics.
 
-\begin{verbatim}++
+\begin{verbatim}
 #include <iostream>
 
 void f(int &);
@@ -329,17 +329,18 @@ In C or C++, programmers can mimic call by reference by explicitly passing point
 
 \begin{enumerate}
 \item
-Consider the following language $e$:
+In this exercise, we examine variation of MFAE which can handle pointer arithmetic (roughly).
+Consider the following language, PFAE:
 \[
-\begin{array}{rll}
-e ::= & n\\
-\mid& \verb!{+ ! e\ e\verb+}+\\
-\mid& x\\
-\mid& \verb+{* +x\verb+}+\\
-\mid& \verb+{& +x\verb+}+\\
-\mid& \verb!{with {! x\ e\verb+} +e\verb+}+\\
-\mid& \verb!{seqn ! e\ e\verb+}+\\
-\mid& \verb!{set ! e\ e\verb+}+\\
+\begin{array}{lrcl}
+\text{Expression} & e & ::= & n \\
+&&\mid& \eadd{e}{e}\\
+&&\mid& x\\
+&&\mid& \verb+* +x\\
+&&\mid& \verb+& +x\\
+&&\mid& \ebind{x}{e}{e}\\
+&&\mid& e;e\\
+&&\mid& e:=e \\
 \end{array}
 \]
 where a value of the language is either a number $n$ or an address $a$,
@@ -347,7 +348,7 @@ an environment maps names to addresses, and a store maps addresses to values:
 \[
 \begin{array}{rrl}
 n \in \mathbb{Z}\\
-a \in \embox{Addr}\\
+a \in \embox{Addr} = \mathbb{Z}\\
 v \in \embox{Val} & = & \mathbb{Z} + \embox{Addr}\\
 \sigma \in \embox{Env} & = & \embox{Var} \finto \embox{Addr}\\
 M \in \embox{Store} & = & \embox{Addr} \finto \embox{Val}
@@ -355,7 +356,7 @@ M \in \embox{Store} & = & \embox{Addr} \finto \embox{Val}
 \]
 The semantics of some constructs are as follows:
 \begin{itemize}
-\item The value of \verb!{+ !$e_1\,e_2$\verb!}! is addition of the values of $e_1$ and $e_2$ with the following rules:
+\item The value of $\eadd{e_1}{e_2}$ is addition of the values of $e_1$ and $e_2$ with the following rules:
 \begin{itemize}
 \item Adding two numbers $n_1$ and $n_2$ evaluates to $n_1+n_2$.
 \item Adding two addresses $a_1$ and $a_2$ evaluates to $a_1+a_2$.
@@ -363,17 +364,17 @@ The semantics of some constructs are as follows:
 \end{itemize}
 
 \item The value of an identifier $x$ is the value in the store at the address denoted by the identifier in the environment.
-\item The value of \verb+{* +$x$\verb+}+ is the value in the store at the address denoted by the value of the identifier.
-\item The value of \verb+{& +$x$\verb+}+ is the address denoted by the identifier in the environment.
-\item The evaluation of \verb+{set +$e_1\ e_2$\verb+}+ evaluates $e_2$ first, which is the value of the whole expression.  Then, it evaluates $e_1$, and it maps the address denoted by the value of $e_1$ to the value of $e_2$.
+\item The value of \verb+* +$x$ is the value in the store at the address denoted by the value of the identifier.
+\item The value of \verb+& +$x$ is the address denoted by the identifier in the environment.
+\item The evaluation of $e_1 := e_2$ evaluates $e_2$ first, which is the value of the whole expression.  Then, it evaluates $e_1$, and it maps the address denoted by the value of $e_1$ to the value of $e_2$.
 \end{itemize}
 Write the operational semantics of the form \fbox{$\sigma, M\vdash e \Rightarrow v, M$} for the expressions.
 
 \item The following code is an excerpt from the implementation of the interpreter for
-BMFAE:
-%// interp : (BMFAE, Env, Sto) => (BMFAEValue, Sto)
+MFAE:
+%// interp : (MFAE, Env, Sto) => (MFAEValue, Sto)
 \begin{verbatim}
-def interp(bmfae:BMFAE, env:Env, sto:Sto): (BMFAEValue, Sto) = bmfae match { ...
+def interp(bmfae:MFAE, env:Env, sto:Sto): (MFAEValue, Sto) = bmfae match { ...
     case App(f, a) => a match {
       case Id(name) =>
         val (fv, fs) = interp(f, env, sto)
@@ -399,12 +400,14 @@ def interp(bmfae:BMFAE, env:Env, sto:Sto): (BMFAEValue, Sto) = bmfae match { ...
 %Is this semantics call-by-value, call-by-reference, or call-by-name?
 
 \hspace*{-2em}
-Consider the following expression in BMFAE:
-\begin{verbatim}
-{with {n 42}
-      {with {f {fun {g} {g n}}}
-            {f {fun {x} {+ x 8}}}}}
-\end{verbatim}
+Consider the following expression in MFAE:
+\[
+\ebind{\code{n}}{42}{
+    \ebind{\code{f}}{\efun{\code{g}}{(\eapp{\code{g}}{\code{n}})}}{
+        (\eapp{\code{f}}{(\efun{\cx}{\eadd{\cx}{8}})})
+    }
+}
+\]
 
 \item[b)] Show the environment and store just before evaluating addition in the call-by-reference semantics.
 
