@@ -437,9 +437,9 @@ interp(
 \begin{enumerate}
 \item Given the following expression:
 
-\begin{verbatim}
-(lambda b1. ((lambda b2. b1 := 8; !b2) b1)) (ref 7)
-\end{verbatim}
+\[
+    (\lambda\ \code{b1}.\ ((\lambda\ \code{b2}.\ \code{b1} \texttt{ := 8; !}\code{b2})\ \code{b1}))\ (\texttt{ref }7)
+\]
 
 write out the arguments to and results of \texttt{interp} each time it is called during
 the evaluation of a program.  Write them out in the order in which the calls to \texttt{interp}
