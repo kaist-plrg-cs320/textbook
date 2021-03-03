@@ -107,15 +107,6 @@
 }
 \newcommand{\tand}{\text{ and }}
 
-\newcommand{\newfrac}[2] {
-        \frac
-                {#1}
-                {#2 \rule{0pt}{11pt}}
-}
-\newcommand{\newinfrule}[2]{\inferrule{#1}{#2}}
-\newcommand{\derive}[2]{\ensuremath{\begin{array}{c}\infer{#1}{#2}\end{array}}}
-\newcommand{\term}[1]{#1}
-
 \makeindex[columns=3, title=Alphabetical Index, intoc] % Make LaTeX produce the files required to compile the index
 
 \makeglossaries % Make LaTeX produce the files required to compile the glossary
@@ -276,7 +267,6 @@
 \input{chapters/mutable-boxes.tex}
 \input{chapters/mutable-variables.tex}
 \input{chapters/lazy-evaluation.tex}
-\input{chapters/untyped-exercises.tex}
 
 % \pagelayout{wide} % No margins
 % \addpart{Typed Languages}

@@ -523,7 +523,7 @@ The semantics of some constructs are as follows:
 { \hspace*{0.8\textwidth} }
 {
   \eval{\emptyset}{
-    \eappfo{(\efun{\code{f}\
+    \eappfo{(\efun{\code{f}
     \code{m}}{\eappfo{\code{f}}{\code{m}}})}{\efun{\cx}{\cx},8}
   }{~~~~~~~~~~}
 }
@@ -682,6 +682,181 @@ In this implementation, a value is either an integer or a lambda abstraction:
   \sidenote{We can make the semantics of substitution-based \lang equivalent to
     environment-based \lang by modifying \code{subst} function.}
 \end{enumerate}
-
 \end{enumerate}
+
+\item Consider the following language:
+\[
+  \begin{array}{lrrl}
+  \text{Expression}& e & ::= & n\ |\ x\ |\ \efun{x\cdots x}{e}\ |\
+  \eappfo{e}{e,\cdots,e}\ |\ \textsf{get}\ e \\
+  \text{Value}& v & ::= & n\ |\ \textsf{undefined}\ |\ \clov{x\cdots x}{e}{\sigma} \\
+  \end{array}
+\]
+The semantics of some constructs are as follows:
+\begin{itemize}
+  \item The value of a function expression $\efun{x_1\cdots x_n}{e}$
+    at an environment $\sigma$ is a closure $\clov{x_1\cdots x_n}{e}{\sigma}$.
+  \item A function application $\eappfo{e_0}{e_1,\cdots,e_n}$ is evaluated as follows:
+    \begin{itemize}
+      \item Evaluate the subexpressions in order.
+        The value of $e_0$ should be a closure
+        $\clov{x_1\cdots x_m}{e}{\sigma}$
+        that has $m$ parameters.
+      \item Create an array $\alpha$ of size $n$ and
+        initialize the $i$-th value of the array with the value of $e_{i+1}$
+        where $0 \le i \le n-1$.
+      \item Evaluate the closure body $e$ under the environment $\sigma$
+        extended as follows:
+        \begin{itemize}
+          \item The value of the $i$-th parameter is the value of $e_i$
+            where $1 \le i \le m \le n$.
+          \item The value of the $j$-th parameter is the \textsf{undefined}
+            value where $n < j \le m$.
+        \end{itemize}
+        and the array $\alpha$.
+    \end{itemize}
+  \item The value of $\textsf{get}\ e$ is the $n$-th value of the array $\alpha$
+    where $n$ is the value of $e$ and the array indices start from $0$.
+\end{itemize}
+
+For example,
+$\eappfo{(\efun{\cx\cy}{\cy})}{4}$
+evaluates to \textsf{undefined}, and
+$\eappfo{(\efun{\cx}{\textsf{get}\ 0})}{5}$
+evaluate to $5$.
+
+\begin{enumerate}
+  \item Write the operational semantics of the form
+    \fbox{$\eval{\sigma,\alpha}{e}{v}$}.
+  \item Write the evaluation derivation of the following expression:
+  \[
+    \inferrule
+    {\hspace*{0.8\textwidth}}
+    {\eval{\emptyset,\emptyset}{\eappfo{(\efun{\cx\cy}{\textsf{get}\ x})}{2,19,141}}{~~~~~}}
+  \]
+\end{enumerate}
+
+\item The following quote describes the JavaScript sequencing semantics:
+\sidenote{\url{https://tc39.es/ecma262/\#sec-block-runtime-semantics-evaluation}}
+
+\begin{quote}
+The value of a \embox{StatementList} is the value of the last
+value-producing them in the \embox{StatementList}.  For example, the
+following calls to the \verb!eval! function all return the value 1:
+\begin{verbatim}
+eval("1;;;;;")
+eval("1;()")
+eval("1;var a;")
+\end{verbatim}
+\end{quote}
+Consider the following language:
+\[
+  \begin{array}{lrrl}
+    \text{Expression} & e & ::= & \textsf{()}\ |\ x\ |\ \efun{x}{e}\ |\ \eapp{e}{e}\ |\
+    e;\cdots;e \\
+    \text{Value} & v & ::= & \textsf{()}\ |\ \clov{x}{e}{\sigma} \\
+  \end{array}
+\]
+The value of the sequence expression $e_1;\cdots;e_n$
+is the value of the last expression whose value is not $\textsf{()}$.
+If the values of all the expressions $e_1,\cdots,e_n$ are $\textsf{()}$,
+the value of the sequence expression is $\textsf{()}$.
+Write the operational semantics of each expression of the form
+\fbox{$\evald{e}{v}$}.
+
+\item Consider the following language:
+\[
+\begin{array}{rll}
+e ::= & a& \text{atomic expression}\\
+\mid& e\ a& \text{function application}\\
+\mid& \textsf{fn}\ m& \text{function expression}\\
+a ::= & n & \text{number}\\
+\mid&x & \text{identifier}\\
+m ::= & p\ \leadsto\ e & \text{pattern matching}\\
+\mid& p\ \leadsto\ e\ \verb!|!\ m & \text{pattern matching sequence}\\
+p ::= & \verb!_! & \text{wildcard pattern}\\
+\mid&n& \text{number pattern}\\
+\mid&x& \text{identifier pattern}
+\end{array}
+\]
+where a value of the language $v$ is either a number $n$ or a closure $\langle m, \sigma\rangle$,
+a result of evaluation $r$ is either a value $v$ or a failure in pattern matching $\uparrow$,
+which is different from run-time errors,
+and an environment $\sigma$ maps identifiers to their values.
+
+The operational semantics rules for expressions and atomic expressions are as follows:
+
+\fbox{$\sigma\vdash e \Rightarrow r$}
+\[
+\begin{array}{c}
+  \inferrule
+  {\sigma \vdash a \hookrightarrow v}
+  {\sigma \vdash a \Rightarrow v}
+  \qquad
+  \inferrule
+  {\sigma \vdash e \Rightarrow \uparrow}
+  {\sigma \vdash e\ a \Rightarrow \uparrow}
+  \qquad
+  \sigma \vdash \textsf{fn}\ m \Rightarrow \langle m, \sigma \rangle
+  \\[1.5em]
+  \inferrule
+  {
+    \sigma \vdash e \Rightarrow \langle m, \sigma' \rangle \\
+    \sigma \vdash a \Rightarrow v \\
+    (\sigma', v) \vdash m \Rightarrow v'
+  }
+  {\sigma \vdash e\ a \Rightarrow v'}
+  \\[1.5em]
+  \inferrule
+  {
+    \sigma \vdash e \Rightarrow \langle m, \sigma' \rangle \\
+    \sigma \vdash a \Rightarrow v \\
+    (\sigma', v) \vdash m \Rightarrow \uparrow
+  }
+  {\sigma \vdash e\ a \Rightarrow \uparrow}
+\end{array}
+\]
+
+\fbox{$\sigma\vdash a \hookrightarrow v$}
+\[
+\begin{array}{c}
+  \sigma \vdash n \hookrightarrow n
+  \qquad\qquad
+  \inferrule
+  {x \in \dom{\sigma}}
+  {\sigma \vdash x \hookrightarrow \sigma(x)}
+\end{array}
+\]
+
+The semantics of pattern matching $m$ and pattern $p$ are as follows:
+\begin{itemize}
+\item Evaluation of $p\ \leadsto\ e$ under $(\sigma, v)$ has two possibilities.
+First, when evaluation of $p$ results in a new environment $\sigma'$,
+the result of this pattern matching is the result of evaluation of $e$ under $\sigma+\sigma'$,
+where $\sigma+\sigma'$ is a disjoint union of $\sigma$ and $\sigma'$.
+Second, when evaluation of $p$ produces $\uparrow$,
+the evaluation of this pattern matching produces $\uparrow$ as well.
+\item Evaluation of ``$p\ \leadsto\ e\ \verb!|!\ m$'' under $(\sigma, v)$
+also has two possibilities.
+First, when evaluation of $p\ \leadsto\ e$ succeeds with a value $v'$,
+the value of this pattern matching sequence is $v'$.
+Second, when evaluation of $p\ \leadsto\ e$ fails,
+the result of evaluation of this pattern matching sequence is
+the result of evaluation of $m$.
+\item Evaluation of the wildcard pattern \verb!_! under $(\sigma, v)$
+produces the empty environment.
+\item Evaluation of the number pattern $n$ under $(\sigma, v)$ has two possibilities.
+If $v=n$,
+it produces the empty environment.  Otherwise, it produces $\uparrow$.
+\item Evaluation of the identifier pattern $x$ under $(\sigma, v)$
+produces a singleton environment $\{x \mapsto v\}$
+if $x$ is not in the domain of $\sigma$.
+\end{itemize}
+Write the operational semantics for $m$ and $p$
+of the forms \fbox{$(\sigma, v)\vdash m \Rightarrow r$} and
+\fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$}, respectively,
+where \fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$} denotes
+\fbox{$(\sigma, v)\vdash p \Rightarrow \sigma$} or
+\fbox{$(\sigma, v)\vdash p \Rightarrow \uparrow$}.
+Remember that the operational semantics do not specify run-time errors.
 \end{enumerate}
