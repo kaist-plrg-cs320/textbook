@@ -305,7 +305,7 @@ The following rule defines the semantics of $\ebind{x}{e_1}{e_2}$:
 
 \semanticrule{Val}{
 If
-  \evaldn{e_1}{n_1} and
+  \evaldn{e_1}{n_1}, and
   \evaln{\sigma[x\mapsto n_1]}{e_2}{n_2},\\
 then
   \evaldn{\ebind{x}{e_1}{e_2}}{n_2}.
@@ -350,7 +350,7 @@ However, we need to additionally take environments into account.
 
 \semanticrule{Add}{
 If
-  \evaldn{e_1}{n_1} and \evaldn{e_2}{n_2},\\
+  \evaldn{e_1}{n_1}, and \evaldn{e_2}{n_2},\\
 then
   \evaldn{\eadd{e_1}{e_2}}{n_1+n_2}.
 }
@@ -359,7 +359,7 @@ then
 
 \semanticrule{Sub}{
 If
-  \evaldn{e_1}{n_1} and \evaldn{e_2}{n_2},\\
+  \evaldn{e_1}{n_1}, and \evaldn{e_2}{n_2},\\
 then
   \evaldn{\esub{e_1}{e_2}}{n_1-n_2}.
 }

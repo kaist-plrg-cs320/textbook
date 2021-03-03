@@ -164,6 +164,8 @@ A lambda abstraction creates a closure containing the current environment.
   \evaldn{\efun{x}{e}}{\clov{x}{e}{\sigma}}.
 }
 
+\vspace{-1em}
+
 \[
   \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}}
   \quad\textsc{[Fun]}
@@ -183,6 +185,8 @@ argument to the environment of the closure.
     & \evaldn{\eapp{e_1}{e_2}}{v}.
   \end{tabular}
 }
+
+\vspace{-1em}
 
 \[
   \inferrule
@@ -206,6 +210,8 @@ If
 then
   \evaldn{\eadd{e_1}{e_2}}{n_1+n_2}.
 }
+
+\vspace{-1em}
 
 \[
   \inferrule
@@ -234,6 +240,8 @@ If
 then
   \evaldn{\ebind{x}{e_1}{e_2}}{v_2}.
 }
+
+\vspace{-1em}
 
 \[
   \inferrule

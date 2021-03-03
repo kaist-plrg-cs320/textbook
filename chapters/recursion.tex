@@ -2,253 +2,311 @@
 \chapter{Recursion}
 \labch{recursion}
 
-The article defines RFAE featuring recursive functions.
+\renewcommand{\plang}{\textsf{FAE}\xspace}
+\renewcommand{\lang}{\textsf{RFAE}\xspace}
 
-\section{CFAE}
+\newcommand{\sumbody}{\eifz{\cx}{0}{(\eadd{\cx}{\eapp{\code{sum}}{(\esub{\cx}{1})}})}}
+\newcommand{\sumbodyf}{\eifz{\cx}{0}{(\eadd{\cx}{\eapp{\code{f}}{(\esub{\cx}{1})}})}}
+\newcommand{\sumbodyfv}{\eifz{\cv}{0}{(\eadd{\cv}{\eapp{\code{f}}{(\esub{\cv}{1})}})}}
 
-CFAE adds conditional expressions to FAE.
+Recursive functions are widely used in programming. We have discussed importance of
+recursion in \refsec{recursion}. This chapter explains the semantics of
+recursive functions by defining \lang, which extends \plang with recursive
+functions. In addition, we will see that recursive functions also are just syntactic
+sugar: we can express recursive functions with first-class functions.
 
-\subsection{Syntax}
-
-The below is the abstract syntax of CFAE. It shows a conditional expression,
-which is the only new feature.
-
-\[
-\begin{array}{lrcl}
-\text{Expression} & e & ::= & \cdots \\
-&& | & \textsf{if0}\ e\ e\ e
-\end{array}
-\]
-
-\(\textsf{if0}\) is similar to \(\textsf{if}\) of BAE, defined by the last
-article, but its condition can be any value since CFAE lacks Boolean values. If a
-condition is zero, the true branch is evaluated; otherwise, the false branch is
-evaluated.
-
-\subsection{Semantics}
-
-The following define the semantics of conditional expressions:
-
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow 0 \\ \sigma\vdash e_2\Rightarrow v }
-{ \sigma\vdash \textsf{if0}\ e_1\ e_2\ e_3\Rightarrow v}
-\]
-
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow v' \\ v'\not=0 \\ \sigma\vdash e_3\Rightarrow v }
-{ \sigma\vdash \textsf{if0}\ e_1\ e_2\ e_3\Rightarrow v}
-\]
-
-The semantics is similar to that of \(\textsf{if}\). Always one of the true and
-false branches are evaluated, but not both.
-
-\section{Recursion}
-
-Is it possible to implement a factorial function with CFAE? Assume that CFAE
-features multiplications. Firstly, consider a factorial function written
-functionally. The following Scala function calculates factorials:
+Consider the following Scala program:
 
 \begin{verbatim}
-def factorial(n: Int): Int =
-  if (n == 0) 1
-  else n * factorial(n – 1)
+def sum(x: Int): Int =
+  if (x == 0)
+    0
+  else
+    x + sum(x – 1)
+
+println(sum(10))
 \end{verbatim}
 
-It seems the following CFAE expression is equivalent to the above code:
+The function \code{sum} takes an integer \code{n} as an argument, and returns
+the sum of the integers between \code{0} to \code{n} (including \code{n}).
+\sidenote{We ignore the case when the input is negative.}
+Therefore, the program prints \code{55}.
 
-\[\textsf{val}\ factorial=\lambda n.\textsf{if0}\ n\ 1\ (n\times(factorial\
-(n-1)))\ \textsf{in}\ \cdots\]
+How can we implement an equivalent program in \plang? One naïve approach could
+be the following expression:\sidenote{\plang does not provide conditional
+expressions (\textsf{if0}), which is defined by \lang, but we use it since
+we can easily add them to \plang.}
 
-However, it is wrong since the scope of the binding occurrence of \(factorial\)
-includes \(\cdots\) but excludes the lambda abstraction. Identifier \(factorial\)
-in the lambda expression is free. CFAE disallows defining recursive functions.
+\[\ebind{
+  \code{sum}
+}{
+  \efun{\cx}{\eifz{\cx}{0}{(\eadd{\cx}{\eapp{\code{sum}}{(\esub{\cx}{1})}})}}
+}{
+  \eapp{\code{sum}}{10}
+}\]
 
-\section{RFAE}
+However, it is wrong since the scope of \code{sum} includes $\eapp{\code{sum}}{10}$ but excludes
+$\efun{\cx}{\eifz{\cx}{0}{(\eadd{\cx}{\eapp{\code{sum}}{(\esub{\cx}{1})}})}}$.
+\code{sum} in the body of the function is a free identifier. Evaluation of the
+expression termiantes with a run-time error. It is nontrival to define recursive
+functions in \plang.
 
-RFAE adds recursive functions to CFAE.
+\section{Syntax}
 
-\subsection{Syntax}
+We define \lang by extending \plang with recursive functions. To demonstrate the
+usefulness of recursion with examples, we add conditional expressions as well.
 
-The below is the abstract syntax of RFAE. It omits features common to CFAE.
+The following is the abstract syntax of \lang:
+\sidenote{We omit the common part to \plang.}
 
 \[
-\begin{array}{lrcl}
-\text{Expression} & e & ::= & \cdots \\
-&& | & \textsf{def}\ x(x)=e\ \textsf{in}\ e
-\end{array}
+  e\ ::=\ \cdots\ |\ \eifz{e}{e}{e}\ |\ \erec{x}{x}{e}{e}
 \]
 
-\(\textsf{def}\ x_1(x_2)=e_1\ \textsf{in}\ e_2\) defines a recursive function. \(x_1\)
-is the name of a function, and both \(e_1\) and \(e_2\) can refer to \(x_1\). For
-example, the following is a factorial function:
+\begin{itemize}
+  \item $\eifz{e_1}{e_2}{e_3}$
 
-\[\textsf{def}\ factorial(n)=\textsf{if0}\ n\ 1\ (n\times(factorial\ (n-1)))
-\ \textsf{in}\ factorial\ 10\]
+    It is a conditional expression. $e_1$ is the condition; $e_2$ is the true
+    branch; $e_3$ is the false branch. We consider the condition to be true when
+    it denotes $0$. All the other values, i.e. nonzero integers and closures,
+    are considered as false.
 
-\subsection{Semantics}
+  \item $\erec{x_1}{x_2}{e_1}{e_2}$
 
-The following defines the semantics of recursive functions:
+    It defines a recursive function whose name is $x_1$, parameter is $x_2$, and
+    body is $e_1$. Both $x_1$ and $x_2$ are binding occurrences. The scope of
+    $x_1$ is $e_1$ and $e_2$; the scope of $x_2$ is $e_1$. If $x_1$ occurs in
+    $e_1$, it is a bound occurrence, which implies that the function can be
+    recursive.
+\end{itemize}
+
+In \lang, we can implement a function computing the sum of consecutive integers
+like below.
+
+\[\erec{\code{sum}}{\cx}{\sumbody}{\eapp{\code{sum}}{10}}\]
+
+\section{Semantics}
+
+The semantics of conditional expressions is quite easy. The semantics consists
+of two rules: one for when the condition is true and the other for when the
+condition is false.
+
+The following rule defines the semantics when the condition is true:
+
+\semanticrule{If0-Z}{
+If
+  \evaldn{e_1}{0} and
+  \evaldn{e_2}{v},\\
+then
+  \evaldn{\eifz{e_1}{e_2}{e_3}}{v}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \evald{e_1}{0} \\
+    \evald{e_2}{v}
+  }
+  { \evald{\eifz{e_1}{e_2}{e_3}}{v} }
+  \quad\textsc{[If0-Z]}
+\]
+
+When $e_1$ evaluates to $0$, the condition is considered as true, and the true
+branch, $e_2$, is evaluated. The result of $e_2$ is the result of the whole
+expression.
+
+The following rule defines the semantics when the condition is false:
+
+\semanticrule{If0-Nz}{
+If
+  \evaldn{e_1}{v'}, where $v'\not=0$, and
+  \evaldn{e_3}{v},\\
+then
+  \evaldn{\eifz{e_1}{e_2}{e_3}}{v}.
+}
+
+\vspace{-1em}
 
 \[
 \inferrule
-{ \sigma'=\sigma\lbrack x_1\mapsto\langle\lambda x_2.e_1,\sigma'\rangle\rbrack \\
-  \sigma'\vdash e_2\Rightarrow v
-}
-{ \sigma\vdash \textsf{def}\ x_1(x_2)=e_1\ \textsf{in}\ e_2\Rightarrow v}
+  {
+    \evald{e_1}{v'} \\
+    v'\not=0 \\
+    \evald{e_3}{v}
+  }
+  { \evald{\eifz{e_1}{e_2}{e_3}}{v} }
+  \quad\textsc{[If0-Nz]}
 \]
 
-The closure of a recursive function is similar to that of a lambda abstraction
-but does not store the environment of the moment. Instead, it stores an
-environment obtained by adding that the name of the function denotes the closure
-to the environment. Calling a closure evaluates the body of the closure under the
-environment of the closure so that recursive calls are valid.
+When $e_1$ evaluates to a value other than $0$, the condition is considered as
+false, and the false
+branch, $e_3$, is evaluated. The result of $e_3$ is the result of the whole
+expression.
 
-The below proof trees prove that the factorial of one is one. The proof splits
-into three trees for readability.
+Now, let us discuss the semantics of recursive functions.
+Consider $\erec{x_1}{x_2}{e_1}{e_2}$.
+$e_2$ is in the scope of $x_1$, and $x_1$ denotes a function. Therefore, we can
+start by defining $\sigma'=[x_1\mapsto\clov{x_2}{e_1}{\sigma}]$ and evaluating
+$e_2$ under $\sigma'$. However, this apporach is incorrect. When the body of the
+closure, $e_1$, is evaluated, the environment is $\sigma[x_2\mapsto v]$ for some
+$v$. The environment does not contain $x_1$, and therefore using $x_1$ in
+$e_1$ will incur a free identifier error, which is certainly wrong since $x_1$
+is a recursive function. The environment of the closure must include $x_1$ and
+its value, which is the closure itself. From this observation, we obtain the
+following rule:
 
+\semanticrule{Rec}{
+If
+  \evaln{\sigma'}{e_2}{v}, where
+  $\sigma'=\sigma[x_1\mapsto\clov{x_2}{e_1}{\sigma'}]$, \\
+then
+  \evaldn{\erec{x_1}{x_2}{e_1}{e_2}}{v}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \sigma'=\sigma[x_1\mapsto\clov{x_2}{e_1}{\sigma'}] \\
+    \eval{\sigma'}{e_2}{v}
+  }
+  { \evald{\erec{x_1}{x_2}{e_1}{e_2}}{v} }
+  \quad\textsc{[Rec]}
+\]
+
+The environment of the closure is $\sigma'$, which has $x_1$ and the closure.
+$\sigma'$ is recursively defined at the meta-level. It is not that surprising.
+We are defining a recursive function, so the defined function value itself
+should be recursive. When the body of the
+closure, $e_1$, is evaluated, the environment is $\sigma'[x_2\mapsto v]$ for some
+$v$, which contains $x_1$. The function $x_1$ can be used in its body and thus
+recursive.
+
+We can reuse the rules of \plang for the other expressions.
+
+The following proof trees prove that
+$\erec{\code{f}}{\cx}{\sumbodyf}{\eapp{\code{f}}{1}}$
+evaluates to $1$ under the empty environment.
+The proof splits into three trees for readability.
+Suppose the following facts:
 \[
 \begin{array}{rcl}
-\sigma_1&=&\lbrack f\mapsto\langle\lambda n.\textsf{if0}\ n\ 1\ (n\times(f\
-(n-1))),\sigma_1\rangle\rbrack \\
-\sigma_2&=&\sigma_1\lbrack n\mapsto 1\rbrack \\
-&=&\lbrack f\mapsto\langle\lambda n.\textsf{if0}\ n\ 1\ (n\times(f\
-(n-1))),\sigma_1\rangle,n\mapsto 1\rbrack \\
-\sigma_3&=&\sigma_1\lbrack n\mapsto 0\rbrack \\
-&=&\lbrack f\mapsto\langle\lambda n.\textsf{if0}\ n\ 1\ (n\times(f\
-(n-1))),\sigma_1\rangle,n\mapsto 0\rbrack \\
+  e_{\code{f}}  &=& \sumbodyf \\
+  v_{\code{f}}  &=& \clov{\cx}{e_{\code{f}}}{\sigma_1} \\
+  \sigma_1 &=& [\code{f}\mapsto v_{\code{f}}] \\
+  \sigma_2 &=& \sigma_1[\cx\mapsto1] \\
+  \sigma_3 &=& \sigma_1[\cx\mapsto0] \\
 \end{array}
 \]
 
-Assume the above.
-
 \[
+  \footnotesize
 \inferrule
 {
   \inferrule
-  { f\in\mathit{Domain}(\sigma_2) }
-  { \sigma_2\vdash f\Rightarrow \langle\lambda n.\textsf{if0}\ n\ 1\ (n\times(f\
-(n-1))),\sigma_1\rangle }
-  \\
+  { \code{f}\in\dom{\sigma_2} }
+  { \eval{\sigma_2}{\code{f}}{v_{\code{f}}} }
+  \quad
   \inferrule
   {
     \inferrule
-    { n\in\mathit{Domain}(\sigma_2) }
-   { \sigma_2\vdash n\Rightarrow 1 } \\
-    \sigma_2\vdash 1\Rightarrow 1
+    { \cx\in\dom{\sigma_2} }
+    { \eval{\sigma_2}{\cx}{1} }
+    \quad
+    \eval{\sigma_2}{1}{1}
   }
-  { \sigma_2\vdash n-1\Rightarrow 0 } \\
+  { \eval{\sigma_2}{\esub{\cx}{1}}{0} }
+  \quad
   \inferrule
   {
     \inferrule
-    { n\in\mathit{Domain}(\sigma_3) }
-    { \sigma_3\vdash n\Rightarrow 0 } \\
-    \sigma_3\vdash 1\Rightarrow 1
+    { \cx\in\dom{\sigma_3} }
+    { \eval{\sigma_3}{\cx}{0} }
+    \quad
+    \eval{\sigma_3}{0}{0}
   }
-  { \sigma_3\vdash \textsf{if0}\ n\ 1\ (n\times(f\ (n-1))) \Rightarrow 1 }
+  { \eval{\sigma_3}{e_{\code{f}}}{0} }
 }
-{ \sigma_2\vdash f\ (n-1)\Rightarrow 1 }
+{ \eval{\sigma_2}{\eapp{\code{f}}{(\esub{\cx}{1})}}{0} }
 \]
 
 \[
+  \footnotesize
 \inferrule
 {
   \inferrule
-  { f\in\mathit{Domain}(\sigma_1)}
-  { \sigma_1\vdash f\Rightarrow\langle\lambda n.\textsf{if0}\ n\ 1\ (n\times(f\
-(n-1))),\sigma_1\rangle }
-  \\
-  {\sigma_1\vdash 1\Rightarrow 1}
-  \\
+  { \code{f}\in\dom{\sigma_1} }
+  { \eval{\sigma_1}{\code{f}}{v_{f}} }
+  \quad
+  { \eval{\sigma_1}{1}{1} }
+  \quad
   \inferrule
   {
     \inferrule
-    { n\in\mathit{Domain}(\sigma_2) }
-    { \sigma_2\vdash n\Rightarrow 1 } \\
+    { \cx\in\dom{\sigma_2} }
+    { \eval{\sigma_2}{\cx}{1} }
+    \quad
+    1\not=0
+    \quad
     \inferrule
     {
       \inferrule
-      { n\in\mathit{Domain}(\sigma_2) }
-      { \sigma_2\vdash n\Rightarrow 1 } \\
-      \sigma_2\vdash f\ (n-1)\Rightarrow 1
+      { \cx\in\dom{\sigma_2} }
+      { \eval{\sigma_2}{\cx}{1} }
+      \quad
+      \eval{\sigma_2}{\eapp{\code{f}}{(\esub{\cx}{1})}}{0}
     }
-    { \sigma_2\vdash (n\times(f\ (n-1)))\Rightarrow 1 }
+    { \eval{\sigma_2}{\eadd{\cx}{\eapp{\code{f}}{(\esub{\cx}{1})}}}{1} }
   }
-  {\sigma_2\vdash\textsf{if0}\ n\ 1\ (n\times(f\ (n-1)))\Rightarrow 1 }
+  { \eval{\sigma_2}{e_{\code{f}}}{1} }
 }
-{ \sigma_1\vdash f\ 1\Rightarrow 1 }
+{ \eval{\sigma_1}{\eapp{\code{f}}{1}}{1} }
 \]
 
 \[
 \inferrule
 {
-  \sigma_1=\lbrack f\mapsto\langle\lambda n.\textsf{if0}\ n\ 1\ (n\times(f\
-(n-1))),\sigma_1\rangle\rbrack
+  \sigma_1=[\code{f}\mapsto v_{\code{f}}]
   \\
-  \sigma_1\vdash f\ 1\Rightarrow 1
+  \eval{\sigma_1}{\eapp{\code{f}}{1}}{1}
 }
-{\emptyset\vdash
-\textsf{def}\ f(n)=\textsf{if0}\ n\ 1\ (n\times(f\ (n-1)))\ \textsf{in}\ f\ 1
-\Rightarrow 1
-}
+{ \evale{\erec{\code{f}}{\cx}{e_{\code{f}}}{\eapp{\code{f}}{1}}}{1} }
 \]
 
-\subsection{Implementing an Interpreter}
+\section{Interpreter}
 
-The following Scala code implements the abstract syntax and environments of RFAE:
+The following Scala code implements the syntax of \lang:
+\sidenote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Mul(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
+...
 case class If0(c: Expr, t: Expr, f: Expr) extends Expr
 case class Rec(f: String, x: String, b: Expr, e: Expr) extends Expr
+\end{verbatim}
 
+\code{If0($e_1$, $e_2$, $e_3$)} represents $\eifz{e_1}{e_2}{e_3}$;
+\code{Rec($x_1$, $x_2$, $e_1$, $e_2$)} represents $\erec{x_1}{x_2}{e_1}{e_2}$.
+
+\begin{verbatim}
 sealed trait Value
 case class NumV(n: Int) extends Value
 case class CloV(p: String, b: Expr, var e: Env) extends Value
-
-type Env = Map[String, Value]
-def lookup(x: String, env: Env): Value =
-  env.getOrElse(x, throw new Exception)
 \end{verbatim}
 
-\verb!If0! instnaces corresponds to conditional expressions; \verb!Rec! instances
-corresponds to recursive functions. \verb!CloV! instances, which are closures,
-have mutable environments because adding themselves to the environments requires
-the environments mutable.
+Values are defined in a similar way to \plang. The only difference is that the
+field \code{e}, which denotes the captured environment, of \code{CloV} is now mutable.
+Using mutation is the easiest way to make recursive values in Scala, though we
+can do it without mutation.
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Value = e match {
-  case Num(n) => NumV(n)
-  case Add(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n + m)
-  case Sub(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n - m)
-  case Mul(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n * m)
-  case Id(x) => lookup(x, env)
-  case Fun(x, b) => CloV(x, b, env)
-  case App(f, a) =>
-    val CloV(x, b, fEnv) = interp(f, env)
-    interp(b, fEnv + (x -> interp(a, env)))
+  ...
   case If0(c, t, f) =>
-    interp(
-      if (interp(c, env) == NumV(0)) t else f,
-      env
-    )
+    interp(if (interp(c, env) == NumV(0)) t else f, env)
   case Rec(f, x, b, e) =>
     val cloV = CloV(x, b, env)
     val nenv = env + (f -> cloV)
@@ -257,303 +315,227 @@ def interp(e: Expr, env: Env): Value = e match {
 }
 \end{verbatim}
 
-The \verb!If0! case evaluates the true branch if the condition equals
-\verb!NumV(0)! and the false branch otherwise. The \verb!Rec! case constructs a
-closure and adds the closure to the environment of the closure.
+In the \code{If0} case, the condition is evaluated first. According to the
+condition, one of the branches is evaluated.
 
-The following calculates the factorial of three by calling the \verb!interp!
-function:
+In the \code{Rec} case, we
+construct a closure first. However, the closure is not complete at this point.
+We next create a new environment: the environment with the closure. The closure
+must capture the new environment. To achieve this, we change the environment of
+the closure to the new environment. Now, both closure and environment have
+recursive structures, and \code{e} can be evaluated under the environment.
 
-\begin{verbatim}
-// def f(n) = if0 n 1 (n * (f (n-1))) in f(3)
-interp(
-  Rec(
-    "f", "n",
-    If0(Id("n"),
-        Num(1),
-        Mul(
-          Id("n"),
-          App(Id("f"), Sub(Id("n"), Num(1)))
-        )
-    ),
-    App(Id("f"), Num(3))
-  ),
-  Map.empty
-)
-// NumV(6)
-\end{verbatim}
+\section{Recursion as Syntactic Sugar}
 
-\section{Encoding Recursive Functions
-}
-
-As lambda calculus is Turing complete, recursive functions are encodable with
-lambda calculus. Since both FAE and CFAE subsume the features of lambda calculus,
-recursive functions are encodable with them as well.
+Even if a language does not support recursive functions, we can implement
+recursive functions with first-class functions, i.e. we can implement recursive
+functions in \plang. The key to desugar recursive functions into \plang is the
+following function:
 
 \[
-\begin{array}{rcl}
-Z&\equiv&\lambda f.(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\
-x\ v)\\
-\mathit{encode}(\textsf{def}\ x_1(x_2)=e_1\ \textsf{in}\ e_2)&=&
-(\lambda x_1.e_2)\ (Z\ \lambda x_1.\lambda x_2.e_1)
-\end{array}
+  Z=\efun{\cf}{\eapp
+    {(\efun{\cx}{\eapp{\cf}{(\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}})}})}
+    {(\efun{\cx}{\eapp{\cf}{(\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}})}})}
+  }
 \]
 
-\(Z\) is a \term{fixed point combinator}; it calculates a fixed point of a given
-function. A fixed point of a function is a value that makes the function yield
-itself: a fixed point of function \(f\) is any \(x\) satisfying \(f(x)=x\). If an
-argument given to \(Z\) is a function whose fixed point is a particular recursive
-function, the result of applying \(Z\) to the function is the recursive function.
-Consider \(\lambda f.\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1)))\). If
-\(f\) is a factorial function, then \(\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\
-(x-1)))\) also is. Thus, the factorial function is a fixed point of \(\lambda
-f.\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1)))\), and \(Z\ \lambda f.\lambda
-x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1)))\) also is a factorial function.
+$Z$ is called a \textit{fixed point combinator}\index{fixed point combinator}.
+In mathematics, a \textit{fixed point}\index{fixed point}
+of a function $f$ is a solution of the equation $f(x)=x$.
+A fixed point combinator is a function that computes a fixed point of a given
+function. A recursive functions can be considered as a fixed point of a certain
+function. For example, consider the following function:
 
-How does the fixed point combinator work? \(Z\ \lambda f.\lambda x.\textsf{if0}\
-x\ 1\ (x\times(f\ (x-1)))\) equals \( (\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda
-x.f\ \lambda v.x\ x\ v)\) if \(f\) denotes \(\lambda f.\lambda x.\textsf{if0}\ x\
-1\ (x\times(f\ (x-1)))\). It equals \(f\ \lambda v.(\lambda x.f\ \lambda v.x\ x\
-v)\ (\lambda x.f\ \lambda v.x\ x\ v)\ v\). Applying \(f\) to the argument results
-in \(\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (\lambda v.(\lambda x.f\ \lambda
-v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\ x\ v)\ v)\ (x-1)))\). Applying the
-function to \(0\) yields \(1\) since \(x\) is \(0\). On the other hand, applying
-the function to a nonzero value leads to \(x\times((\lambda v.(\lambda x.f\
-\lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\ x\ v)\ v)\ (x-1))\). Then,
-\(\lambda v.(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\ x\ v)\
-v\) has reappeared, but its argument has decreased by one. It successfully
-simulates a recursive call and calculates factorials.
+\[ \efun{\cf}{\efun{\cv}{\sumbodyfv}} \]
 
-The following shows how to get the factorial of one:
+Let us call the function $f$.
+Suppose that $\embox{sum}$ is given to the function as an argument, where
+$\embox{sum}$ is a function that takes a natural number $n$ as an argument
+and returns $\sum_{i=0}^n i$. Then, the return value of $f$ is
 
 \[
-\begin{array}{rll}
-& Z\ (\lambda f.\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1))))\ 1 \\
-=&
-(\lambda f.(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\ x\ v))\
-(\lambda f.\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1))))\ 1 \\
-&& (f\leftarrow\lambda f.\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1)))) \\
-\rightarrow &
-(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\ x\ v)\ 1 &
-(f=\lambda f.\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1)))) \\
-&& (x\leftarrow\lambda x.f\ \lambda v.x\ x\ v) \\
-\rightarrow &
-f\ (\lambda v.(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\ x\ v)\
-v)\ 1 \\
-= &
-(\lambda f.\lambda x.\textsf{if0}\ x\ 1\ (x\times(f\ (x-1))))\ (\lambda
-v.(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\ x\ v)\ v)\ 1\\
-&& (f\leftarrow\lambda v.(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda
-v.x\ x\ v)\ v) \\
-\rightarrow &
-(\lambda x.\textsf{if0}\ x\ 1\ (x\times((\lambda v.(\lambda x.f\ \lambda v.x\ x\
-v)\ (\lambda x.f\ \lambda v.x\ x\ v)\ v)\ (x-1))))\ 1 \\
-&& (x\leftarrow 1) \\
-\rightarrow &
-1\times((\lambda v.(\lambda x.f\ \lambda v.x\ x\ v)\ (\lambda x.f\ \lambda v.x\
-x\ v)\ v)\ 0)
-\end{array}
+  \efun{\cv}{\eifz{\cv}{0}{(\eadd{\cv}{\eapp{\embox{sum}}{(\esub{\cv}{1})}})}}
 \]
 
-Via the fixed point combinator, a factorial function is implementable without
-using a recursive function of RFAE.
+It is a function again. When $0$ is given to the function, the result is $0$.
+When a positive integer $n$ is given to the function, the result is
+$\eadd{n}{\eapp{\embox{sum}}{(n-1)}}$, which equals $\eapp{\embox{sum}}{n}$.
+Therefore, $\eapp{f}{\embox{sum}}$ equals $\embox{sum}$, and we can say that
+$\embox{sum}$ is a fixed point of $f$.
 
-\begin{verbatim}
-// lambda f.(lambda x.f lambda v.x x v) (lambda x.f lambda v.x x v)
-val Z =
-  Fun("f",
-    App(
-      Fun("x",
-        App(
-          Id("f"),
-          Fun("v", App(App(Id("x"), Id("x")), Id("v")))
-        )
-      ),
-      Fun("x",
-        App(
-          Id("f"),
-          Fun("v", App(App(Id("x"), Id("x")), Id("v")))
-        )
-      )
-    )
-  )
+The fixed point combinator $Z$ takes a function as an argument and returns a
+fixed point of the function. Therefore, $\eapp{Z}{f}$ equals $\embox{sum}$. Let
+us see the reason. We use $e_f$ as an abbreviation of $\sumbodyfv$.
+Then, $\eapp{Z}{f}$ is the same as
+\[ \eapp{Z}{(\efun{\code{f}}{\efun{\cv}{e_f}})} \]
+It evaluates to $\eapp{F}{F}$ where $F$ denotes
+\[
+  \efun{\cx}{\eapp{(\efun{\code{f}}{\efun{\cv}{e_f}})}{(\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}})}}
+\]
+By expanding only the first $F$ in $\eapp{F}{F}$, we get
+\[
+  \eapp{(\efun{\cx}{\eapp{(\efun{\code{f}}{\efun{\cv}{e_f}})}{(\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}})}})}
+  {F}
+\]
+which evaluates to
+\[
+  \eapp{(\efun{\code{f}}{\efun{\cv}{e_f}})}{(\efun{\cv}{\eapp{\eapp{F}{F}}{\cv}})}
+\]
+By expanding $e_f$, we get
+\[
+  \eapp{(\efun{\code{f}}{\efun{\cv}{\sumbodyfv}})}{(\efun{\cv}{\eapp{\eapp{F}{F}}{\cv}})}
+\]
+which evalutes to
+\[
+  \efun{\cv}{{\eifz{\cv}{0}{(\eadd{\cv}{\eapp{(\efun{\cv}{\eapp{\eapp{F}{F}}{\cv}})}{(\esub{\cv}{1})}})}}}
+\]
+Let us call this function $g$. Note that we now know that $\eapp{F}{F}$
+evaluates to $g$. If we apply $g$ to
+$0$, the result is $0$. If we apply $g$ to a positive integer $n$, the result is
+\[
+  \eadd{n}{\eapp{(\efun{\cv}{\eapp{\eapp{F}{F}}{\cv}})}{(\esub{n}{1})}}
+\]
+which evalutes to
+\[
+  \eadd{n}{\eapp{\eapp{F}{F}}{(\esub{n}{1})}}
+\]
+Since ${\eapp{F}{F}}$ evaluates to $g$, the above expression evaluates to
+\[
+  \eadd{n}{\eapp{g}{(\esub{n}{1})}}
+\]
+Then, the semantics of $g$ is
+\[
+  \eapp{g}{n}=\begin{cases}
+    0 & \text{if } n=0\\
+    \eadd{n}{\eapp{g}{(\esub{n}{1})}} & \text{otherwise}
+  \end{cases}
+\]
+It implies that $g$ equals $\embox{sum}$. Actually, this evaluation has started from
+$\eapp{Z}{f}$. Therefore, $\eapp{Z}{f}$ equals $\embox{sum}$.
 
-// (Z lambda f.lambda n.if0 n 1 (n * (f (n-1)))) 3
-interp(
-  App(
-    App(
-      Z,
-      Fun("f", Fun("n",
-        If0(Id("n"),
-            Num(1),
-            Mul(
-              Id("n"),
-              App(Id("f"), Sub(Id("n"), Num(1)))
-            )
-        )
-      ))
-    ),
-    Num(3)
-  ),
-  Map.empty
-)
-// NumV(6)
-\end{verbatim}
+One may ask if we can use the the following expression $Z'$ instead of $Z$:
+\[
+  Z'=\efun{\cf}{\eapp
+    {(\efun{\cx}{\eapp{\cf}{(\eapp{\cx}{\cx})}})}
+    {(\efun{\cx}{\eapp{\cf}{(\eapp{\cx}{\cx})}})}
+  }
+\]
+It is a natural question because $\eapp{\cx}{\cx}$ does the same thing as
+$\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}}$ when applied to an argument. However,
+the answer is no. Eta-expanding $\eapp{\cx}{\cx}$ to $\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}}$
+has the effect of delaying computation on $\eapp{\cx}{\cx}$. While
+$\eapp{\cx}{\cx}$ should be immediately evaluated, $\eapp{\cx}{\cx}$ in
+$\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}}$ can be evaluated only when the
+function is applied to
+an argument. This delaying effect is necessary in $Z$. Suppose that we use $Z'$.
+Then, $\eapp{Z'}{f}$ evaluates to $\eapp{F'}{F'}$
+where $F'$ denotes
+\[
+  \efun{\cx}{\eapp{(\efun{\code{f}}{\efun{\cv}{e_f}})}{(\eapp{\cx}{\cx})}}
+\]
+By expanding only the first $F'$, we get
+\[
+  \eapp{(\efun{\cx}{\eapp{(\efun{\code{f}}{\efun{\cv}{e_f}})}{(\eapp{\cx}{\cx})}})}
+  {F'}
+\]
+which evaluates to
+\[
+  \eapp{(\efun{\code{f}}{\efun{\cv}{e_f}})}{(\eapp{F'}{F'})}
+\]
+To evaluate this expression, we need to evaluate the argument. However, the
+argument is $\eapp{F'}{F'}$, which implies that we need the value of
+$\eapp{F'}{F'}$ to compute the value of $\eapp{F'}{F'}$. Thus, at this point,
+the execution starts to evaluate $\eapp{F'}{F'}$ forever and never terminates.
+For this reason, we should use $Z$, not $Z'$, as a fixed point combinator.
+
+Finally, we can define the syntactic transformation rule to desugar recursive
+functions: $\erec{x_1}{x_2}{e_1}{e_2}$ is transformed into
+$\ebind{x_1}{\eapp{Z}{(\efun{x_1}{\efun{x_2}{e_1}})}}{e_2}$.
+If $x_1$ in $\erec{x_1}{x_2}{e_1}{e_2}$ denotes a function $h$, $h$ is a fixed
+point of $\efun{x_1}{\efun{x_2}{e_1}}$. Therefore,
+$\eapp{Z}{(\efun{x_1}{\efun{x_2}{e_1}})}$ is equal to $h$.
+Both $\erec{x_1}{x_2}{e_1}{e_2}$ and $\ebind{x_1}{\eapp{Z}{(\efun{x_1}{\efun{x_2}{e_1}})}}{e_2}$
+evaluate $e_2$ under the environment that $x_1$ denotes $h$. Therefore, they
+have the same semantics, and the desugaring is correct.
 
 \section{Exercises}
 
 \begin{enumerate}
-\item Explain why the following code is an infinite loop and describe how to break the infinite loop:
+\item Explain why the following expression does not terminate and describe how
+  to fix it.
 
 $\begin{array}{l}
-    \ebind{\code{mkRec}}{(\efun{\code{bodyProc}}{
-        \\ \ \ \ebind{\code{fX}}{(\efun{\code{fY}}{
-            \\ \ \ \ \ \ebind{\code{f}}{\eapp{\code{fY}}{\code{fY}}}{\eapp{\code{bodyProc}}{\code{f}}}}) }{\\ \ \ \eapp{\code{fX}}{\code{fX}}}}) }{
-                \\ \ebind{\code{fac}}{\eapp{\code{mkRec}}{(\efun{\code{fac}}{\efun{\code{n}}{\code{if0}\ \code{n}\ 1\ (\code{n}\ *\ (\eapp{\code{fac}}{(\esub{\code{n}}{1})}) )}})}}{
-        \\ ( \eapp{\code{fac}}{10} )
-    }
+  \ebind{\cz}{(\efun{\cf}{\\
+  \ \ \ \ \ebind{\cx}{(\efun{\cy}{\\
+  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\eapp{\cy}{\cy}}{\\
+  \ \ \ \ \ \ \ \ \eapp{\cf}{\code{g}}}}\\
+  \ \ \ \ )}{\\
+  \ \ \ \ \eapp{\cx}{\cx}}}\\
+  )}{\\
+  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
+  \eapp{\cf}{10}
+  }
 }
 \end{array}$
 
-\item Consider the following definition of \texttt{mkRec} and its use to define the recursive
-function \texttt{fib}:
+\item Consider the following definition of $\cz$ and its use to define the recursive
+function $\cf$.
 
 $\begin{array}{l}
-    \ebind{\code{mkRec}}{(\efun{\code{bodyProc}}{
-        \\ \ \ \ebind{\code{fX}}{(\efun{\code{fY}}{
-            \\ \ \ \ \ \ebind{\code{f}}{ \efun{\cx}{\eapp{(\eapp{\code{fY}}{\code{fY}})}{\cx}} }{\eapp{\code{bodyProc}}{\code{f}}}}) }{\\ \ \ \eapp{\code{fX}}{\code{fX}}}}) }{
-                \\ \ebind{\code{fib}}{\eapp{\code{mkRec}}{(\efun{\code{fib}}{\efun{\code{n}}{\code{if}\ (\code{n = 0 or n = 1})\ 1\ (\eadd{\eapp{\code{fib}}{(\esub{\code{n}}{1})}}{\eapp{\code{fib}}{(\esub{\code{n}}{2})}} )}})}}{
-        \\ ( \eapp{\code{fib}}{10} )
-    }
+  \ebind{\cz}{(\efun{\cf}{\\
+  \ \ \ \ \ebind{\cx}{(\efun{\cy}{\\
+  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\efun{\code{a}}{\eapp{\eapp{\cy}{\cy}}{\code{a}}}}{\\
+  \ \ \ \ \ \ \ \ \eapp{\cf}{\code{g}}}}\\
+  \ \ \ \ )}{\\
+  \ \ \ \ \eapp{\cx}{\cx}}}\\
+  )}{\\
+  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
+  \eapp{\cf}{10}
+  }
 }
 \end{array}$
 
-Describe what conditions \texttt{bodyProc} should satisfy so that \texttt{mkRec} can make its recursive version.
-
-\item Let's call the following code $A$:
-
-$\begin{array}{l}
-    \ebind{\code{fac}} {(\ebind{\code{facX}}{ (\efun{\code{facX}}{
-        \\ \ \ \efun{\code{n}}{
-            \\ \ \ \ \ \ebind{\code{fac}}{ \eapp{\code{facX}}{\code{facX}} }{
-                \\ \ \ \ \ \code{if0}\ \code{n}\ 1\ (\code{n} * \eapp{\code{fac}}{(\esub{\code{n}}{1})}) } } }) }{
-                \\ \ \ \eapp{\code{facX}}{\code{facX}}} )} {
-        \\ \eapp{\code{fac}}{5}}
-\end{array}$
-
-and the following code $B$:
-
-$\begin{array}{l}
-    \ebind{\code{fac}} {(\ebind{\code{facX}}{ (\efun{\code{facX}}{
-        \\ \ \ \ebind{\code{fac}}{ \eapp{\code{facX}}{\code{facX}} }{
-        \\ \ \ \ \ \efun{\code{n}}{
-                \\ \ \ \ \ \code{if0}\ \code{n}\ 1\ (\code{n} * \eapp{\code{fac}}{(\esub{\code{n}}{1})}) } } }) }{
-                \\ \ \ \eapp{\code{facX}}{\code{facX}}} )} {
-        \\ \eapp{\code{fac}}{5}}
-\end{array}
-$
-
-\begin{itemize}
-  \item[a)] What is the result of $A$?
-  \item[b)] What is the result of $B$?
-\end{itemize}
-
-\item Write the value of \texttt{fac} at line 8:
-
-\begin{verbatim}
- 1 val fac =
- 2         val facX =
- 3                 lambda facY.
- 4                    val fac = lambda x. (facY facY) x in
- 5                    ; Exactly like original fac
- 6                    lambda n. if0 n 1 (n * fac (n - 1)) in
- 7         facX facX in
- 8 fac 10
-\end{verbatim}
-
-using the following Scala types:
-\begin{verbatim}
-trait FVAEValue
-case class NumV(n: Int) extends FVAEValue
-case class CloV(param: String, body: String, env: Env) extends FVAEValue
-type Env = Map[String, FVAEValue]
-\end{verbatim}
-Note that the type of the body  of \texttt{CloV} is \texttt{String}.
-
-\item Consider the following language $e$:
-\[
-\begin{array}{rll}
-e ::= & n\\
-\mid& \esub{e}{e}\\
-\mid& b\\
-\mid& e \wedge e\\
-\mid& \neg e\\
-\mid& \verb!if ! e\ e\ e\\
-\mid& x\\
-\mid& \lambda x \cdots x. e\\
-\mid& e(e,\ \cdots,\ e)\\
-\mid& \textsf{def}\ x(x,\ \cdots,\ x)=e\ \textsf{in}\ e
-\end{array}
-\]
-where $n$ denotes a number, $b$ denotes a boolean, $x$ denotes an identifier,
-and a value $v$ of the language is one of a number, a boolean, or a closure
-$\langle \lambda x_1\ \cdots\ x_n .\ e,\ \sigma\rangle$.
-It does not support the short-circuiting semantics.
-It means, $e_2$ must be evaluated in expression $e_1 \wedge e_2$ whenever $e_1$ evaluates to true or not.
-\begin{itemize}
-  \item[a)]
-Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
-  \item[b)] Write the evaluation derivation of the following expressions:
-
-\hspace*{-5em}
-\derive {\hspace*{\textwidth}}
-{\emptyset\vdash (\lambda \code{f}\ \code{m}.\code{f}(\code{m}))\
-(\lambda \cx. \cx,\ 8) \Rightarrow~~~~~~~~}
-
-
-% To Add
-%%
-\hspace*{-5em}
-\derive
-{\hspace*{\textwidth}}
-{[\texttt{zero} \mapsto \langle 
-\lambda x_1\ x_2\ x_3 .\ 
-\texttt{if}\ x_1\ x_2\ x_3,\
-\emptyset\rangle] \vdash \term{pgm}
-\Rightarrow~~~~~~~~
-}
-
-\bigskip
-where \term{pgm} is as follows:
-
-$
-\begin{array}{l}
-  \textsf{def}\ \code{visit}(\code{b},\ \code{n}) = \texttt{if}\ \code{b}\ \code{n}\ \code{visit} (\neg \code{b},\ \code{zero}(\code{n}))\ \textsf{in} \\
-  \textsf{def}\ \code{zero}(\cx) = \esub{42}{\cx}\ \textsf{in} \\
-  \code{visit}(\code{false},\ 7)
-%  \texttt{\{rec \{visit \{fun \{b\ n\} \{if b n \{visit \{not b\} \{zero n\}\}\}\}\}}\\
-%\texttt{\phantom{\{rec }\{rec \{zero \{fun \{x\} \{- 42 x\}\}\}}\\
-%\texttt{\phantom{\{rec \{rec }\{visit false 7\}\}\}}
-\end{array}
-$
-
-\end{itemize}
+Describe conditions that an argument given to $\cz$ must satisfy so that $\cz$
+    can make its recursive version.
 
 \item Consider the following expression:
+
+$\begin{array}{l}
+  \ebind{\cf}{(\\
+  \ \ \ \ \ebind{\cx}{\efun{\cy}{(\\
+  \ \ \ \ \ \ \ \ \ebind{\cf}{\efun{\cv}{\eapp{\eapp{\cy}{\cy}}{\cv}}}{\\
+  \ \ \ \ \ \ \ \ \efun{\cv}{\sumbodyfv}}\\
+  \ \ \ \ )}}{\\
+  \ \ \ \ \eapp{\cx}{\cx}\\
+  )}}{\\
+  \eapp{\cf}{10}
+  }
+\end{array}$
+
+\begin{enumerate}
+\item Draw arrows on the above expression from each bound variable to its binding occurrence.
+\item Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
+\item Write the value of $\cf$ at the last line by using the following Scala types:
+\begin{verbatim}
+trait Value
+case class NumV(n: Int) extends Value
+case class CloV(p: String, b: Expr, e: Env) extends Value
+type Env = Map[String, Value]
+\end{verbatim}
+\end{enumerate}
+
+\item Consider the following language:
 \[
-\begin{array}{l@{~}l}
-\textsf{val}\ \code{fac} = \lambda \code{m}. &
-\textsf{val}\ \code{facX} = \lambda \code{facX}.
-\lambda \code{m}. \textsf{if0}\ m\ 1\ (n * ((\code{facX}\ \code{facX})\ (x - 1)))\\
-&\textsf{in}\ ((\code{facX}\ \code{facX})\ m)\\
-\textsf{in}\ (\code{fac}\ m)
+\begin{array}{lrrl}
+  \text{Expression} & e & ::= & n\ |\ \esub{e}{e}\ |\ b\ |\ e\wedge e\ |\ \neg
+  e\ |\ \textsf{if}\ e\ e\ e\ |\ x \\
+  &&|& \efun{x\cdots x}{e}\ |\ \eappfo{e}{e,\cdots,e}\ |\
+  \erec{x}{x,\cdots,x}{e}{e} \\
+  \text{Value} & v & ::= & n\ |\ b\ |\ \clov{x\cdots x}{e}{\sigma} \\
 \end{array}
 \]
-
-\begin{itemize}
-\item[a)] Draw arrows on the above expression from each bound variable to its binding occurrence.
-\item[b)] Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
-\end{itemize}
-
-
+Note that $b$ ranges over a boolean. The language does not support the short-circuiting
+semantics, i.e. $e_2$ must be evaluated in expression $e_1\wedge e_2$ whenever $e_1$
+evaluates to true or not.
+Write the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
 \end{enumerate}

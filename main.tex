@@ -72,6 +72,9 @@
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\cx}{\code{x}}
 \newcommand{\cy}{\code{y}}
+\newcommand{\cz}{\code{z}}
+\newcommand{\cf}{\code{f}}
+\newcommand{\cv}{\code{v}}
 
 \newcommand{\pto}{\mathrel{\ooalign{\hfil$\mapstochar$\hfil\cr$\to$\cr}}}
 \newcommand{\finto}{\stackrel{\mbox{\tiny fin}}{\pto}}
@@ -89,11 +92,13 @@
 \newcommand{\eapp}[2]{#1\ #2}
 \newcommand{\eappfo}[2]{#1(#2)}
 \newcommand{\erec}[4]{\textsf{def}\ #1(#2)\shorteq#3\ \textsf{in}\ #4}
+\newcommand{\eifz}[3]{\textsf{if0}\ #1\ #2\ #3}
 
 \newcommand{\eval}[3]{#1\vdash#2\Rightarrow#3}
 \newcommand{\evaln}[3]{\ensuremath{#2} evaluates to \ensuremath{#3} under \ensuremath{#1}}
 \newcommand{\evald}[2]{\eval{\sigma}{#1}{#2}}
 \newcommand{\evaldn}[2]{\evaln{\sigma}{#1}{#2}}
+\newcommand{\evale}[2]{\eval{\emptyset}{#1}{#2}}
 \newcommand{\semanticrule}[2]{
 \vspace{1em}
 \textbf{Rule \textsc{#1}}\\
@@ -135,9 +140,9 @@
 \title{Introduction to Programming Languages}
 
 % \author[Federico Marotta]{Federico Marotta \thanks{A \LaTeX\ lover}}
-\author{Jaemin Hong}
+\author{Jaemin Hong and Sukyoung Ryu}
 
-\date{}
+% \date{}
 
 % \publishers{An Awesome Publisher}
 
@@ -170,14 +175,14 @@
 
 \lowertitleback{
   % \textbf{License}\\
-	\copyright2021 Jaemin Hong
+	\copyright2021 Jaemin Hong and Sukyoung Ryu
 
   \medskip
 
   All rights reserved. No part of this book may be reproduced in any form by any
   electronic of mechanical means (including photocopying, recording, or
   information storage and retrieval) without permission in writing from the
-  author.
+  authors.
 
   % \medskip
 
