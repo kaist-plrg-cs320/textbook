@@ -2,175 +2,342 @@
 \chapter{First-Class Functions}
 \labch{first-class-functions}
 
-The article defines FAE by adding \term{first-class functions} to AE. First-class
-functions are values: arguments for function calls and the return values of
-functions. Functions taking functions as arguments or returning functions are not
-first-order; they are \term{higher-order}. In most contexts, the terms
-'first-class functions' and 'higher-order functions' are interchangeable.
+\renewcommand{\plang}{\textsf{VAE}\xspace}
+\renewcommand{\lang}{\textsf{FVAE}\xspace}
+
+\textit{First-class functions}\index{first-class function} are functions that
+can be used as values. They are much more expressive than first-order functions,
+which are the topic of the previous chapter. This chapter explains the semantics
+of first-class functions. We need to introduce the notion of a closure to make
+first-class functions work properly. We will see what closures are and why they
+are necessary.
+
+This chapter defines \lang by extending \plang with first-class functions.
+The only way to create a function in \lang is to make an \textit{anonymous
+function}\index{anonymous function}, which is a function without a name.
+However, we can add named functions as syntactic sugar. In addition,
+we will see that even variable definitions can be considered as syntactic sugar.
 
 \section{Syntax}
 
-The following is the abstract syntax of FAE:
+Consider an anonymous function in Scala:
 
-\[
-\begin{array}{lrcl}
-\text{Integer} & n & \in & \mathbb{Z} \\
-\text{Variable} & x & \in & \textit{Id} \\
-\text{Expression} & e & ::= & n \\
-&& | & e + e \\
-&& | & e - e \\
-&& | & x \\
-&& | & \lambda x.e \\
-&& | & e\ e \\
-\text{Value} & v & ::= & n \\
-&& | & \langle \lambda x.e,\sigma \rangle \\
-\text{Environment} & \sigma & \in & \textit{Id}\hookrightarrow\text{Value}
-\end{array}
-\]
+\begin{verbatim}
+(x: Int) => x + x
+\end{verbatim}
 
-An expression of FAE is an expression of AE, variable \(x\), \term{lambda
-abstraction} \(\lambda x.e\), or \term{function application} \(e\ e\). A lambda
-abstraction creates an anonymous function: \(\lambda x.e\) denotes a function
-whose parameter and body are \(x\) and \(e\) respectively. \(x\) is a binding
-occurrence. In function application \(e_1\ e_2\), \(e_1\) denotes a function, and
-\(e_2\) denotes an argument. Evaluating a function application equals applying
-its function to its argument.
+If we ignore its type annotation, it consists of two parts: \code{x} and \code{x
++ x}. \code{x} is the parameter of the function; \code{x + x} is the body of the
+function. This observation let us know that an anonymous function consists of
+its name and parameter.
 
-A value of FAE is either an integer or a \term{closure}. A closure, which is a
-function as a value, is the pair of a lambda abstraction and the environment of
-when the lambda abstraction defines the function. Lambda abstractions may have
-free identifiers, but the environments of closures store values denoted by the
-free identifiers if a program is correct. Consider the following expression:
+In \textsf{F1VAE}, the sytnax of a function call is $\eappfo{x}{e}$. To call a
+function, the name of the function should be given. However, it is not true in
+languages with first-class functions. Let us see some function calls in Scala.
 
-\[(\lambda x.\lambda y.x + y)\ 1\ 2\]
+\begin{verbatim}
+def twice(x: Int): Int = x + x
+twice(1)
+\end{verbatim}
 
-\(\lambda y.x+y\) contains free identifier \(x\). At run time, when the lambda
-abstraction is evaluated, the environment of the moment knows that \(x\) refers
-to \(1\). Hence, the environment of a closure defined by \(\lambda y.x+y\) also
-knows that \(x\) refers to \(1\). The evaluation of the body of a closure happens
-under the environment of the closure. \(x+y\) does not result in an error. The
-next section shows the formal semantics of FAE and clarifies how lambda
-abstractions and function applications operate.
+\code{twice(1)} is a function call, and it designates a function by its name.
 
-An environment of FAE is a partial function from identifiers to values. Note that
-values are not only integers but also closures.
+\begin{verbatim}
+def makeAdder(x: Int): Int => Int =
+  (y: Int) => x + y
+makeAdder(3)(5)
+\end{verbatim}
+
+\code{makeAdder} is a function that returns a function. \code{makeAdder(3)} is a
+function call, and its result is a function. Therefore, we can call the
+resulting function again. \code{makeAdder(3)(5)} is an expression that calls
+\code{makeAdder(3)}. It designates a function by an expression, rather than just
+a name. We can conclude that the syntax of a function call in \lang should be
+more general than \textsf{F1VAE} because of the presence of first-class
+functions. In \lang, a function call consists of two expressions: one determines
+the function to be called and the other determines the value of the argument.
+
+We have used the term function call so far. In the context of functional
+programming, we use the term \textit{function application}\index{function
+application} more frequently. When we see \code{f(1)}, we say ``\code{f} is
+applied to \code{1}'' instead of ``\code{f} is called with the argument
+\code{1}.'' Applications sound more natural than calls especially when we are
+talking about first-class functions. For example, we usually say
+``\code{makeAdder(3)} is applied to \code{5}'' rather than ``\code{makeAdder(3)}
+is called with the argument \code{5}.''
+
+From the above observation on anonymous functions and function applications,
+we can define the syntax of \lang. The following is the syntax of \lang:
+\sidenote{We omit the common part to \plang.}
+
+\[ e\ ::=\ \cdots\ |\ \efun{x}{e}\ |\ \eapp{e}{e} \]
+
+\begin{itemize}
+  \item $\efun{x}{e}$
+
+    It is called an anonymous function or a \textit{lambda abstraction}.
+    \index{lambda abstraction}
+    It denotes a function whose parameter is $x$ and body is $e$. $x$ is a
+    binding occurrence, and its scope is $e$.
+    A function have zero or more parameters in many real-world languages,
+    but we restrict a function in \lang to have one and only one parameter for
+    simplicity as before.
+
+  \item $\eapp{e_1}{e_2}$
+
+    It is a function application, or just an application in short.
+    $e_1$ denotes the function; $e_2$ denotes the argument.
+\end{itemize}
 
 \section{Semantics}
 
-The semantics of FAE is a relation over environments, expressions, and values, as
-that of VAE is.
+Integers are the only values in \plang. It is not true in \lang. Since
+first-class functions are values, a value of \lang is either an integer or a
+function. Thus, we define a new kind of semantic elements, values. The
+metavariable $v$ ranges over values. Also, let $V$ be the set of every value.
 
+\[ v\ ::=\ n\ |\ \clov{x}{e}{\sigma} \]
 
-\[\Rightarrow\subseteq\text{Environment}\times\text{Expression}\times\text{Value}\]
+A value is either an integer or a closure. A \textit{closure}\index{closure}, which is a
+function as a value, has the form $\clov{x}{e}{\sigma}$.
+It is a pair of a lambda abstraction and an environment.
+A lambda abstraction in a closure may have free identifiers,
+but the environment of the closure can store the values denoted by the
+free identifiers.
 
-\(\sigma\vdash e\Rightarrow v\) implies that evaluating \(e\) under \(\sigma\)
-yields \(v\).
+To discuss the necessity of closures, consider the following expression:
 
-The rules for integers, sums, differences, and variables equal those of VAE.
+\[\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}})}{1}}{2}\]
 
-\[
-\sigma\vdash n\Rightarrow n
-\]
+It is equivalent to \code{((x: Int) => (y: Int) => x + y)(1)(2)} in Scala.
+The function $\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}}$ does not have any free
+identifiers. The scope of \code{x} is ${\efun{\cy}{\eadd{\cx}{\cy}}}$; the scope
+of \code{y} is ${\eadd{\cx}{\cy}}$. Therefore, both \code{x} and \code{y} in
+$\eadd{\cx}{\cy}$ are bound occurrences. The whole expression must result in $3$,
+which equals $1+2$, without a run-time error. You can check it by running the
+equivalent Scala program.
 
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow n_1 \\ \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1+e_2\Rightarrow n_1+n_2 }
-\]
+If we consider a function value as just a lambda abstraction, not a closure,
+evaluation of the above expression becomes problematic.
+When the expression is evaluated, $\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}}$ is
+applied to $1$ first. The result is a function value, which is a lambda
+abstraction: $\efun{\cy}{\eadd{\cx}{\cy}}$. Next, $\efun{\cy}{\eadd{\cx}{\cy}}$
+is applied to $2$. The result of the application can be computed by evaluating
+$\eadd{\cx}{\cy}$ under the environment containing that $\cy$ denotes $2$.
+However, there is no way to find the value of $\cx$. $\cx$ has become free
+identifier although it was not in the beginning.
 
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow n_1 \\ \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1-e_2\Rightarrow n_1-n_2 }
-\]
+We adopt the notion of a closure to resolve the problem. When a lambda
+expression evaluates to a function value, which is a closure, it captures the
+environment. Since $\efun{\cy}{\eadd{\cx}{\cy}}$ is evaluated under the
+environment containing that $\cx$ denotes $1$, its result is
+$\clov{\cy}{\eadd{\cx}{\cy}}{[\cx\mapsto1]}$. The captured environment of the
+closure records that $\cx$ is not a free identifier and denotes $1$.
+When the closure is applied to $2$, its body ${\eadd{\cx}{\cy}}$ is evaluated
+under $[\cx\mapsto1,\cy\mapsto2]$, not $[\cy\mapsto2]$. The addition
+successfully results in $3$.
 
-\[
-\inferrule
-{ x\in\mathit{Domain}(\sigma) }
-{ \sigma\vdash x\Rightarrow \sigma(x)}
-\]
+In summary, we need closures to retain the static scope semantics. First-class
+functions can move around the program. However, the environments used for the
+evaluation of their bodies must be determined statically. In other words,
+the denotation of identifiers in the bodies of functions must be determined when
+the functions are defined, not used. Therefore, each closure captures the surrounding
+environment when it borns.
+
+Now, let us define the semantics of \lang. Most things are the same as the
+semantics of \plang, but we should be aware of that values now include not only
+integers but also closures.
+
+An environment is a finite partial function from identifiers to values.
+
+\[ \embox{Env}=\embox{Id}\finto V \]
+
+The semantics of \lang is a ternay relation over $\embox{Env}$, $E$, and $V$.
+
+\[\Rightarrow\subseteq\embox{Env}\times E\times V\]
+
+$\evald{e}{v}$ is true if and only if $e$ evaluates to $v$ under $\sigma$.
 
 A lambda abstraction creates a closure containing the current environment.
 
+\semanticrule{Fun}{
+  \evaldn{\efun{x}{e}}{\clov{x}{e}{\sigma}}.
+}
+
 \[
-\sigma\vdash \lambda x.e\Rightarrow \langle\lambda x.e,\sigma\rangle
+  \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}}
+  \quad\textsc{[Fun]}
 \]
 
 A function application evaluates its both subexpressions. Then, it evaluates the
-body of the closure under an environment obtained by adding the value of the
+body of the closure under the environment obtained by adding the value of the
 argument to the environment of the closure.
 
+\semanticrule{App}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip0pt}l}
+    If \\
+    & \evaldn{e_1}{\clov{x}{e}{\sigma'}}, \\
+    & \evaldn{e_2}{v'}, and \\
+    & \evaln{\sigma'[x\mapsto v']}{e}{v}, \\
+    then \\
+    & \evaldn{\eapp{e_1}{e_2}}{v}.
+  \end{tabular}
+}
+
 \[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow\langle\lambda x.e,\sigma'\rangle \\
-  \sigma\vdash e_2\Rightarrow v' \\
-  \sigma'\lbrack x\mapsto v'\rbrack\vdash e\Rightarrow v }
-{ \sigma\vdash e_1\ e_2\Rightarrow v }
+  \inferrule
+  {
+    \evald{e_1}{\clov{x}{e}{\sigma'}} \\
+    \evald{e_2}{v'} \\
+    \eval{\sigma'[x\mapsto v']}{e}{v}
+  }
+  { \evald{\eapp{e_1}{e_2}}{v} }
+  \quad\textsc{[App]}
 \]
 
-The following proof tree proves that \((\lambda x.\lambda y.x+y)\ 1\ 2\) yields
-\(3\).
+We can reuse Rule \textsc{Num}, Rule \textsc{Add}, Rule \textsc{Sub}, and Rule \textsc{Id} of
+\plang. However, it is important to note that \lang has more
+cases that evaluation can fail than \plang. For example, consider Rule \textsc{Add}.
+
+\semanticrule{Add}{
+If
+  \evaldn{e_1}{n_1}, and
+  \evaldn{e_2}{n_2},\\
+then
+  \evaldn{\eadd{e_1}{e_2}}{n_1+n_2}.
+}
+
+\[
+  \inferrule
+  {
+    \evald{e_1}{n_1} \\
+    \evald{e_2}{n_2}
+  }
+  { \evald{\eadd{e_1}{e_2}}{n_1+n_2} }
+  \quad\textsc{[Add]}
+\]
+
+The rule assumes the results of $e_1$ and $e_2$ to be integers. If the
+assumption is violated, a run-time error happens. For example,
+$\eadd{(\efun{\cx}{\cx})}{1}$ incurs a run-time error becuase the left operand
+is a closure, not an integer.
+
+We need to revise Rule \textsc{Val} of \plang a bit.
+Since every value is an integer in \plang, a variable of \plang can denote only
+an integer. In \lang, a variable should be able to denote a general value, not
+only an integer.
+
+\semanticrule{Val}{
+If
+  \evaldn{e_1}{v_1}, and
+  \evaln{\sigma[x\mapsto v_1]}{e_2}{v_2},\\
+then
+  \evaldn{\ebind{x}{e_1}{e_2}}{v_2}.
+}
+
+\[
+  \inferrule
+  {
+    \evald{e_1}{v_1} \\
+    \eval{\sigma[x\mapsto v_1]}{e_2}{v_2}
+  }
+  { \evald{\ebind{x}{e_1}{e_2}}{v_2} }
+  \quad\textsc{[Val]}
+\]
+
+Now, a variable can denote a value, not only an integer.
+
+The following proof trees prove that
+$\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}})}{1}}{2}$
+evaluates to $3$ under the empty environment.
+The proof splits into three trees for readability.
+Suppose that $\sigma_1=[\cx\mapsto1]$ and $\sigma_2=[\cx\mapsto1,\cy\mapsto2]$.
+
+\[
+  \inferrule
+  {
+    \eval{\emptyset}{
+      \efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}}
+    }{\clov{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}}{\emptyset}}
+    \\
+    \eval{\emptyset}{1}{1}
+    \\
+    \eval{\sigma_1}{
+      \efun{\cy}{\eadd{\cx}{\cy}}
+    }{\clov{\cy}{\eadd{\cx}{\cy}}{\sigma_1}}
+  }
+  { \eval{\emptyset}{
+      \eapp{(\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}})}{1}
+    }{\clov{\cy}{\eadd{\cx}{\cy}}{\sigma_1}}
+  }
+\]
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { \cx\in\dom{\sigma_2} }
+    { \eval{\sigma_2}{\cx}{1} }
+    \\
+    \inferrule
+    { \cy\in\dom{\sigma_2} }
+    { \eval{\sigma_2}{\cy}{2} }
+  }
+  { \eval{\sigma_2}{\eadd{\cx}{\cy}}{3} }
+\]
 
 \[
 \inferrule
 {
-  \inferrule
-  {
-    \emptyset\vdash\lambda x.\lambda y.x+y\Rightarrow\langle\lambda x.\lambda
-y.x+y,\emptyset\rangle \\
-    \emptyset\vdash 1\Rightarrow 1 \\
-    \lbrack x\mapsto 1\rbrack\vdash \lambda y.x+y\Rightarrow\langle\lambda
-y.x+y,\lbrack x\mapsto 1\rbrack\rangle
-  }
-  { \emptyset\vdash(\lambda x.\lambda y.x+y)\ 1\Rightarrow\langle\lambda
-y.x+y,\lbrack x\mapsto 1\rbrack\rangle } \\
-  \emptyset\vdash2\Rightarrow 2 \\
-  \inferrule
-  {
-    \inferrule
-    { x\in\mathit{Domain}(\lbrack x\mapsto 1,y\mapsto 2\rbrack) }
-    { \lbrack x\mapsto 1,y\mapsto 2\rbrack\vdash x\Rightarrow 1 } \\
-    \inferrule
-    { y\in\mathit{Domain}(\lbrack x\mapsto 1,y\mapsto 2\rbrack) }
-    { \lbrack x\mapsto 1,y\mapsto 2\rbrack\vdash y\Rightarrow 2 }
-  }
-  { \lbrack x\mapsto 1,y\mapsto 2\rbrack\vdash x+y\Rightarrow 3 }
+  \eval{\emptyset}{
+      \eapp{(\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}})}{1}
+    }{\clov{\cy}{\eadd{\cx}{\cy}}{\sigma_1}}
+  \\
+  \emptyset\vdash2\Rightarrow 2
+  \\
+  \eval{\sigma_2}{\eadd{\cx}{\cy}}{3}
 }
-{ \emptyset\vdash(\lambda x.\lambda y.x+y)\ 1\ 2\Rightarrow 3 }
+{ \eval{\emptyset}{
+    \eapp{\eapp{(\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}})}{1}}{2}
+  }{3}
+}
 \]
 
-\section{Implementing an Interpreter}
+\section{Interpreter}
 
-The following Scala code implements the abstract syntax and environments of FAE:
+The following Scala code implements the syntax of \lang:
+\sidenote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
+...
 case class Fun(x: String, b: Expr) extends Expr
 case class App(f: Expr, a: Expr) extends Expr
+\end{verbatim}
 
+\code{Fun($x$, $e$)} represents $\efun{x}{e}$; \code{App($e_1$, $e_2$)}
+represents $\eapp{e_1}{e_2}$.
+
+A value of \lang is either an integer or a closure. Thus, we represent a value
+as an ADT.
+
+\begin{verbatim}
 sealed trait Value
 case class NumV(n: Int) extends Value
 case class CloV(p: String, b: Expr, e: Env) extends Value
+\end{verbatim}
 
+\code{NumV($n$)} represents $n$; \code{CloV($x$, $e$, $\sigma$)} represents
+$\clov{x}{e}{\sigma}$.
+
+An environment is a finite partial function from identifiers to values.
+Therefore, the type of an environment is \code{Map[String, Value]}.
+
+\begin{verbatim}
 type Env = Map[String, Value]
 \end{verbatim}
 
-Since a value is either an integer or a closure, \verb!Value!, instead of
-\verb!Int!, denotes the type of values. The \verb!NumV! type corresponds to
-integers; the \verb!CloV! type corresponds to closures. The type of environments
-is a map from \verb!String! to \verb!Value!, but not \verb!Int!.
-
-\begin{verbatim}
-def lookup(x: String, env: Env): Value =
-  env.getOrElse(x, throw new Exception)
-\end{verbatim}
-
-The \verb!lookup! function finds a value denoted by an identifier from an
-environment.
+The following function evaluates a given expression under a given environment:
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Value = e match {
@@ -183,7 +350,7 @@ def interp(e: Expr, env: Env): Value = e match {
     val NumV(n) = interp(l, env)
     val NumV(m) = interp(r, env)
     NumV(n - m)
-  case Id(x) => lookup(x, env)
+  case Id(x) => env(x)
   case Fun(x, b) => CloV(x, b, env)
   case App(f, a) =>
     val CloV(x, b, fEnv) = interp(f, env)
@@ -191,117 +358,75 @@ def interp(e: Expr, env: Env): Value = e match {
 }
 \end{verbatim}
 
-The \verb!Num! case creates a \verb!NumV! instance. Both \verb!Add! and
-\verb!Sub! cases check whether values are integral, respectively calculate the
-sum or the difference, and create \verb!NumV! instances. The \verb!Id! case
-equals that of VAE. The \verb!Fun! case constructs a \verb!CloV! instance. The
-\verb!App! case obtains a closure by evaluating the function, calculates the
-argument, adds the argument to the environment of the closure, and evaluates the
-body of the closure.
+In the \code{Num} case, the return value is \code{NumV(n)}, not \code{n},
+since the function must return a value of the type \code{Value}.
 
-Passing \((\lambda x.\lambda y.x+y)\ 1\ 2\) and the empty environment to
-\verb!interp! results in \verb!NumV(3)!.
+In the
+\code{Add} and \code{Sub} cases, we cannot assume that the operands are integers
+any longer. We use pattern matching to discriminate integers from closures. If
+both operands are integers, addition or subtraction succeeds. Otherwise, at
+least one of them is a closure, and the interpreter crashes due to a pattern
+matching failure. Note that this code is equivalent to the following code:
 
 \begin{verbatim}
-// lambda x.lambda y.(x + y) 1 2
-interp(
-  App(
-    App(
-      Fun("x", Fun("y",
-        Add(Id("x"), Id("y")))),
-      Num(1)
-    ),
-    Num(2)
-  ),
-  Map.empty
-)
-// NumV(3)
+case Add(l, r) =>
+  interp(l, env) match {
+    case NumV(n) => interp(r, env) match {
+      case NumV(m) => NumV(n + m)
+      case _ => error("not an integer")
+    }
+    case _ => error("not an integer")
+  }
 \end{verbatim}
 
-\section{Type Errors}
+Similarly, in the \code{App} case, we use pattern matching to discriminate
+closures from integers. The first expression of \code{App} must yield a clsoure,
+not an integer, to make the execution succeeds.
 
-Free identifiers are the only reasons for run-time errors of VAE and F1VAE. On
-the other hand, FAE expressions can result in run-time errors even though they do
-not contain any free identifiers.
+\section{Syntactic Sugar}
+\labsec{fae}
 
-\[1 + \lambda x.x\]
-
-The two premises of the inference rule for sums require both operands to denote
-integers. The right operand of the above expression denotes a closure and thus
-does not satisfy the premise. The expression does not yield any values;
-interpreting the expressions causes a run-time error.
-
-\[1\ 1\]
-
-One of the premises of the inference rule for function applications enforces the
-former subexpression of a function application to denote a closure. However,
-\(1\) yields an integer, but not a closure. Like the previous one, the expression
-does not yield any values and results in a run-time error.
-
-Both expressions cause \term{type errors}. In the former, an expression denoting
-a function occurs where an integer must come. In the latter, an expression
-denoting an integer occurs where a function must come. Errors such as those from
-the examples are type errors since their reasons are expressions of unexpected
-types.
-
-Syntactic methods can hardly prevent type errors. Such solutions restrict
-languages too much. Consider restricting operands of sums and differences to only
-integers rather than arbitrary expressions. Then, the syntax rejects many useful
-or trivially correct expressions including \(1+1+1\). In the same manner,
-restricting the first expressions of function applications to lambda abstractions
-refuses \((\lambda x.\lambda y.x+y)\ 1\ 2\) and many others.
-
-A \term{type system} is the most popular method to avoid type errors before
-executions. Type systems prove that particular programs never cause type errors
-at run time without executing them. Since they are the semantics of programs
-before run time, \term{static semantics} is another name of them. To distinguish
-'semantics,' whom the previous articles and the current article focus on, from
-static semantics, \term{dynamic semantics} means 'semantics,' which defines the
-run-time behaviors of programs. Type systems are out of the scope of the article,
-and later articles discuss type systems in detail.
-
-\section{Encoding VAE with FAE}
-
-If one can transform every code of a language into code of another language
-without changing its meaning, the latter can express everything the former
-expresses. \term{Encoding} is rewriting a code written in a language with another
-language.
-
-VAE is encodable with FAE; FAE expresses everything VAE expresses; FAE is at
-least as \term{expressive} as VAE. Precisely, FAE is more expressive than VAE.
-The below \(\mathit{encode}\) function takes an expression of VAE as an argument
-and returns an expression of FAE; it encodes VAE with FAE.
+We can add named local functions to \lang with the following change in the
+syntax:
 
 \[
-\begin{array}{l}
-\mathit{encode}(n)=n \\
-\mathit{encode}(e_1+e_2)=\mathit{encode}(e_1)+\mathit{encode}(e_2) \\
-\mathit{encode}(e_1-e_2)=\mathit{encode}(e_1)-\mathit{encode}(e_2) \\
-\mathit{encode}(\textsf{val}\ x = e_1\ \textsf{in}\ e_2)=
-\lambda x.\mathit{encode}(e_2)\ \mathit{encode}(e_1) \\
-\mathit{encode}(x)=x
-\end{array}
+  e\ ::=\ \cdots\ |\ \erec{x}{x}{e}{e}
 \]
 
-Most cases are straightforward. The most important case is an expression
-declaring a local variable. Hereafter, examples may declare local variables for
-brevity even though they are written in languages without the feature. It is safe
-to transform them to use lambda expressions and function applications.
+$\erec{x_1}{x_2}{e_1}{e_2}$ defines a function whose name is $x_1$, parameter is
+$x_2$, and body is $e_1$. The scope of $x_1$ is $e_2$, and thus the function
+does not allow recursion.
 
-Encoding complex languages with simple, but expressive languages can be
-understood as desugaring code written in a language with various syntactic sugar.
-Syntactic sugar provides convenience for programmers; desugaring provides
-convenience for language designers: it simplifies implementations of interpreters
-and compilers. Researchers often encode languages with others as well: encoding
-makes proofs easier or allows borrowing already proven facts.
+Instead of changing the semantics, \lang can provide named local functions as
+syntactic sugar. Let $s$ be a string transformed into $\erec{x_1}{x_2}{e_1}{e_2}$
+by the parser of \lang with named local functions imbeded in the semantics.
+To treat named local functions as syntactic sugar, the parser should transform
+$s$ into $\ebind{x_1}{\efun{x_2}{e_1}}{e_2}$.
 
-\term{Structural induction} proves the correctness of encodings. Such proofs are
-beyond the scope of the article and the course.
+Variable definitions can be considered as syntactic sugar as well.
+Let $s$ be a string transformed into $\ebind{x}{e_1}{e_2}$.
+To make variable definitions syntactic sugar, the parser can transform $s$ into
+$\eapp{(\efun{x}{e_2})}{e_1}$. The evaluation of $\eapp{(\efun{x}{e_2})}{e_1}$
+evaluates $e_1$ first. Then, $e_2$ is evaluated under the environment that $x$ denotes
+the result of $e_1$. This semantics is exactly the same as that of
+$\ebind{x}{e_1}{e_2}$. Therefore, we can say that variable definitions are just
+syntactic sugar in \lang.
+
+Hereafter, we remove variable definitions from \lang and call the language
+\textsf{FAE}. However, we may still use variable definitions in examples. It is
+completely fine because they are considered as syntactic sugar.
+
+Furthermore, we can treat even integers, addition, and subtraction as syntactic
+sugar. The only things we need are variables, lambda abstractions, and function
+applications. We can write any programs with these three kinds of expressions.
+The \textit{lambda calculus}\index{lambda calculus} is a language that provides
+only the three features. This book does not discuss how integers, addition, and
+subtraction can be desugared into the lambda calculus.
 
 \section{Exercises}
 
 \begin{enumerate}
-\item Given the following expression:
+\item Consider the following expression:
 
 \[
 \ebind{\cx}{5}{
@@ -311,14 +436,11 @@ beyond the scope of the article and the course.
     }
 }
 \]
-Describe a trace of the evalaution in terms of arguments to an \texttt{interp}
-function for every call. (There will be 16 calls.) The \texttt{interp} function
-takes two arguments --- an expression and a
-   deferred substitution --- so show both for each call.  For number,
-   variable, and \texttt{fun} expressions, show the result value, which
-   is immediate. Use the back of the exam for additional space, and
-   use the following abbreviations and possibly more abbreviations
- to save time:
+Describe a trace of the evalaution in terms of arguments to an \code{interp}
+function for every call. (There will be 16 calls.) The \code{interp} function
+takes two arguments---an expression and an environment---so show both for each call.
+For \code{Num}, \code{Id}, and \code{Fun} expressions, show the result value, which
+is immediate. You can use the following abbreviations and possibly more abbreviations:
 
 \begin{center}
 \begin{tabular}{lcl}
@@ -330,9 +452,8 @@ $E_4$ & = & $\ebind{\code{f}}{E_1}{\eapp{E_2}{E_3}}$
 \end{tabular}
 \end{center}
 
-\item In this exercise, we examine differences of semantics by changing scope.
-The following code is an implementation of the interpreter for new language, AEF.
-All the missing definitions are exactly the same as the ones for FAE.
+\item This exercise examines differences between semantics by changing scope.
+The following code is an implementation of an interpreter:
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Value = e match {
@@ -353,98 +474,89 @@ def interp(e: Expr, env: Env): Value = e match {
 }
 \end{verbatim}
 
-Describe the semantics of the \texttt{App} case in AEF in prose
+Describe the semantics of the \code{App} case in prose
 when we use each of the following for the blank above:
 \begin{itemize}
-  \item[a)] \texttt{env}
-  \item[b)] \texttt{Map()}
-  \item[c)] \texttt{fEnv}
+  \item \code{env}
+  \item \code{Map()}
+  \item \code{fEnv}
 \end{itemize}
 
-\item In this exercise, we extend FAE to support multiple parameters. Consider the following language, MFAE:
+\item This exercise extends \lang to support multiple parameters.
+Consider the following language:
 \[
-\begin{array}{lrll}
-\text{Expression}& e ::= & n\\
-&\mid& x\\
-&\mid& \lambda x\ \cdots\ x. e\\
-&\mid& e\ (e,\ \cdots ,\ e)\\
-\text{Value}& v ::= & n \\
-&\mid& \langle \lambda x \cdots\ x.e,\sigma \rangle \\
+\begin{array}{lrrl}
+  \text{Expression}& e & ::= & \cdots\ |\ \efun{x\cdots x}{e}\ |\
+  \eappfo{e}{e,\cdots,e}\\
+  \text{Value}& v & ::= & \cdots\ |\ \clov{x\cdots x}{e}{\sigma} \\
 \end{array}
 \]
-where definition of $n,\ x,\ \sigma$ is same as FAE.
 The semantics of some constructs are as follows:
 \begin{itemize}
   \item Evaluating $\lambda x_1\ \cdots\ x_n. e$ under $\sigma$
       yields a closure $\langle \lambda x_1 \cdots\ x_n.e,\sigma \rangle$.
-  \item If :
+  \item If
     \begin{itemize}
-    \item Evaluating $e_0$ under $\sigma$ yields a closure $\langle \lambda x_1 \cdots\ x_n.e,\sigma' \rangle$
-    \item Evaluating $e_i$ under $\sigma'$ yields $v_i$ for each $1 \leq i \leq n$
-    \item Evaluating $e$ under $\sigma'[x_1 \mapsto v_1, \cdots, x_n \mapsto v_n]$ yields $v$
+    \item evaluating $e_0$ under $\sigma$ yields a closure $\langle \lambda x_1
+      \cdots\ x_n.e,\sigma' \rangle$,
+    \item evaluating $e_i$ under $\sigma'$ yields $v_i$ for each $1 \leq i \leq
+      n$, and
+    \item evaluating $e$ under $\sigma'[x_1 \mapsto v_1, \cdots, x_n \mapsto
+      v_n]$ yields $v$,
     \end{itemize}
-\item[] then evaluating $e_0\ (e_1,\ \cdots ,\ e_n)$ under $\sigma$ yields $v$.
+\item[] then evaluating $\eappfo{e}{e,\cdots,e}$ under $\sigma$ yields $v$.
 \end{itemize}
 
-\begin{itemize}
-  \item[a)] Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
-  \item[b)] Write the evaluation derivation of the following expression:
-
-\derive
-{\hspace*{\textwidth}}
-{\emptyset\vdash (\lambda \code{f}\ \code{m}.\code{f}(\code{m}))\
-(\lambda \cx. \cx,\ 8) \Rightarrow~~~~~~~~}
-\end{itemize}
-
-\item Rewrite the following FVAE expression to FAE expression by extending ``encode`` function in section 9.5.
-You should not ``evaluate'' them. (Consider $\code{if0}$ as an identifier.)
-
-\begin{itemize}
-    \item[a)] \(\textsf{val}\ \cx = \lambda \code{n}. \eadd{8}{\code{n}}\ \textsf{in}\ \lambda \code{n}. (\eapp{\cx}{(\esub{10}{\code{n}})}) \)
-\item[b)] \(\textsf{val}\ \code{fac} = (\code{mk-rec}\
-    (\lambda \code{fac}.\ \lambda \code{n}.\ (\code{if0}\ \code{n}\ 1 (\code{n} * (\code{fac}\ (\code{n} - 1))))))\ \textsf{in}\ (\code{fac}\ 10)\)
-\item[c)] \(\lambda\ \code{body-proc}.\
-\textsf{val}\ \code{fX} = \lambda\ \code{fX}.\
-(\textsf{val}\ \code{f} = \lambda\ \cx.\ ((\code{fX}\ \code{fX})\ \cx)\
-\textsf{in}\ (\code{body-proc}\ \code{f}))\
-\textsf{in}\ (\code{fX}\ \code{fX}) \)
-\end{itemize}
-
-\item In this exercise, we extend FAE to check body expression when evaluating function expression.
-Consider we extend value of FAE to include special value $\uparrow$ to represent error value at function body checking.
-Write the operational semantics of the form
-\fbox{$\sigma \vdash e \Rightarrow v$} for a function expression
-$\lambda x. e$, when the semantics of the function expression
-is changed as follows:
-\begin{itemize}
-\item If all free identifiers of $e$ is in $\sigma$ or is $x$, then evaluation of $\lambda x. e$ under $\sigma$ yields a closure
-  contains function expression and the environment.
-\item Otherwise, evaluation of $\lambda x. e$ under $\sigma$ yields a special value $\uparrow$.
-\end{itemize}
-You may use the function \textit{fv} which takes an
-expression and returns a set of free identifiers in the expression.
-For example, $fv(\lambda x. y\ x) = \{ y \}$.
-
-\item In this exercise, we extend FAE to have record value. Consider the following language, RecFAE:
+\begin{enumerate}
+  \item Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
+  \item Write the evaluation derivation of the following expression:
 \[
-\begin{array}{lrcl}
-\text{Variable} & x & \in & \textit{Id} \\
-\text{Field} & f & \in & \textit{Field} \\
-\text{Record} & \rho & \in & \embox{Record} = \embox{Field} \finto \embox{Value} \\
-\text{Expression}& e & ::= & x \\
-&& \mid & \lambda x.e \\
-&& \mid & e\ e \\
-&& \mid & \{f\ e,\ \cdots,\ f\ e\}\\
-&& \mid & e.f \\
-&& \mid & e; e \\
-&& \mid & (e) \\
-\text{Value} & v & ::= & \rho \\
-&& | & \langle \lambda x.e,\sigma \rangle \\
+\inferrule
+{ \hspace*{0.8\textwidth} }
+{
+  \eval{\emptyset}{
+    \eappfo{(\efun{\code{f}\
+    \code{m}}{\eappfo{\code{f}}{\code{m}}})}{\efun{\cx}{\cx},8}
+  }{~~~~~~~~~~}
+}
+\]
+\end{enumerate}
+
+\item Rewrite the following \lang expression to \textsf{FAE} expression.
+  You should not ``evaluate'' them. Consider the approach of \refsec{fae}.
+
+\[
+  \ebind{\cx}{\efun{\cy}{\eadd{8}{\cy}}}{\efun{\cy}\eapp{\eapp{\cx}{(\esub{10}{\cy})}}}
+\]
+
+\item This exercise modifies \lang to check body expressions when evaluating
+  function expressions.
+Consider we extend value of \lang to include a special value $\uparrow$
+to represent an error during function body checking.
+Write the operational semantics of the form
+\fbox{$\evald{e}{v}$} for a function expression
+$\efun{x}{e}$, when its semantics  changes as follows:
+\begin{itemize}
+\item If every free identifier of $e$ is in $\sigma$ or is $x$,
+  then evaluation of $\efun{x}{e}$ under $\sigma$ yields a closure
+  containing the function expression and the environment.
+\item Otherwise, evaluation of $\efun{x}{e}$ under $\sigma$ yields $\uparrow$.
+\end{itemize}
+You may use the semantic function \embox{fv}, which takes an
+expression and returns the set of every free identifier in the expression.
+For example, $\embox{fv}(\efun{\cx}{\eapp{\cy}{\cx}}) = \{ \cy \}$.
+
+\item This exercise extends \lang with records.
+  Consider the following language:
+\[
+\begin{array}{lrrl}
+  \text{Field} & f & \in & \textit{Field} \\
+  \text{Record} & \rho & \in & \embox{Record} = \embox{Field} \finto \embox{Value} \\
+  \text{Expression}& e & ::= & \cdots\ |\ \{f\ e,\ \ldots,\ f\ e\}\ |\ e.f\ |\
+  e;e \\
+  \text{Value} & v & ::= & \cdots\ |\ \rho \\
 \end{array}
 \]
-where a value of the language is either a record $\rho$
-or a closure $\langle\lambda x. e,\sigma\rangle$, and
-an environment maps names to values:
 
 The semantics of some constructs are as follows:
 \begin{itemize}
@@ -454,123 +566,97 @@ which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
 to the value $v_i$ which is evaluated from the expression $e_i$ under $\sigma$.
   \item The evaluation of $e.f$ under $\sigma$ yields the value of the field $f$ in the record $\rho$,
       where evaluation $e$ under $\sigma$ yields $\rho$.
-  \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation of $e_2$ yields $v$ under same environment,
+  \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation
+    of $e_2$ yields $v$ under $\sigma$,
       then evaluation of $e_1; e_2$ yields $v$ under $\sigma$.
-\item The evaluation of $(e)$ under any environment yields same value as evaluation of $e$.
 \end{itemize}
 
 Write the operational semantics of the form
 $\boxed{\sigma \vdash e \Rightarrow v}$
 
-\item In this exercise, we develop small language which only handles pair. Consider the following language Pair:
+\item This exercise extends \lang with pairs. Consider the following language:
 \[
-\begin{array}{lrcl}
-\text{Expression}& e & ::= & n \\
-&&\mid& \verb!{pair ! e\ e\verb+}+\\
-&&\mid& \verb!{first ! e\verb+}+\\
-&&\mid& \verb!{second ! e\verb+}+\\
-\text{Value} & v & ::= & \fbox{ (a) }
-\end{array}
-\]
-where $n$ denotes a number and a value of the language is either a number or a pair of two values.
-\begin{itemize}
-  \item[a)] Write the grammar of the value $v$ and
- the operational semantics of the form \fbox{$\vdash e \Rightarrow v$} for the expressions.
-  \item[b)] Write the evaluation derivation of the following expressions:
-
-\hspace*{-5em}
- \derive
-{\hspace*{\textwidth}}
-{\vdash
- \{\texttt{second}\ \{\texttt{pair}\ 8\ \{
- \texttt{first}\ \{\texttt{pair}\ 320\ 42\}\}\}\}
- \Rightarrow~~~~~~~~}
-\end{itemize}
-
-\item In this exercise, we replace environment-baesd semantics of FVAE to subtitution-based semantics.
-Consider the following language, FVAES:
-
-\[
-\begin{array}{lrcl}
-\text{Expression} & e & ::= & n \\
-&& | & \eadd{e}{e}\\
-&& | & \esub{e}{e} \\
-&& | & \ebind{x}{e}{e} \\
-&& | & x \\
-&& | & \efun{x}{e} \\
-&& | & \eapp{e}{e} \\
+\begin{array}{lrrl}
+  \text{Expression}& e & ::= & \cdots\ |\ (e,e)\ |\ e\textsf{.1}\ |\ e\textsf{.2} \\
+  \text{Value} & v & ::= & \cdots\ |\ \fbox{ (a) }
 \end{array}
 \]
 
-where evaluation of $e$ results in either a number $n$ or a closure $\efun{x}{e}$.
+\begin{enumerate}
+  \item Write the syntax of a pair value in \fbox{ (a) } and
+    the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
+  \item Write the evaluation derivation of the following expression:
+    \[
+      \inferrule
+      {\hspace*{0.8\textwidth}}
+      { \eval{\emptyset}{(8,(320,42)\textsf{.1})\textsf{.2}}{~~~~~} }
+    \]
+\end{enumerate}
 
-Consider the following implementation of FVAES:
+\item This exercise replaces the environment-based semantics of \lang with subtitution-based semantics.
+Consider the following implementation:
 \begin{verbatim}
-trait FVAES
-trait FVAESValue extends FVAES                                       // v ::= n | lambda x. e
-case class Num(num: Int) extends FVAES with FVAESValue               // e ::= n
-case class Add(left: FVAES, right: FVAES) extends FVAES              //     | e + e
-case class Sub(left: FVAES, right: FVAES) extends FVAES              //     | e - e
-case class Val(x: String, init: FVAES, body: FVAES) extends FVAES    //     | val x = e in e
-case class Id(name: String) extends FVAES                            //     | x
-case class Fun(x: String, body: FVAES) extends FVAES with FVAESValue //     | lambda x.e
-case class App(fun: FVAES, arg: FVAES) extends FVAES                 //     | e e
+trait Expr
+trait Value extends Expr
+case class Num(n: Int) extends Expr with Value
+case class Add(l: Expr, r: Expr) extends Expr
+case class Sub(l: Expr, r: Expr) extends Expr
+case class Val(x: String, e: Expr, b: Expr) extends Expr
+case class Id(x: String) extends Expr
+case class Fun(x: String, b: Expr) extends Expr with Value
+case class App(f: Expr, a: Expr) extends Expr
 
-// subst : (FVAES, String, FVAESValue) => FVAES
-def subst(fvaes: FVAES, x: String, v: FVAESValue): FVAES = fvaes match {
-  case Num(n) => fvaes
-  case Add(l, r) => Add(subst(l, x, v), subst(r, x, v))
-  case Sub(l, r) => Sub(subst(l, x, v), subst(r, x, v))
-  case Val(y, i, b) => Val(y, subst(i, x, v), if (y == x) b else subst(b, x, v))
-  case Id(name) => if (name == x) v else fvaes
-  case Fun(y, b) => Fun(y, if (y == x) b else subst(b, x, v))
-  case App(f, a) => App(subst(f, x, v), subst(a, x, v))
+def subst(e: Expr, x: String, v: Value): Expr = e match {
+  case Num(n) => e
+  case Add(l, r) =>
+    Add(subst(l, x, v), subst(r, x, v))
+  case Sub(l, r) =>
+    Sub(subst(l, x, v), subst(r, x, v))
+  case Val(y, i, b) =>
+    val nb = if (y == x) b else subst(b, x, v)
+    Val(y, subst(i, x, v), nb)
+  case Id(name) =>
+    if (name == x) v else e
+  case Fun(y, b) =>
+    Fun(y, if (y == x) b else subst(b, x, v))
+  case App(f, a) =>
+    App(subst(f, x, v), subst(a, x, v))
 }
 
-// interp : FVAES => FVAESValue
-def interp(fvaes: FVAES): FVAESValue = fvaes match {
+def interp(e: Expr): Value = e match {
   case Num(n) => Num(n)
-  case Add(l, r) => numAdd(interp(l), interp(r))
-  case Sub(l, r) => numSub(interp(l), interp(r))
-  case Val(x, i, b) => interp(subst(b, x, interp(i)))
-  case Id(x) => error(s"free identifier: $x")
+  case Add(l, r) =>
+    val Num(n) = interp(l)
+    val Num(m) = interp(r)
+    Num(n + m)
+  case Sub(l, r) =>
+    val Num(n) = interp(l)
+    val Num(m) = interp(r)
+    Num(n + m)
+  case Val(x, i, b) =>
+    interp(subst(b, x, interp(i)))
+  case Id(x) => error("free identifier")
   case Fun(x, b) => Fun(x, b)
-  case App(f, a) => interp(f) match {
-    case Fun(x, b) => interp(subst(b, x, interp(a)))
-    case fv => error(s"not a closure: $fv")
-  }
+  case App(f, a) =>
+    val Fun(x, b) = interp(f)
+    interp(subst(b, x, interp(a)))
 }
 \end{verbatim}
 
-\begin{itemize}
-  \item[a)]
-Write the operational semantics of the above implementation
-of the form \fbox{$\vdash e \Rightarrow v$}
-where $e[x/v]$ denotes \verb!subst(e, x, v)! and a value $v$ is either a number $n$ or
-a closure $\efun{x}{e}$.
+In this implementation, a value is either an integer or a lambda abstraction:
 
-\begin{itemize}
-  \item $e \equiv n$
-  \item $e \equiv \eadd{e}{e}$
-  \item $e \equiv \ebind{x}{e}{e}$
-  \item $e \equiv \efun{x}{e}$
-  \item $e \equiv \eapp{e}{e}$
-\end{itemize}
+\[ v\ ::=\ n\ |\ \efun{x}{e} \]
 
-  \item[b)] Write the definition of the substitution $e[x/v]$ denoting \verb!subst(e,x,v)!
-of the form \fbox{$e[x/v] \leadsto e$}:
-\begin{itemize}
-  \item $e \equiv n$
-%{\Large $n[x/v] \leadsto n$}
-  \item $e \equiv \eadd{e}{e}$
-  \item $e \equiv \ebind{x}{e}{e}$
-  \item $e \equiv x$
-  \item $e \equiv \efun{x}{e}$
-  \item $e \equiv \eapp{e}{e}$
-\end{itemize}
+\begin{enumerate}
+  \item
+    Write the operational semantics of the above implementation
+    of the form \fbox{$e \Rightarrow v$}
+    where $e[x/v]$ denotes \code{subst($e$, $x$, $v$)}.
 
-  \item[c)] Consider the following expression:
+  \item Write the definition of the substitution $e[x/v]$
+    of the form \fbox{$e[x/v]=e$}:
 
+  \item Consider the following expression:
 \[
 \ebind{\code{z}}{\efun{\cx}{\esub{\cx}{\cy}}}{
     \ebind{\cy}{10}{
@@ -579,17 +665,15 @@ of the form \fbox{$e[x/v] \leadsto e$}:
 }
 \]
 
-\begin{itemize}
-\item What is the result of evaluating the expression under the empty environment?
-\item What is the result of evaluating the expression under the empty environment in FVAE?
+\begin{enumerate}
+\item What is the result of evaluating the expression under the empty
+  environment in substitution-based \lang?
+\item What is the result of evaluating the expression under the empty
+  environment in environment-based \lang?
 \item Why are the results different?
-\end{itemize}
-    (Note: we can define equivalent semantics as FVAE using substitution
-    by modifying \verb!subst! function)
+  \sidenote{We can make the semantics of substitution-based \lang equivalent to
+    environment-based \lang by modifying \code{subst} function.}
+\end{enumerate}
 
-%\verb!subst(With("y", Num(10), Id("z")), "z", Fun("x", Add(Id("x"), Id("y"))))!
-%$[z/\verb!{fun {!z\verb!} {+ !x\ y\verb!}}!]\verb!{with {!y\ 10\verb!} !z\verb!}!$
-
-\end{itemize}
-
+\end{enumerate}
 \end{enumerate}

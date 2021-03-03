@@ -48,7 +48,9 @@ follows:
 The metavariable $d$ ranges over function definitions. Let $\embox{FunDef}$
 denote the set of every function definition. A function definition
 $\fundef{x_1}{x_2}{e}$ defines a function whose name is $x_1$, parameter is
-$x_2$, and body is $e$. In many real-world languages, a function have zero or
+$x_2$, and body is $e$. Both $x_1$ and $x_2$ are binding occurrences.
+The scope of $x_1$ is the entire program; the scope of $x_2$ is $e$.
+In many real-world languages, a function have zero or
 more parameters. However, our syntax restricts a function to have one and only
 one parameter. We adopt this design to make the semantics simple. Once you
 understand a function with a single parameter, you can easily extend the concept
@@ -56,13 +58,15 @@ to a function with multiple parameters.
 
 Using a function is to call the function. If we never call a function, the
 function is useless. We need to add a new kind of expressions to the language:
-function call expressions. The following is the abstract syntax of \lang:
+function call expressions. The following is the syntax of \lang:
 \sidenote{We omit the common part to \plang.}
 
 \[ e\ ::=\ \cdots\ |\ \eappfo{x}{e} \]
 
-$x(e)$ is a function call expression. It calls a function named $f$. $e$
-determines the value of the argument of the call.
+$x(e)$ is a function call expression. It calls a function named $x$. $e$
+determines the value of the argument of the call. Here, $x$ is a bound
+occurrence. A function call always has only one argument since every function in
+\lang has only one parameter.
 
 \section{Semantics}
 
@@ -89,7 +93,7 @@ instead of $(\sigma,\Lambda,e,n)\in\Rightarrow$.
 
 The following rule describes the semantics of function calls:
 
-\semanticrule{App}{
+\semanticrule{Call}{
 \begin{tabular}{@{\hskip0pt}l@{\hskip0pt}l}
   If \\
   & \evaln{\sigma\tand\Lambda}{e}{n'},\\
@@ -125,7 +129,7 @@ We can formulate the semantics as the following inference rule:
     \eval{[x'\mapsto n'],\Lambda}{e'}{n}
   }
   { \eval{\sigma,\Lambda}{\eappfo{x}{e}}{n} }
-  \quad\textsc{[App]}
+  \quad\textsc{[Call]}
 \]
 
 The other rules should be revised to consider function environments.
@@ -159,10 +163,10 @@ then
 
 \semanticrule{Val}{
 If
-  \evaln{\sigma\tand\Lambda}{e_1}{v_1}, and
-  \evaln{\sigma[x\mapsto v_1]\tand\Lambda}{e_2}{v_2},\\
+  \evaln{\sigma\tand\Lambda}{e_1}{n_1}, and
+  \evaln{\sigma[x\mapsto n_1]\tand\Lambda}{e_2}{n_2},\\
 then
-  \evaln{\sigma\tand\Lambda}{\ebind{x}{e_1}{e_2}}{v_2}.
+  \evaln{\sigma\tand\Lambda}{\ebind{x}{e_1}{e_2}}{n_2}.
 }
 
 \vspace{-1em}
@@ -204,10 +208,10 @@ We can fix the inference rules in a similar way.
 \[
   \inferrule
   {
-    \eval{\sigma,\Lambda}{e_1}{v_1} \\
-    \eval{\sigma[x\mapsto v_1],\Lambda}{e_2}{v_2}
+    \eval{\sigma,\Lambda}{e_1}{n_1} \\
+    \eval{\sigma[x\mapsto n_1],\Lambda}{e_2}{n_2}
   }
-  { \eval{\sigma,\Lambda}{\ebind{x}{e_1}{e_2}}{v_2} }
+  { \eval{\sigma,\Lambda}{\ebind{x}{e_1}{e_2}}{n_2} }
   \quad\textsc{[Val]}
 \]
 
@@ -228,7 +232,7 @@ case class FunDef(f: String, x: String, b: Expr)
 
 sealed trait Expr
 ...
-case class App(f: String, a: Expr) extends Expr
+case class Call(f: String, a: Expr) extends Expr
 \end{verbatim}
 
 Just like environments, function environments can be expressed as maps.
@@ -251,10 +255,9 @@ def interp(e: Expr, env: Env, fEnv: FEnv): Int = e match {
     interp(l, env, fEnv) - interp(r, env, fEnv)
   case Val(x, i, b) =>
     interp(b, env + (x -> interp(i, env, fEnv)), fEnv)
-  case Id(x) =>
-    env.getOrElse(x, error("free identifier"))
-  case App(f, a) =>
-    val (x, e) = fEnv.getOrElse(f, error("free identifier"))
+  case Id(x) => env(x)
+  case Call(f, a) =>
+    val (x, e) = fEnv(f)
     interp(e, Map(x -> interp(a, env, fEnv)), fEnv)
 }
 \end{verbatim}
@@ -308,7 +311,7 @@ run time due to function calls.
 To adopt dynamic scope to \lang, we need to change the function call semantics
 as follows:
 
-\semanticrule{App-Dyn}{
+\semanticrule{Call-Dyn}{
 \begin{tabular}{@{\hskip0pt}l@{\hskip0pt}l}
   If \\
   & \evaln{\sigma\tand\Lambda}{e}{n'},\\
@@ -331,14 +334,14 @@ It is equivalent to the following inference rule:
     \eval{\sigma[x'\mapsto n'],\Lambda}{e'}{n}
   }
   { \eval{\sigma,\Lambda}{\eappfo{x}{e}}{n} }
-  \quad\textsc{[App-Dyn]}
+  \quad\textsc{[Call-Dyn]}
 \]
 
 The interpreter can be fixed like below.
 
 \begin{verbatim}
-case App(f, a) =>
-  val (x, e) = fEnv.getOrElse(f, error("free identifier"))
+case Call(f, a) =>
+  val (x, e) = fEnv(f)
   interp(e, env + (x -> interp(a, env, fEnv)), fEnv)
 \end{verbatim}
 

@@ -81,12 +81,14 @@
 \newcommand{\isub}{-_{{}_{\mathbb{Z}}}}
 
 \newcommand{\fundef}[3]{\textsf{def}\ #1(#2)\shorteq#3}
+\newcommand{\clov}[3]{\langle\efun{#1}{#2},#3\rangle}
 \newcommand{\eadd}[2]{#1+#2}
 \newcommand{\esub}[2]{#1-#2}
 \newcommand{\ebind}[3]{\textsf{val}\ #1\shorteq#2\ \textsf{in}\ #3}
 \newcommand{\efun}[2]{\lambda#1.#2}
 \newcommand{\eapp}[2]{#1\ #2}
 \newcommand{\eappfo}[2]{#1(#2)}
+\newcommand{\erec}[4]{\textsf{def}\ #1(#2)\shorteq#3\ \textsf{in}\ #4}
 
 \newcommand{\eval}[3]{#1\vdash#2\Rightarrow#3}
 \newcommand{\evaln}[3]{\ensuremath{#2} evaluates to \ensuremath{#3} under \ensuremath{#1}}
@@ -264,7 +266,7 @@
 \input{chapters/identifiers.tex}
 \input{chapters/first-order-functions.tex}
 \input{chapters/first-class-functions.tex}
-\input{chapters/lambda-calculus.tex}
+% \input{chapters/lambda-calculus.tex}
 \input{chapters/recursion.tex}
 \input{chapters/mutable-boxes.tex}
 \input{chapters/mutable-variables.tex}

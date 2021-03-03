@@ -289,15 +289,14 @@ Rule \textsc{Id} can be formulated as the following inference rule:
   \quad\textsc{[Id]}
 \]
 
-
 When a variable is defined, the value of the variable is added to the environment.
 We write $\sigma[x\mapsto n]$ to denote an environment obtained by adding the
 fact that $x$ denotes $v$ to $\sigma$. Then, the following property holds:
 
 \[
-\sigma [ x\mapsto v](x') =
+\sigma [x\mapsto n](x') =
 \begin{cases}
-  v & \text{if}\ x=x' \\
+  n & \text{if}\ x=x' \\
   \sigma(x) & \text{if}\ x\neq x'
 \end{cases}
 \]
@@ -306,24 +305,24 @@ The following rule defines the semantics of $\ebind{x}{e_1}{e_2}$:
 
 \semanticrule{Val}{
 If
-  \evaldn{e_1}{v_1} and
-  \evaln{\sigma[x\mapsto v_1]}{e_2}{v_2},\\
+  \evaldn{e_1}{n_1} and
+  \evaln{\sigma[x\mapsto n_1]}{e_2}{n_2},\\
 then
-  \evaldn{\ebind{x}{e_1}{e_2}}{v_2}.
+  \evaldn{\ebind{x}{e_1}{e_2}}{n_2}.
 }
 
 To evaluate $\ebind{x}{e_1}{e_2}$, we need to determine the value of $x$ first.
 It can be done by evaluating $e_1$. Since the scope of $x$ excludes $e_1$,
 the evaluation proceeds under $\sigma$, which is a given environment.
 The result of $e_1$ is the value of $x$, and this information must be added to
-the environment. By adding the fact to $\sigma$, we get $\sigma[x\mapsto v_1]$.
-As $e_2$ is the scope of $x$, $e_2$ is evaluated under $\sigma[x\mapsto v_1]$.
+the environment. By adding the fact to $\sigma$, we get $\sigma[x\mapsto n_1]$.
+As $e_2$ is the scope of $x$, $e_2$ is evaluated under $\sigma[x\mapsto n_1]$.
 The result of $e_2$ is the final result.
 
 This semantics naturally explains shadowing. Let $x$ already be in the domain of
-$\sigma$. Suppose that $\sigma(x)=v$. However, $e_2$ is evaluated under
-$\sigma[x\mapsto v_1]$, and $\sigma[x\mapsto v_1](x)=v_1$. When $x$ is used in
-$e_2$, its value is $v_1$, not $v$. Therefore, we can say that the
+$\sigma$. Suppose that $\sigma(x)=n$. However, $e_2$ is evaluated under
+$\sigma[x\mapsto n_1]$, and $\sigma[x\mapsto n_1](x)=n_1$. When $x$ is used in
+$e_2$, its value is $n_1$, not $n$. Therefore, we can say that the
 innermost definition of $x$ is used for the evaluation of $e_2$. This behavior
 exactly matches the concept of shadowing explained before.
 
@@ -332,10 +331,10 @@ Rule \textsc{Val} can be expressed as the following inference rule:
 \[
 \inferrule
 {
-  \evald{e_1}{v_1} \\
-  \eval{\sigma[x\mapsto v_1]}{e_2}{v_2}
+  \evald{e_1}{n_1} \\
+  \eval{\sigma[x\mapsto n_1]}{e_2}{n_2}
 }
-{ \evald{\ebind{x}{e_1}{e_2}}{v_2} }
+{ \evald{\ebind{x}{e_1}{e_2}}{n_2} }
 \quad\textsc{[Val]}
 \]
 
@@ -436,25 +435,10 @@ We use a map to represent an environment. The type of an environment is
 type Env = Map[String, Int]
 \end{verbatim}
 
-The standard library provides various methods for maps.
-We use two methods to implement the interpreter.
-
-\begin{itemize}
-  \item \code{+}
-
-    It allows us to add the pair of a key and a value to the map. For example,
-    where \code{m} is \code{Map(1 -> "one")}, we \code{m + (2 -> "two")} is the same as
-    \code{Map(1 -> "one", 2 -> "two")}
-
-  \item \code{getOrElse}
-
-    It takes two arguments. The first argument is a key, and the second argument
-    is a default value. If the map has the key, then the result is the
-    corresponding value. Otherwise, the default value is returned.
-    For instance, where \code{m} is \code{Map(1 -> "one")}, \code{m.getOrElse(1,
-    "?")} is \code{"one"}, and \code{m.getOrElse(2, "?")} is
-    \code{"?"}.
-\end{itemize}
+We can add a pair of a key and a value to a map with the \code{+} operator.
+For example,
+where \code{m} is \code{Map(1 -> "one")}, \code{m + (2 -> "two")} is the same as
+\code{Map(1 -> "one", 2 -> "two")}
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Int = e match {
@@ -462,15 +446,14 @@ def interp(e: Expr, env: Env): Int = e match {
   case Add(l, r) => interp(l, env) + interp(r, env)
   case Sub(l, r) => interp(l, env) - interp(r, env)
   case Val(x, i, b) => interp(b, env + (x -> interp(i, env)))
-  case Id(x) => env.getOrElse(x, error("free identifier"))
+  case Id(x) => env(x)
 }
 \end{verbatim}
 
 Since the structure of the code is almost identical to the semantic rules, there
-is nothing much to explain. In the \code{Id} case, we use the function
-\code{error}, which is defined in \refsec{options}. When \code{x} is a key in
+is nothing much to explain. In the \code{Id} case, when \code{x} is a key in
 \code{env}, the corresponding value becomes the result of \code{interp}.
-Otherwise, \code{error}, which throws an exception, is called, and the execution
+Otherwise, an exception is thrown, and the execution
 terminates without producing any results.
 
 \section{Exercises}
