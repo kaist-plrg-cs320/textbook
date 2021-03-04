@@ -1,298 +1,535 @@
 \setchapterpreamble[u]{\margintoc}
-\chapter{Mutable Boxes}
-\labch{mutable-boxes}
+\chapter{Boxes}
+\labch{boxes}
 
-The article defines BFAE, a language with boxes, which are mutable spaces
-storing data.
+\renewcommand{\plang}{\textsf{FAE}\xspace}
+\renewcommand{\lang}{\textsf{BFAE}\xspace}
 
-\section{Syntax
-}
+Mutation is a widely-used feature. It is an important concept in imperative
+languages. Even functional languages support mutation. Few languages are purely
+functional, i.e. do not allow any mutation: e.g. Haskell and Coq. Muation is
+important since many programs can be implemented concisely and efficiently with
+mutation. At the same time, mutation often makes program difficult to be
+reasoned about and error-prone. While binding of identifiers works modularly and
+allows local reasoning, mutation has a global effect on execution and enables
+uncontrolled interference between distinct parts of a program. Mutation should
+be used with extreme care of programmers.
 
-The below is the abstract syntax of BFAE. It shows only parts not in FAE.
+This chapter introduces mutation by defining \lang, which extends \plang with
+boxes. A \textit{box}\index{box} is a cell in memory that contains a single value. The value
+contained in a box can be modified anytime after the creation of the box.
+Boxes in \lang are higher-order. Each box can contains any value, which can be
+a box or a closure, rather than only an integer.
+A box itself is rarely found in real-world languages: it is almost the same as
+a reference in OCaml (\code{ref}). However, it is good abstraction of more
+general mutation mechanism including mutable arrays, objects, and data
+structures. We can find such concepts in most languages, and boxes are useful to
+understand those concepts.
 
-\[
-\begin{array}{lrcl}
-\text{Expression} & e & ::= & \cdots \\
-&& | & \textsf{ref}\ e \\
-&& | & e:=e \\
-&& | & !e \\
-&& | & e;e
-\end{array}
-\]
+We can consider mutable objects in Scala as generalization of boxes. By
+going the opposite direction, we can say that boxes can be represented as
+objects. Consider the following class definition in Scala:
 
-\(\textsf{ref}\) creates a new box. \(\textsf{ref}\ e\) evaluates \(e\), creates
-a new box, and stores the result of \(e\) in the box. The whole expression
-denotes the box. A low-level interpretation of a box is a memory address
-where its value exists. \(\textsf{ref}\) is similar to \verb!malloc! of C or
-\verb!new! of object-oriented languages because it allocates spaces whom
-programmers can use in a memory. For example, rewriting \(\textsf{ref}\ 1\) in C
-yields \verb!int p = (int) malloc(sizeof(int)); *p = 1; return p;!.
+\begin{verbatim}
+case class Box(var value: Any)
+\end{verbatim}
 
-\(:=\) modifies the content of a box. \(e_1:=e_2\) evaluates \(e_1\) and then
-\(e_2\) and puts a value denoted by \(e_2\) in a box denoted by \(e_1\). The
-result of the whole expression equals the value. If \(e_1\) does not denote a
-box, a run-time error occurs. The expression directly modifies the memory. It is
-similar to an assignment statement whose left-hand side is a pointer
-dereference in C. For example, if \(x\) denotes a box or a pointer,
-\(x:=2\) equals \(*x=2\).
+The class \code{Box} has one field: \code{value}. Like any other classes, we can
+construct instances of \code{Box} and read the fields of the instances.
 
-\(!\) opens a box. If \(e\) results in a box, \(!e\) results in the content of
-the box. It is similar to a pointer dereference not at the left-hand side of an
-assignment statement in C. \(!x\) equals \(*x\).
+\begin{verbatim}
+val b = Box(3)
+println(b.value)
+\end{verbatim}
 
-\(e_1;e_2\) is an expression obtained by sequencing \(e_1\) and \(e_2\).
-It evaluates \(e_1\) and then \(e_2\). The whole expression denotes a value
-denoted by \(e_2\). Languages covered by the previous articles lack expression
-sequencing since it is meaningless. The result of the former expression is always
-discarded without being used by the latter expression. On the other hand, in the
-case of BFAE, the former expression can create a box or modify the content of a
-box and is therefore meaningful although its result is ignored. Most languages
-allow programmers to write sequences of multiple statements or expressions
-separated by commas or line breaks. Expression sequencing of BFAE equals them.
+It prints \code{3}.
+In addition, since the field \code{value} is declared as mutable, we can mutate
+its value.
 
-\section{Semantics
-}
+\begin{verbatim}
+b.value = 10
+println(b.value)
+\end{verbatim}
 
-Unlike the previous languages, BFAE is not a purely functional language but
-provides mutable boxes. Like imperative languages, execution of a BFAE program
-mutates a state. Despite mutability, the semantics of BFAE retains the functional
-viewpoint, which interprets an expression as a program and executes the program
-by finding a value denoted by the expression.
+It changes the value of the field to \code{10} and prints \code{10}.
 
-Defining a mutable memory is crucial to define the semantics of BFAE. The article
-calls such memories stores. A store saves values in boxes existing during
-execution of a program. Boxes are distinguishable as they have distinct names.
-The article calls the names addresses. Let \(Addr\) be the set of every
-possible address. A store is a partial function from an address to a value. A
-value mapped from the address of a box by a store is the content of the box.
+\section{Syntax}
 
-\[
-\begin{array}{lrcl}
-\text{Address} & a & \in & \mathit{Addr} \\
-\text{Store} & M & \in & \text{Address}\hookrightarrow\text{Value}
-\end{array}
-\]
+The above Scala example shows three kinds of expressions regarding boxes:
+creating a new box, reading the value of a box, and changing the value of a box.
+To create a box, we need an expression that determines the initial value of the
+box. The read the value a box, we need an expression that determines the box.
+The change the value of a box, we need an expression that determines the box and
+an expression that determines the new value of the box.
 
-Metavariable \(a\) ranges over addresses; \(M\) ranges over stores.
+In addition, there is another kind of expressions that have been implicitly
+used: sequenced expressions. Usually, an expression mutating a box is useless
+per se. There should be other expressions that observe the change and do
+other interesting things based on the change. To do so, we need combine
+multiple expressions to form a single expression. Such expressions are sequenced
+expressions.
 
-The semantics does not require a concrete definition of a box. Since the address
-of a box determines the meaning of the box, addresses are enough for the
-semantics. The result of evaluating an expression denoting a box is an address.
-For example, \(\textsf{ref}\ e\) yields an address. The previous languages allow
-only integers and closures to be values, but BFAE additionally allows addresses
-to be values.
+We can define the syntax of \lang based on the observations.
+The following is the syntax of \lang:
+\sidenote{We omit the common part to \plang.}
 
 \[
-\begin{array}{lrcl}
-\text{Value} & e & ::= & \cdots \\
-&& | & a
-\end{array}
+  e\ ::=\ \cdots\ |\ \eref{e}\ |\ \ederef{e}\ |\ \eset{e}{e}\ |\ \eseq{e}{e}
 \]
 
-Note that the remaining part of the article keeps using the concept of a box.
-Even though the semantics abstracts boxes with addresses, in the programmers'
-perspective, boxes do exist. Besides, boxes are more intuitive than addresses for
-explanations.
+\begin{itemize}
+  \item $\eref{e}$
 
-Evaluating \(!e\) needs not only an environment but also a store. If \(e\)
-denotes a box, the store has a value stored in the box. Hence, evaluating an
-expression requires a store, and \(\Rightarrow\) must be a relation over
-environments, stores, expressions, and values.
+    It creates a new box, cf. \code{Box(3)} in the example.
+    $e$ determines the initial value of the box.
 
-Evaluating \(\textsf{ref}\ e\) creates a new box; evaluating \(e_1:=e_2\) changes
+  \item $\ederef{e}$
+
+    It read the value of a box, cf. \code{b.value} in the example.
+    $e$ determines the box to be read.
+
+  \item $\eset{e_1}{e_2}$
+
+    It changes the value of a box, cf. \code{b.value = 10} in the example.
+    $e_1$ determines the box to be updated; $e_2$ determines the new value.
+
+  \item $\eseq{e_1}{e_2}$
+
+    It is a sequenced expression. $e_1$ is the first expression to be
+    evaluated; $e_2$ is the second. Many real-world languages allow sequencing
+    of an arbitrary number of expressions. For brevity, \lang allows only
+    sequencing of two expressions. Sequencing of multiple expressions can be
+    easily expresssed by nested sequencing. For example, $e_1;e_2;e_3$ can be
+    expresssed as $(e_1;e_2);e_3$.
+\end{itemize}
+
+\section{Semantics}
+
+Defining mutable memory is crucial to define the semantics of \lang.
+We call the memory of a program a store. A \textit{store}\index{store} records the values of boxes.
+Each box is distinguished from another box by its address, i.e. every box has
+its own address, which differs from the addresses of any other boxes.
+The metavarible $a$ ranges over addresses. Let $\embox{Addr}$ be the set of every
+possible address. We do not care about what $\embox{Addr}$ really is.
+
+\[ a \in \embox{Addr} \]
+
+A store is a finite partial function from addresses to values.
+If the store maps an address $a$ to a value $v$, the value of the box whose
+address is $a$ is $v$. The metavarible $M$ ranges over stores. Let $\embox{Sto}$
+be the set of every store.
+
+\[ \embox{Sto} = \embox{Addr}\finto V \]
+\[ M \in \embox{Sto} \]
+
+The semantics does not require a concrete notion of a box. Since every
+box is uniquely identified by an address, the semantics can consider each
+address as a box. Thus, we treat an address as a value of \lang, instead of
+introducing a new semantic element denoting boxes. For example, an expression
+creating a box evaluates to an address. We need to revise the definition of a
+value to include addresses.
+\sidenote{We omit the common part to \plang.}
+
+\[ v\ ::=\ \cdots\ |\ a \]
+
+Note that we keeps using the concept of a box for explanation.
+Even though the semantics abstracts boxes with addresses,
+boxes do exist from the programmers' perspective.
+The term box and the term address will be interchangeably used.
+
+How stores are used in the semantics? First, consider an expression reading a
+box. Evaluating \(\ederef{e}\) needs not only an environment but also a store.
+If $e$ denotes a box, the store has the value of the box. The value becomes
+the result of \(\ederef{e}\). Without a store, there is no way to find the value
+of a box and yield a result. It implies that evaluation requires a store to be
+given.
+
+Now, let us consider the other kinds of expressions related to boxes.
+$\eref{e}$ creates a new box; $\eset{e_1}{e_2}$ changes
 the content of a box. Both modify stores. Modifying a store differs from
-extending an environment with a new variable. Evaluating \(\textsf{val}\ x=e_1\
-\textsf{in}\ e_2\) adds \(x\) to the environment, but only \(e_2\) uses the
-extended environment because the scope of the binding occurrence of \(x\) is
-\(e_2\) but nowhere else. For instance, let \(e\) denote the expression, then
-both \(e'\) and addition of \(e+e'\) do not require the extended one. On the
-other hand, the modified store is unnecessary for the subexpressions of an
-expression that creates or modifies a box while other parts of the program need
-the modified one. Consider \(x:=2;!x\) as an example. \(!x\) must know that
-\(x:=2\) has changed the content of a box denoted by \(x\) into \(2\). Therefore,
+extending an environment with a new identifier.
+
+A change in an environment is propagated to the subexpressions of the expression
+that has caused the change. Consider $\ebind{x}{e_1}{e_2}$.
+It extends the environment with $x$, but only $e_2$ uses the
+extended environment because the scope of $x$ is $e_2$ but nowhere else.
+A variable definition can affect to only its subexpressions.
+For instance, in $\eadd{(\ebind{x}{e_1}{e_2})}{e_3}$, $e_3$ does not belong to
+the scope of $x$. The extended environment must be used for only $e_2$, but not
+$e_3$. Therefore, we say that binding and environments are local and modular.
+
+On the other hand, the modified store is unnecessary for the subexpressions of an
+expression that modifies the store, while other parts of the program need
+the modified one. Consider $\eseq{(\eset{\cx}{2})}{\ederef{\cx}}$ as an example.
+Assume that $\cx$ denotes a box.
+$\ederef{\cx}$ must be aware of that $\eset{\cx}{2}$ has changed the value of the box
+to $2$. Otherwise, $\ederef{\cx}$ will get the previous value of the box and
+produce a wrong result. Note that $\ederef{\cx}$ is not a subexpression of
+$\eset{\cx}{2}$. However, in $\eset{\cx}{2}$, the evaluation of $2$, which is a
+subexpression of $\eset{\cx}{2}$, must not be affected by the change in the value
+of the box since the change happens after the evaluation of $2$. Therefore,
 how stores change due to expressions is important. If an expression contains two
-subexpressions, a store obtained by evaluating the first subexpression has to be
-passed to the evaluation of the second expressions. Since the semantics needs to
-yield both of the resulting value and a new store, the final correct definition
-of \(\Rightarrow\) is a relation over environments, stores, expressions, values,
-and stores. Evaluation reads the former store and creates the second store.
+subexpressions, the store obtained by evaluating the first subexpression has to be
+passed to the evaluation of the second expression. Stores are completely
+different from environments. Any change in a store affects the entire remaining
+computation. Stores are global and not modular.
 
+From the observations, we can conclude that evaluation of an expression needs to
+take a store in addition to an environment as input and output a new store along
+with the result value. We can define the semantics as a
+relation over $\embox{Env}$, $\embox{Sto}$, $E$, $V$, and $\embox{Sto}$.
+The former store is input, and the latter store is output.
 
-\[\Rightarrow\subseteq\text{Environment}\times\text{Store}\times\text{Expression}\times\text{Value}\times\text{Store}\]
+\[\Rightarrow\subseteq\embox{Env}\times\embox{Sto}\times E\times V\times\embox{Sto}\]
 
-\(\sigma,M\vdash e\Rightarrow v,M'\) implies that evaluating \(e\) under
-\(\sigma\) and \(M\) results in \(v\) and creates \(M'\). The semantics uses the
-store passing style. The style allows defining BFAE, featuring mutable
-boxes, without any mutable concepts.
+$\sevald{1}{e}{v}{2}$ is true if and only if \sevaldn{1}{e}{v}{2}.
+We call this way of defining semantics a \textit{store-passing
+style}\index{store-passing style}. The style allows defining \lang, featuring
+mutability, without any mutable concepts at the meta-level.
 
-The order among subexpressions matters as the subexpressions can modify stores.
-Suppose that \(x\) denotes a box, and the box contains \(1\). \( (x:=2)+(!x) \)
-yields \(4\) if \(x:=2\) comes first so that \(!x\) equals \(2\). In contrast, \(
-(x:=2)+(!x) \) yields \(3\) if \(!x\) comes first so that \(!x\) equals \(1\).
-Inference rules naturally set orders by passing stores.
+Now, let us define the semantics of each expression. We can easily reuse Rule
+\textsc{Num}, Rule \textsc{Id}, and Rule \textsc{Fun} of \lang by adding stores.
+They maintain the contents of given stores.
 
-The inference rules for integers, variables, lambda abstractions equal those of
-FAE but additionally require stores. They maintain the contents of given stores.
+\semanticrule{Num}{
+  \sevaldn{}{n}{n}{}.
+}
 
-\[
-\sigma,M\vdash n\Rightarrow n,M
-\]
-
-\[
-\inferrule
-{ x\in\mathit{Domain}(\sigma) }
-{ \sigma,M\vdash x\Rightarrow \sigma(x),M }
-\]
+\vspace{-1em}
 
 \[
-\sigma,M\vdash \lambda x.e\Rightarrow \langle\lambda x.e,\sigma\rangle,M
+  \sevald{}{n}{n}{}
+  \quad\textsc{[Num]}
 \]
+
+\vspace{-1em}
+
+\semanticrule{Id}{
+  If $x$ is in the domain of $\sigma$,\\
+  then \sevaldn{}{x}{\sigma(x)}{}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { x\in\dom{\sigma} }
+  { \sevald{}{x}{\sigma(x)}{} }
+  \quad\textsc{[Id]}
+\]
+
+\vspace{-1em}
+
+\semanticrule{Fun}{
+  \sevaldn{}{\efun{x}{e}}{\clov{x}{e}{\sigma}}{}.
+}
+
+\vspace{-1em}
+
+\[
+  \sevald{}{\efun{x}{e}}{\clov{x}{e}{\sigma}}{}
+  \quad\textsc{[Fun]}
+\]
+
+During the evaluation of a certain expression,
+the order of the evaluation among the subexpressions matters as they can modify the
+store. Suppose that $x$ denotes a box, and the box contains $1$.
+If the left operand of addition is evaluated before the right operand, in
+$\eadd{(\eset{\cx}{2})}{\ederef{\cx}}$, $\ederef{\cx}$ evaluates to $2$ since it is
+affected by the previous change. On the other hand, if the
+right operand is evaluated first, $\ederef{\cx}$ evaluates to $1$ because
+its evaluation precedes the modification and can observe only the original
+value.
+
+The order among the premises in a semantic rule does not specify the order of
+evaluation. So far, we have not specified the order of evaluation in the
+semantics as the order does not matter if there are no side
+effects.\sidenote{Side effects are any observable behaviors of expressions except the
+results. Mutation and exceptions are side effects.}
+ However, \lang supports mutation, and we should specify
+the order in the semantics. This goal can be naturally achieved by passing
+stores. If we define the semantic to use the store that comes out from the
+evaluation of the left operand as input of the evaluation of the right operand,
+the order is determined to evaluate the left first.
 
 A sequenced expression per se cannot modify a given store, but its subexpressions
-can. The left subexpression comes before the right one. The evaluation of the
-right considers any modifications of the store made by the left.
+can.
+
+\semanticrule{Seq}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{v_1}{1}, and \\
+    & \sevaldn{1}{e_2}{v_2}{2}, \\
+    then \\
+    & \sevaldn{}{\eseq{e_1}{e_2}}{v_2}{2}. \\
+  \end{tabular}
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow v_1,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow v_2,M_2 }
-{ \sigma,M\vdash e_1;e_2\Rightarrow v_2,M_2 }
+  \inferrule
+  {
+    \sevald{}{e_1}{v_1}{1} \\
+    \sevald{1}{e_2}{v_2}{2} \\
+  }
+  { \sevald{}{\eseq{e_1}{e_2}}{v_2}{2} }
+  \quad\textsc{[Seq]}
 \]
 
-The rule passes \(M_1\), obtained by evaluating the left, to the evaluation of
-the right and discards the result of the left. The final result equals the result
-of the right.
+The $e_1$ is evaluated before $e_2$. The evaluation of $e_2$ must be aware of
+any modifications of the store made by the $e_1$.
+For this purpose, the rule passes $M_1$, obtained by evaluating
+$e_1$, to the evaluation of $e_2$. The result of $e_1$ is just discarded.
+The final result is the same as the result of $e_2$.
 
-Sums, differences, and function applications are similar to sequenced
-expressions. They cannot modify stores, but their subexpressions can. The
-evaluation orders are the same as those of sequenced expressions. BFAE chooses
-the left-to-right order for every expression, but orders vary with languages.
+Rule \textsc{Add}, Rule \textsc{Sub}, and Rule \textsc{App} are similar to
+Rule \textsc{Seq}. They cannot modify stores, but their subexpressions can. The
+evaluation order is the same as sequenced expressions. \lang chooses
+the left-to-right order for every expression, but the order varies with the language.
+
+\semanticrule{Add}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{n_1}{1}, and \\
+    & \sevaldn{1}{e_2}{n_2}{2}, \\
+    then \\
+    & \sevaldn{}{\eadd{e_1}{e_2}}{n_1+n_2}{2}.
+  \end{tabular}
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow n_1,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow n_2,M_2 }
-{ \sigma,M\vdash e_1+e_2\Rightarrow n_1+n_2,M_2 }
+  \inferrule
+  {
+    \sevald{}{e_1}{n_1}{1} \\
+    \sevald{1}{e_2}{n_2}{2}
+  }
+  { \sevald{}{\eadd{e_1}{e_2}}{n_1+n_2}{2} }
+  \quad\textsc{[Add]}
 \]
 
-\[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow n_1,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow n_2,M_2 }
-{ \sigma,M\vdash e_1-e_2\Rightarrow n_1-n_2,M_2 }
-\]
+\vspace{-1em}
+
+\semanticrule{Sub}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{n_1}{1}, and \\
+    & \sevaldn{1}{e_2}{n_2}{2}, \\
+    then \\
+    & \sevaldn{}{\esub{e_1}{e_2}}{n_1-n_2}{2}.
+  \end{tabular}
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow \langle\lambda x.e,\sigma'\rangle,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow v_1,M_2 \\
-  \sigma'\lbrack x\mapsto v_1\rbrack,M_2\vdash e\Rightarrow v_2,M_3 }
-{ \sigma,M\vdash e_1\ e_2\Rightarrow v_2,M_3 }
+  \inferrule
+  {
+    \sevald{}{e_1}{n_1}{1} \\
+    \sevald{1}{e_2}{n_2}{2}
+  }
+  { \sevald{}{\esub{e_1}{e_2}}{n_1-n_2}{2} }
+  \quad\textsc{[Sub]}
+\]
+
+\vspace{-1em}
+
+\semanticrule{App}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{\clov{x}{e}{\sigma'}}{1}, \\
+    & \sevaldn{1}{e_2}{v'}{2}, and\\
+    & \sevaln{\sigma'[x\mapsto v']}{M_2}{e}{v}{M_3}, \\
+    then \\
+    & \sevaldn{}{\eapp{e_1}{e_2}}{v}{3}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \sevald{}{e_1}{\clov{x}{e}{\sigma'}}{1} \\
+    \sevald{1}{e_2}{v'}{2} \\
+    \seval{\sigma'[x\mapsto v']}{2}{e}{v}{3}
+  }
+  { \sevald{}{\eapp{e_1}{e_2}}{v}{3} }
+  \quad\textsc{[App]}
 \]
 
 Note that the evaluation of the body of a closure can modify the store as well.
 
-The remaining, creating a box, modifying a box, and opening a box, change or read
-stores directly.
+Now, let us define the semantics of expressions treating boxes.
+$\eref{e}$ is an expression creating a new box. The result of $e$ becomes the
+initial value of the box. The result of $\eref{e}$ is the new box.
 
-\[
-\inferrule
-{ \sigma,M\vdash e\Rightarrow v,M' \\
-  a\not\in \mathit{Domain}(M') }
-{ \sigma,M\vdash \textsf{ref}\ e\Rightarrow a,M'\lbrack a\mapsto v\rbrack }
-\]
-
-When a box is created, the address of the box must not belong to the domain of a
-store attained by evaluating the subexpression. The result contains the address
-and the store plus a mapping from the address to the value of the subexpression.
-
-\[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow a,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow v,M_2 }
-{ \sigma,M\vdash e_1:=e_2\Rightarrow v,M_2\lbrack a\mapsto v\rbrack }
-\]
-
-Like other expressions, an expression modifying a box uses the left-to-right
-order. If the left subexpression results in an address, a value associated with
-the address in the store changes into the value of the right subexpression. The
-whole expression denotes the value.
-
-\[
-\inferrule
-{ \sigma,M\vdash e\Rightarrow a,M' \\
-  a\in \mathit{Domain}(M') }
-{ \sigma,M\vdash !e\Rightarrow M'(a),M' }
-\]
-
-The subexpression of an expression opening a box has to yield an address. A value
-denoted by the expression is a value at the address in the store. The store
-differs from a given store but is the outcome of evaluating the subexpression.
-For example, \(!(\textsf{ref}\ 1)\) correctly results in \(1\) only if the
-opening uses the store given by \(\textsf{ref}\ 1\).
-
-\section{Implementing an Interpreter
+\semanticrule{NewBox}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e}{v}{1}, and \\
+    & $a$ is not in the domain of $M_1$, \\
+    then \\
+    & \sevaln{\sigma}{M}{\eref{e}}{a}{M_1[a\mapsto v]}.
+  \end{tabular}
 }
 
-The following Scala code implements the abstract syntax, environments, and stores
-of BFAE:
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \sevald{}{e}{v}{1} \\
+    a\not\in \dom{M_1}
+  }
+  { \seval{\sigma}{M}{\eref{e}}{a}{M_1[a\mapsto v]} }
+  \quad\textsc{[NewBox]}
+\]
+
+To get the initial value, $e$ is evaluated first. The address of the new
+box must not belong to $M_1$, the store attained by evaluating $e$.
+There is no additional condition the address must satisfy, so we can freely
+choose any address that is not in $M_1$.
+Note that if we check the domain of $M$, not $M_1$, we result in multiple
+boxes sharing the same address, which is certainly wrong, when $e$ also creates
+boxes.
+The result is the address of the box. Also, we add a mapping from the address of
+the box to the value of the box to the final store.
+
+$\ederef{e}$ is an expression reading the value of a box. $e$ determines the box
+to be read. If $e$ does not evaluate to a box, a run-time error occurs.
+Otherwise, $e$ is some box, and the final result is the value of the box.
+
+\semanticrule{OpenBox}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e}{a}{1}, and \\
+    & $a$ is in the domain of $M_1$, \\
+    then \\
+    & \sevaln{\sigma}{M}{\ederef{e}}{M_1(a)}{M_1}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \sevald{}{e}{a}{1} \\
+    a\in \dom{M_1}
+  }
+  { \seval{\sigma}{M}{\ederef{e}}{M_1(a)}{M_1} }
+  \quad\textsc{[OpenBox]}
+\]
+
+To get a box, $e$ is evaluated. The result of $e$ must be an address that
+belongs to $M_1$. The rule uses $M_1$ instead
+of $M$ to find the value of the box. The reason is that $e$ can create a new
+box and give the box as a result. Consider $\ederef{(\eref{1})}$. If the semantics
+is correct, this expression must evaluate to $1$. The initial
+store is empty, but evaluating $\eref{1}$ makes the store contain the address of
+the box. It means that the address can be obtained only by looking into $M_1$,
+not $M$. Therefore, the correct semantics use $M_1$ to find the value of the
+box.
+
+$\eset{e_1}{e_2}$ is an expression changing the value of a box. $e_1$ determines the box
+to be updated, and $e_2$ determines the new value of the box. Just like when we
+open a box, $e_1$ must evaluates to a box. Otherwise, a run-time error will happen.
+
+\semanticrule{SetBox}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{a}{1}, and \\
+    & \sevaldn{1}{e_2}{v}{2}, \\
+    then \\
+    & \sevaln{\sigma}{M}{\eset{e_1}{e_2}}{v}{M_2[a\mapsto v]}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \sevald{}{e_1}{a}{1} \\
+    \sevald{1}{e_2}{v}{2}
+  }
+  { \seval{\sigma}{M}{\eset{e_1}{e_2}}{v}{M_2[a\mapsto v]} }
+  \quad\textsc{[SetBox]}
+\]
+
+Like all the other expressions, an expression modifying a box uses the left-to-right
+order. If $e_1$ evaluates to an address $a$, the value associated with $a$ in
+the store changes into the value denoted by $e_2$. Also, the value is the result
+of the whole expression. This semantics follows the semantics of many real-world
+imperative languages. For example, \code{x = 1} in C changes the value of
+\code{x} to \code{1} and results in \code{1}. On the other hand, functional
+languages usually use unit as the results of expressions for mutation. We can
+easily adopt the semantics in \lang by adding unit to the language.
+
+\section{Interpreter}
+
+The following Scala code implements the syntax of \lang:
+\sidenote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
+...
 case class NewBox(e: Expr) extends Expr
-case class SetBox(b: Expr, e: Expr) extends Expr
 case class OpenBox(b: Expr) extends Expr
+case class SetBox(b: Expr, e: Expr) extends Expr
 case class Seqn(l: Expr, r: Expr) extends Expr
-
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-case class BoxV(a: Addr) extends Value
-
-type Env = Map[String, Value]
-def lookup(x: String, env: Env): Value =
-  env.getOrElse(x, throw new Exception)
-
-type Addr = Int
-type Sto = Map[Addr, Value]
-def storeLookup(a: Addr, sto: Sto): Value =
-  sto.getOrElse(a, throw new Exception)
-def malloc(sto: Sto): Addr =
-  sto.keys.maxOption.getOrElse(0) + 1
 \end{verbatim}
 
-The \verb!NewBox! class corresponds to creating a box; the \verb!SetBox! class
-corresponds to modifying a box; the \verb!OpenBox! class corresponds to opening a
-box; the \verb!Seqn! class corresponds to sequencing expressions. \verb!BoxV!
-instances model values that are addresses. \verb!Addr! denotes the type of an
-address and is \verb!Int!. \verb!Sto! is the type of a store and is a map from
-\verb!Addr! to \verb!Value!. The \verb!lookup! function finds a value from a
-given environment; the \verb!storeLookup! function finds from a given store. The
-\verb!malloc! function computes an address unused by a given store.
+\code{NewBox($e$)} represents $\eref{e}$;
+\code{OpenBox($e$)} represents $\ederef{e}$;
+\code{SetBox($e_1$, $e_2$)} represents $\eset{e_1}{e_2}$;
+\code{Seqn($e_1$, $e_2$)} represents $\eseq{e_1}{e_2}$;
 
-\verb!interp! takes an expression, an environment, and a store as arguments and
-returns the pair of a value and a store.
+Addresses should be defined. We treat addresses as integers in Scala.
 
 \begin{verbatim}
-def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) = e match { ... }
+type Addr = Int
 \end{verbatim}
 
-I discuss the cases of the pattern matching in the same order as the inference
-rules.
+In addition, we add a new variant of \code{Value} to represent boxes.
+\sidenote{We omit the common part to \plang.}
+
+\begin{verbatim}
+sealed trait Value
+...
+case class BoxV(a: Addr) extends Value
+\end{verbatim}
+
+\code{Box($a$)} represents $a$.
+
+We use a map to represent a store. The type of a store is \code{Map[Addr, Value]}.
+
+\begin{verbatim}
+type Sto = Map[Addr, Value]
+\end{verbatim}
+
+\code{interp} takes an expression, an environment, and a store as arguments and
+returns a pair of a value and a store.
+
+\begin{verbatim}
+def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) =
+  e match {
+    ...
+  }
+\end{verbatim}
+
+Let us see each case of the pattern matching.
 
 \begin{verbatim}
 case Num(n) => (NumV(n), sto)
-case Id(x) => (lookup(x, env), sto)
+case Id(x) => (env(x), sto)
 case Fun(x, b) => (CloV(x, b, env), sto)
 \end{verbatim}
 
-The \verb!Num!, \verb!Id!, and \verb!Fun! cases use given stores as the results.
+The \code{Num}, \code{Id}, and \code{Fun} cases use given stores as the results.
 
 \begin{verbatim}
 case Seqn(l, r) =>
@@ -312,20 +549,39 @@ case App(f, a) =>
   interp(b, fEnv + (x -> v), rs)
 \end{verbatim}
 
-The \verb!Seqn!, \verb!Add!, \verb!Sub!, and \verb!App! cases do not directly
-modify or read stores, but pass stores returned from the recursive calls to the
-other recursive calls or use them as the results.
+The \code{Seqn}, \code{Add}, \code{Sub}, and \code{App} cases do not directly
+modify or read stores, but pass the stores returned from the recursive calls to the
+next recursive calls or use them as the results.
 
 \begin{verbatim}
 case NewBox(e) =>
   val (v, s) = interp(e, env, sto)
-  val a = malloc(s)
+  val a = sto.keys.maxOption.getOrElse(0) + 1
   (BoxV(a), s + (a -> v))
 \end{verbatim}
 
-The \verb!NewBox! case calls \verb!malloc! to compute an unused address after
-evaluating the subexpression. The result contains the address and the extended
-store.
+The \code{NewBox} case computes the initial value of the box first. Then, it
+computes an address not used in the store. We use the method \code{maxOption}.
+If a collection is empty, the method returns \code{None}. Otherwise, the
+result is \code{Some(n)}, where \code{n} is the greatest value in the collection.
+By \code{.getOrElse(0)}, we can get \code{n} from \code{Some(n)} and \code{0}
+from \code{None}. Consequently, \code{sto.keys.maxOption.getOrElse(0)} results
+in the maximum key in the store when the store is nonempty and \code{0}
+otherwise. \code{a} is one greater than that value and thus does not belong to
+the store. Therefore, we can use \code{a} as the address of the box.
+The result of the function consists of the address and the extended store.
+
+\begin{verbatim}
+case OpenBox(e) =>
+  val (BoxV(a), s) = interp(e, env, sto)
+  (s(a), s)
+\end{verbatim}
+
+The \code{OpenBox} case evaluates the subexpression to get an address.
+If the result is not a box, an exception is thrown due to a pattern matching
+failure. The address is used to find the value of the box from the store.
+The result of the function consists of the value of the box and the store from
+the evaluation of the subexpression.
 
 \begin{verbatim}
 case SetBox(b, e) =>
@@ -334,122 +590,25 @@ case SetBox(b, e) =>
   (v, es + (a -> v))
 \end{verbatim}
 
-The \verb!SetBox! case evaluates the two subexpressions and modifies a given
-store. The result contains the result of the second subexpression and the
-modified store.
-
-\begin{verbatim}
-case OpenBox(e) =>
-  val (BoxV(a), s) = interp(e, env, sto)
-  (storeLookup(a, s), s)
-\end{verbatim}
-
-The \verb!OpenBox! case finds a value corresponding to an address denoted by the
-subexpression in a given store. The store remains unchanged.
-
-I have covered all the cases. The following shows the whole code at once:
-
-\begin{verbatim}
-sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
-case class NewBox(e: Expr) extends Expr
-case class SetBox(b: Expr, e: Expr) extends Expr
-case class OpenBox(b: Expr) extends Expr
-case class Seqn(l: Expr, r: Expr) extends Expr
-
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-case class BoxV(a: Addr) extends Value
-
-type Env = Map[String, Value]
-def lookup(x: String, env: Env): Value =
-  env.getOrElse(x, throw new Exception)
-
-type Addr = Int
-type Sto = Map[Addr, Value]
-def storeLookup(a: Addr, sto: Sto): Value =
-  sto.getOrElse(a, throw new Exception)
-def malloc(sto: Sto): Addr =
-  sto.keys.maxOption.getOrElse(0) + 1
-
-def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) = e match {
-  case Num(n) => (NumV(n), sto)
-  case Id(x) => (lookup(x, env), sto)
-  case Fun(x, b) => (CloV(x, b, env), sto)
-  case Seqn(l, r) =>
-    val (_, ls) = interp(l, env, sto)
-    interp(r, env, ls)
-  case Add(l, r) =>
-    val (NumV(n), ls) = interp(l, env, sto)
-    val (NumV(m), rs) = interp(r, env, ls)
-    (NumV(n + m), rs)
-  case Sub(l, r) =>
-    val (NumV(n), ls) = interp(l, env, sto)
-    val (NumV(m), rs) = interp(r, env, ls)
-    (NumV(n - m), rs)
-  case App(f, a) =>
-    val (CloV(x, b, fEnv), ls) = interp(f, env, sto)
-    val (v, rs) = interp(a, env, ls)
-    interp(b, fEnv + (x -> v), rs)
-  case NewBox(e) =>
-    val (v, s) = interp(e, env, sto)
-    val a = malloc(s)
-    (BoxV(a), s + (a -> v))
-  case SetBox(b, e) =>
-    val (BoxV(a), bs) = interp(b, env, sto)
-    val (v, es) = interp(e, env, bs)
-    (v, es + (a -> v))
-  case OpenBox(e) =>
-    val (BoxV(a), s) = interp(e, env, sto)
-    (storeLookup(a, s), s)
-}
-\end{verbatim}
-
-The below code evaluates \( (\lambda x.(x:=1);!x)\ (\textsf{ref}\ 2) \). The
-result is \(1\), and the final store has a single box whose content is \(1\).
-
-\begin{verbatim}
-// (lambda x.(x:=1); !x) (ref 2)
-interp(
-  App(
-    Fun("x",
-      Seqn(
-        SetBox(Id("x"), Num(1)),
-        OpenBox(Id("x"))
-      )
-    ),
-    NewBox(Num(2))
-  ),
-  Map.empty,
-  Map.empty
-)
-// (NumV(1), Map(1 -> NumV(1)))
-\end{verbatim}
+The \code{SetBox} case evaluates both subexpressions and modifies the store.
 
 \section{Exercises}
 
 \begin{enumerate}
-\item Given the following expression:
+\item Consider the following expression:
 
 \[
-    (\lambda\ \code{b1}.\ ((\lambda\ \code{b2}.\ \code{b1} \texttt{ := 8; !}\code{b2})\ \code{b1}))\ (\texttt{ref }7)
+  \eapp{(\efun{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}})}{\eref{7}}
 \]
 
-write out the arguments to and results of \texttt{interp} each time it is called during
-the evaluation of a program.  Write them out in the order in which the calls to \texttt{interp}
-occur during evaluation.  Use the \texttt{interp} code at the end.
+Write out the arguments to and results of \code{interp} each time it is called during
+the evaluation of the expression. Write them out in the order in which the calls to \code{interp}
+occur during evaluation.
 
-Write down the environments and stores using the \verb+{}+ notation,
-not using the more verbose data constructors.
-Also, use an arrow notation for both the store and the environment.
+Write down the environments and stores using the \verb+{}+ notation.
+Also, use the arrow notation for both stores and environments.
 
-An example, if the first call to \texttt{interp} were:
+For example, the solution to the following \code{interp} call is like below.
 
 \begin{verbatim}
 interp(Add(Id("x"), Id("y")),
@@ -457,25 +616,21 @@ interp(Add(Id("x"), Id("y")),
        Map.empty)
 \end{verbatim}
 
-then a model solution would be:
-
 \begin{verbatim}
 exp: x + y
 env: {x -> NumV(3), y -> NumV(4)}
 sto: {}
-ans: NumV(7) {}
+res: NumV(7) {}
 
 exp: x
 env: {x -> NumV(3), y -> NumV(4)}
 sto: {}
-ans: NumV(3) {}
+res: NumV(3) {}
 
 exp: y
 env: {x -> NumV(3), y -> NumV(4)}
 sto: {}
-ans: NumV(4) {}
+res: NumV(4) {}
 \end{verbatim}
-
-Note that the environment and store read in order from left to right.
 
 \end{enumerate}

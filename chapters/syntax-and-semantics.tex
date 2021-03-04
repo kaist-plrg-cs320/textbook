@@ -76,7 +76,7 @@ Let $P$ be the set of every program.
 \[P = \text{the set of every program} = \{ p\ |\ p\text{ is a program} \}\]
 
 A program is an element of $P$.
-Then, $P$ has only one restriction: $P$ should be a subset of $S$, as
+Then, $P$ has only one restriction: $P$ should be a subset of $S$ as
 every program is a string.
 
 \[P\subseteq S\]
@@ -222,8 +222,8 @@ defines $P$ of \lang, and the concrete syntax of \lang has been defined now.
 Defining syntax solely with concrete syntax has problems from both language
 users' and language designers' perspectives.
 
-Programmers usually learn multiple languages. Languages vary in their concrete
-syntax a lot. Consider a function that takes two integers as arguments and
+Programmers usually learn multiple languages. Languages considerably vary in their concrete
+syntax. Consider a function that takes two integers as arguments and
 returns the sum of the integers. We can implement the function in four different
 languages like below.
 
@@ -368,7 +368,7 @@ operands of the addition.
 \end{tikzpicture}
 \end{center}
 
-The root of the tree is Add, as the expression is addition. It has two
+The root of the tree is Add as the expression is addition. It has two
 children: the operand expressions.
 
 The first operand expression consists of a single component: \code{n}.
@@ -789,7 +789,7 @@ program). That is why $\embox{parse}$ is a partial function. When the input
 belongs to $P$, $\embox{parse}$ results in the corresponding AST.
 
 Consider the parser of \lang. The results of $\embox{parse}$ are undefined for
-the following strings, as they are not \lang programs:
+the following strings as they are not \lang programs:
 
 \begin{itemize}
   \item \code{1+}
@@ -1245,7 +1245,7 @@ We can express the same thing as an inference rule.
   \quad\textsc{Neg}
 \]
 
-It requires lots of work, as we need to fix every component of the language.
+It requires considerable amount of work as we need to fix every component of the language.
 
 Another way to add integer negation to \lang is to add it as syntactic sugar. It
 is enough to modify the concrete syntax and the parser. The change in the

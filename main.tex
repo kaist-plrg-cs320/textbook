@@ -93,12 +93,26 @@
 \newcommand{\eappfo}[2]{#1(#2)}
 \newcommand{\erec}[4]{\textsf{def}\ #1(#2)\shorteq#3\ \textsf{in}\ #4}
 \newcommand{\eifz}[3]{\textsf{if0}\ #1\ #2\ #3}
+\newcommand{\eref}[1]{\textsf{box}\ #1}
+\newcommand{\ederef}[1]{!#1}
+\newcommand{\eset}[2]{#1{:}\shorteq#2}
+\newcommand{\eseq}[2]{#1;#2}
 
 \newcommand{\eval}[3]{#1\vdash#2\Rightarrow#3}
 \newcommand{\evaln}[3]{\ensuremath{#2} evaluates to \ensuremath{#3} under \ensuremath{#1}}
 \newcommand{\evald}[2]{\eval{\sigma}{#1}{#2}}
 \newcommand{\evaldn}[2]{\evaln{\sigma}{#1}{#2}}
 \newcommand{\evale}[2]{\eval{\emptyset}{#1}{#2}}
+
+\newcommand{\seval}[5]{#1,#2\vdash#3\Rightarrow#4,#5}
+\newcommand{\sevaln}[5]{
+  \ensuremath{#3} evaluates to \ensuremath{#4} and changes the store from
+  \ensuremath{#2} to \ensuremath{#5} under \ensuremath{#1}\xspace
+}
+\newcommand{\sevald}[4]{\seval{\sigma}{M_{#1}}{#2}{#3}{M_{#4}}}
+\newcommand{\sevaldn}[4]{\sevaln{\sigma}{M_{#1}}{#2}{#3}{M_{#4}}}
+\newcommand{\sevale}[3]{\seval{\emptyset}{\emptyset}{#1}{#2}{#3}}
+
 \newcommand{\semanticrule}[2]{
 \vspace{1em}
 \textbf{Rule \textsc{#1}}\\
