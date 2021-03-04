@@ -2,405 +2,495 @@
 \chapter{Mutable Variables}
 \labch{mutable-variables}
 
-The last article defines BFAE, which features mutable boxes. Like BFAE, some functional languages, including OCaml, allow programmers to use mutable spaces that require explicit creation, modification, and unboxing but not mutable variables. On the other hand, variables of many languages are mutable. The article defines MFAE, which features mutable variables.
+\renewcommand{\plang}{\textsf{FAE}\xspace}
+\newcommand{\bfae}{\textsf{BFAE}\xspace}
+\renewcommand{\lang}{\textsf{MFAE}\xspace}
 
-MFAE defined by the lecture provides mutable boxes. The last article has already dealt with boxes so that one can easily add boxes to MFAE of this article. This article focuses on only variables. I recommend students to define MFAE with boxes by themselves as practice after reading the article.
+\bfae of the previous chatper provides boxes. Boxes are good abstraction
+of mutable objects and data structures but do not explain mutable variables
+well. Boxes, mutable objects, mutable data structures are values, while mutable
+variables are names. Mutable variables allow the values associated with
+names to change. We can find the notion of a mutable variable in many
+real-world languages except a few functional languages including OCaml and
+Haskell.
+
+The semantics of mutable variables seem trivial. We can change the values of
+mutable variables. However, if we use mutable variables with closures, we can do
+many interesting things. Consider the following Scala program:
+
+\begin{verbatim}
+def makeCounter(): () => Int = {
+  var x = 0
+  def counter(): Int = {
+    x += 1
+    x
+  }
+  counter
+}
+
+val counter1 = makeCounter()
+val counter2 = makeCounter()
+
+println(counter1())
+println(counter2())
+println(counter1())
+println(counter2())
+\end{verbatim}
+
+The program defines the function \code{makeCounter}. The function has a mutable
+variable \code{x} whose initial value is \code{0}. Also, it defines and returns the function
+\code{counter}. \code{counter} increases the value of \code{x} by
+one every time it is called. We make two counters by calling \code{makeCounter}
+twice. Then, we call each counter in turn and print the return value.
+What does the program print? The first value will be \code{1} since
+\code{counter1} will increase \code{x} by one from zero and return \code{x}.
+However, predicting the other ones is difficult. We need the exact semantics of
+mutable variables to answer the question.
+
+This chapter defines \lang by extending \plang with mutable variables.
+We will see the semantics of mutable variables. Addition of mutable
+variables gives us a chance to explore a different design of function
+application semantics. We will see what is call-by-reference semantics and how
+it differs from call-by-value semantics.
 
 \section{Syntax}
 
-MFAE is similar to FAE but allows changing the values of variables. Its expressions include every expression of FAE and assign expressions. The below shows the abstract syntax of MFAE. The common parts to FAE are omitted.
+As variables are mutable in \lang, we need to add expressions that change the
+values of variables. The following is the abstract syntax of \lang:
+\sidenote{We omit the common part to \plang.}
 
-\[
-\begin{array}{lrcl}
-\text{Expression} & e & ::= & \cdots \\
-&& | & x:=e \\
-\end{array}
-\]
+\[ e\ ::=\ \cdots\ |\ \eset{x}{e} \]
 
-Expression \(x:=e\) assigns a value denoted by \(e\) to a variable whose name is \(x\).
+$\eset{x}{e}$ is an expression changing the value of a variable. $x$ is the
+variable to be updated; $e$ determines the new value of the variable. Unlike
+$\eset{e_1}{e_2}$ in \bfae, the left-hand-side of an assignment is restricted to
+a variable. The reason is that variables are not values. We cannot get a
+variable by evaluating an expression. The only way to designate a variable is
+to write the name of the variable, and the syntax reflects this point.
 
-MFAE lacks expression sequencing since a lambda abstraction and a function application can encode it.
-
-
-\[\mathit{encode}(e_1;e_2)=(\lambda \_ . \mathit{encode}(e_2))\ \mathit{encode}(e_1)\]
-
-The right-hand side evaluates \(e_1\) first and then \(e_2\). The result of \(e_1\) is discarded, and the result of the whole expression equals that of \(e_2\). The result is the same as evaluating \(e_1;e_2\) of the left-hand side.
+Note that \lang lacks sequenced expressions, which exist in \bfae. Actually, it
+is not problematic at all. We can desugar sequenced expressions into
+lambda abstractions and function applications: transform $\eseq{e_1}{e_2}$ into
+$\eapp{(\efun{x}{e_2})}{e_1}$, where $x$ is not free in $e_2$. The semantics of
+$\eseq{e_1}{e_2}$ is that evaluating $e_1$ first and then $e_2$. The evaluation
+of $\eapp{(\efun{x}{e_2})}{e_1}$ is the same. First, $\efun{x}{e_2}$ evaluates
+to a closure, which means that $e_2$ is not evaluated. Then, the argument,
+$e_1$, is evaluated. Finally, the body of the closure, $e_2$, is evaluated. Therefore,
+$e_1$ is evaluated before $e_2$. Also, since $x$ is not a free identifier in
+$e_2$, the result of $e_1$ is never used even though it is passed to the
+function as an argument. Thus, we can conclude that the desugaring is correct.
+We may use sequenced expressions in examples as they can be easily desugared.
 
 \section{Semantics}
 
-The semantics of MFAE uses the store passing style as that of BFAE does. \(\Rightarrow\) is a relation over environments, stores, expressions, values, and stores.
+Since \lang provides mutation, its semantics uses store-passing just like \bfae.
+Therefore, a store is a finite partial function from addresses to values.
 
-\[\Rightarrow\subseteq\text{Environment}\times\text{Store}\times\text{Expression}\times\text{Value}\times\text{Store}\]
+\[ \embox{Sto} = \embox{Addr}\finto V \]
+\[ M \in \embox{Sto} \]
 
-A value of MFAE is either an integer or a closure. BFAE allows addresses to be values because programmers can directly use boxes that yield addresses after being evaluated. However, MFAE features mutable variables instead of boxes. Evaluating a variable results in its value, which differs from the address of a box containing the value. Evaluating an expression never yields an address, and thus values can exclude addresses.
+The semantics is a
+relation over $\embox{Env}$, $\embox{Sto}$, $E$, $V$, and $\embox{Sto}$.
 
-\[
-\begin{array}{lrcl}
-\text{Value} & v & ::= & n \\
-&& | & \langle \lambda x.e,\sigma \rangle
-\end{array}
-\]
+\[\Rightarrow\subseteq\embox{Env}\times\embox{Sto}\times E\times V\times\embox{Sto}\]
 
-An environment of MFAE is a partial function from an identifier to an address, but not a value. The semantics needs environments to find a value denoted by a variable. The previous languages, whose variables are immutable, are satisfied with environments that takes an identifier and returns a value. However, variables of MFAE are mutable. Since the results of evaluations exclude environments, values stored in environments are never modified. On the other hand, values in stores are modifiable as stores are the results of evaluations. Thus, stores must contain values denoted by variables, and environments must know the address of a value denoted by a variable.
+Like \plang, a value of \lang is either an integer or a closure. It is different
+from \bfae, which allows addresses to be values. \bfae treats addresses as
+values becuase expressions creating boxes evaluate to addresses. However, there
+are mutable variables instead of boxes in \lang. \lang has addresses to support
+mutation, but they are used only for tracking the value of each variable. Addresses
+are not exposed to programmers as values.
 
-\[
-\begin{array}{lrcl}
-\text{Environment} & \sigma & \in & \textit{Id}\hookrightarrow\text{Address} \\
-\text{Store} & M & \in & \text{Address}\hookrightarrow\text{Value}
-\end{array}
-\]
+An environment of \lang is a finite partial function from identifiers to addresses,
+but not values.
 
-Environments may seem unnecessary. However, in fact, removing environments from the semantics prevents the use of static scope. Assume that the semantics lacks environments, and its store is a partial function from an identifier to a value. Consider expression \((\lambda x.x:=1)0;x\). The example uses expression sequencing for brevity. The function application creates a box containing the value of \(x\) in a store. The store is passed to evaluating \(x\), and the result is \(1\). On the contrary, under static scope, the scope of the binding occurrence of \(x\) includes only \(x:=1\), and the expression results in an error because the final \(x\) is a free identifier. As the example implies, both environments and stores are essential. Environments support static scope, and stores make the values of variables editable.
+\[ \embox{Env}=\embox{Id}\finto\embox{Addr} \]
+\[ \sigma \in \embox{Env} \]
 
-Inference rules for integers, sum, products, and lambda abstractions are the following:
+The semantics needs environments to find the value denoted by
+a variable. \plang, whose variables are immutable, is
+satisfied with environments that take identifiers as input and return values.
+However, variables of \lang are mutable. Evaluation outputs a value and a store.
+Environments are not the output of evaluation. Therefore, we cannot use
+environments to record changes in the values of variables. On the other hand, we
+can use stores to record the changes as stores are output of evaluation.
+It implies that stores must contain the values of variables to make variables
+mutable. Since the value of a certain variable is stored at a particular address
+of a store, an environment must know the address of each variable.
 
-\[
-\sigma,M\vdash n\Rightarrow n,M
-\]
+One may ask if we can remove environments from the semantics and consider a
+store as a partial function from identifiers to values. However, in fact,
+removing environments from the semantics prevents use of static scope.
+Assume that the semantics lacks environments, and a store is a partial
+function from an identifier to a value.
+Consider $\eseq{(\eapp{(\efun{\cx}{\eset{\cx}{1}})}{0})}{\cx}$.
+To evaluate the function application, the value of the argument should be
+recorded in the store. After evaluating the function body, the store will
+be passed to the evaluation of $\cx$. Then, $\cx$ evaluates to $1$
+without a run-time error since $\cx$ is in the store.
+On the contrary, under static scope, the scope of $\cx$ includes only $x:=1$.
+The expression should result in a run-time error because $\cx$ outside the
+function is a free identifier. Environments are essential for resolving this
+problem. Environments enable static scope, and stores make variables mutable.
+The semantics must have both.
 
-\[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow n_1,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow n_2,M_2 }
-{ \sigma,M\vdash e_1+e_2\Rightarrow n_1+n_2,M_2 }
-\]
+Because of the change in the definition of an environment, the semantics of
+identifiers need to be revised. An environment has the address of a given
+identifier, and a store has the value at a given address. Therefore,
+we need two steps to find the value of a variable: find the address of a variable
+from the environment and find the value at the address from the store.
 
-\[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow n_1,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow n_2,M_2 }
-{ \sigma,M\vdash e_1-e_2\Rightarrow n_1-n_2,M_2 }
-\]
+\semanticrule{Id}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & x is in the domain of $\sigma$, and \\
+    & $\sigma(x)$ is in the domain of $M$,\\
+    then \\
+    & \sevaldn{}{x}{M(\sigma(x))}{}.
+  \end{tabular}
+}
 
-\[
-\sigma,M\vdash \lambda x.e\Rightarrow \langle\lambda x.e,\sigma\rangle,M
-\]
-
-An environment has the address of a given identifier, and a store has the value at the address. Finding the value of a variable requires lookup twice: an address from the environment and a value from the store.
-
-\[
-\inferrule
-{ x\in\mathit{Domain}(\sigma) \\ \sigma(x)\in\mathit{Domain}(M) }
-{ \sigma,M\vdash x\Rightarrow M(\sigma(x)), M }
-\]
-
-The store remains the same.
-
-Function applications are the only expressions that create new boxes.
-
-\[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow \langle\lambda x.e,\sigma'\rangle,M_1 \\
-  \sigma,M_1\vdash e_2\Rightarrow v_1,M_2 \\
-  a\not\in \mathit{Domain}(M_2) \\
-  \sigma'\lbrack x\mapsto a\rbrack,M_2\lbrack a\mapsto v_1\rbrack\vdash e\Rightarrow v_2,M_3 }
-{ \sigma,M\vdash e_1\ e_2\Rightarrow v_2,M_3 }
-\]
-
-Evaluating the argument yields a value. A box is created, and the value goes into the box. The relationship between the name of the parameter and the address of the box is added to the environment.
-
-Assigning a value to a variable is similar to modifying the value of a box of BFAE. The left-hand side of an assign expression is a variable. The store has the address of the variable.
+\vspace{-1em}
 
 \[
-\inferrule
-{ x\in\mathit{Domain}(\sigma) \\
-  \sigma,M\vdash e\Rightarrow v,M' }
-{ \sigma,M\vdash x:=e\Rightarrow v,M'\lbrack \sigma(x)\mapsto v\rbrack }
+  \inferrule
+  {
+    x\in\dom{\sigma} \\
+    \sigma(x)\in\dom{M}
+  }
+  { \sevald{}{x}{M(\sigma(x))}{} }
+  \quad\textsc{[Id]}
 \]
 
-Evaluation of the right-hand side yields a value and a store. A value at the address of the variable in the store becomes the value of the right-hand side.
+Like boxes in \bfae, each variable of \lang has its own address. New variables
+can be defined only by function applications. Hence,
+function applications are the only expressions that create new addresses.
+Let us see the semantics of function applications.
 
-\section{Implementing an Interpreter}
+\semanticrule{App}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{\clov{x}{e}{\sigma'}}{1}, \\
+    & \sevaldn{1}{e_2}{v'}{2}, \\
+    & $a$ is not in the domain of $M_2$, and \\
+    & \sevaln{\sigma'[x\mapsto a]}{M_2[a\mapsto v']}{e}{v}{M_3}, \\
+    then \\
+    & \sevaldn{}{\eapp{e_1}{e_2}}{v}{3}.
+  \end{tabular}
+}
 
-The following Scala code implements the abstract syntax, environments, and stores of MFAE:
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \sevald{}{e_1}{\clov{x}{e}{\sigma'}}{1} \\
+    \sevald{1}{e_2}{v'}{2} \\
+    a\not\in \dom{M_2} \\
+    \seval{\sigma'[x\mapsto a]}{M_2[a\mapsto v']}{e}{v}{M_3}
+  }
+  { \sevald{}{\eapp{e_1}{e_2}}{v}{3} }
+  \quad\textsc{[App]}
+\]
+
+The evalution of the subexpressions is the same as \bfae. However, the remaining
+procedure is different. We cannot store the value of the argument in the
+environment. It should go into the store. To put the value into the store, we
+need a fresh address. The name of the parameter becomes associated with the
+address in the environment; the address becomes associated with the value of the
+argument in the store. Finally, the function body is evaluated.
+
+Changing the value of a variable is similar to changing the value of a box of
+\bfae. However, we have to evaluate an expression to find the address of the box
+to be updated in \bfae. On the other hand, we can find the address of the
+variable to be updated from the environment by using its name in \lang.
+
+\semanticrule{Set}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & $x$ is in the domain of $\sigma$, and \\
+    & \sevaldn{}{e}{v}{1}, \\
+    then \\
+    & \sevaln{\sigma}{M}{\eset{x}{e}}{v}{M_1[\sigma(x)\mapsto v]}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    x\in\dom{\sigma} \\
+    \sevald{}{e}{v}{1}
+  }
+  { \seval{\sigma}{M}{\eset{x}{e}}{v}{M_1[\sigma(x)\mapsto v]} }
+  \quad\textsc{[Set]}
+\]
+
+We can reuse the rules of \bfae for the other expressions.
+
+Now, we can answer the question in the beginning of the chapter. At each call to
+\code{makeCounter}, a new address is allocated to store the value of \code{x}.
+Therefore, \code{x} of \code{counter1} uses a different address from \code{x} of
+\code{counter2}. Both of the first two lines of \code{println} print \code{1}.
+Also, each address is permanent throughout the execution. When
+a call to \code{counter1} updates the value of \code{x}, the change remains
+until the next call to \code{counter1}. Thus, both of the last two lines of
+\code{println} print \code{2}.
+
+\section{Interpreter}
+
+The following Scala code implements the syntax of \lang:
+\sidenote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
+...
 case class Set(x: String, e: Expr) extends Expr
+\end{verbatim}
 
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
+\code{Set($x$, $e$)} represents $\eset{x}{e}$.
 
-type Env = Map[String, Addr]
-def lookup(x: String, env: Env): Addr =
-  env.getOrElse(x, throw new Exception)
+The types of an address and a store can be defined as in \bfae.
 
+\begin{verbatim}
 type Addr = Int
 type Sto = Map[Addr, Value]
-def storeLookup(a: Addr, sto: Sto): Value =
-  sto.getOrElse(a, throw new Exception)
-def malloc(sto: Sto): Addr =
-  sto.keys.maxOption.getOrElse(0) + 1
 \end{verbatim}
 
-The \verb!Set! class corresponds to an assign expression.
-
-The \verb!Num!, \verb!Add!, \verb!Sub!, and \verb!Fun! cases of the \verb!interp! function equal to the interpreter of BFAE.
+We need to change the type of an environment.
 
 \begin{verbatim}
-def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) = e match {
-  case Num(n) => (NumV(n), sto)
-  case Add(l, r) =>
-    val (NumV(n), ls) = interp(l, env, sto)
-    val (NumV(m), rs) = interp(r, env, ls)
-    (NumV(n + m), rs)
-  case Sub(l, r) =>
-    val (NumV(n), ls) = interp(l, env, sto)
-    val (NumV(m), rs) = interp(r, env, ls)
-    (NumV(n - m), rs)
-  case Fun(x, b) => (CloV(x, b, env), sto)
-\end{verbatim}
-
-The \verb!Id! case calls both \verb!lookup! and \verb!storeLookup!.
-
-\begin{verbatim}
-  case Id(x) => (storeLookup(lookup(x, env), sto), sto)
-\end{verbatim}
-
-\verb!App! calls \verb!malloc! to find a new address.
-
-\begin{verbatim}
-  case App(f, a) =>
-    val (CloV(x, b, fEnv), ls) = interp(f, env, sto)
-    val (v, rs) = interp(a, env, ls)
-    val addr = malloc(rs)
-    interp(b, fEnv + (x -> addr), rs + (addr -> v))
-\end{verbatim}
-
-\verb!Set! calls \verb!lookup! to find the address of the variable and changes the value at the address.
-
-\begin{verbatim}
-  case Set(x, e) =>
-    val (v, s) = interp(e, env, sto)
-    (v, s + (lookup(x, env) -> v))
-}
-\end{verbatim}
-
-The below shows the whole code at once.
-
-%<details><summary>See the code</summary>
-
-\begin{verbatim}
-sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
-case class Set(x: String, e: Expr) extends Expr
-
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-
 type Env = Map[String, Addr]
-def lookup(x: String, env: Env): Addr =
-  env.getOrElse(x, throw new Exception)
-
-type Addr = Int
-type Sto = Map[Addr, Value]
-def storeLookup(a: Addr, sto: Sto): Value =
-  sto.getOrElse(a, throw new Exception)
-def malloc(sto: Sto): Addr =
-  sto.keys.maxOption.getOrElse(0) + 1
-
-def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) = e match {
-  case Num(n) => (NumV(n), sto)
-  case Add(l, r) =>
-    val (NumV(n), ls) = interp(l, env, sto)
-    val (NumV(m), rs) = interp(r, env, ls)
-    (NumV(n + m), rs)
-  case Sub(l, r) =>
-    val (NumV(n), ls) = interp(l, env, sto)
-    val (NumV(m), rs) = interp(r, env, ls)
-    (NumV(n - m), rs)
-  case Fun(x, b) => (CloV(x, b, env), sto)
-  case Id(x) => (storeLookup(lookup(x, env), sto), sto)
-  case App(f, a) =>
-    val (CloV(x, b, fEnv), ls) = interp(f, env, sto)
-    val (v, rs) = interp(a, env, ls)
-    val addr = malloc(rs)
-    interp(b, fEnv + (x -> addr), rs + (addr -> v))
-  case Set(x, e) =>
-    val (v, s) = interp(e, env, sto)
-    (v, s + (lookup(x, env) -> v))
-}
 \end{verbatim}
 
-%</details>
-
-The below example evaluates \((\lambda x.x+(x:=1)+x)0\) with the \verb!interp! function. The first \(x\) and the second \(x\) respectively denote \(0\) and \(1\). \(x:=1\) between two \(x\)'s results in \(1\). The result must be \(2\), and the final store must map the address of \(x\) onto \(1\).
+As in \bfae, \code{interp} takes an expression, an environment, and a store as
+arguments and returns a pair of a value and a store.
+\sidenote{We omit the common part to \bfae.}
 
 \begin{verbatim}
-// (lambda x.x+(x:=1)+x) 0
-interp(
-  App(
-    Fun("x",
-      Add(Add(
-        Id("x"),
-        Set("x", Num(1))),
-        Id("x")
-      )
-    ),
-    Num(0)
-  ),
-  Map.empty,
-  Map.empty
-)
-// (NumV(2), Map(1 -> NumV(1)))
+def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) =
+  e match {
+    ...
+    case Id(x) => (sto(env(x)), sto)
+    case App(f, a) =>
+      val (CloV(x, b, fEnv), ls) = interp(f, env, sto)
+      val (v, rs) = interp(a, env, ls)
+      val addr = rs.keys.maxOption.getOrElse(0) + 1
+      interp(b, fEnv + (x -> addr), rs + (addr -> v))
+    case Set(x, e) =>
+      val (v, s) = interp(e, env, sto)
+      (v, s + (env(x) -> v))
+  }
 \end{verbatim}
 
-\section{Call by Reference}
+In the \code{Id} case, the function finds the address of the variable first and
+then the value at the address.
 
-The semantics of a function application varies in how arguments are passed to a function. Different languages use different function application semantics. Some languages provide multiple ways to pass arguments and allow programmers to choose one of them.
+In the \code{App} case, we use the same strategy to
+the interpreter of \bfae to compute a new address. The body of the function is
+evaluated under the extended environment and the extended store.
 
-Every hitherto language in the articles uses call-by-value semantics. Under the semantics, the evaluation of the argument precedes the evaluation of the function body. Only a value denoted by the argumens is passed to the function.
+The \code{Set} case uses the environment to find the address of the variable.
+Then, it updates the store to change the value of the variable.
 
-Call by reference is another semantics to deal with function applications. It allows passing an address instead of a value if the argument is a variable. The following inference rules define the semantics of MFAE featuring call by reference:
+\section{Call-by-Reference}
+
+Novices in programming often implement a swap function incorrectly. For example,
+consider the following C++ program:
+
+\begin{verbatim}
+void swap(int x, int y) {
+    int tmp = x;
+    x = y;
+    y = tmp;
+}
+
+int a = 1, b = 2;
+swap(a, b);
+std::cout << a << " " << b << std::endl;
+\end{verbatim}
+
+They expect the program to print \code{2 1} as \code{swap} has been called.
+On the contrary, their expectation is wrong. The result is \code{1 2}.
+We can explain the reason based on
+the content of this chapter. When \code{swap} is called, two new fresh addresses
+are allocated for \code{x} and \code{y}. The values of \code{a} and \code{b} are
+copied and stored in the addresses respectively. The function affects only the values in
+the addresses of \code{x} and \code{y}. It never touches the addresses of
+\code{a} and \code{b}. As a consequence, while the values of \code{x} and
+\code{y} are swapped, the values of \code{a} and \code{b} are not.
+
+This is the usual semantics of function applications. The values of arguments are
+copied and saved at fresh addresses. This semantics is called
+\textit{call-by-value}\index{call-by-value} (\acrshort{cbvLabel})
+as function calls pass the values of arguments.
+
+People have explored another semantics for function applications to implement
+functions like \code{swap} easily. The semantics is called
+\textit{call-by-reference}\index{call-by-reference} (\acrshort{cbrLabel}).
+In this semantics, function calls pass the references, i.e. addresses,
+when variables are used as arguments.
+
+The following rule defines the semantics of a function application using CBR when its
+argument is a variable:
+
+\semanticrule{App-Cbr}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{\clov{x'}{e'}{\sigma'}}{1}, \\
+    & $x$ is in the domain of $\sigma$, and \\
+    & \sevaln{\sigma'[x'\mapsto\sigma(x)]}{M_1}{e'}{v}{M_2}, \\
+    then \\
+    & \sevaldn{}{\eapp{e}{x}}{v}{2}.
+  \end{tabular}
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \sigma,M\vdash e\Rightarrow \langle\lambda x'.e',\sigma'\rangle,M_1 \\
-  x\in\mathit{Domain}(\sigma) \\
-  \sigma'\lbrack x'\mapsto \sigma(x)\rbrack,M_1\vdash e'\Rightarrow v,M_2 }
-{ \sigma,M\vdash e\ x\Rightarrow v,M_2 }
+  \inferrule
+  {
+    \sevald{}{e_1}{\clov{x'}{e'}{\sigma'}}{1} \\
+    x\in \dom{\sigma} \\
+    \seval{\sigma'[x'\mapsto\sigma(x)]}{M_1}{e'}{v}{M_2}
+  }
+  { \sevald{}{\eapp{e}{x}}{v}{2} }
+  \quad\textsc{[App-Cbr]}
 \]
+
+The rule does not evaluate the argument to get a value. It simply uses the
+address of the variable. Then, the parameter of the function has the exactly
+same address to the argument. Any change in the parameter that happens in the
+function body affects the variable outside the function. We say that the
+parameter is an \textit{alias}\index{alias} of the argument as they share the
+same address.
+
+Even if we want to adopt the CBR semantics in \lang, we cannot use it when the argument is not
+a variable. We cannot get an address from an expression that is not a variable.
+In such cases, we fall back to the CBV semantics. The following rule specifies
+such cases:
+
+\semanticrule{App-Cbv}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \sevaldn{}{e_1}{\clov{x}{e}{\sigma'}}{1}, \\
+    & $e_2$ is not an identifier, \\
+    & \sevaldn{1}{e_2}{v'}{2}, \\
+    & $a$ is not in the domain of $M_2$, and \\
+    & \sevaln{\sigma'[x\mapsto a]}{M_2[a\mapsto v']}{e}{v}{M_3}, \\
+    then \\
+    & \sevaldn{}{\eapp{e_1}{e_2}}{v}{3}.
+  \end{tabular}
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \sigma,M\vdash e_1\Rightarrow \langle\lambda x.e,\sigma'\rangle,M_1 \\
-  e_2\not\in\text{Variable} \\
-  \sigma,M_1\vdash e_2\Rightarrow v_1,M_2 \\
-  a\not\in \mathit{Domain}(M_2) \\
-  \sigma'\lbrack x\mapsto a\rbrack,M_2\lbrack a\mapsto v_1\rbrack\vdash e\Rightarrow v_2,M_3 }
-{ \sigma,M\vdash e_1\ e_2\Rightarrow v_2,M_3 }
+  \inferrule
+  {
+    \sevald{}{e_1}{\clov{x}{e}{\sigma'}}{1} \\
+    e_2\not\in\embox{Id} \\
+    \sevald{1}{e_2}{v'}{2} \\
+    a\not\in \dom{M_2} \\
+    \seval{\sigma'[x\mapsto a]}{M_2[a\mapsto v']}{e}{v}{M_3}
+  }
+  { \sevald{}{\eapp{e_1}{e_2}}{v}{3} }
+  \quad\textsc{[App-Cbv]}
 \]
 
-The first rule corresponds to the cases that the argument is a variable; the second corresponds to any other cases. When the argument is a variable, box creation is unnecessary, and it is enough to add a map from the parameter to the address of the variable to the environment. The address of the parameter in the function body equals the address of the variable. It is call by reference. On the other hand, an expression that is not a variable may result in a value that is not stored in any boxes. There is no way to pass an address, and thus call by value is used.
+It is the same as Rule \textsc{App} except that it has one more premise to
+ensure that the argument is not a variable.
 
 The interpreter needs the following change:
 
 \begin{verbatim}
-  case App(f, a) =>
-    val (CloV(x, b, fEnv), ls) = interp(f, env, sto)
-    a match {
-      case Id(y) =>
-        interp(b, fEnv + (x -> lookup(y, env)), ls)
-      case _ =>
-        val (v, rs) = interp(a, env, ls)
-        val addr = malloc(rs)
-        interp(b, fEnv + (x -> addr), rs + (addr -> v))
-    }
+case App(f, a) =>
+  val (CloV(x, b, fEnv), ls) = interp(f, env, sto)
+  a match {
+    case Id(y) =>
+      interp(b, fEnv + (x -> env(y)), ls)
+    case _ =>
+      val (v, rs) = interp(a, env, ls)
+      val addr = rs.keys.maxOption.getOrElse(0) + 1
+      interp(b, fEnv + (x -> addr), rs + (addr -> v))
+  }
 \end{verbatim}
 
-An example of call by reference is a parameter with the ampersand in C++. If the ampersand follows the name of a parameter, the parameter uses the call-by-reference semantics.
+It uses pattern matching on the argument expression of a function application.
+When it is an identifier, the CBR semantics can be used. Otherwise, it falls
+back to the CBV semantics.
+
+We can find a few languages that support CBR in real-world. One example is C++.
+In C++, if there is an ampersand in front of the name of a parameter,
+the parameter uses the CBR semantics. We can fix the function \code{swap} with
+this feature.
 
 \begin{verbatim}
-#include <iostream>
-
-void f(int &);
-
-int main() {
-    int x = 1;
-    f(x);
-    std::cout << x << std::endl;
+void swap(int &x, int &y) {
+    int tmp = x;
+    x = y;
+    y = tmp;
 }
 
-void f(int &x) {
-    x = 2;
-}
+int a = 1, b = 2;
+swap(a, b);
+std::cout << a << " " << b << std::endl;
 \end{verbatim}
 
-Execution of the code prints \verb!2!.
-
-In C or C++, programmers can mimic call by reference by explicitly passing pointers as arguments. In Java or Scala, if arguments are objects, their references are passed. One can say that it is call by reference. Many other object-oriented languages use call by reference. However, since they pass the addresses of objects instead of the addresses of variables, their call-by-reference semantics differs from call by reference of C++ or MFAE. Some people call such semantics of object-oriented languages call by sharing, but the terminology is unpopular.
-
-Call by name and call by need are other semantics for function applications. The next article deals with them.
+It is enough to fix only the first line to make the parameters use CBR. When
+\code{swap} is applied to \code{a} and \code{b}, the addresses of \code{a} and
+\code{b} are passed. The address of \code{x} is the same as that of
+\code{a}, and the address of \code{y} is the same as that of \code{b}.
+Therefore, the function swaps not only the values of \code{x} and \code{y} but
+also the values of \code{a} and \code{b}. The program prints \code{2 1} as
+intended.
 
 \section{Exercises}
 
 \begin{enumerate}
 \item
-In this exercise, we examine variation of MFAE which can handle pointer arithmetic (roughly).
-Consider the following language, PFAE:
+This exercise extends \lang with pointers.
+Consider the following language:
 \[
-\begin{array}{lrcl}
-\text{Expression} & e & ::= & n \\
-&&\mid& \eadd{e}{e}\\
-&&\mid& x\\
-&&\mid& \verb+* +x\\
-&&\mid& \verb+& +x\\
-&&\mid& \ebind{x}{e}{e}\\
-&&\mid& e;e\\
-&&\mid& e:=e \\
-\end{array}
-\]
-where a value of the language is either a number $n$ or an address $a$,
-an environment maps names to addresses, and a store maps addresses to values:
-\[
-\begin{array}{rrl}
-n \in \mathbb{Z}\\
-a \in \embox{Addr} = \mathbb{Z}\\
-v \in \embox{Val} & = & \mathbb{Z} + \embox{Addr}\\
-\sigma \in \embox{Env} & = & \embox{Var} \finto \embox{Addr}\\
-M \in \embox{Store} & = & \embox{Addr} \finto \embox{Val}
-\end{array}
+  e\ ::=\ \cdots\ |\ \ast e \ |\ \& x\ |\ \ast\eset{e}{e} \\
 \]
 The semantics of some constructs are as follows:
 \begin{itemize}
-\item The value of $\eadd{e_1}{e_2}$ is addition of the values of $e_1$ and $e_2$ with the following rules:
-\begin{itemize}
-\item Adding two numbers $n_1$ and $n_2$ evaluates to $n_1+n_2$.
-\item Adding two addresses $a_1$ and $a_2$ evaluates to $a_1+a_2$.
-\item Adding a number $n$ and an address $a$ evaluates to $n \times 8 +a$.
+  \item The value of $\ast e$ is the value in the store at the address denoted by
+    the expression.
+  \item The value of $\& x$ is the address denoted by the identifier in the environment.
+  \item The evaluation of $\ast\eset{e_1}{e_2}$ evaluates $e_2$ first, which is
+    the value of the whole expression. Then, it evaluates $e_1$, and it maps the
+    address denoted $e_1$ to the value of $e_2$.
 \end{itemize}
-
-\item The value of an identifier $x$ is the value in the store at the address denoted by the identifier in the environment.
-\item The value of \verb+* +$x$ is the value in the store at the address denoted by the value of the identifier.
-\item The value of \verb+& +$x$ is the address denoted by the identifier in the environment.
-\item The evaluation of $e_1 := e_2$ evaluates $e_2$ first, which is the value of the whole expression.  Then, it evaluates $e_1$, and it maps the address denoted by the value of $e_1$ to the value of $e_2$.
-\end{itemize}
-Write the operational semantics of the form \fbox{$\sigma, M\vdash e \Rightarrow v, M$} for the expressions.
+Write the operational semantics of the form \fbox{$\sevald{}{e}{v}{}$} for the expressions.
 
 \item The following code is an excerpt from the implementation of the interpreter for
-MFAE:
-%// interp : (MFAE, Env, Sto) => (MFAEValue, Sto)
+\lang:
 \begin{verbatim}
-def interp(bmfae:MFAE, env:Env, sto:Sto): (MFAEValue, Sto) = bmfae match { ...
-    case App(f, a) => a match {
-      case Id(name) =>
-        val (fv, fs) = interp(f, env, sto)
-        fv match {
-          case CloV(x, b, fenv) =>
-            val addr = lookup(name, env)
-            interp(b, fenv + (x -> addr), fs)
-          case _ => error(s"not a closure: $fv")
-        }
-      case _ =>
-        val (fv, fs) = interp(f, env, sto)
-        val (av, as) = interp(a, env, fs)
-        fv match {
-          case CloV(x, b, fenv) =>
-            val addr = malloc(as)
-            interp(b, fenv + (x -> addr), as + (addr -> av))
-          case _ => error(s"not a closure: $fv")
-        } } }
+def interp(e:Expr, env:Env, sto:Sto): (Value, Sto) =
+  e match {
+    ...
+    case App(f, a) =>
+      val (CloV(x, b, fEnv), ls) = interp(f, env, sto)
+      a match {
+        case Id(y) =>
+          interp(b, fEnv + (x -> env(y)), ls)
+        case _ =>
+          val (v, rs) = interp(a, env, ls)
+          val addr = rs.keys.maxOption.getOrElse(0) + 1
+          interp(b, fEnv + (x -> addr), rs + (addr -> v))
+      }
+  }
 \end{verbatim}
 
-\begin{itemize}
-  \item[a)] What is the calling convention of this semantics?
-%Is this semantics call-by-value, call-by-reference, or call-by-name?
+\begin{enumerate}
+  \item What is this semantics? CBV or CBR?
 
-\hspace*{-2em}
-Consider the following expression in MFAE:
+    \vspace{1em}
+    \hspace{-2.5em}
+Consider the following expression in \lang:
 \[
 \ebind{\code{n}}{42}{
     \ebind{\code{f}}{\efun{\code{g}}{(\eapp{\code{g}}{\code{n}})}}{
@@ -408,11 +498,9 @@ Consider the following expression in MFAE:
     }
 }
 \]
-
-\item[b)] Show the environment and store just before evaluating addition in the call-by-reference semantics.
-
-\item[c)] Show the environment and store just before evaluating addition in the call-by-value semantics.
-\end{itemize}
+\item Show the environment and store just before evaluating addition in the CBV semantics.
+\item Show the environment and store just before evaluating addition in the CBR semantics.
+\end{enumerate}
 
 
 \end{enumerate}
