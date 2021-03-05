@@ -538,4 +538,24 @@ Note that $b$ ranges over a boolean. The language does not support the short-cir
 semantics, i.e. $e_2$ must be evaluated in expression $e_1\wedge e_2$ whenever $e_1$
 evaluates to true or not.
 Write the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
+
+\item What are the results of the following expression:
+\[
+  \begin{array}{l}
+  \erec{\cf}{\cx}{\eifz{\cx}{\cx}{(\eadd{1}{(\eapp{\cf}{(\esub{\cx}{1})})})}}{\\
+  \ebind{\cf}{\eadd{42}{(\eapp{\cf}{\cx})}}{\\
+  \eapp{\cf}{7}
+  }
+  }
+  \end{array}
+\]
+in different scoping semantics when we evaluate it under the following environment?
+\begin{verbatim}
+Map("f" -> CloV("x", Add(Num(13), Id("x")), Map()))
+\end{verbatim}
+
+\begin{enumerate}
+  \item Dynamic scope
+  \item Static scope
+\end{enumerate}
 \end{enumerate}

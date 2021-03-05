@@ -2,122 +2,358 @@
 \chapter{Lazy Evaluation}
 \labch{lazy-evaluation}
 
-The article deals with lazy evaluation. Lazy evaluation means delaying the
-evaluation of an expression until the result is required. Real-world languages
-support many features other than function applications. The evaluations of
-expressions at various places can be subjects of lazy evaluation. For example,
-Scala provides the \verb!lazy! keyword to delay the initialization of a variable.
-The initialization of a variable declared with the \verb!lazy val! keyword
-happens when the variable is first used, but not declared. However, discussing
-the evaluations of function call arguments gives enough insight to understand
-lazy evaluation. Therefore, the article focuses only on function applications.
+\renewcommand{\plang}{\textsf{FAE}\xspace}
+\renewcommand{\lang}{\textsf{LFAE}\xspace}
 
-Every hitherto language from the previous articles uses eager evaluation, or
-strict evaluation. Eager evaluation is a strategy that evaluates an argument
-before a function body. Call-by-value semantics of the last article belongs to
-eager evaluation. Call by reference denotes semantics that arguments are passed
-as references instead of values. Strictly speaking, it is orthogonal to the
-distinction between eager and lazy evaluation. However, the intention of lazy
-evaluation is delaying an evaluation, but call by reference does not intend it.
-Thus, call-by-reference semantics also commonly belongs to eager evaluation.
+This chapter is about lazy evaluation. \textit{Lazy evaluation}\index{lazy
+evaluation} means delaying the evaluation of an expression until the result
+is required. The opposite of lazy evaluation is \textit{eager
+evaluation}\index{eager evaluation}, which evaluates an expression even if in
+the case that it is unknown whether the result of the expression is necessary
+for future computation. There are multiple features that lazy evaluation can be
+applied to in programming languages. For example, arguments for function
+applications can be evaluated lazily; each argument of a function application is
+evaluated when the argument is used in the function body, not before the
+evaluation of the function body starts. Another example is a variable
+definition. The initialization of variable happens when the variable is
+used for the first time, not when it is defined. Actually, as you have seen
+already, local variables can be consdiered as syntactic sugar of function
+parameters, it is enough to focus on laziness in function applications.
+Therefore, this book considers lazy evaluation only on arguments of function
+applications.
 
-On the other hand, lazy evaluation evaluates a function body first. The
-evaluation of an argument happens when its corresponding parameter appears at the
-function body. Consider the following Scala code:
+All the previously defined languages in the book are eager languages. They use
+the CBV semantics for function applications. CBV can be consdiered equivalent to
+eager evaluation. CBV means that every argument is passed as a value. The value
+of an argument can be acquired only by evaluating the argument expression. It
+implies that every argument is evaluated before the evaluation of the function
+body regardless of whether the argument is used during the body evaluation.
+Thus, the CBV semantics is equal to the eager evaluation semantics.\sidenote{One
+may wonder whether CBR is eager or not. The best answer is that CBR is
+irrelevant to distinction between eagerness and laziness. As shown in the previous chapter, CBR is
+possible only when an argument is a variable, whose address is known. In that
+case, there is nothing to evaluate. We have to make a choice between passing the
+address (CBR) and passing the value at the address (CBV). On the other hand,
+choosing one of eagerness and laziness is about a choice between evaluating the
+argument and not evaluating the argument. CBR can be used in both eager and lazy
+languages.}
+
+This chapter mainly discusses \textit{call-by-name}\index{call-by-value}
+(\acrshort{cbnLabel}) semantics, which is one form of lazy evaluation.
+In the CBN semantics, each argument is passed as its name, i.e. the expression
+itself, rather than the value denoted by the expression. Since it is passed as an
+expression, there is no need to evaluate the expression to obatin its value. The
+expression will be evalauted when the value is required by the function body.
+As you can see, CBN delays the computation of arguments by passing them as
+expressions and can be considered as lazy evaluation. We will define \lang, which
+is a lazy version of \plang, in this chapter. \lang adopts the CBN semantics. In
+addition, we will introduce call-by-need,\sidenote{Some people use the term lazy
+evaluation to denote call-by-need only. In that sense, CBN is not considered as
+lazy evaluation. However, this book views lazy evaluation as a term that can be
+used broadly to mean any form of delayed computation. In this sense, both CBN
+and call-by-need belong to lazy evaluation.} which is another form of lazy
+evaluation, as an optimized version of CBN.
+
+Before we discuss the CBN semantics and \lang, let us see why lazy evaluation is
+valuable in practice. We can find lazy evaluation in a few real-world languages.
+Haskell is well-known as treating every computation lazily by
+default.\sidenote{Programmers can force evaluation if they really want.} On the
+other hand, Scala is an eager language but allows programmers to selectively
+apply lazy evaluation to their programs. We will see code examples in Scala as
+it is the language used in this book, though Haskell is the most famous lazy
+language. Consider the following Scala code:
 
 \begin{verbatim}
-def f(): Int = ...
-def g(): Boolean = ...
-def h(x: Int, b: Boolean): Int =
-  if (b) x else 0
-
-h(f(), g())
-\end{verbatim}
-
-Function \verb!h! has two parameters: \verb!x! and \verb!b!. The value of
-\verb!x! is unnecessary when \verb!b! equals \verb!false!. In such cases, the
-result always is \verb!0! regardless of the value of \verb!x!. In the last line
-of the code, the arguments of the function call are \verb!f()! and \verb!g()!.
-Suppose that \verb!g()! equals \verb!true!. Evaluating \verb!f()! is essential.
-In contrast, when \verb!g()! equals \verb!false!, it is sure that the result is
-\verb!0! whatever \verb!g()! results in. Scala uses eager evaluation. Since
-\verb!f()! is always evaluated even though its result might be unessential, the
-code is inefficient. However, lazy evaluation allows omitting the evaluation of
-\verb!f()! when \verb!g()! equals \verb!false!. The code per se is efficient.
-Lazy evaluation helps programmers to write concise and efficient code.
-
-A way to implement lazy evaluation varies according to a criterion deciding the
-necessity of the value of an argument. The simplest criterion is the occurrence
-of the corresponding parameter in the function body. One can delay more than the
-criterion. If the value does not participate in some calculation despite the
-occurrence, the value is unnecessary. Consider the following code:
-
-\begin{verbatim}
-def f(x: Int): Int = x
-
-f(1 + 1) + 1
-\end{verbatim}
-
-Follow the first criterion. Since \verb!x! appears in the body, the evaluation of
-\verb!1 + 1! happens and yields \verb!2!. The final result is \verb!3!, which is
-the result of \verb!2 + 1!.
-
-Now, follow the second strategy. Despite the appearance of \verb!x!, its value is
-unimportant. It is possible to omit the evaluation and to return \verb!1 + 1!.
-The final result is \verb!3!, which is the result of \verb!3 + 1!.
-
-One can delay more than the second strategy. The final result is \verb!(1 + 1) + 1!.
-The expression is evaluated only when the result becomes observable, for
-example being printed to a command line.
-
-No single semantics is the best among them. The best depends on the context.
-Language designers must carefully decide the semantics of their language based on
-a domain whom it targets, performance, and ease of understanding by programmers.
-
-The article discusses LFAE from the lecture at first. It lacks the formal
-semantics of LFAE but shows the implementation of an interpreter. The last part
-deals with call by name and call by need in detail. They are beyond the scope of
-the course so that one may skip the part.
-
-\section{LFAE
+def square(x: Int): Int = {
+  Thread.sleep(5000)  // models some expensive computation
+  x * x
 }
 
-LFAE is a language applying lazy evaluation to FAE. They have the same syntax. In
-LFAE, arguments are evaluated only when their values are necessary. The value is
-necessary if it is a function of a function application or an operand for an
-addition or a subtraction.
+def foo(x: Int, b: Boolean): Int =
+  if (b) x else 0
 
-The following Scala code implements the abstract syntax of LFAE:
-
-\begin{verbatim}
-sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
+val file = new java.io.File("a.txt")
+foo(square(10), file.exists)
 \end{verbatim}
 
-An environment is a map from strings to values. It contains the values of
-arguments. However, the values are unknown when an environment is expanded.
-Values must be able to denote delayed evaluations.
+The function \code{square} takes an integer as an argument and returns its
+square. It always takes five seconds to return due to \code{Thread.sleep(5000)},
+which makes the thread sleep for five seconds. Of course, no one will write
+such code in practice, but it is an analogy of highly expensive computation that
+takes a long time.
+
+The function \code{foo} takes one integer and one boolean. It
+returns the integer when the boolean is true and zero otherwise. Therefore, the
+integer value is required only when the boolean is true.
+
+The last line of the program applies \code{foo} to \code{square(10)} and
+\code{file.exists}. The second argument is true if and only
+if there exists a file named \code{a.txt}. If the file does not exist, \code{foo}
+returns zero, and thus the value of \code{square(10)} is unnecessary.
+However, as Scala uses eager evaluation by default, \code{square(10)} is
+evaluated and spends five seconds regardless of the existence of the file.
+If we modify the program not to evaluate \code{square(10)} when the file is
+absent, we can save time in many cases without changing the behavior of the
+program.
+
+Lazy evaluation gives us an easy solution to this issue. If the first argument
+for \code{foo} is evaluated lazily, the program will evaluate
+\code{square(10)} only when the file exists. In Scala, we can make a certain
+parameter use the CBN semantics by adding \code{=>} in front of the type of the
+parameter. Thus, the following fix completely resolves the problem:
+
+\begin{verbatim}
+def foo(x: => Int, b: Boolean): Int =
+  if (b) x else 0
+\end{verbatim}
+
+We call \code{x} a by-name parameter in Scala. Since \code{x} is a by-name
+parameter, the first argument for \code{foo} is evaluated only when the value of
+\code{x} is needed during the evaluation of the body.
+
+\section{Semantics}
+
+We do not explain the syntax of \lang as it is the same as \plang.
+We can move on to the semantics immediately. The definition of an environment is
+the same as \plang. Also, as in \plang, $\evald{e}{v}$ is true if and only if
+\evaldn{e}{v}. We can use Rule \textsc{Num} of \lang since evaluation of
+integers are not affected by lazy evaluation. Similarly, Rule \textsc{Fun} can
+be reused as well. Rule \textsc{Id} also remains the same.
+The value of an identifier can be found in an environment.
+
+One that certainly requires a change is the semantics of function applications.
+It is the most distinctive feature of lazy languages compared to eager
+languages. In the CBV semantics, we store the values of arguments in
+environments and use the environments to evaluate function bodies. We still need
+to store arguments in environments in the CBN semantics. However, arguments are
+passed as expressions, and expressions are not values. We need a way to put
+expressions in environments. The simplest solution is to define a new kind of
+values as follows:
+\sidenote{We omit the common part to \plang.}
+
+\[ v\ ::=\ \cdots\ |\ \exprv{e}{\sigma} \]
+
+$\exprv{e}{\sigma}$ is an expression as a value; we call it an expression-value.
+It denotes that the computation
+of $e$ under $\sigma$ has been delayed. We must keep the environment together
+with the expression since the expression can have free identifiers whose values
+are available in the environment. The reason is the same as why we need the
+notion of a closure, which is a function with an environment. The structure of
+$\exprv{e}{\sigma}$ is quite similar to the structure of a closure,
+$\clov{x}{e}{\sigma}$, except that an expression-value lacks the name of a
+parameter. The similarity is not just a coincidence. Both kinds of values denote
+delay of computation. The evaluation of $e$ in $\exprv{e}{\sigma}$ is postponed
+until the value of the argument becomes required, and the evaluation of $e$ in
+$\clov{x}{e}{\sigma}$ is postponed until the closure is applied to a value.
+
+Because of the addition of expression-values, we need to define another form of
+evaluation. We call it strict evaluation. The purpose of strict evaluation is to
+force an expression-value to be a ``normal'' value, which is an integer or a
+closure. Strict evaluation is required because the ability of an
+expression-value is limited. It can be passed as an argument or stored in an
+environment like normal values but cannot be used as an operand of an arithmetic
+expression or applied to a value as a function. There must be a way to convert
+an expression-value to a normal value, and strict evaluation takes this role.
+
+Strict evaluation is defined as a binary relation over $V$ and $V$. We use
+$\Downarrow$ to denote strict evaluation.
+
+\[ \Downarrow\subseteq V\times V \]
+
+$\stricte{v_1}{v_2}$ is true if and only if $v_1$ strictly evaluates to $v_2$.
+Here, $v_1$ can be any value. However, $v_2$ cannot be an expression-value; it
+must be a normal value. The reason obviously comes from the purpose of strict
+evaluation: converting an expression-value to a normal value.
+
+The following rules define strict evaluation of normal values:
+
+\semanticrule{Strict-Num}{
+  \stricten{n}{n}
+}
+
+\vspace{-1em}
+
+\[
+  \stricte{n}{n}
+  \quad\textsc{[Strict-Num]}
+\]
+
+\vspace{-1em}
+
+\semanticrule{Strict-Clo}{
+  \stricten{\clov{x}{e}{\sigma}}{\clov{x}{e}{\sigma}}
+}
+
+\vspace{-1em}
+
+\[
+  \stricte{\clov{x}{e}{\sigma}}{\clov{x}{e}{\sigma}}
+  \quad\textsc{[Strict-Clo]}
+\]
+
+A normal value strictly evaluates to itself since it is already a normal value.
+
+The following rule defines strict evaluation of expression-values:
+
+\semanticrule{Strict-Expr}{
+  If \evaldn{e}{v_1}, and \stricten{v_1}{v_2},
+  then \stricten{\exprv{e}{\sigma}}{v_2}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \evald{e}{v_1} \\ \stricte{v_1}{v_2} }
+  { \stricte{\exprv{e}{\sigma}}{v_2} }
+  \quad\textsc{[Strict-Expr]}
+\]
+
+An expression-value $\exprv{e}{\sigma}$ is strictly evaluated by evaluating $e$
+under $\sigma$. The result of $e$ can be an expression-value again, and thus we
+need repeated strict evaluation until reaching a normal value.
+
+Now, we can define the semantics of function applications by using the notions of
+expression-values and strict evaluation.
+
+\semanticrule{App}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \evaldn{e_1}{v_1}, \\
+    & \stricten{v_1}{\clov{x}{e}{\sigma'}}, and \\
+    & \evaln{\sigma'[x\mapsto\exprv{e_2}{\sigma}]}{e}{v}, \\
+    then \\
+    & \evaldn{\eapp{e_1}{e_2}}{v}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \evald{e_1}{v_1} \\
+    \stricte{v_1}{\clov{x}{e}{\sigma'}} \\
+    \eval{\sigma'[x\mapsto\exprv{e_2}{\sigma}]}{e}{v}
+  }
+  { \evald{\eapp{e_1}{e_2}}{v} }
+  \quad\textsc{[App]}
+\]
+
+$e_1$ evaluates to $v_1$ first. $v_1$ may be an expression-value, while we need a
+closure. Therefore, we strictly evaluate $v_1$ to get a closure. On the other
+hand, the argument must not be evaluated in the CBN semantics. Instead of
+evaluating $e_2$, we make an expression-value with $e_2$ and $\sigma$ and then
+put the value into the environment.
+
+Let us see the semantics of addition and subtraction.
+
+\semanticrule{Add}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \evaldn{e_1}{v_1}, \\
+    & \stricten{v_1}{n_1}, \\
+    & \evaldn{e_2}{v_2}, and\\
+    & \stricten{v_2}{n_2}, \\
+    then \\
+    & \evaldn{\eadd{e_1}{e_2}}{n_1+n_2}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \evald{e_1}{v_1} \\
+    \stricte{v_1}{n_1} \\
+    \evald{e_2}{v_2} \\
+    \stricte{v_2}{n_2} \\
+  }
+  { \evald{\eadd{e_1}{e_2}}{n_1+n_2} }
+  \quad\textsc{[Add]}
+\]
+
+\vspace{-1em}
+
+\semanticrule{Sub}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \evaldn{e_1}{v_1}, \\
+    & \stricten{v_1}{n_1}, \\
+    & \evaldn{e_2}{v_2}, and\\
+    & \stricten{v_2}{n_2}, \\
+    then \\
+    & \evaldn{\esub{e_1}{e_2}}{n_1-n_2}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \evald{e_1}{v_1} \\
+    \stricte{v_1}{n_1} \\
+    \evald{e_2}{v_2} \\
+    \stricte{v_2}{n_2} \\
+  }
+  { \evald{\esub{e_1}{e_2}}{n_1-n_2} }
+  \quad\textsc{[Sub]}
+\]
+
+There is nothing difficult. They are similar to the rules of \plang but
+additionally require strict evaluation since addition and subtraction are
+possible only by using integers, not expression-values.
+
+The semantics is a correct instance of CBN but has a flaw from a practical
+perspective. Consider $\eapp{(\efun{\cx}{\cx})}{(\eadd{1}{1})}$. It results in
+$\exprv{\eadd{1}{1}}{\emptyset}$, not $2$. Most programmers are likely to perfer
+$2$ as a result. We need to apply one last strict evaluation at the end of the
+evaluation to resolve the problem. It is to say that ``the result of a program
+$e$ is $v$ when $\evale{e}{v'}$ and $\stricte{v'}{v}$.'' Note that it is
+different from applying strict evaluation to the evaluation of every expression
+in the program. Strict evaluation is applied to only the result of the whole
+expression, which is the program. In this way, we can make the result of the
+above expression $2$ and eliminate the flaw.\sidenote{It is not a flaw in real-world
+programming languages like Haskell. A program shows its result by output operations
+(e.g. to files) rather than the value of a single expression. Each output
+operation applies strict evaluation to its argument (like Rule \textsc{Add},
+Rule \textsc{Sub}, and Rule \textsc{App} in \lang), and the value of
+each expression does not need to be a normal value.}
+
+If evaluating an expression in the CBV semantics results in a value,
+then the CBN semantics yields the same value. It is known as a corollary of the
+standardization theorem of lambda calculus~\cite{theories-of-pl}.
+Note that it is true only in languages without side effects.
+The result of an expression with side effects vary in the order of
+the evaluation. For example, if an argument is an expression changing the value
+of a box, and the body of the function reads the value of the box without using
+the argument, the program can behave differently in CBV and CBN. In CBV, the
+read value will be the value after the update. On the other hand, in CBN, the
+update never happens, and the read value will be the original value of the box.
+
+While the CBN semantics preserves the results of the CBV semantics,
+the converse is false even without mutation, i.e. there are expressions that
+yield results only in CBN.
+For instance, consider a function application whose argument is a nonterminating
+expression. If the function returns zero without using the argument, evaluation
+with CBN results in zero, while evaluation with CBV does not terminate.
+
+\section{Interpreter}
+
+We need to add a new variant to \code{Value} to represent expression-values.
+\sidenote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
+...
 case class ExprV(e: Expr, env: Env) extends Value
-
-type Env = Map[String, Value]
 \end{verbatim}
 
-An \verb!ExprV! instance denotes an expression whose value is unknown. Its value
-is the result of evaluating \verb!e! under \verb!env!.
+\code{ExprV($e$, $\sigma$)} represents $\exprv{e}{\sigma}$.
 
-If an \verb!ExprV! instance is an operand or a function being applied to an
-argument, then the real value of the instance is necessary. The following
-\verb!strict! function calculates the value:
+The following function implements strict evlauation:
 
 \begin{verbatim}
 def strict(v: Value): Value = v match {
@@ -126,18 +362,12 @@ def strict(v: Value): Value = v match {
 }
 \end{verbatim}
 
-An \verb!ExprV! instance denotes a value that is the result of evaluating its
-expression under its environment. The value can be an \verb!ExprV! instance as
-well. Recursive calls resolve such cases. When argument \verb!v! is a \verb!NumV!
-or \verb!CloV! instance, it is the final result of the function.
-
+We can implement \code{interp} as follows:
+\sidenote{We omit the common part to \plang.}
 
 \begin{verbatim}
-def lookup(x: String, env: Env): Value =
-  env.getOrElse(x, throw new Exception)
-
 def interp(e: Expr, env: Env): Value = e match {
-  case Num(n) => NumV(n)
+  ...
   case Add(l, r) =>
     val NumV(n) = strict(interp(l, env))
     val NumV(m) = strict(interp(r, env))
@@ -146,55 +376,67 @@ def interp(e: Expr, env: Env): Value = e match {
     val NumV(n) = strict(interp(l, env))
     val NumV(m) = strict(interp(r, env))
     NumV(n - m)
-  case Id(x) => lookup(x, env)
-  case Fun(x, b) => CloV(x, b, env)
   case App(f, a) =>
     val CloV(x, b, fEnv) = strict(interp(f, env))
     interp(b, fEnv + (x -> ExprV(a, env)))
 }
 \end{verbatim}
 
-The \verb!Num!, \verb!Id!, and \verb!Fun! cases equal those of the FAE
-interpreter. The \verb!Add! and \verb!Sub! cases need to apply the \verb!strict!
-function to the results of \verb!interp! function calls. The \verb!Fun! case
-applies the \verb!strict! function to the result of \verb!f! to get a closure.
-There is no \verb!interp! call for an argument expression. A new \verb!ExprV!
-instance consists of the argument expression and the current environment. The
-instance is added to the environment.
+Each case matches the corresponding rule, so there is nothing difficult.
 
-The following code evaluates \((\lambda x.1)(1\ 1)\) with the \verb!interp!
-function. The FAE interpreter will raise an error for the expression as the first
-\(1\) of \(1\ 1\) is not a function. On the other hand, the LFAE interpreter
-yields \(1\) because the function body lacks \(x\), the parameter. It never
-evaluates \(1\ 1\), which is problematic.
+\section{Call-by-Need}
 
 The current implementation is efficient when a parameter appears once or less in
 the function body. However, using a parameter twice or more leads to redundant
-calculations. Consider applying the current implementation to the following Scala
-code:
+calculation. Consider the following Scala program:
 
 \begin{verbatim}
-def f(x: Int): Int = x + x
-def g(): Int = ...
+def square(x: Int): Int = {
+  Thread.sleep(5000)  // models some expensive computation
+  x * x
+}
 
-f(g())
+def bar(x: => Int, b: Boolean): Int =
+  if (b) x + x else 0
+
+val file = new java.io.File("a.txt")
+foo(square(10), file.exists)
 \end{verbatim}
 
-\verb!x! appears twice in the body of function \verb!f!. \verb!g()! is evaluated
-twice. Suppose that \verb!g! is a pure function, which lacks a side effect and
-always produces the same result. Then, the second evaluation yields the same
-result to the first evaluation. The redundant evaluation never affects other
-evaluations. Therefore, using the first result of \verb!g()! again does not make
-any differences. On the other hand, eager evaluation naturally makes \verb!g()!
-to be evaluated only once.
+\code{x} appears twice in the body of \code{bar}. If \code{a.txt} exists, \code{square(10)} is
+evaluated twice. Actually, we do not need to evaluate \code{square(10)} twice
+since its result is always the same. Since \code{square} is an expensive
+function, it is desirable to reduce the number of function calls as much as possible.
+If we use CBV instead of CBN, it is possible to evaluate \code{square(10)} only
+once when the file exists.
+However, going back to CBV is not a good choice. It will make the program
+evaluate \code{square(10)} even when the file does not exist.
 
-By storing the value of an argument and using the value again, the interpreter
-becomes efficient. It is as optimla as eager evaluation when a parameter appears
-multiple times; it is as optimal as lazy evaluation when the value of a parameter
-can be unnecessary. If a language features mutable boxes or variables, which
-cause side effects, storing the value of an argument can change the result. The
-modification in an interpreter changes the semantics. It is not an optimization.
-However, LFAE lacks side effects, and it thus is just an optimization.
+The way to solve this problem is to store the value of an argument and use the
+value again. This strategy is as optimal as CBV when a parameter appears
+multiple times; it is as optimal as CBN when a parameter is not used at all.
+For programmers, it is tedious to implement such logic in their programs by
+themselves. Instead, programming languages can provide the optimization. This
+optimization is called \textit{call-by-need}\index{call-by-need} as each
+argument is evaluated based on need for its value. It is evaluated once if
+needed and is not otherwise.
+
+Call-by-need is not different semantics from CBN in purely functional languages.
+The behaviors of a program in call-by-need and CBN are completely equal.
+Call-by-need is just an optimization strategy of interpreters and compilers. On
+the other hand, call-by-need is different semantics from CBN in languages with
+side effects. In such languages, the number of computation of a certain
+expression can affect the result. For example, consider an argument that is an expression
+that increases the value of the box by one. Suppose that its value is used twice
+in the function body. Then, the value of the box increases by two in CBN, while
+it increases by one in call-by-need.
+
+Since \lang lacks side effects, we can adopt call-by-need to the language as
+optimization of the interpreter. There is no need to newly define the call-by-need
+version of the semantics.
+
+To store the strict value of an expression-value, we add a new field to
+the class \code{ExprV}.
 
 \begin{verbatim}
 case class ExprV(
@@ -202,26 +444,33 @@ case class ExprV(
 ) extends Value
 \end{verbatim}
 
-The definition of the \verb!ExprV! class has changed. Field \verb!v! is mutable.
-When the value of the expression is unknown, \verb!v! equals \verb!None!. After
-the value is calculated once, \verb!v! equals a \verb!Some! instance containing
-the value. To use the value again, reading the value of \verb!v! is enough. No
-redundant evaluations happen. The \verb!strict! function requires the following
-changes:
+The field is declared as mutable. Initially,
+the value of the expression is unknown, and \code{v} equals \code{None}. When
+the value is calculated for the first time, the value is stored in \code{v}.
+The fact that \code{v} equals \code{Some(a)} for some \code{a} implies that the
+value of the expression is \code{a}. In the next time we need the value again,
+\code{a} can be used without any redundant computation.
+
+The function \code{strict} requires the following change:
 
 \begin{verbatim}
 def strict(v: Value): Value = v match {
+  case ExprV(_, _, Some(cache)) => cache
   case ev @ ExprV(e, env, None) =>
     val cache = strict(interp(e, env))
     ev.v = Some(cache)
     cache
-  case ExprV(_, _, Some(cache)) => cache
   case _ => v
 }
 \end{verbatim}
 
-The \verb!App! case of the \verb!interp! function must pass \verb!None!, which is
-the initial value of \verb!v!, as an argument for the \verb!ExprV! constructor.
+It checks whether there exists a cached value. If it is the case, the function
+simply returns the cached value. Otherwise, \code{e} is evaluated under
+\code{env} like before. In addition, the function stores the value in \code{v}.
+
+The function \code{interp} needs only one fix. When a new \code{ExprV} instance
+is created in the \code{App} case, one additional argument is required to
+initialize the field \code{v}.
 
 \begin{verbatim}
 case App(f, a) =>
@@ -229,524 +478,70 @@ case App(f, a) =>
   interp(b, fEnv + (x -> ExprV(a, env, None)))
 \end{verbatim}
 
-One may use a default parameter value for the \verb!ExprV! class instead of
-revising the \verb!interp! function.
+Since we do not know the value of \code{a}, the initial value of \code{v} is \code{None}.
+
+Purely function languages with lazy evaluation usually adopt call-by-need
+because it is just optimization but not a change in their semantics. On the
+other hand, impure languages cannot consider call-by-need as optimization and
+often allow programmers to choose one of them at each place. For example, Scala
+uses CBN for by-name parameters and call-by-need for lazy variables. We can
+define lazy variables with the \code{lazy} modifier.
 
 \begin{verbatim}
-case class ExprV(
-  e: Expr, env: Env, var v: Option[Value] = None
-) extends Value
+lazy val x = {
+  println(1)
+  1
+}
+val y = x + x
 \end{verbatim}
 
-In this case, passing only two arguments for a new \verb!ExprV! instance
-initializes field \verb!v! to \verb!None! automatically. Hence, changing only
-\verb!strict! function suffices. The \verb!interp! function remains the same.
-
-\section{Substitution
-}
-
-The semantics of FAE needs revision. The formalization will change, but the
-meaning remains the same. Substitution replaces environments. Substitution allows
-defining lazy evaluation semantics easily and comparing eager and lazy
-evaluations clearly.
-
-Substitution is changing a particular subexpression in an expression into another
-subexpression. Usually, it changes a variable into a specific expression. For
-example, substituting \(x\) with \((z\ 3)\) in \(x+y\) results in \((z\ 3)+y\).
-
-The following is the abstract syntax of FAE:
-
-\[
-\begin{array}{lrcl}
-\text{Integer} & n & \in & \mathbb{Z} \\
-\text{Variable} & x & \in & \textit{Id} \\
-\text{Expression} & e & ::= & n \\
-&& | & e + e \\
-&& | & e - e \\
-&& | & x \\
-&& | & \lambda x.e \\
-&& | & e\ e
-\end{array}
-\]
-
-\(\lbrack e'/x\rbrack e\) denotes substituting \(x\) with \(e'\) in \(e\).
-\(\lbrack /\rbrack\) is a function from an expression, a variable, and an
-expression to an expression.
-
-\[
-\lbrack/\rbrack \in
-\text{Expression}\times\text{Variable}\times\text{Expression}\rightarrow\text{Expression}
-\]
-
-Substitution retains an integer since it lacks variables.
-
-\[\lbrack e/x \rbrack n  =  n\]
-
-A variable changes into an expression if the subject of the substitution equals
-the variable. Otherwise, it remains the same.
-
-\[
-\lbrack e/x' \rbrack x = \begin{cases} e& \text{if } x=x'\\ x & \text{if }
-x\not=x'\end{cases}
-\]
-
-Substitution for sums, differences, and function applications has recursive
-definitions. The result of substitution is applying the substitution to all the
-subexpressions.
-
-\[
-\begin{array}{rcl}
-\lbrack e/x \rbrack (e_1+e_2) = \lbrack e/x \rbrack e_1+\lbrack e/x \rbrack e_2
-\\
-\lbrack e/x \rbrack (e_1-e_2) = \lbrack e/x \rbrack e_1-\lbrack e/x \rbrack e_2
-\\
-\lbrack e/x \rbrack (e_1\ e_2)\ = \lbrack e/x \rbrack e_1\ \lbrack e/x \rbrack
-e_2
-\end{array}
-\]
-
-If the subject of substitution differs from the parameter of a lambda
-abstraction, the result of the substitution is applying it to the body.
-Otherwise, it remains the same.
-
-The above rule is crucial for defining the semantics of function applications
-with substitution. Substituting a parameter in the function body corresponds to
-passing arguments to functions. If the name of the parameter is unchecked before
-substitution, shadowing fails.
-
-Now, the semantics of FAE uses substitution. Environments are needless. The
-semantics is a relation over expressions and values. \(\Downarrow\) denotes the
-semantics.
-
-\[
-\Downarrow \subseteq \text{Expression}\times\text{Value}
-\]
-
-\(e\Downarrow v\) implies that evaluating \(e\) yields \(v\).
-
-A value is either an integer or a function value. Due to the absence of
-environments, a function value lacks an environment. A lambda abstraction instead
-of a closure is a function value.
-
-\[
-\begin{array}{lrcl}
-\text{Value} & v & ::= & n \\
-&& | & \lambda x.e
-\end{array}
-\]
-
-The inference rules for integers, sums, and differences are similar to the
-previous rules.
-
-\[
-n\Downarrow n
-\]
-
-\[
-\inferrule
-{
-  e_1\Downarrow n_1 \\
-  e_2\Downarrow n_2
-}
-{ e_1+e_2\Downarrow n_1+n_2 }
-\]
-
-\[
-\inferrule
-{
-  e_1\Downarrow n_1 \\
-  e_2\Downarrow n_2
-}
-{ e_1-e_2\Downarrow n_1-n_2 }
-\]
-
-Like an integer, a lambda abstraction produces itself.
-
-\[
-\lambda x.e\Downarrow\lambda x.e
-\]
-
-A function application evaluates the function and the argument. Then, it
-evaluates an expression obtained by substituting the parameter with the value of
-the argument in the function body.
-
-\[
-\inferrule{
-  e_1\Downarrow \lambda x.e \\
-  e_2\Downarrow v' \\
-  \lbrack v'/x\rbrack e\Downarrow v
-}
-{ e_1\ e_2\Downarrow v }
-\]
-
-Since substitution changes parameters into values, evaluating expressions without
-free variables never results in situations directly requiring the values of
-variables. No rules for variables exist. If an evaluation fails because of a
-variable, then the original expression contains a free variable. Consider
-\(\lambda x.y)\ 1\). Variable \(y\) is free in the expression. Substituting \(x\)
-with \(1\) in \(\lambda x.y\) results in \(y\). It is impossible to evaluate
-\(y\).
-
-To understand the definition of substitution, consider \((\lambda x.(\lambda
-x.x)\ 1)\ 2\). \(\lambda x.x\) is an identity function. Since \((\lambda x.x\)\
-\(1\) always results in \(1\), \(\lambda x.(\lambda x.x)\ 1\) is a function
-returning \(1\) regardless of the value of an argument. According to the current
-definition of substitution, substituting \(x\) with \(2\) in \((\lambda x.x)\ 1\)
-results in \((\lambda x.x)\ 1\) because subject \(x\) equals parameter \(x\).
-\((\lambda x.x)\ 1\) yields \(1\), which is correct. Assume that substitution
-always changes the body of a lambda abstraction. Then the substitution results in
-\((\lambda x.2)\ 1\). The final result is \(2\), which is wrong. It implies that
-the innermost \(x\) is bound to parameter \(x\) of \(\lambda x.(\lambda x.x)\ 1\)
-instead of parameter \(x\) of \(\lambda x.x\). Shadowing fails, and the original
-definition thus is correct.
-
-\subsection{Alpha Conversion
-}
-
-Alas, the semantics of FAE is incomplete. An expression containing a free
-variable can result in an error because directly evaluating a variable is
-impossible. However, under the current semantics, such an expression can
-incorrectly yield a value. Consider \((\lambda x.\lambda y.x)\ (\lambda z.y)\ 1\
-2\). \(\lambda z.y\) has free variable \(y\). \(\lambda x.\lambda y.x\) is a
-function taking two arguments and returning the former. Thus, \((\lambda
-x.\lambda y.x)\ (\lambda z.y)\ 1\) equals \(\lambda z.y\). Applying the function
-to \(2\) produces an error as the value of \(y\) is unknown. However, the current
-semantics evaluates the expression in a different way. Substituting \(x\) with
-\(\lambda z.y\) in \(\lambda x.\lambda y.x\) results in \(\lambda y.\lambda
-z.y\). It has already become problematic. Free variable \(y\) in \(\lambda z.y\)
-has been unexpectedly bound to parameter \(y\) of \(\lambda y.x\). Continuing the
-evaluation yields \(1\) since \(\lambda y.\lambda z.y\) takes two arguments and
-returns the former. Why did it happen? \(y\) bound to parameter \(y\) of
-\(\lambda y.x\) must syntactically belong to the body of the function. However,
-the substitution syntactically replaces \(x\) with \(\lambda z.y\). As a
-consequence, free variable \(y\), which is unrelated to parameter \(y\), has been
-bound to parameter \(y\). Variable capture refers to that a free variable becomes
-unexpectedly bound to an irrelevant binding occurrence.
-
-Alpha conversion, or alpha renaming, resolves variable capture. It changes the
-name of the parameter of a lambda abstraction while preserving the behavior of
-the function. For example, alpha-converting \(\lambda x.x\) can yield \(\lambda
-y.y\). Both functions are identity functions and thus have the same semantics but
-differ in the names of the parameters. A lambda abstraction and a lambda
-abstraction obtained by alpha-converting the former are alpha equivalent.
-
-A new name of a parameter for alpha conversion must be an identifier that is not
-in the lambda abstraction. Otherwise, the semantics of the function can change.
-For example, replacing \(x\) with \(z\) in \(\lambda x.y\) yields \(\lambda z.y\)
-and is correct alpha conversion. On the other hand, replacing \(x\) with \(y\)
-yields \(\lambda y.y\), whose semantics differs from that of the original
-function. Replacing \(x\) with \(z\) in \(\lambda x.\lambda y/x\) is correct
-since the result is \(\lambda z.\lambda y.z\). However, replacing \(x\) with
-\(y\) results in \(\lambda y.\lambda y.y\), which changes the semantics.
-
-Function \(\mathit{id}\) takes an expression as an argument and returns the set
-of all the identifiers in the expression.
-
-\[
-\mathit{id}\in \text{Expression}\rightarrow \mathcal{P}(\text{Variable})
-\]
-
-\[
-\begin{array}{rcl}
-\mathit{id}(n) & = & \emptyset \\
-\mathit{id}(e_1+e_2) & = & \mathit{id}(e_1)\cup\mathit{id}(e_2) \\
-\mathit{id}(e_1-e_2) & = & \mathit{id}(e_1)\cup\mathit{id}(e_2) \\
-\mathit{id}(x) & = & \{x\} \\
-\mathit{id}(\lambda x.e) & = & \mathit{id}(e)\cup\{x\} \\
-\mathit{id}(e_1\ e_2) & = & \mathit{id}(e_1)\cup\mathit{id}(e_2)
-\end{array}
-\]
-
-An integer lacks identifiers. A variable contains a single identifier that is its
-name. When an expression is a sum, a difference, or a function application, the
-union of the identifiers of its subexpressions is the result. A lambda
-abstraction has the name of its parameter and every identifier in its body.
-
-Alpha conversion is a relation over expressions and expressions. The definition
-of alpha conversion follows:
-
-\[
-\equiv^\alpha \subseteq \text{Expression}\times\text{Expression}
-\]
-
-\[
-\inferrule
-{ x'\not\in\textit{ids}(\lambda x.e) }
-{ \lambda x.e\equiv^\alpha\lambda x'.\lbrack x'/x\rbrack e }
-\]
-
-\[
-\lambda x.e\equiv^\alpha\lambda x.e
-\]
-
-The domain of alpha conversion includes only lambda abstractions. For a given
-function, it replaces every occurrence of the parameter with a fresh identifier,
-which never occurs in the function, in the function. The result can be the
-function itself.
-
-Substitution avoids variable capture through alpha conversion. Before that, a
-free variable of an expression must be formally defined. Function \(\mathit{fv}\)
-takes an expression as an argument and returns the set of all the free variables
-in the expression.
-
-\[
-\mathit{fv}\in \text{Expression}\rightarrow \mathcal{P}(\text{Variable})
-\]
-
-\[
-\begin{array}{rcl}
-\mathit{fv}(n) & = & \emptyset \\
-\mathit{fv}(e_1+e_2) & = & \mathit{fv}(e_1)\cup\mathit{fv}(e_2) \\
-\mathit{fv}(e_1-e_2) & = & \mathit{fv}(e_1)\cup\mathit{fv}(e_2) \\
-\mathit{fv}(x) & = & \{x\} \\
-\mathit{fv}(\lambda x.e) & = & \mathit{fv}(e)\setminus\{x\} \\
-\mathit{fv}(e_1\ e_2) & = & \mathit{fv}(e_1)\cup\mathit{fv}(e_2)
-\end{array}
-\]
-
-An integer lacks free variables. A variable has a single free variable that is
-itself. When an expression is a sum, a difference, or a function application, the
-union of the free variables of its subexpressions is the result. The free
-variables of a lambda expression equal the free variables of the body except the
-parameter.
-
-Now, the definition of substitution changes. Since alpha conversion can produce
-more than one expression, substitution is a relation, but not a function.
-
-Substitution for lambda abstractions only needs changes. All the other cases
-remain the same.
-
-\[
-\lbrack e/x \rbrack\lambda x.e' = \lambda x.e'
-\]
-
-\[
-\inferrule
-{ x\not=x' \\
-  \lambda x'.e'\equiv^\alpha \lambda x'' .e'' \\
-  x'' \not\in\mathit{fv}(e) }
-{ \lbrack e/x \rbrack\lambda x'.e' =
-  \lambda x'' .\lbrack e/x \rbrack e'' }
-\]
-
-Substitution correctly avoids variable capture. The semantics of FAE has been
-perfect.
-
-Many sorts of programming language research focus on topics irrelevant to
-variable capture and alpha conversion. They usually assume alpha conversion to
-prevent variable capture in their semantics. They typically say that they treat
-expressions up to alpha conversion. It may seem naive but makes researchers be
-able to concentrate on important points. Substitution often fits defining
-semantics better than environments. As the assumption simply removes the concern
-about variable capture, most researchers use substitution instead of environments
-to define semantics.
-
-Proof assistants, such as Coq, strictly deals with every insignificant detail.
-Users cannot simply assume alpha conversion to resolve variable capture. They
-commonly use De Bruijn indices to overcome the difficulty. Higher-order abstract
-syntax, which represents variable binding with functions at the level of abstract
-syntax trees, is another solution. Both topics are beyond the scope of the
-article.
-
-Interpreters can use substitution, but such interpreters are rare. Assuming alpha
-conversion does not work for interpreters. Implementing correct substitution
-requires some amount of effort. Besides, interpreters using environments
-outperform interpreters using substitution. Maps efficiently implement
-environments. Both extension and lookup require constant time. On the other hand,
-applying substitution to an expression whose size is \(n\) requires time
-complexity of \(O(n)\). The definition of the size of an expression is omitted as
-it is unimportant.
-
-\section{Call by Name
-}
-
-The inference rule for function applications under call-by-value semantics
-follows:
-
-\[
-\inferrule{
-  e_1\Downarrow \lambda x.e \\
-  e_2\Downarrow v' \\
-  \lbrack v'/x\rbrack e\Downarrow v
-}
-{ e_1\ e_2\Downarrow v }
-\]
-
-Call-by-name semantics changes the rule not to evaluate the argument and to
-substitute the parameter with the argument expression.
-
-All the other rules remain the same.
-
-If evaluating an expression under call-by-value semantics results in a value,
-then call-by-name semantics yields the same value. The following formally
-rephrases it:
-
-\[
-\forall e.\forall v.e\Downarrow v\rightarrow e\Downarrow_l v
-\]
-
-It is a corollary of the standardization theorem. The theorem states that for
-a given expression, if there is an order of evaluation that results in a value,
-then normal-order evaluation produces the same value. Normal order is similar to
-call by name. The only difference is that normal-order evaluation evaluates the
-body of a function that is never called. Normal order is beyond the scope of the
-article.
-
-The above proposition is true because FAE and LFAE lack side effects. Expressions
-of languages with side effects vary in the results according to the order of
-evaluation. If side effects exist, redundant calculations can change states.
-Under call-by-value semantics, every argument is evaluated once and only once.
-However, under call-by-name semantics, an argument can be evaluated zero or more
-times.
-
-The converse of the proposition is false. Some expressions yield results under
-only call-by-name semantics. Even though the evaluation of an argument raises an
-error or does not terminate, the function application succeeds if the body does
-not require the value of the argument. However, the evaluation always happens
-under the call-by-value semantics.
-
-\subsection{Implementing an Interpreter
-}
-
-Making some revision to the LFAE interpreter allows call by name for function
-applications. The existing interpreter evaluates an argument when it appears as a
-function of a function application or an operand of an addition or a subtraction.
-Under the call-by-name semantics, an interpreter must evaluate an argument when
-the corresponding parameter occurs.
+The program prints \code{1} only once. By using both by-name parameter and lazy
+variable, we can simulate the call-by-need semantics in Scala.
 
 \begin{verbatim}
-sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
-\end{verbatim}
-
-The abstract syntax remains the same.
-
-\begin{verbatim}
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-
-case class Expr(e: Expr, env: Env)
-type Env = Map[String, Expr]
-\end{verbatim}
-
-The previous interpreter needs the \verb!ExprV! class to represent a delayed
-evaluation as a value. Now, the result of the \verb!interp! function always
-differs from a delayed evaluation because any occurrence of a parameter leads to
-evaluation of the argument. The \verb!Expr! class replaces the \verb!ExprV!
-class. The \verb!Expr! class takes the same role to the \verb!ExprV! class, but
-its instance is not considered as a value of LFAE. An environment is a map from a
-string to an \verb!Expr! instance.
-
-\begin{verbatim}
-def lookup(x: String, env: Env): Expr =
-  env.getOrElse(x, throw new Exception)
-
-def interp(e: Expr, env: Env): Value = e match {
-  case Num(n) => NumV(n)
-  case Add(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n + m)
-  case Sub(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n - m)
-  case Id(x) =>
-    val Expr(e, eEnv) = lookup(x, env)
-    interp(e, eEnv)
-  case Fun(x, b) => CloV(x, b, env)
-  case App(f, a) =>
-    val CloV(x, b, fEnv) = interp(f, env)
-    interp(b, fEnv + (x -> Expr(a, env)))
+def bar(_x: => Int, b: Boolean): Int = {
+  lazy val x = _x
+  if (b) x + x else 0
 }
 \end{verbatim}
 
-Since the result of \verb!interp! function cannot be \verb!ExprV!, the
-\verb!strict! function is useless. The \verb!Id! case finds an \verb!Expr!
-instance from the environment and evaluates the expression in the instance under
-the environment in the instance. The \verb!App! case creates an \verb!Expr!
-instance to extend the environment.
-
-\subsection{Call by Need
-}
-
-Call by need is semantics that evaluates an argument when the corresponding
-parameter occurs in the function body, like call by name. The only difference
-between two semantics is that call-by-need semantics stores a value of the
-argument after the first evaluation and reuses the value for other occurrences of
-the parameter. It applies the optimization for LFAE, which uses the option type,
-to call by name. Two semantics always produces the same result for languages
-without side effects. Under the presence of side effects, two semantics vary.
-
-Call by need is formalizable as well as call by name. However, to represent
-storing values of arguments, formalization needs a concept similar to a store of
-BFAE or MFAE. It complexifies the semantics needlessly. Moreover, an LFAE
-expression results in the same value regardless of choice between call by name
-and call by need. Call by need for LFAE is an optimization of call by name for
-LFAE. Thus, the article omits formalization of call by need. One can find
-additionally from other articles, such as "An operational semantics of sharing in
-lazy evaluation." Since modifying the interpreter to use call by need is
-trivial, the article omits it as well.
+If \code{b} is true, the first argument is evaluated only once. Otherwise, it is
+not evaluated at all.
 
 \section{Exercises}
 
 \begin{enumerate}
 \item Which of the following produce different results in a
- call-by-value language and a call-by-name language? Both produce the
+ CBV language and a CBN language? Both produce the
  same result if they both produce the same number or they both produce
- a procedure (even if the procedure doesn't behave exactly the same
+ closures (even if they do not behave exactly the same
  when applied).
 
-\begin{itemize}
-  \item[a)] \verb!{{fun {y} {y 3}} {f {x} {1 2}}}!
-  \item[b)] \verb!{{fun {y} {y {fun {z} 10}}} {f {x} {x {1 2}}}}!
-  \item[c)] \verb!{{fun {y} {y {fun {z} 10}}} {f {x} {1 2}}}!
-  \item[d)] \verb!{{fun {y} y} {+ 1 {fun {x} x}}}!
-  \item[e)] \verb!{{fun {y} {+ 1 2}} {+ 1 {fun {x} x}}}!
-\end{itemize}
+\begin{enumerate}
+  \item $\eapp{(\efun{\cy}{\eapp{\cy}{3}})}{(\efun{\cx}{\eapp{1}{2}})}$
+  \item
+    $\eapp{(\efun{\cy}{\eapp{\cy}{\efun{\cx}{10}}})}{(\efun{\cx}{\eapp{\cx}{(\eapp{1}{2})}})}$
+  \item
+    $\eapp{(\efun{\cy}{\eapp{\cy}{\efun{\cx}{10}}})}{(\efun{\cx}{\eapp{1}{2}})}$
+  \item
+    $\eapp{(\efun{\cy}{\cy})}{(\eadd{1}{\efun{\cx}{\cx}})}$
+  \item
+    $\eapp{(\efun{\cy}{\eadd{1}{2}})}{(\eadd{1}{\efun{\cx}{\cx}})}$
+\end{enumerate}
 
-\item Show the results of each expression in an eager language and a lazy language.
-\begin{itemize}
+\item Show the results of each expression in an CBV language and a CBN language.
 
-  \item[a)] \((\lambda x. 8) + 10\)
-\\[1em]
-eager:
-\hspace*{5em}
-lazy:\\
+\begin{enumerate}
+  \item $\eadd{(\efun{\cx}{8})}{10}$
+  \item $\eapp{(\efun{\cx}{8})}{(\eapp{1}{2})}$
+  \item $\efun{\cx}{(\eapp{(\efun{\cy}{42})}{(\eapp{9}{2})})}$
+  \item
+    $\eadd{1}{(\eapp{(\efun{\cx}{\eadd{\cx}{13}})}{(\eadd{1}{\efun{\cy}{7}})})}$
+  \item
+    $\eadd{1}{(\eapp{(\efun{\cx}{\eadd{1}{13}})}{(\eadd{1}{\efun{\cy}{7}})})}$
+\end{enumerate}
 
-  \item[b)] \((\lambda n. 8)\ (1\ 2)\)
-\\[1em]
-eager:
-\hspace*{5em}
-lazy:\\
-
-  \item[c)] \(\lambda m.\ ((\lambda n. 42) (9\ 2))\)
-\\[1em]
-eager:
-\hspace*{5em}
-lazy:\\
-
-  \item[d)] \(1 + ((\lambda x.(x + 13))\ (1 + (\lambda z.7)))\)
-\\[1em]
-eager:
-\hspace*{5em}
-lazy:\\
-
-  \item[e)] \(1 + ((\lambda x. (1 + 13)) (1 + (\lambda z. 7)))\)
-\\[1em]
-eager:
-\hspace*{5em}
-lazy:\\
-
-\end{itemize}
-
-\item Note that there is a nested \texttt{strict} call in the following:
+\item Note that there is a recursive call in the following function:
 
 \begin{verbatim}
 def strict(v: Value): Value = v match {
@@ -758,80 +553,35 @@ def strict(v: Value): Value = v match {
   case _ => v
 }
 \end{verbatim}
-Write an example LFAE expression showing the need for the nested \texttt{strict} call.
 
-\item Consider the following language:
-\[
-\begin{array}{lll}
-\begin{array}{rrl}
-\\
-  e & ::= & n\\
-        & | & e + e\\
-        & | & x\\
-        & | & \lambda x.\ e\\
-        & | & e\ e\\
-\end{array}
-&\qquad&
-\begin{array}{rclcl}
-n & \in & \mbox{Num}&&\\
-  \sigma &\in& \mbox{Env} &=& {\mbox{Var}} \xrightarrow[]{\text{fin}} {\mbox{Val}}\\
-  x &\in& \mbox{Var} &&\\
-
-  \langle\lambda x. e,\ \sigma\rangle &\in& \mbox{Clo} &=& \mbox{Var} \times \mbox{Expr} \times \mbox{Env}\\
-  v &\in& \mbox{Val} &=& \mbox{Int} + \mbox{Clo} + \mbox{ExprV}\\
-  (e, \sigma) &\in& \mbox{ExprV} &=& \mbox{Expr} \times \mbox{Env}\\
-\end{array}
-\end{array}
-\]
-with the following ``strict'' evaluation of the form \fbox{$v \Downarrow v$}:
-\[
-\begin{array}{lll}
-n \Downarrow n
-&\qquad
-\langle\lambda x. e,\ \sigma\rangle \Downarrow \langle\lambda x. e,\ \sigma\rangle
-&\qquad
-\inferrule
-{\sigma \vdash e \Rightarrow v_1 \qquad
-v_1 \Downarrow v_2 }
-{(e, \sigma) \Downarrow v_2}
-\end{array}
-\]
-Write the operational semantics of the language, where a value is strictly evaluted
-when it is used, that is, strict evaluation is deferred as much as possible.
-Thus, the evaluation of ``$\lambda x.x~y$'' is not an error.
-
-\item For each of the following LFAE expressions, show how it is evaluated and its result.
-
-\begin{itemize}
-  \item[a)] \((\lambda x.x\ 8) (42 + (\lambda y.y - x)) \)
-  \item[b)] \((\lambda y.((\lambda x.3 + x)\ y))\ 5\)
-\end{itemize}
+Write an example \lang expression showing the need for the recursive \code{strict} call.
 
 \item Consider the following expression:
-
 \[
-\begin{array}{l@{~}l}
-\textsf{val}& f = \lambda x. y + 7\\
-\textsf{in}& \textsf{val}\ y = 4\\
-& \textsf{in}\ (f\ (42 + \lambda y.3))
+\begin{array}{l}
+  \ebind{\cf}{\efun{\cx}{\eadd{\cy}{7}}}{\\
+  \ebind{\cy}{5}{\\
+  \eapp{\cf}{(\eadd{42}{\efun{\cy}{3}})}
+  }
+  }
 \end{array}
 \]
 
 Explain the result of evaluating it under the following semantics:
-\begin{itemize}
-  \item[a)] Lazy evaluation with static scoping%2
-  \item[b)] Lazy evaluation with dynamic scoping%2
-  \item[c)] Eager evaluation with static scoping%1
-  \item[d)] Eager evaluation with dynamic scoping%1
-\end{itemize}
+\begin{enumerate}
+  \item Lazy evaluation with static scope
+  \item Lazy evaluation with dynamic scope
+  \item Eager evaluation with static scope
+  \item Eager evaluation with dynamic scope
+\end{enumerate}
 
-\item For each of the following LFAE expressions, show how it is evaluated and its result.
+\item For each of the following \lang expressions, show how it is evaluated and its result.
 
-\begin{itemize}
-  \item[a)] \((\lambda x.x\ 8)\ (42 + (\lambda y. y - x))\)
-
-  \item[b)] \(((\lambda y. (\lambda x.3 + x)\ y)\ 5)\)
-\end{itemize}
-
+\begin{enumerate}
+  \item
+    $\eapp{(\efun{\cx}{\eapp{\cx}{8}})}{(\eadd{\eapp{42}}{\efun{\cy}{\esub{\cy}{\cx}}})}$
+  \item
+    $\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{3}{\cx}})}{\cy})}}{5}$
+\end{enumerate}
 
 \end{enumerate}

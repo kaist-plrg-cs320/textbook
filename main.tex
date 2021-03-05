@@ -85,6 +85,7 @@
 
 \newcommand{\fundef}[3]{\textsf{def}\ #1(#2)\shorteq#3}
 \newcommand{\clov}[3]{\langle\efun{#1}{#2},#3\rangle}
+\newcommand{\exprv}[2]{(#1,#2)}
 \newcommand{\eadd}[2]{#1+#2}
 \newcommand{\esub}[2]{#1-#2}
 \newcommand{\ebind}[3]{\textsf{val}\ #1\shorteq#2\ \textsf{in}\ #3}
@@ -104,6 +105,9 @@
 \newcommand{\evald}[2]{\eval{\sigma}{#1}{#2}}
 \newcommand{\evaldn}[2]{\evaln{\sigma}{#1}{#2}}
 \newcommand{\evale}[2]{\eval{\emptyset}{#1}{#2}}
+
+\newcommand{\stricte}[2]{#1\Downarrow#2}
+\newcommand{\stricten}[2]{\ensuremath{#1} strictly evaluates to \ensuremath{#2}}
 
 \newcommand{\seval}[5]{#1,#2\vdash#3\Rightarrow#4,#5}
 \newcommand{\sevaln}[5]{
@@ -375,6 +379,7 @@
 \newacronym[longplural={abstract syntax trees}]{astLabel}{AST}{abstract syntax tree}
 \newacronym[longplural={call-by-value}]{cbvLabel}{CBV}{call-by-value}
 \newacronym[longplural={call-by-reference}]{cbrLabel}{CBR}{call-by-reference}
+\newacronym[longplural={call-by-name}]{cbnLabel}{CBN}{call-by-name}
 
 \setglossarystyle{listgroup} % Set the style of the glossary (see https://en.wikibooks.org/wiki/LaTeX/Glossary for a reference)
 \printglossary[title=Special Terms, toctitle=List of Terms] % Output the glossary, 'title' is the chapter heading for the glossary, toctitle is the table of contents heading
