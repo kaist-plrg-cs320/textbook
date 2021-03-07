@@ -128,7 +128,7 @@ Compiling the above code succeeds. The type of \code{h1} is \code{Int => (Int =>
 \code{Int => Int => Int} denotes the same type because \code{=>} is
 a right-associative type operator. \code{h1(0)(0)} is valid and yields \code{0}.
 
-Actually, expressions \inred{except \code{val h1 = f}} use function names as values
+Actually, above expressions except \code{val h1 = f} use function names as values
 successfully. The Scala compiler transforms function names into function values
 when they occur where function types are expected. Therefore, enforcing the type of
 \code{h1} to be a function type corrects the code without the underscore. The
