@@ -242,7 +242,8 @@ expression-values and strict evaluation.
 
 $e_1$ evaluates to $v_1$ first. $v_1$ may be an expression-value, while we need a
 closure. Therefore, we strictly evaluate $v_1$ to get a closure. On the other
-hand, the argument must be evaluated in the CBN semantics. Instead of
+hand, in the CBN semantics, the argument must not be evaluated before the
+evaluation of the function body. Instead of
 evaluating $e_2$, we make an expression-value with $e_2$ and $\sigma$ and then
 put the value into the environment.
 

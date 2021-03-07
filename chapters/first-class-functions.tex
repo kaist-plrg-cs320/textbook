@@ -137,9 +137,9 @@ When the closure is applied to $2$, its body ${\eadd{\cx}{\cy}}$ is evaluated
 under $[\cx\mapsto1,\cy\mapsto2]$, not $[\cy\mapsto2]$. The addition
 successfully results in $3$.
 
-In summary, we need closures to retain the static scope semantics. First-class
-functions can appear at any places expecting expressions.
-However, the environments used for the
+In summary, we need closures to retain the static scope semantics. A first-class
+function can be passed as a value and thus applied to an argument at a different
+place from where it has been defined. However, the environments used for the
 evaluation of their bodies must be determined statically. In other words,
 the denotation of identifiers in the bodies of functions must be determined when
 the functions are defined, not used. Therefore, each closure captures the surrounding
@@ -602,7 +602,7 @@ $\boxed{\sigma \vdash e \Rightarrow v}$
     \]
 \end{enumerate}
 
-\item This exercise replaces the environment-based semantics of \lang with 
+\item This exercise replaces the environment-based semantics of \lang with
 a substitution-based semantics.
 Consider the following implementation:
 \begin{verbatim}
