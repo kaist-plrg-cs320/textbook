@@ -67,7 +67,7 @@ tag to be distinguished from other components.
 In an ADT, one form of values that can be distinguished from the other forms is
 called a \textit{variant}\index{variant}.
 
-For example, an arithmetic expression, which have three variants, is
+For example, an arithmetic expression, which has three variants, is
 
 \begin{itemize}
 \item a number,
@@ -98,7 +98,7 @@ type ae =
 \end{verbatim}
 
 Scala does not provide a direct way to define ADTs. Instead, Scala provides
-traits and classes, which are more general mechanism to define new types,
+traits and classes, which are more general mechanisms to define new types,
 and programmers can express ADTs with traits and classes.
 
 A new type can be defined as a trait.
@@ -272,17 +272,17 @@ def eval(e: AE): Int =
 \code{value} of \code{e}. However, \code{value} cannot be directly accessed
 since \code{e}'s type is \code{AE}. Because \code{e.isInstanceOf[Num]} is true,
 we are sure that \code{e}'s actual type is \code{Num}. In this case, we can
-inform this knowledge to the compiler with type casting. \code{e.isInstanceOf[Num]}
+inform this knowledge to the compiler with type casting. \code{e.asInstanceOf[Num]}
 does not change the value denoted by \code{e} but lets the compiler know that
 the programmer guarantees the type of \code{e} to be \code{Num}. Therefore, the
-compiler considers \code{e.isInstanceOf[Num]} to belong \code{Num} and allows
+compiler considers \code{e.asInstanceOf[Num]} to belong \code{Num} and allows
 accessing the field \code{value}. These type tests and casting processes should
 be done for the other variants, \code{Add} and \code{Sub}, too.
 
 The code is long and complicated despite its simple functionality. Dynamic type
 tests and explicit type casting occupy most of the code, while real
 computation requires short code. Besides, such code is error-prone.
-For example, programmers may write code like below by a mistake:
+For example, programmers may write code like below by mistake:
 
 \begin{verbatim}
 else if (e.isInstanceOf[Add]) {
@@ -365,8 +365,8 @@ The unit of compilation is a single file, so it is impossible to find
 all the variants by scanning a single file when a trait is not sealed.
 Exhaustivity checking during pattern matching will be impossible.
 The \code{sealed} keyword resolves the problem. Since sealed traits cannot be
-extended further, it is enough to check only the file defines a sealed trait to find
-every variant of the trait. It is why we uses sealed traits to define ADTs.
+extended further, it is enough to check only the file that defines a sealed trait to find
+every variant of the trait. It is why we use sealed traits to define ADTs.
 
 \subsection{Reachability Checking}
 
@@ -397,9 +397,9 @@ warning: unreachable code
 \end{flushright}
 \end{mdframed}
 
-When code is simple and short, it is easy check whether there are unreachable
+When code is simple and short, it is easy to check whether there are unreachable
 patterns. However, in complex code, programmers often insert unreachable
-patterns by mistakes and make critical bugs. Reachability checking of the
+patterns by mistake and make critical bugs. Reachability checking of the
 compiler is an important feature to prevent such bugs.
 
 \section{Patterns in Scala}
@@ -493,7 +493,7 @@ optimizes a given arithmetic expression by eliminating additions of zeros.
 def optimizeAdd(e: AE): AE = e match {
   case Num(_) => e
   case Add(Num(0), r) => optimizeAdd(r)
-  case Add(l, Num(0)) => optimizeAdd(r)
+  case Add(l, Num(0)) => optimizeAdd(l)
   case Add(l, r) => Add(optimizeAdd(l), optimizeAdd(r))
   case Sub(l, r) => Sub(optimizeAdd(l), optimizeAdd(r))
 }
@@ -609,7 +609,7 @@ semantics, and type arguments are unavailable at run time.
 \subsection{Tuple Patterns}
 
 The syntax of a tuple pattern is \code{([pattern], …, [pattern])}.
-It matches a tuple whose elements respectively matches the internal patterns.
+It matches a tuple whose elements respectively match the internal patterns.
 
 The following function uses tuple patterns to check
 whether two lists are identical:
@@ -701,7 +701,7 @@ element of a given tree and a tree obtained by removing the element from the
 tree.
 
 \begin{verbatim}
-def removeMin(t: Node): (Int, Tree) = {
+def removeMin(t: Tree): (Int, Tree) = {
   t match {
     case Node(n, Empty, t1) =>
       (n, t1)
@@ -897,7 +897,7 @@ possibility of unhandled exceptions.
 Another problem of exceptions is that exception handling is not local.
 When an exception is thrown, the control flow suddenly jumps to the position of
 the nearest exception handler. Non-local transition of the control flow usually
-hinder programmers from understanding code.
+hinders programmers from understanding code.
 Therefore, implementing \code{get} without exceptions is desirable.
 
 The first attempt is to use \code{null}. \code{null} is a value that denotes that
@@ -1044,7 +1044,7 @@ that the operation has failed by \code{None}.
 Otherwise, the function packs
 an element inside \code{Some} to make the return value.
 
-The Scala standard library uses options in many places. Various methods returns options.
+The Scala standard library uses options in many places. Various methods return options.
 For example, \code{headOption} of a list returns \code{None} when the list is
 empty. Otherwise, \code{Some} containing the head of the list is returned.
 
@@ -1113,5 +1113,5 @@ def getStudent(
   l.headOption.flatMap(m.get)
 \end{verbatim}
 
-The standard library provide many other useful methods for
+The standard library provides many other useful methods for
 options.\sidenote{\url{https://www.scala-lang.org/api/current/scala/Option.html}}

@@ -20,10 +20,10 @@ def twice(x: Int): Int = x + x
 println(twice(3) + twice(5))
 \end{verbatim}
 
-It defines a function, \code{double}. The functions takes one argument and
-returns the twice of the argument. The program can call the function whenever we want.
+It defines a function, \code{twice}. The function takes one argument and
+returns twice of the argument. The program can call the function whenever we want.
 \code{twice(3)} passes \code{3} as an argument to \code{twice}. Its result is
-\code{6}, which is the twice of \code{3}. Similarly, \code{twice(5)} results in
+\code{6}, which is twice of \code{3}. Similarly, \code{twice(5)} results in
 \code{10}. Therefore, the program prints \code{16}.
 
 This chapter defines \lang by adding first-order functions to \plang.
@@ -50,20 +50,20 @@ denote the set of every function definition. A function definition
 $\fundef{x_1}{x_2}{e}$ defines a function whose name is $x_1$, parameter is
 $x_2$, and body is $e$. Both $x_1$ and $x_2$ are binding occurrences.
 The scope of $x_1$ is the entire program; the scope of $x_2$ is $e$.
-In many real-world languages, a function have zero or
+In many real-world languages, a function has zero or
 more parameters. However, our syntax restricts a function to have one and only
 one parameter. We adopt this design to make the semantics simple. Once you
 understand a function with a single parameter, you can easily extend the concept
 to a function with multiple parameters.
 
 Using a function is to call the function. If we never call a function, the
-function is useless. We need to add a new kind of expressions to the language:
-function call expressions. The following is the syntax of \lang:
+function is useless. We need to add a new kind of expression to the language:
+the function call expression. The following is the syntax of \lang:
 \sidenote{We omit the common part to \plang.}
 
 \[ e\ ::=\ \cdots\ |\ \eappfo{x}{e} \]
 
-$x(e)$ is a function call expression. It calls a function named $x$. $e$
+$x(e)$ is the function call expression. It calls a function named $x$. $e$
 determines the value of the argument of the call. Here, $x$ is a bound
 occurrence. A function call always has only one argument since every function in
 \lang has only one parameter.
@@ -124,7 +124,7 @@ We can formulate the semantics as the following inference rule:
   \inferrule
   {
     \eval{\sigma,\Lambda}{e}{n'} \\
-    f\in\dom{\Lambda} \\
+    x\in\dom{\Lambda} \\
     \Lambda(x)=\fundef{x}{x'}{e'} \\
     \eval{[x'\mapsto n'],\Lambda}{e'}{n}
   }
@@ -270,7 +270,7 @@ correctness with the case-wise comparison.
 The current semantics is called static scope. Static scope allows the scope of a
 binding occurrence to be determined statically, i.e. only by looking the code,
 without executing it. In other words, a function body can use only variables
-that has been defined already when the function is defined.
+that have been defined already when the function is defined.
 For example, consider the following code:
 
 \[
@@ -329,7 +329,7 @@ It is equivalent to the following inference rule:
   \inferrule
   {
     \eval{\sigma,\Lambda}{e}{n'} \\
-    f\in\dom{\Lambda} \\
+    x\in\dom{\Lambda} \\
     \Lambda(x)=\fundef{x}{x'}{e'} \\
     \eval{\sigma[x'\mapsto n'],\Lambda}{e'}{n}
   }

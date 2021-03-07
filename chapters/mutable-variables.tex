@@ -49,9 +49,9 @@ mutable variables to answer the question.
 
 This chapter defines \lang by extending \plang with mutable variables.
 We will see the semantics of mutable variables. Addition of mutable
-variables gives us a chance to explore a different design of function
-application semantics. We will see what is call-by-reference semantics and how
-it differs from call-by-value semantics.
+variables gives us a chance to explore a different design of the function
+application semantics. We will see what is the call-by-reference semantics and how
+it differs from the call-by-value semantics.
 
 \section{Syntax}
 
@@ -68,8 +68,8 @@ a variable. The reason is that variables are not values. We cannot get a
 variable by evaluating an expression. The only way to designate a variable is
 to write the name of the variable, and the syntax reflects this point.
 
-Note that \lang lacks sequenced expressions, which exist in \bfae. Actually, it
-is not problematic at all. We can desugar sequenced expressions into
+Note that \lang lacks sequencing expressions, which exist in \bfae. Actually, it
+is not problematic at all. We can desugar sequencing expressions into
 lambda abstractions and function applications: transform $\eseq{e_1}{e_2}$ into
 $\eapp{(\efun{x}{e_2})}{e_1}$, where $x$ is not free in $e_2$. The semantics of
 $\eseq{e_1}{e_2}$ is that evaluating $e_1$ first and then $e_2$. The evaluation
@@ -79,7 +79,7 @@ $e_1$, is evaluated. Finally, the body of the closure, $e_2$, is evaluated. Ther
 $e_1$ is evaluated before $e_2$. Also, since $x$ is not a free identifier in
 $e_2$, the result of $e_1$ is never used even though it is passed to the
 function as an argument. Thus, we can conclude that the desugaring is correct.
-We may use sequenced expressions in examples as they can be easily desugared.
+We may use sequencing expressions in examples as they can be easily desugared.
 
 \section{Semantics}
 
@@ -316,7 +316,7 @@ On the contrary, their expectation is wrong. The result is \code{1 2}.
 We can explain the reason based on
 the content of this chapter. When \code{swap} is called, two new fresh addresses
 are allocated for \code{x} and \code{y}. The values of \code{a} and \code{b} are
-copied and stored in the addresses respectively. The function affects only the values in
+copied and stored in the addresses, respectively. The function affects only the values in
 the addresses of \code{x} and \code{y}. It never touches the addresses of
 \code{a} and \code{b}. As a consequence, while the values of \code{x} and
 \code{y} are swapped, the values of \code{a} and \code{b} are not.

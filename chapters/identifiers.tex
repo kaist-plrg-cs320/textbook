@@ -7,7 +7,7 @@
 
 Variables are one of the basic concepts of programming languages. A
 \textit{variable}\index{variable} relates a name to a value. We use the
-value by writing the name of the variable. For example, the following Scala program
+value of a variable by writing the name of the variable. For example, the following Scala program
 prints \code{3}.
 
 \begin{verbatim}
@@ -26,18 +26,18 @@ there are various kinds of identifiers:
 \begin{itemize}
 \item Function names, which are related to functions
 \item Parameter names, which are related to the values of arguments
-\item Fields names, which are related to values of fields
+\item Field names, which are related to values of fields
 \item Method names, which are related to methods
 \item Class names, which are related to classes
 \end{itemize}
 
-This chapter introduces identifiers. Identifiers in programs can split in to
+This chapter introduces identifiers. Identifiers in programs can split into
 three groups: binding occurrences, bound occurrences, and free identifiers.
-We will see what they are. This chapter discusses identifiers based on use
+We will see what they are. This chapter discusses identifiers based on the use
 of variables in programs. We will define \lang by extending \plang of
 \refch{syntax-and-semantics} with variables. Variables of \lang are immutable.
 We will deal with mutable variables in \refch{mutable-variables}.
-In \lang, the name of variables are
+In \lang, the names of variables are
 the only identifiers. However, as you have seen already, real-world programming
 languages have many kinds of identifiers.
 
@@ -97,7 +97,7 @@ occurrence is alive, i.e. usable. The scope of each identifier in the program is
   \item \code{x}
 
     A paramter of a function can be used only in the function body. The scope of
-    \code{x} is line 3 and 4.
+    \code{x} is line 3 and line 4.
 
   \item \code{y}
 
@@ -168,13 +168,13 @@ the outer binding occurrences of the same name. Therefore, \code{x} at line 2
 shadows \code{x} at line 1.
 \code{x} at line 3 belongs to the scope of both binding occurrences simultaenously.
 It denotes the value of an argument given to \code{g}, not \code{f}, because of
-the shadowing. On the other hand, \code{x} at line 4 denotes the value of an
+shadowing. On the other hand, \code{x} at line 4 denotes the value of an
 argument given to \code{f} since it belongs to the scope of only \code{x} at
 line 1.
 
 \section{Syntax}
 
-Let us define the abstract syntax of \lang. We do not consider the concrete
+Let us define the abstract syntax of \lang. We do not consider concrete
 syntax anymore. Therefore, the term syntax will be used to mean abstract
 syntax. Also, from now on, we use the term expressions rather than
 programs when we discuss languages like \lang. For example, we say that
@@ -195,7 +195,7 @@ variable \code{x} and starts the scope of \code{x} so that \code{x} can be used
 in \code{println(x)}. We can conclude that an expression defining a variable
 consists of three parts: the name of the variable, an expression determining the
 value of the variable, and an expression that can use the variable. These parts
-are \code{x}, \code{3}, and \code{println(x)} respectively in the example. The
+are \code{x}, \code{3}, and \code{println(x)}, respectively, in the example. The
 second kind is expressions using a variable, i.e. a bound occurrence. In the
 example, \code{x} at the second line is such an expression. It uses the variable \code{x} to denote
 the value \code{3}. Based on this observation, we can define the syntax of
@@ -232,7 +232,7 @@ to \plang.}
 \section{Semantics}
 
 To define the semantics of \lang, we need an additional semantic element that
-stores the values denoted by variables. Without such element, we cannot know the
+stores the values denoted by variables. Without such an element, we cannot know the
 value of each variable. We call the element an
 \textit{environment}\index{environment}. An environment is a finite partial
 function.\sidenote{A finite partial function is a partial function whose domain
@@ -244,7 +244,7 @@ is a finite set.} The metavariable $\sigma$ ranges over environments.
 For example, consider an environment $\sigma$.
 If $\sigma(\cx)=1$, the value of a variable named \code{x} is $1$.
 An environment is a partial function because it does not have the values
-related to free identifiers. If a variable named \code{y} is is free in
+related to free identifiers. If a variable named \code{y} is free in
 $\sigma$, then $\sigma(\cy)$ is undefined.
 In addition, it is finite since every program
 defines only finitely many identifiers.
@@ -277,7 +277,7 @@ environments into account.
 $(\sigma,e,n)\in\Rightarrow$ is true if and only if
 $e$ evaluates to $n$ under $\sigma$.
 We write $\sigma\vdash e\Rightarrow n$ instead of $(\sigma,e,n)\in\Rightarrow$.
-Intuitively, $\sigma$ and $e$ are input, and $n$ is the corresponding output.
+Intuitively, $\sigma$ and $e$ are inputs, and $n$ is the corresponding output.
 
 Rule \textsc{Id} can be formulated as the following inference rule:
 \sidenote{$\dom{\sigma}$ denotes the domain of $\sigma$.}
@@ -297,7 +297,7 @@ fact that $x$ denotes $v$ to $\sigma$. Then, the following property holds:
 \sigma [x\mapsto n](x') =
 \begin{cases}
   n & \text{if}\ x=x' \\
-  \sigma(x) & \text{if}\ x\neq x'
+  \sigma(x') & \text{if}\ x\neq x'
 \end{cases}
 \]
 
@@ -368,7 +368,7 @@ Integers, addition, and subtraction never update environments.
 An integer evaluates to itself. Addition and subtraction evaluates their
 subexpressions under the same environment.
 
-We can express the rules in a natural language as the inference rules:
+We can express the rules in a natural language as the following inference rules:
 
 \[
   \evald{n}{n}\quad\textsc{[Num]}
@@ -438,7 +438,7 @@ type Env = Map[String, Int]
 We can add a pair of a key and a value to a map with the \code{+} operator.
 For example,
 where \code{m} is \code{Map(1 -> "one")}, \code{m + (2 -> "two")} is the same as
-\code{Map(1 -> "one", 2 -> "two")}
+\code{Map(1 -> "one", 2 -> "two")}.
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Int = e match {
@@ -450,7 +450,7 @@ def interp(e: Expr, env: Env): Int = e match {
 }
 \end{verbatim}
 
-Since the structure of the code is almost identical to the semantic rules, there
+Since the structure of the code is almost identical to the semantics rules, there
 is nothing much to explain. In the \code{Id} case, when \code{x} is a key in
 \code{env}, the corresponding value becomes the result of \code{interp}.
 Otherwise, an exception is thrown, and the execution

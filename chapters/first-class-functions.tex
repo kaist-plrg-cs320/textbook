@@ -28,7 +28,7 @@ Consider an anonymous function in Scala:
 
 If we ignore its type annotation, it consists of two parts: \code{x} and \code{x
 + x}. \code{x} is the parameter of the function; \code{x + x} is the body of the
-function. This observation let us know that an anonymous function consists of
+function. This observation lets us know that an anonymous function consists of
 its name and parameter.
 
 In \textsf{F1VAE}, the sytnax of a function call is $\eappfo{x}{e}$. To call a
@@ -79,7 +79,7 @@ we can define the syntax of \lang. The following is the syntax of \lang:
     \index{lambda abstraction}
     It denotes a function whose parameter is $x$ and body is $e$. $x$ is a
     binding occurrence, and its scope is $e$.
-    A function have zero or more parameters in many real-world languages,
+    A function has zero or more parameters in many real-world languages,
     but we restrict a function in \lang to have one and only one parameter for
     simplicity as before.
 
@@ -93,7 +93,7 @@ we can define the syntax of \lang. The following is the syntax of \lang:
 
 Integers are the only values in \plang. It is not true in \lang. Since
 first-class functions are values, a value of \lang is either an integer or a
-function. Thus, we define a new kind of semantic elements, values. The
+function. Thus, we define a new kind of semantic element, the value. The
 metavariable $v$ ranges over values. Also, let $V$ be the set of every value.
 
 \[ v\ ::=\ n\ |\ \clov{x}{e}{\sigma} \]
@@ -138,11 +138,12 @@ under $[\cx\mapsto1,\cy\mapsto2]$, not $[\cy\mapsto2]$. The addition
 successfully results in $3$.
 
 In summary, we need closures to retain the static scope semantics. First-class
-functions can move around the program. However, the environments used for the
+functions can appear at any places expecting expressions.
+However, the environments used for the
 evaluation of their bodies must be determined statically. In other words,
 the denotation of identifiers in the bodies of functions must be determined when
 the functions are defined, not used. Therefore, each closure captures the surrounding
-environment when it borns.
+environment when it is created.
 
 Now, let us define the semantics of \lang. Most things are the same as the
 semantics of \plang, but we should be aware of that values now include not only
@@ -389,7 +390,7 @@ case Add(l, r) =>
 
 Similarly, in the \code{App} case, we use pattern matching to discriminate
 closures from integers. The first expression of \code{App} must yield a clsoure,
-not an integer, to make the execution succeeds.
+not an integer, to make the execution succeed.
 
 \section{Syntactic Sugar}
 \labsec{fae}
@@ -407,7 +408,7 @@ does not allow recursion.
 
 Instead of changing the semantics, \lang can provide named local functions as
 syntactic sugar. Let $s$ be a string transformed into $\erec{x_1}{x_2}{e_1}{e_2}$
-by the parser of \lang with named local functions imbeded in the semantics.
+by the parser of \lang with named local functions embeded in the semantics.
 To treat named local functions as syntactic sugar, the parser should transform
 $s$ into $\ebind{x_1}{\efun{x_2}{e_1}}{e_2}$.
 
@@ -444,11 +445,11 @@ subtraction can be desugared into the lambda calculus.
     }
 }
 \]
-Describe a trace of the evalaution in terms of arguments to an \code{interp}
+Describe a trace of the evalaution in terms of arguments to the \code{interp}
 function for every call. (There will be 16 calls.) The \code{interp} function
 takes two arguments---an expression and an environment---so show both for each call.
-For \code{Num}, \code{Id}, and \code{Fun} expressions, show the result value, which
-is immediate. You can use the following abbreviations and possibly more abbreviations:
+For \code{Num}, \code{Id}, and \code{Fun} expressions, show their result values, which
+are immediate. You can use the following abbreviations and possibly more abbreviations:
 
 \begin{center}
 \begin{tabular}{lcl}
@@ -507,7 +508,7 @@ The semantics of some constructs are as follows:
     \begin{itemize}
     \item evaluating $e_0$ under $\sigma$ yields a closure $\langle \lambda x_1
       \cdots\ x_n.e,\sigma' \rangle$,
-    \item evaluating $e_i$ under $\sigma'$ yields $v_i$ for each $1 \leq i \leq
+    \item evaluating $e_i$ under $\sigma$ yields $v_i$ for each $1 \leq i \leq
       n$, and
     \item evaluating $e$ under $\sigma'[x_1 \mapsto v_1, \cdots, x_n \mapsto
       v_n]$ yields $v$,
@@ -523,15 +524,15 @@ The semantics of some constructs are as follows:
 { \hspace*{0.8\textwidth} }
 {
   \eval{\emptyset}{
-    \eappfo{(\efun{\code{f}
+    \eappfo{(\efun{\code{f}\
     \code{m}}{\eappfo{\code{f}}{\code{m}}})}{\efun{\cx}{\cx},8}
   }{~~~~~~~~~~}
 }
 \]
 \end{enumerate}
 
-\item Rewrite the following \lang expression to \textsf{FAE} expression.
-  You should not ``evaluate'' them. Consider the approach of \refsec{fae}.
+\item Rewrite the following \lang expression to an \textsf{FAE} expression.
+  You should not ``evaluate'' it. Consider the approach of \refsec{fae}.
 
 \[
   \ebind{\cx}{\efun{\cy}{\eadd{8}{\cy}}}{\efun{\cy}\eapp{\eapp{\cx}{(\esub{10}{\cy})}}}
@@ -539,13 +540,13 @@ The semantics of some constructs are as follows:
 
 \item This exercise modifies \lang to check body expressions when evaluating
   function expressions.
-Consider we extend value of \lang to include a special value $\uparrow$
+Consider we extend the value of \lang to include a special value $\uparrow$
 to represent an error during function body checking.
 Write the operational semantics of the form
 \fbox{$\evald{e}{v}$} for a function expression
 $\efun{x}{e}$, when its semantics  changes as follows:
 \begin{itemize}
-\item If every free identifier of $e$ is in $\sigma$ or is $x$,
+\item If every free identifier of $e$ is in the domain of $\sigma$ or is $x$,
   then evaluation of $\efun{x}{e}$ under $\sigma$ yields a closure
   containing the function expression and the environment.
 \item Otherwise, evaluation of $\efun{x}{e}$ under $\sigma$ yields $\uparrow$.
@@ -601,7 +602,8 @@ $\boxed{\sigma \vdash e \Rightarrow v}$
     \]
 \end{enumerate}
 
-\item This exercise replaces the environment-based semantics of \lang with subtitution-based semantics.
+\item This exercise replaces the environment-based semantics of \lang with 
+a substitution-based semantics.
 Consider the following implementation:
 \begin{verbatim}
 trait Expr
@@ -732,7 +734,7 @@ evaluate to $5$.
   \[
     \inferrule
     {\hspace*{0.8\textwidth}}
-    {\eval{\emptyset,\emptyset}{\eappfo{(\efun{\cx\cy}{\textsf{get}\ x})}{2,19,141}}{~~~~~}}
+    {\eval{\emptyset,\emptyset}{\eappfo{(\efun{\cx\ \cy}{\textsf{get}\ x})}{2,19,141}}{~~~~~}}
   \]
 \end{enumerate}
 
@@ -741,7 +743,7 @@ evaluate to $5$.
 
 \begin{quote}
 The value of a \embox{StatementList} is the value of the last
-value-producing them in the \embox{StatementList}.  For example, the
+value-producing item in the \embox{StatementList}.  For example, the
 following calls to the \verb!eval! function all return the value 1:
 \begin{verbatim}
 eval("1;;;;;")

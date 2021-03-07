@@ -343,7 +343,7 @@ $Z$ is called a \textit{fixed point combinator}\index{fixed point combinator}.
 In mathematics, a \textit{fixed point}\index{fixed point}
 of a function $f$ is a solution of the equation $f(x)=x$.
 A fixed point combinator is a function that computes a fixed point of a given
-function. A recursive functions can be considered as a fixed point of a certain
+function. A recursive function can be considered as a fixed point of a certain
 function. For example, consider the following function:
 
 \[ \efun{\cf}{\efun{\cv}{\sumbodyfv}} \]
@@ -413,7 +413,7 @@ Then, the semantics of $g$ is
 It implies that $g$ equals $\embox{sum}$. Actually, this evaluation has started from
 $\eapp{Z}{f}$. Therefore, $\eapp{Z}{f}$ equals $\embox{sum}$.
 
-One may ask if we can use the the following expression $Z'$ instead of $Z$:
+One may ask if we can use the following expression $Z'$ instead of $Z$:
 \[
   Z'=\efun{\cf}{\eapp
     {(\efun{\cx}{\eapp{\cf}{(\eapp{\cx}{\cx})}})}
@@ -534,7 +534,7 @@ type Env = Map[String, Value]
   \text{Value} & v & ::= & n\ |\ b\ |\ \clov{x\cdots x}{e}{\sigma} \\
 \end{array}
 \]
-Note that $b$ ranges over a boolean. The language does not support the short-circuiting
+Note that $b$ ranges over boolean values. The language does not support the short-circuiting
 semantics, i.e. $e_2$ must be evaluated in expression $e_1\wedge e_2$ whenever $e_1$
 evaluates to true or not.
 Write the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.

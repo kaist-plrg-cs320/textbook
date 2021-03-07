@@ -9,7 +9,7 @@ Mutation is a widely-used feature. It is an important concept in imperative
 languages. Even functional languages support mutation. Few languages are purely
 functional, i.e. do not allow any mutation: e.g. Haskell and Coq. Muation is
 important since many programs can be implemented concisely and efficiently with
-mutation. At the same time, mutation often makes program difficult to be
+mutation. At the same time, mutation often makes programs difficult to be
 reasoned about and error-prone. While binding of identifiers works modularly and
 allows local reasoning, mutation has a global effect on execution and enables
 uncontrolled interference between distinct parts of a program. Mutation should
@@ -18,11 +18,11 @@ be used with extreme care of programmers.
 This chapter introduces mutation by defining \lang, which extends \plang with
 boxes. A \textit{box}\index{box} is a cell in memory that contains a single value. The value
 contained in a box can be modified anytime after the creation of the box.
-Boxes in \lang are higher-order. Each box can contains any value, which can be
+Boxes in \lang are higher-order. Each box can contain any value, which can be
 a box or a closure, rather than only an integer.
 A box itself is rarely found in real-world languages: it is almost the same as
-a reference in OCaml (\code{ref}). However, it is good abstraction of more
-general mutation mechanism including mutable objects and data
+a reference in OCaml (\code{ref}). However, it is a good abstraction of more
+general mutation mechanisms including mutable objects and data
 structures. We can find such concepts in most languages, and boxes are useful to
 understand those concepts.
 
@@ -58,16 +58,16 @@ It changes the value of the field to \code{10} and prints \code{10}.
 The above Scala example shows three kinds of expressions regarding boxes:
 creating a new box, reading the value of a box, and changing the value of a box.
 To create a box, we need an expression that determines the initial value of the
-box. The read the value a box, we need an expression that determines the box.
-The change the value of a box, we need an expression that determines the box and
+box. To read the value of a box, we need an expression that determines the box.
+To change the value of a box, we need an expression that determines the box and
 an expression that determines the new value of the box.
 
-In addition, there is another kind of expressions that have been implicitly
-used: sequenced expressions. Usually, an expression mutating a box is useless
+In addition, there is another kind of expression that has been implicitly
+used: the sequencing expression. Usually, an expression mutating a box is useless
 per se. There should be other expressions that observe the change and do
-other interesting things based on the change. To do so, we need combine
-multiple expressions to form a single expression. Such expressions are sequenced
-expressions.
+other interesting things based on the change. To do so, we need to combine
+multiple expressions to form a single expression. Such an expression
+is the sequencing expression.
 
 We can define the syntax of \lang based on the observations.
 The following is the syntax of \lang:
@@ -85,7 +85,7 @@ The following is the syntax of \lang:
 
   \item $\ederef{e}$
 
-    It read the value of a box, cf. \code{b.value} in the example.
+    It reads the value of a box, cf. \code{b.value} in the example.
     $e$ determines the box to be read.
 
   \item $\eset{e_1}{e_2}$
@@ -95,7 +95,7 @@ The following is the syntax of \lang:
 
   \item $\eseq{e_1}{e_2}$
 
-    It is a sequenced expression. $e_1$ is the first expression to be
+    It is a sequencing expression. $e_1$ is the first expression to be
     evaluated; $e_2$ is the second. Many real-world languages allow sequencing
     of an arbitrary number of expressions. For brevity, \lang allows only
     sequencing of two expressions. Sequencing of multiple expressions can be
@@ -106,7 +106,7 @@ The following is the syntax of \lang:
 \section{Semantics}
 
 Defining mutable memory is crucial to define the semantics of \lang.
-We call the memory of a program a store. A \textit{store}\index{store} records the values of boxes.
+We call the memory of a program a \textit{store}\index{store}. A store records the values of boxes.
 Each box is distinguished from another box by its address, i.e. every box has
 its own address, which differs from the addresses of any other boxes.
 The metavarible $a$ ranges over addresses. Let $\embox{Addr}$ be the set of every
@@ -132,12 +132,12 @@ value to include addresses.
 
 \[ v\ ::=\ \cdots\ |\ a \]
 
-Note that we keeps using the concept of a box for explanation.
+Note that we keep using the concept of a box for explanation.
 Even though the semantics abstracts boxes with addresses,
 boxes do exist from the programmers' perspective.
 The term box and the term address will be interchangeably used.
 
-How stores are used in the semantics? First, consider an expression reading a
+How are stores used in the semantics? First, consider an expression reading a
 box. Evaluating \(\ederef{e}\) needs not only an environment but also a store.
 If $e$ denotes a box, the store has the value of the box. The value becomes
 the result of \(\ederef{e}\). Without a store, there is no way to find the value
@@ -149,11 +149,11 @@ $\eref{e}$ creates a new box; $\eset{e_1}{e_2}$ changes
 the content of a box. Both modify stores. Modifying a store differs from
 extending an environment with a new identifier.
 
-A change in an environment is propagated to the subexpressions of the expression
+A change in an environment is propagated to the subexpressions of an expression
 that has caused the change. Consider $\ebind{x}{e_1}{e_2}$.
 It extends the environment with $x$, but only $e_2$ uses the
 extended environment because the scope of $x$ is $e_2$ but nowhere else.
-A variable definition can affect to only its subexpressions.
+A variable definition can affect only its subexpressions.
 For instance, in $\eadd{(\ebind{x}{e_1}{e_2})}{e_3}$, $e_3$ does not belong to
 the scope of $x$. The extended environment must be used for only $e_2$, but not
 $e_3$. Therefore, we say that binding and environments are local and modular.
@@ -170,13 +170,13 @@ subexpression of $\eset{\cx}{2}$, must not be affected by the change in the valu
 of the box since the change happens after the evaluation of $2$. Therefore,
 how stores change due to expressions is important. If an expression contains two
 subexpressions, the store obtained by evaluating the first subexpression has to be
-passed to the evaluation of the second expression. Stores are completely
+passed to the evaluation of the second subexpression. Stores are completely
 different from environments. Any change in a store affects the entire remaining
 computation. Stores are global and not modular.
 
-From the observations, we can conclude that evaluation of an expression needs to
+From the observation, we can conclude that evaluation of an expression needs to
 take a store in addition to an environment as input and output a new store along
-with the result value. We can define the semantics as a
+with a result value. We can define the semantics as a
 relation over $\embox{Env}$, $\embox{Sto}$, $E$, $V$, and $\embox{Sto}$.
 The former store is input, and the latter store is output.
 
@@ -241,7 +241,7 @@ right operand is evaluated first, $\ederef{\cx}$ evaluates to $1$ because
 its evaluation precedes the modification and can observe only the original
 value.
 
-The order among the premises in a semantic rule does not specify the order of
+The order among the premises in a semantics rule does not specify the order of
 evaluation. So far, we have not specified the order of evaluation in the
 semantics as the order does not matter if there are no side
 effects.\sidenote{Side effects are any observable behaviors of expressions except the
@@ -252,7 +252,7 @@ stores. If we define the semantic to use the store that comes out from the
 evaluation of the left operand as input of the evaluation of the right operand,
 the order is determined to evaluate the left first.
 
-A sequenced expression per se cannot modify a given store, but its subexpressions
+A sequencing expression per se cannot modify a given store, but its subexpressions
 can.
 
 \semanticrule{Seq}{
@@ -277,16 +277,17 @@ can.
   \quad\textsc{[Seq]}
 \]
 
-The $e_1$ is evaluated before $e_2$. The evaluation of $e_2$ must be aware of
-any modifications of the store made by the $e_1$.
+$e_1$ is evaluated before $e_2$. The evaluation of $e_2$ must be aware of
+any modifications of the store made by $e_1$.
 For this purpose, the rule passes $M_1$, obtained by evaluating
 $e_1$, to the evaluation of $e_2$. The result of $e_1$ is just discarded.
 The final result is the same as the result of $e_2$.
 
 Rule \textsc{Add}, Rule \textsc{Sub}, and Rule \textsc{App} are similar to
 Rule \textsc{Seq}. They cannot modify stores, but their subexpressions can. The
-evaluation order is the same as sequenced expressions. \lang chooses
-the left-to-right order for every expression, but the order varies with the language.
+evaluation order is the same as the sequencing expression. \lang chooses
+the left-to-right order for every expression, but other languages
+may use a different order.
 
 \semanticrule{Add}{
   \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
@@ -431,12 +432,12 @@ box and give the box as a result. Consider $\ederef{(\eref{1})}$. If the semanti
 is correct, this expression must evaluate to $1$. The initial
 store is empty, but evaluating $\eref{1}$ makes the store contain the address of
 the box. It means that the address can be obtained only by looking into $M_1$,
-not $M$. Therefore, the correct semantics use $M_1$ to find the value of the
+not $M$. Therefore, the correct semantics uses $M_1$ to find the value of the
 box.
 
 $\eset{e_1}{e_2}$ is an expression changing the value of a box. $e_1$ determines the box
 to be updated, and $e_2$ determines the new value of the box. Just like when we
-open a box, $e_1$ must evaluates to a box. Otherwise, a run-time error will happen.
+open a box, $e_1$ must evaluate to a box. Otherwise, a run-time error will happen.
 
 \semanticrule{SetBox}{
   \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
@@ -486,7 +487,7 @@ case class Seqn(l: Expr, r: Expr) extends Expr
 \code{NewBox($e$)} represents $\eref{e}$;
 \code{OpenBox($e$)} represents $\ederef{e}$;
 \code{SetBox($e_1$, $e_2$)} represents $\eset{e_1}{e_2}$;
-\code{Seqn($e_1$, $e_2$)} represents $\eseq{e_1}{e_2}$;
+\code{Seqn($e_1$, $e_2$)} represents $\eseq{e_1}{e_2}$.
 
 Addresses should be defined. We treat addresses as integers in Scala.
 
@@ -551,7 +552,7 @@ case App(f, a) =>
 
 The \code{Seqn}, \code{Add}, \code{Sub}, and \code{App} cases do not directly
 modify or read stores, but pass the stores returned from the recursive calls to the
-next recursive calls or use them as the results.
+next recursive calls or use them as results.
 
 \begin{verbatim}
 case NewBox(e) =>

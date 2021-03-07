@@ -125,7 +125,7 @@ $\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},
 then \code{"0"} \code{<digit>} denotes
 $\{\code{"00"},\code{"01"},\code{"02"},\code{"03"},\code{"04"},\code{"05"},\code{"06"},\code{"07"},\code{"08"},\code{"09"}\}$.
 
-Now, let us see how we can define a new set from scratch. BNF allow us to define
+Now, let us see how we can define a new set from scratch. BNF allows us to define
 the set denoted by a nonterminal with the following form:
 
 \begin{verbatim}
@@ -133,7 +133,7 @@ the set denoted by a nonterminal with the following form:
 \end{verbatim}
 
 The vertical bars in the right hand side separate distinct expressions.
-The expressions define the set denoted by the nonterminal. The union of the set
+The expressions define the set denoted by the nonterminal. The union of the sets
 denoted by the expressions equals the set denoted by the nonterminal. For
 example, the following definition makes \code{<digit>} denote
 $\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$:
@@ -185,11 +185,11 @@ string denoted by \code{<digit>} is also a string of \code{<nat>}. Hence,
 $\{$\code{"0"}, \code{"1"}, \code{"2"}, \code{"3"}, \code{"4"},
 \code{"5"}, \code{"6"}, \code{"7"}, \code{"8"}, \code{"9"}$\}$
 is a subset of the set denoted by \code{<nat>}. At the same time, \code{<digit>}
-\code{nat} is the other way to construct an element. We can make a new element
-of \code{<nat>} by selecting strings from \code{<digit>} and \code{<nat>}
+\code{<nat>} is the other way to construct an element. We can make a new element
+of \code{<nat>} by selecting strings from \code{<digit>} and \code{<nat>},
 respectively. For example, \code{<digit>} can denote \code{"1"}, and
-\code{<num>} can denote \code{"0"}. Therefore, \code{"10"} is an element of
-\code{<num>}. By repeating this process, we can construct infinitely many
+\code{<nat>} can denote \code{"0"}. Therefore, \code{"10"} is an element of
+\code{<nat>}. By repeating this process, we can construct infinitely many
 strings, e.g. \code{"110"} by concatenating \code{"1"} and \code{"10"},
 \code{"1110"} by concatenating \code{"1"} and \code{"110"}, and so on. In the
 end, we can conclude that \code{<nat>} denotes the set of every string that
@@ -215,7 +215,7 @@ the concrete syntax.
 In a similar way, we can figure out which set is denoted by \code{<expr>}. The
 set includes every string that represents arithmetic expression consisting of
 decimal integers, addition, and subtraction. We can say that \code{<expr>}
-defines $P$ of \lang, and the concrete syntax of \lang has been defined now.
+defines $P$ of \lang, and the concrete syntax of \lang is defined now.
 
 \section{Abstract Syntax}
 
@@ -262,7 +262,7 @@ JavaScript, \code{define} in Racket, and \code{let} in OCaml. It is not
 the only difference. Python and JavaScript need parentheses and commas
 for parameters, while Racket and OCaml do not. JavaScript puts function
 bodies inside curly braces. Racket treats \code{+} as a prefix operator,
-while the others treat \code{+} as a infix operator. These differences
+while the others treat \code{+} as an infix operator. These differences
 are the differences between the concrete syntax of each language.
 Various forms of concrete syntax hinder programmers from learning
 multiple languages easily.
@@ -271,7 +271,7 @@ However, their structures are quite the same. In every language, a
 function definition consists of a name, parameters, and a body
 expression. The above example defines a function whose name is \code{add},
 parameters are \code{n} and \code{m}, and body is an expression that
-adds \code{n} and \code{m}. In every language, an addition expression
+adds \code{n} and \code{m}. In every language in the example, an addition expression
 consists of two operands. The body expression uses \code{n} and \code{m}
 as the operands of the addition.
 
@@ -655,15 +655,15 @@ case class Sub(left: AE, right: AE) extends AE
 \end{tikzpicture}
 \end{center}
 
-The previous AST can be written as \code{Add(Sub(Num(3),
+The previous AST can be written as \code{Add(Sub(Num(5),
 Num(1)), Num(3))} in Scala.
 
 It is inconvenient to draw a tree every time we need to express a program. For
 this reason, people usually use notations that look like code to represent
 trees. For example, we can simply write $n$ instead of drawing a tree whose root
-is Num and only child is Num when it is clear that $n$ denotes an AST
+is \code{Num} and only child is $n$ when it is clear that $n$ denotes an AST
 from the context. Similarly, we can use $e_1+e_2$ and $e_1-e_2$
-instead of trees that represent addition and subtraction respectively. Note that
+instead of trees that represent addition and subtraction, respectively. Note that
 $+$ and $-$ in the notations are not the mathematical addition and subtraction
 operators. They are just parts of the notations and do not have any meaning.
 
@@ -684,7 +684,7 @@ mix abstract syntax using notations up with concrete syntax in the end.
 Notations are just notations. You can define different notations and use them.
 For example, one may use $\embox{ADD}\ e_1\ e_2$ instead of $e_1 + e_2$ to represent
 addition. You can freely choose notations, but once you define them, you should
-consistently use them not to make other peoples confused.
+consistently use them not to make other people confused.
 
 To make the definition of abstract syntax more concise, we adopt BNF to the
 definition of abstract syntax. We can re-define the abstract syntax of \lang with
@@ -694,7 +694,7 @@ BNF:
 
 We call each symbol that denotes a particular element in abstract syntax a
 \textit{metavariable}.\index{metavariable}
-It is called \textbf{meta}variable because it is a variable at the
+It is called \textbf{meta}variable because it is a variable at a
 meta-level, not the level of the defined programming language. For example, $e$
 is a metavariable that ranges over programs, and $n$ is a metavariable that
 ranges over integers.
@@ -784,9 +784,9 @@ every AST).
 \end{kaobox}
 
 The result of $\embox{parse}$
-is undefined when the input does not belong to $P$ (the set of every
-program). That is why $\embox{parse}$ is a partial function. When the input
-belongs to $P$, $\embox{parse}$ results in the corresponding AST.
+is undefined when an input does not belong to $P$ (the set of every
+program). That is why $\embox{parse}$ is a partial function. When an input
+belongs to $P$, $\embox{parse}$ results in its corresponding AST.
 
 Consider the parser of \lang. The results of $\embox{parse}$ are undefined for
 the following strings as they are not \lang programs:
@@ -851,7 +851,7 @@ There are infinitely many programs. We cannot define the semantics of each
 program separately. We need to utilize the structures of programs defined by the
 abstract syntax. According to the abstract syntax, programs can split into three
 groups: $n$, $e_1+e_2$, and $e_1-e_2$. By defining the semantics of each group
-at once, we can complete the semantics of infinitely many programs in a finite
+once, we can complete the semantics of infinitely many programs in a finite
 method.
 
 The simplest case is $n$. $n$ is an expression consisting of an integer. An
@@ -982,8 +982,8 @@ propositions. An inference rule has the following form:
 \]
 
 It consists of a horizontal line, propositions above the line, and a proposition
-below the line. We call the propositions above the line the
-\textit{premises}\index{premise} and the proposition below the line the
+below the line. We call the propositions above the line
+\textit{premises}\index{premise} and the proposition below the line a
 \textit{conclusion}\index{conclusion}. The rule means that if every premise is
 true, then also the conclusion is true. A single inference rule can have zero or
 more premises. A rule without premises implies that its conclusion is always
@@ -1016,7 +1016,7 @@ written in a natural language.
 We can prove $(3-1)+2\Rightarrow4$ with the rules. We usually draw a proof tree
 when we prove a proposition with inference rules. A \textit{proof
 tree}\index{proof tree} is a tree whose root is the proposition to be proven.
-Each node of the tree is a proposition, and the children node of a node are
+Each node of the tree is a proposition, and the children nodes of a node are
 evidences supporting that the proposition of the node is true. Unlike most trees in
 computer science, we place the root of a proof tree at the bottom. Every node is
 placed below its children.

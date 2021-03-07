@@ -242,7 +242,7 @@ expression-values and strict evaluation.
 
 $e_1$ evaluates to $v_1$ first. $v_1$ may be an expression-value, while we need a
 closure. Therefore, we strictly evaluate $v_1$ to get a closure. On the other
-hand, the argument must not be evaluated in the CBN semantics. Instead of
+hand, the argument must be evaluated in the CBN semantics. Instead of
 evaluating $e_2$, we make an expression-value with $e_2$ and $\sigma$ and then
 put the value into the environment.
 
@@ -326,7 +326,7 @@ If evaluating an expression in the CBV semantics results in a value,
 then the CBN semantics yields the same value. It is known as a corollary of the
 standardization theorem of lambda calculus~\cite{theories-of-pl}.
 Note that it is true only in languages without side effects.
-The result of an expression with side effects vary in the order of
+The result of an expression with side effects varies in the order of
 the evaluation. For example, if an argument is an expression changing the value
 of a box, and the body of the function reads the value of the box without using
 the argument, the program can behave differently in CBV and CBN. In CBV, the
@@ -400,7 +400,7 @@ def bar(x: => Int, b: Boolean): Int =
   if (b) x + x else 0
 
 val file = new java.io.File("a.txt")
-foo(square(10), file.exists)
+bar(square(10), file.exists)
 \end{verbatim}
 
 \code{x} appears twice in the body of \code{bar}. If \code{a.txt} exists, \code{square(10)} is
@@ -480,7 +480,7 @@ case App(f, a) =>
 
 Since we do not know the value of \code{a}, the initial value of \code{v} is \code{None}.
 
-Purely function languages with lazy evaluation usually adopt call-by-need
+Purely functional languages with lazy evaluation usually adopt call-by-need
 because it is just optimization but not a change in their semantics. On the
 other hand, impure languages cannot consider call-by-need as optimization and
 often allow programmers to choose one of them at each place. For example, Scala
@@ -529,7 +529,7 @@ not evaluated at all.
     $\eapp{(\efun{\cy}{\eadd{1}{2}})}{(\eadd{1}{\efun{\cx}{\cx}})}$
 \end{enumerate}
 
-\item Show the results of each expression in an CBV language and a CBN language.
+\item Show the results of each expression in a CBV language and a CBN language.
 
 \begin{enumerate}
   \item $\eadd{(\efun{\cx}{8})}{10}$

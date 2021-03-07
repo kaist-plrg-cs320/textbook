@@ -33,7 +33,7 @@ functions as arguments nor return functions. Therefore, higher-order functions
 can take functions as arguments and return functions. Strictly speaking, they
 are different from first-class functions because first-class functions are
 functions that can be passed as arguments or returned from functions.
-However, any languages support first-class functions support higher-order
+However, any languages that support first-class functions support higher-order
 functions and vice versa.
 The reason is obvious: to pass first-class functions as arguments, there should
 be higher-order functions, and to pass functions to higher-order functions,
@@ -60,7 +60,7 @@ of functions. Functions without parameters have types of the form \code{() => [r
 single parameter. Parentheses are required to express the types of functions
 with two or more parameters:
 \code{([parameter type], … ) => [return type]}. The function \code{f}
-has one integral parameter and returns an integer, i.e. its type is \code{Int =>
+has one integer parameter and returns an integer, i.e. its type is \code{Int =>
 Int}. Thus, it can be an argument for
 \code{g}. Evaluating \code{g(f)} equals evaluating \code{f(0)}, which results
 in \code{0}.
@@ -128,7 +128,7 @@ Compiling the above code succeeds. The type of \code{h1} is \code{Int => (Int =>
 \code{Int => Int => Int} denotes the same type because \code{=>} is
 a right-associative type operator. \code{h1(0)(0)} is valid and yields \code{0}.
 
-Actually, expressions except \code{val h1 = f} use function names as values
+Actually, expressions \inred{except \code{val h1 = f}} use function names as values
 successfully. The Scala compiler transforms function names into function values
 when they occur where function types are expected. Therefore, enforcing the type of
 \code{h1} to be a function type corrects the code without the underscore. The
@@ -154,7 +154,7 @@ type of function \code{f} is \code{Int}, the corresponding function value is
 
 In functional programming, functions often appear only once as an argument or a
 return value. Naming functions used only once is unnecessary. The meaning of
-a function value are how it behave. While the parameters and body of a function
+a function value is how it behave. While the parameters and body of a function
 decide its behavior, its name does not affect the behavior. Naturally, functional
 languages provide syntax to define functions without giving them names. Such
 functions are \textit{anonymous functions}.\index{anonymous function}
@@ -330,9 +330,9 @@ of underscores.
 \section{Closures}
 
 \textit{Closures}\index{closure} are function values that capture
-environments, which stores the values of existing variables, when they are defined.
+environments, which store the values of existing variables, when they are defined.
 The bodies of closures may
-have variables not defined in themselves, and the environments stores the values
+have variables not defined in themselves, and the environments store the values
 of those variables.
 
 \begin{verbatim}
@@ -366,7 +366,7 @@ thus \code{x + y} is \code{4} when \code{y} is \code{2}.
 
 \section{First-Class Functions and Lists}
 
-The section shows how first-class functions allow generalization of the functions
+This section shows how first-class functions allow generalization of the functions
 defined in \refch{immutability}.
 
 \begin{verbatim}
@@ -416,8 +416,8 @@ g(l, h => h * h)
 \end{verbatim}
 
 This function is called \code{map}. The returned list
-has elements obtained \textbf{map}ping a given function to the elements of a
-given list to the elements of a given list.
+has elements obtained by \textbf{map}ping a given function to the elements of a
+given list.
 
 \begin{verbatim}
 def map(l: List[Int], f: Int => Int): List[Int] = l match {
@@ -614,7 +614,7 @@ interpretation:
 \end{verbatim}
 
 The order traversing a list does not affect the results of \code{sum} and
-\code{product} Both \code{foldRight} and \code{foldLeft} can express the functions.
+\code{product}. Both \code{foldRight} and \code{foldLeft} can express the functions.
 
 \begin{verbatim}
 def sum(l: List[Int]): Int = foldLeft(l, 0, _ + _)
@@ -706,7 +706,7 @@ case class Student(name: String, height: Int)
 def heights(l: List[Student]): List[Int] = l.map(_.height)
 \end{verbatim}
 
-The standard library provide many other useful methods for
+The standard library provides many other useful methods for
 lists.\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/List.html}}
 
 \section{For Loops}
