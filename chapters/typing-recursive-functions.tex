@@ -1,0 +1,373 @@
+\setchapterpreamble[u]{\margintoc}
+\chapter{Typing Recursive Functions}
+\labch{typing-recursive-functions}
+
+The article defines TRFAE, which extends TFAE with conditional expressions and
+recursive functions. It defines the abstract syntax, the dynamic semantics, and
+the type system of TRFAE, and implement a type checker and an interpreter of
+TRFAE.
+
+TFAE has the normalization property. Evaluation of every well-typed TFAE
+expression terminates in a finite time. It implies that the fixed point
+combinator is ill-typed in TFAE. Use of the fixed point combinator can create an
+expression whose evaluation does not terminate. Therefore, programmers cannot
+define recursive functions in TFAE. The article defines TRFAE, which features
+recursive functions. The type system accepts some expressions using recursive
+functions after the extension. The extension from FAE to RFAE does not increase
+the expressivity. It is only for convenience of programmers. On the other hand,
+the extension from TFAE to TRFAE does increase the expressivity by allowing
+recursive functions.
+
+\section{Syntax}
+
+The following is the abstract syntax of TRFAE:
+
+\[
+\begin{array}{lrcl}
+\text{Expression} & e & ::= & \cdots \\
+&& | & \textsf{if0}\ e\ e\ e \\
+&& | & \textsf{def}\ x(x:\tau):\tau=e\ \textsf{in}\ e \\
+\text{Value} & v & ::= & n \\
+&& | & \langle \lambda x.e,\sigma \rangle \\
+\end{array}
+\]
+
+$\textsf{if0}\ e_1\ e_2\ e_3$ is the same as that of RFAE. $e_1$ is the
+condition; $e_2$ is the true branch; $e_3$ is the false branch.
+
+$\textsf{def}\ x_1(x_2:\tau_1):\tau_2=e_1\ \textsf{in}\ e_2$ defines a recursive
+function. It is similar to a recursive function of RFAE. The only difference is
+type annotation $\tau_1$ and $\tau_2$. $\tau_1$ denotes the parameter type of the
+function; $\tau_2$ denotes the return type of the function. The function must
+take an argument of type $\tau_1$ and return a value of type $\tau_2$. Type
+annotations are used for type checking, just like type annotations in TFAE.
+
+\section{Dynamic Semantics}
+
+The dynamic semantics of TRFAE is similar to that of RFAE. The rules common to
+TFAE are omitted.
+
+\[
+\inferrule
+{ \sigma\vdash e_1\Rightarrow 0 \\
+  \sigma\vdash e_2\Rightarrow v }
+{ \sigma\vdash\textsf{if0}\ e_1\ e_2\ e_3\Rightarrow v}
+\]
+
+\[
+\inferrule
+{ \sigma\vdash e_1\Rightarrow v' \\
+  v'\not=0 \\
+  \sigma\vdash e_3\Rightarrow v }
+{ \sigma\vdash\textsf{if0}\ e_1\ e_2\ e_3\Rightarrow v}
+\]
+
+\[
+\inferrule
+{ \sigma'=\sigma\lbrack x_1\mapsto\langle\lambda x_2.e,\sigma'\rangle\rbrack }
+{ \sigma\vdash\mu x_1:\tau_1\rightarrow\tau_2.\lambda
+x_2.e\Rightarrow\langle\lambda x_2.e,\sigma'\rangle}
+\]
+
+\section{Type System}
+
+The rules common to TFAE are omitted.
+
+\[
+\inferrule
+{ \Gamma\vdash e_1:\tau' \\
+  \Gamma\vdash e_2:\tau \\
+  \Gamma\vdash e_3:\tau }
+{ \Gamma\vdash\textsf{if0}\ e_1\ e_2\ e_3:\tau}
+\]
+
+The condition of a conditional expression must be well-typed. If the result of
+the condition is $0$, then the first branch is evaluated. Otherwise, the second
+branch is evaluated. Therefore, the result can be any value. $\Gamma\vdash
+e_1:\tau'$ denotes that. The rule cannot determine whether the first or the
+second branch will be evaluated. Since every expression has at most one type,
+$e_2$ and $e_3$ have the same type, $\tau$. The type of the whole expression is
+$\tau$.
+
+One may change the above rule to the following rule:
+
+\[
+\inferrule
+{ \Gamma\vdash e_1:\textsf{num} \\
+  \Gamma\vdash e_2:\tau \\
+  \Gamma\vdash e_3:\tau }
+{ \Gamma\vdash\textsf{if0}\ e_1\ e_2\ e_3:\tau}
+\]
+
+Both rules make the type system sound. The latter rejects more expressions than
+the former. However, programmers usually want to use an integer as a condition.
+Therefore, rejecting nonintegral values being used as a condition can prevent
+mistakes of programmers.
+
+\[
+\inferrule
+{
+  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2,x_2:\tau_1\rbrack\vdash e_1:\tau_2
+  \\
+  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2\rbrack\vdash e_2:\tau
+}
+{ \Gamma\vdash\textsf{def}\ x_1(x_2:\tau_1):\tau_2=e_1\ \textsf{in}\ e_2:\tau}
+\]
+
+The static semantics of a recursive function is similar to that of a lambda
+abstraction. The rule needs to check the type of the function body. The body can
+use not only the parameter but also the function itself. The type of the function
+is $\tau_1\rightarrow\tau_2$. The type of the parameter is $\tau_1$. Type
+checking of the body uses the extended type environment, which has the type of
+the function and the parameter. The type of $e_1$ has to be equal to the return
+type of the function, which is $\tau_2$.
+
+The following proof tree proves that the type of $\textsf{def}\
+f(n:\textsf{num}):\textsf{
+num}=\textsf{if0}\ n\ 0\ (n+(f\ (n-1)))\ \textsf{in}\ f\ 3$ is $\textsf{num}$:
+
+\[\Gamma_1=\lbrack f:\textsf{num}\rightarrow\textsf{num},n:\textsf{num}\rbrack\]
+\[\Gamma_2=\lbrack f:\textsf{num}\rightarrow\textsf{num}\rbrack\]
+
+\[
+\inferrule
+{
+  \Large
+  \inferrule
+  {
+    \inferrule
+    {n\in\mathit{Domain}(\Gamma_1)}
+    {\Gamma_1\vdash n:\textsf{num}} \\
+    \Gamma_1\vdash 0:\textsf{num} \\
+    \inferrule
+    {
+      \inferrule
+      {n\in\mathit{Domain}(\Gamma_1)}
+      { \Gamma_1\vdash n:\textsf{num} } \\
+      \inferrule
+      {
+        \inferrule
+        {f\in\mathit{Domain}(\Gamma_1)}
+        { \Gamma_1\vdash f:\textsf{num}\rightarrow\textsf{num} } \\
+        \inferrule
+        {
+          \inferrule
+          { n\in\mathit{Domain}(\Gamma_1) }
+          { \Gamma_1\vdash n:\textsf{num} } \\
+          \Gamma_1\vdash 1:\textsf{num}
+        }
+        { \Gamma_1\vdash n-1:\textsf{num} } \\
+      }
+      { \Gamma_1\vdash f\ (n-1):\textsf{num} }
+    }
+    { \Gamma_1\vdash n+(f\ (n-1)):\textsf{num} }
+  }
+  { \Gamma_1\vdash \textsf{if0}\ n\ 0\ (n+(f\ (n-1))):\textsf{num} }
+  \\
+  \inferrule
+  {
+    \inferrule
+    { f\in\dom{\Gamma_2} }
+    { \Gamma_2\vdash f:\textsf{num}\rightarrow\textsf{num} }
+    \\
+    \Gamma_2\vdash 3:\textsf{num}
+  }
+  { \Gamma_2\vdash f\ 3:\textsf{num} }
+}
+{
+  \emptyset\vdash
+  \textsf{def}\ f(n:\textsf{num}):\textsf{num}=\textsf{if0}\ n\ 0\ (n+(f\ (n-1)))\ \textsf{in}\ f\
+3
+  :\textsf{num}
+}
+\]
+
+\section{Implementing a Type Checker}
+
+The following Scala code implements the abstract syntax of TRFAE:
+
+\begin{verbatim}
+sealed trait Expr
+case class Num(n: Int) extends Expr
+case class Add(l: Expr, r: Expr) extends Expr
+case class Sub(l: Expr, r: Expr) extends Expr
+case class Id(x: String) extends Expr
+case class Fun(x: String, t: Type, b: Expr) extends Expr
+case class App(f: Expr, a: Expr) extends Expr
+case class If0(c: Expr, t: Expr, f: Expr) extends Expr
+case class Rec(f: String, x: String, p: Type, r: Type, b: Expr, e: Expr) extends
+Expr
+
+sealed trait Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+
+type TEnv = Map[String, Type]
+
+def mustSame(t1: Type, t2: Type): Type =
+  if (t1 == t2) t1 else throw new Exception
+\end{verbatim}
+
+A \code{Expr} instance represent a TRFAE expression. The implementation is
+similar to that of RFAE.
+
+\begin{verbatim}
+case If0(c, t, f) =>
+  typeCheck(c, env)
+  mustSame(typeCheck(t, env), typeCheck(f, env))
+\end{verbatim}
+
+\[
+\inferrule
+{ \Gamma\vdash e_1:\tau' \\
+  \Gamma\vdash e_2:\tau \\
+  \Gamma\vdash e_3:\tau }
+{ \Gamma\vdash\textsf{if0}\ e_1\ e_2\ e_3:\tau}
+\]
+
+The condition of an expression must be well-typed. The \code{typeCheck} function
+checks the type of \code{c}, and the result of type checking is unnecessary. The
+types of the two branches must be the same. The \code{typeCheck} function checks
+the types of \code{t} and \code{f}. The \code{mustSame} function compares the
+results. If they are the same, then the type is the type of the whole expression.
+
+\begin{verbatim}
+case Rec(f, x, p, r, b, e) =>
+  val t = ArrowT(p, r)
+  val nenv = env + (f -> t)
+  mustSame(r, typeCheck(b, nenv + (x -> p)))
+  typeCheck(e, nenv)
+\end{verbatim}
+
+\[
+\inferrule
+{
+  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2,x_2:\tau_1\rbrack\vdash e_1:\tau_2
+  \\
+  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2\rbrack\vdash e_2:\tau
+}
+{ \Gamma\vdash\textsf{def}\ x_1(x_2:\tau_1):\tau_2=e_1\ \textsf{in}\ e_2:\tau}
+\]
+
+The parameter type is \code{p}, and the return type is \code{r}. Thus, the type
+of \code{f} is the function type from \code{p} to \code{r}. The type of \code{x}
+is \code{p}. To type-check \code{b}, the type environment must have the types of
+\code{f} and \code{x}. The type of \code{b} must equal \code{r}. The
+\code{mustSame} function compares the types. The function can be used not only in
+\code{b}, which is the body of the function, but also in \code{e}. On the other
+hand, the parameter \code{x} cannot be used in \code{e}. Therefore, it is enough
+to add only the type of \code{f} to the type environment used to type-check
+\code{e}. The type of the whole expression is equal to the type of \code{e}.
+
+The following shows the complete code of the function:
+
+\begin{verbatim}
+def typeCheck(e: Expr, env: TEnv): Type = e match {
+  case Num(n) => NumT
+  case Add(l, r) =>
+    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
+  case Sub(l, r) =>
+    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
+  case Id(x) => env(x)
+  case Fun(x, t, b) =>
+    ArrowT(t, typeCheck(b, env + (x -> t)))
+  case App(f, a) =>
+    val ArrowT(t1, t2) = typeCheck(f, env)
+    val t3 = typeCheck(a, env)
+    mustSame(t1, t3)
+    t2
+  case If0(c, t, f) =>
+    typeCheck(c, env)
+    mustSame(typeCheck(t, env), typeCheck(f, env))
+  case Rec(f, x, p, r, b, e) =>
+    val t = ArrowT(p, r)
+    val nenv = env + (f -> t)
+    mustSame(r, typeCheck(b, nenv + (x -> p)))
+    typeCheck(e, nenv)
+}
+\end{verbatim}
+
+The following code checks the type of $\textsf{def}\
+f(n:\textsf{num}):\textsf{num}=\textsf{
+if0}\ n\ 0\ (n+(f\ (n-1)))\ \textsf{in}\ f\ 3$:
+
+\begin{verbatim}
+// def f(x: num): num = if0 n 0 (n + (f (n-1))); 3
+typeCheck(
+  Rec(
+    "f", "n", NumT, NumT,
+    If0(Id("n"),
+        Num(0),
+        Add(
+          Id("n"),
+          App(Id("f"), Sub(Id("n"), Num(1)))
+        )
+    ),
+    App(Id("f"), Num(3))
+  ),
+  Map.empty
+)
+// num
+\end{verbatim}
+
+\section{Implementing an Interpreter}
+
+The interpreter is similar to that of RFAE.
+
+\begin{verbatim}
+sealed trait Value
+case class NumV(n: Int) extends Value
+case class CloV(p: String, b: Expr, var e: Env) extends Value
+
+type Env = Map[String, Value]
+
+def interp(e: Expr, env: Env): Value = e match {
+  case Num(n) => NumV(n)
+  case Add(l, r) =>
+    val NumV(n) = interp(l, env)
+    val NumV(m) = interp(r, env)
+    NumV(n + m)
+  case Sub(l, r) =>
+    val NumV(n) = interp(l, env)
+    val NumV(m) = interp(r, env)
+    NumV(n - m)
+  case Id(x) => env(x)
+  case Fun(x, _, b) => CloV(x, b, env)
+  case App(f, a) =>
+    val CloV(x, b, fEnv) = interp(f, env)
+    interp(b, fEnv + (x -> interp(a, env)))
+  case If0(c, t, f) =>
+    interp(if (interp(c, env) == NumV(0)) t else f, env)
+  case Rec(f, x, _, _, b, e) =>
+    val cloV = CloV(x, b, env)
+    val nenv = env + (f -> cloV)
+    cloV.e = nenv
+    interp(e, nenv)
+}
+
+def run(e: Expr): Value = {
+  typeCheck(e, Map.empty)
+  interp(e, Map.empty)
+}
+\end{verbatim}
+
+The following code executes $\textsf{def}\ f(n:\textsf{num}):\textsf{num}=\textsf{if0}\ n\ 0\
+(n+(f\ (n-1)))\ \textsf{in}\ f\ 3$:
+
+\begin{verbatim}
+// def f(x: num): num = if0 n 0 (n + (f (n-1))); 3
+run(
+  Rec(
+    "f", "n", NumT, NumT,
+    If0(Id("n"),
+        Num(0),
+        Add(
+          Id("n"),
+          App(Id("f"), Sub(Id("n"), Num(1)))
+        )
+    ),
+    App(Id("f"), Num(3))
+  )
+)
+// 6
+\end{verbatim}
