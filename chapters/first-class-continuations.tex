@@ -744,3 +744,248 @@ break\ ())
 The encoding omits $continue$. The value of $break$ is a continuation doing
 nothing. Even though the condition always equals true, the evaluation of $break\
 ()$ makes the final result of the program $()$ and the program terminate.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item In the KFAE language, what is the value of the following expression:
+
+{
+\begin{verbatim}
+{withcc result
+    {{withcc escape
+         {result {+ 2 {withcc k
+                          {escape k}}}}}
+     8}}
+\end{verbatim}
+}
+%==> 10
+
+\item Consider the following KCFAE expression:
+\[
+\!\!\!\!\!\!\!\!
+\begin{array}{l@{}l@{}l@{}l}
+\begin{array}{rrl}
+  e & ::= & n\\
+        & | & e + e\\
+        & | & x\\
+        & | & \lambda x.\ e\\
+        & | & e\ e\\
+        & | & \mbox{\code{withcc}}\ x\ e\\
+\end{array}
+&
+\!\!\!\!
+\begin{array}{rcll}
+  \kappa & ::= & \square &\\
+        & | & \sigma \vdash e :: \kappa &\mbox{interpretation}\\
+        & | & \mtt{(+)} :: \kappa &\mbox{addition}\\
+        & | & \mtt{(@)} :: \kappa &\mbox{application}\\
+s      & ::= &  \blacksquare &\mbox{}\\
+        & | & v :: s &\mbox{}\\
+\end{array}
+&
+\begin{array}{rl@{}c@{}l}
+  n \in& \mathbb{Z} &&\\
+  x \in& \mbox{Var} &&\\
+  e \in& \mbox{Expr}&&\\
+  \kappa \in& \mbox{Cont} &&\\
+ s \in&\mbox{Stack}\\\\
+\end{array}
+&
+\!\!\!\!
+\begin{array}{r@{}l@{}c@{}l}
+  v \in& \mbox{Val} = \mathbb{Z} + \mbox{Clo} + \mbox{Continuation}\\
+\langle\lambda x. e,\ \sigma\rangle \in& \mbox{Clo} = \mbox{Var} \times \mbox{Expr} \times \mbox{Env}\\
+  \sigma \in& \mbox{Env} = \finmap{\mbox{Var}}{\mbox{Val}}\\
+\langle \kappa, s\rangle \in&\mbox{Continuation} = \mbox{Cont} \times \mbox{Stack}\\\\\\
+\end{array}
+\end{array}
+\]
+
+\begin{itemize}
+  \item[a)] Fill in the missing five cases of the small-step operational semantics of KCFAE
+of the form \fbox{$\kappa \; || \; s \; \rightarrow \; \kappa \; || \; s$}.
+
+{
+\[
+\begin{array}{rcl}
+\sigma \vdash n :: \kappa \; || \; s \; &\rightarrow& \kappa \; || \; n :: s\\[2em]
+\sigma \vdash e_1 \; \mtt{+}\; e_2 :: \kappa \; || \; s &\rightarrow& \sigma \vdash e_1 :: \sigma \vdash e_2 :: \mtt{(+)} :: \kappa \; || \; s\\[1em]
+\mtt{(+)} :: \kappa \; || \; n_2 :: n_1 :: s &\rightarrow& \kappa \; || \; n_1 + n_2 :: s\\[2em]
+\sigma \vdash x :: \kappa \; || \; s \; &\rightarrow& \kappa \; || \; \sigma(x) :: s\\[2em]
+\sigma \vdash \lambda x.\, e :: \kappa \; || \; s \; 
+&\rightarrow& \\[3em]
+\sigma \vdash e_1 \; e_2 :: \kappa \; || \; s &\rightarrow&\\[3em]
+\mtt{(@)} :: \kappa \; || \; v :: \langle \lambda x.\,e, \sigma \rangle :: s &\rightarrow&\\[3em]
+\mtt{(@)} :: \kappa \; || \; v :: \langle \kappa', s'\rangle :: s
+& \rightarrow & \\[3em]
+\sigma \vdash \mbox{\texttt{withcc}} \; x \; e :: \kappa \; || \; s
+& \rightarrow & 
+\end{array}
+\]
+}
+
+  \item[b)] Show the interpretation steps of the expression
+\( (\mbox{\texttt{withcc}} \; x \; (42 \; \mtt{+} \; (x \; 2))) \; \mtt{+} \; 8 \)
+where the value of a parenthesized expression $(e)$ is the value of $e$.
+\end{itemize}
+
+{
+\[
+\hspace*{-5em}
+\begin{array}{rlcl}
+  & \varnothing \vdash (\mbox{\texttt{withcc}} \; x \; (42 \; \mtt{+} \; (x \; 2))) \; \mtt{+} \; 8 :: \square
+\qquad\qquad
+ & || & \blacksquare\\
+  \rightarrow
+  & \\
+\end{array}
+\]
+}
+
+\item Consider the following language:
+\[
+\begin{array}{rllrllr@{\hskip3pt}l}
+e::= & n &\qquad& \kappa ::= & \square
+&\qquad& n\in & \mathbb{Z} \\
+\mid& e\verb!+!e &&\mid&\sigma\vdash e::\kappa
+&& x\in & \mathit{Id} \\
+\mid& x &&\mid&\verb!(+)!::\kappa
+&& v\in & \mathit{Val} \\
+\mid& \lambda x\verb+.+e &\qquad&\mid&\verb!(@)!::\kappa
+&& \sigma\in & \mathit{Id}\rightarrow\mathit{Val} \\
+\mid& e\ e &&s::=& \blacksquare \\
+v::=& n &&\mid&v::s\\
+\mid& \langle \lambda x.e, \sigma \rangle\\
+\end{array}
+\]
+with the following small-step semantics:
+\[
+\begin{array}{rcl}
+\sigma\vdash n::\kappa\ ||\ s&\rightarrow&\kappa\ ||\ n::s \\
+\sigma\vdash x::\kappa\ ||\ s&\rightarrow&\kappa\ ||\ \sigma(x)::s \\
+\sigma\vdash \lambda x\code{.}e::\kappa\ ||\ s
+&\rightarrow&\kappa\ ||\ \langle\lambda x.e,\sigma\rangle::s \\
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Complete the small-step semantics
+of the form \fbox{$\kappa\ ||\ s\rightarrow\kappa\ ||\ s$}
+by filling the blanks:
+\end{itemize}
+
+\[
+\begin{array}{rcl}
+\sigma\vdash e_1\code{+}e_2::\kappa\ ||\ s
+&\rightarrow& \mblank\\[20pt]
+\code{(+)}::\kappa\ ||\ n_2::n_1::s
+&\rightarrow& \mblank\\[20pt]
+\sigma\vdash e_1\ e_2::\kappa\ ||\ s
+&\rightarrow& \mblank\\[20pt]
+\code{(@)}::\kappa\ ||\ v::\langle\lambda x.e,\sigma\rangle::s
+&\rightarrow& \mblank\\[20pt]
+\end{array}
+\]
+
+Now, we extend the language to feature exceptions:
+\[
+\begin{array}{rl}
+e::= & \cdots \\
+\mid&\verb+throw+ \\
+\mid&\verb+try +e\verb+ catch +e \\
+\end{array}
+\]
+
+A \code{throw} expression raises an exception. The exception is propagated to
+expressions containing the \code{throw} expression. For example, evaluation of
+\code{1 + throw} results in an exception since it contains \code{throw} as
+a subexpression. If the left subexpression of an expression raises an exception,
+then the right subexpression is never evaluated. It holds for additions and
+applications. For instance, \code{throw+(($\lambda$x.x x) ($\lambda$x.x x))}
+results in an exception, while \code{(($\lambda$x.x x) ($\lambda$x.x x))+throw}
+does not produce any results as the evaluation does not terminate.
+
+A \code{try-catch} expression
+handles an exception. If evaluation of $e_1$ results in an exception, then
+the result of \code{try $e_1$ catch $e_2$} equals the result of
+$e_2$. On the other hand, if evaluation of $e_1$ yields value $v$, then
+$e_2$ is not evaluated, and the result of the whole expression is $v$.
+For example, \code{try throw catch 2} yields \code{2}, while
+\code{try 1 catch 2} yields \code{1}.
+
+The revised definition of continuations follows:
+\[
+\begin{array}{rllrll}
+\kappa ::= & \square &\qquad& H::= & \cdot \\
+\mid& \sigma,H\vdash e::\kappa &&\mid& \langle \kappa\ |\ s\rangle \\
+\mid& \verb!(+)!::\kappa \\
+\mid& \verb+(@)+::\kappa \\
+\end{array}
+\]
+
+Continuation $\sigma,H\vdash e$ denotes evaluation of $e$ under
+environment $\sigma$ and exception handler $H$.
+A handler is either $\cdot$ or $\langle \kappa\ |\ s\rangle$.
+The former, $\cdot$, denotes that there is no handler.
+The latter, $\langle \kappa\ |\ s\rangle$, denotes that the evaluation
+continues at continuation $\kappa$ and stack $s$ when
+an exception raises.
+
+\begin{itemize}
+\item[b)] Complete the small-step semantics
+of the form \fbox{$\kappa\ ||\ s\rightarrow\kappa\ ||\ s$}
+by filling the blanks:
+
+\end{itemize}
+\[
+\begin{array}{rcl}
+\sigma,\langle\kappa'\ |\ s'\rangle\vdash \code{throw}::\kappa\ ||\ s
+&\rightarrow& \mblank\\[20pt]
+\sigma,H\vdash \code{try }e_1\code{ catch }e_2::\kappa\ ||\ s
+&\rightarrow& \mblank\\[20pt]
+\end{array}
+\]
+
+We want to define the type system of the langauge.
+The typing and subtyping rules of the language are given as the following:
+\[
+\begin{array}{ccccccc}
+\begin{array}{rllr@{\hskip3pt}l}
+\tau::= & \verb+num+&\qquad&\tau\in&\mathit{Type} \\
+\mid& \tau\rightarrow\tau &&\Gamma\in&\mathit{Id}\rightarrow\mathit{Type}\\
+\mid& \verb+Bottom+ \\
+\end{array} &\qquad&
+\begin{array}{c}
+{\tau}<:{\tau} \\[5pt]
+{\code{Bottom}}<:{\tau} 
+\end{array}&\qquad&
+\newinfrule
+{ \typed{e}{\tau'} \rulesep {\tau'}<:{\tau} }
+{ \typed{e}{\tau} }
+\end{array}
+\]
+
+The omitted typing rules are conventional.
+
+\begin{itemize}
+\item[c)] Complete the following typing rules
+of the form \fbox{$\typed{e}{\tau}$}
+by filling the blanks:
+\end{itemize}
+
+{
+\[
+\newinfrule
+{ \lblank }
+{ \typed{\code{throw}}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{\code{try }e_1\code{ catch }e_2}{\sblank} }
+\]
+}
+
+
+\end{enumerate}

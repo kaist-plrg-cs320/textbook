@@ -806,3 +806,829 @@ run(
 )
 // 1
 \end{verbatim}
+
+\section{Exercises}
+
+\SaveVerb{op}=[tyfun [=
+\SaveVerb{opp}=[@=
+\SaveVerb{cl}=]=
+
+\begin{enumerate}
+\item Given the following grammar and the partial typing rules:
+\[
+\begin{array}{ll}
+\begin{array}{rl}
+e ::= & n\\
+\mid& \verb!{+!\ e\ e\ \verb+}+\\
+\mid& \verb!{-!\ e\ e\ \verb+}+\\
+\mid& x\\
+\mid& \verb+{fun {+x \verb+:+\tau \verb+} + e\verb+}+\\
+\mid& \verb+{+e\ e \verb+}+\\
+\mid& \verb+{if0 + e\ e\ e\verb+}+\\
+\mid& \verb+[tyfun [+\alpha\verb+] + e\verb+]+\\
+\mid& \verb+[@ +e\ \tau\verb+]+\\
+\tau ::= & \verb+num+\\
+\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
+\mid&\verb+(+\forall \alpha\ \tau\verb+)+\\
+\mid&\alpha
+\end{array}
+&
+\begin{array}{c}
+
+\newinfrule
+{\Gamma[\alpha]\vdash e : \tau}
+{\Gamma\vdash\UseVerb{op}\alpha\UseVerb{cl}\ e\UseVerb{cl} : (\forall \alpha\ \tau)}
+\\[2em]
+\newinfrule{
+\Gamma\vdash \tau_0
+\rulesep
+\Gamma\vdash e : (\forall\alpha\ \tau_1)
+}
+{\Gamma\vdash\UseVerb{opp}\ e\ \tau_0\UseVerb{cl} : \tau_1[\alpha \leftarrow \tau_0]}
+\\[2em]
+\newinfrule{
+\Gamma[\alpha]\vdash \tau
+}
+{\Gamma\vdash(\forall\alpha\ \tau)}
+\\[2em]
+[\ldots\alpha\ldots]\vdash\alpha
+\end{array}
+\end{array}
+\]
+
+
+
+Draw the type derivation of the following expression:
+
+{
+\begin{verbatim}
+{{fun {f : (forall alpha (alpha -> alpha))}
+      {[@ f num] 10}}
+ [tyfun [alpha] {fun {x : alpha} x}]}
+\end{verbatim}
+}
+
+\item Given the partial typing rules:
+\[
+\begin{array}{ll}
+% \begin{array}{rl}
+% e ::= & n\\
+% \mid& \verb!{+!\ e\ e\ \verb+}+\\
+% \mid& \verb!{-!\ e\ e\ \verb+}+\\
+% \mid& x\\
+% \mid& \verb+{fun {+x \verb+:+\tau \verb+} + e\verb+}+\\
+% \mid& \verb+{+e\ e \verb+}+\\
+% \mid& \verb+{if0 + e\ e\ e\verb+}+\\
+% \mid& \verb+[tyfun [+\alpha\verb+] + e\verb+]+\\
+% \mid& \verb+[@ +e\ \tau\verb+]+\\
+% \tau ::= & \verb+num+\\
+% \mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
+% \mid&\verb+(+\forall \alpha\ \tau\verb+)+\\
+% \mid&\alpha
+% \end{array}
+% &
+\begin{array}{c}
+
+\newinfrule
+{\Gamma[\alpha]\vdash e : \tau}
+{\Gamma\vdash\UseVerb{op}\alpha\UseVerb{cl}\ e\UseVerb{cl} : (\forall \alpha\ \tau)}
+\\[2em]
+\newinfrule{
+\Gamma\vdash \tau_0
+\rulesep
+\Gamma\vdash e : (\forall\alpha\ \tau_1)
+}
+{\Gamma\vdash\UseVerb{opp}\ e\ \tau_0\UseVerb{cl} : \tau_1[\alpha \leftarrow \tau_0]}
+\\[2em]
+\newinfrule{
+\Gamma[\alpha]\vdash \tau
+}
+{\Gamma\vdash(\forall\alpha\ \tau)}
+\\[2em]
+[\ldots\alpha\ldots]\vdash\alpha
+\end{array}
+\end{array}
+\]
+
+
+
+Draw the type derivation of the following expression:\\
+
+\verb+{with {apply +$(\forall \alpha\ (\forall \beta\ ((\alpha \rightarrow \beta)\ \alpha \rightarrow \beta)))$\\
+\verb+             [tyfun [+$\alpha$\verb+] [tyfun [+$\beta$\verb+] {fun {f : +$(\alpha \rightarrow \beta)$
+\verb+ x : +$\alpha$\verb+} {f x}}]]}+
+\begin{verbatim}
+  {[@ [@ apply (num -> num)] num] {fun {n : num} {- 17 n}} 9}}
+\end{verbatim}
+
+\item We'd like to allow the following expression:
+
+\begin{verbatim}
+{withtype {{alpha list} {empty num}
+           {cons (alpha * {alpha list})}}
+          {rec {len : (forall alpha ({alpha list} -> num))
+                    [tyfun [alpha]
+                           {fun {l : {alpha list}}
+                                {cases {alpha list} l
+                                  {empty {n} 0}
+                                  {cons {fxr}
+                                        {+ 1 {len {snd fxr}}}}}}]}
+               {+ {[@ len num] {[@ cons num] {pair 1 {[@ empty num] 0}}}}
+                  {[@ len (num -> num)] {[@ empty (num -> num)] 0}}}}}
+\end{verbatim}
+and of course the following as well:
+\begin{verbatim}
+{withtype {fruit {banana num} {apple bool}}
+          {{fun {x : fruit} {cases fruit x {banana {n} {+ n 9}} {apple  {b} 76}}}
+           {banana 2}}}
+\end{verbatim}
+
+\begin{itemize}
+  \item[a)] Define the language syntax.
+
+  \item[b)] Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions
+\texttt{withtype} and \texttt{cases}.
+
+  \item[c)] Write the typing rules of the form \fbox{$\Gamma\vdash e : \tau$} for the expressions
+\texttt{withtype} and \texttt{cases} and the well-formedness of the added types.
+
+  \item[d)] Draw the type derivation of the following expression:
+
+\begin{verbatim}
+{withtype {{alpha list} {empty num}
+                        {cons (alpha * {alpha list})}}
+          {[@ [tyfun [alpha]
+                     {fun {l : {alpha list}}
+                          {cases {alpha list} l {empty {n} n} {cons {p} 1}}}] num]
+           {[@ empty num] 0}}}
+\end{verbatim}
+\end{itemize}
+
+\item Given the following grammar and the partial typing rules:
+\[
+\begin{array}{ll}
+\begin{array}{rl}
+e ::= & n\\
+\mid& b\\
+\mid& \verb!{seqn!\ e\ e\verb+}+\\
+\mid& x\\
+\mid& \verb+{fun {+x\verb+} + e\verb+}+\\
+\mid& \verb+{+e\ e \verb+}+\\
+\mid& \verb+{with {+x\ e\verb+} + e\verb+}+\\
+\tau ::= & \verb+num+\\
+\mid&\verb!bool!\\
+\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
+\mid&\alpha\\
+\sigma ::= & \tau\\
+\mid&\verb+(+\forall \alpha\ \sigma\verb+)+\\
+\end{array}
+&
+\begin{array}{c}
+
+\newinfrule
+{x : \sigma \in \Gamma\rulesep
+\sigma \succ \tau}
+{\Gamma\vdash x : \tau}
+\\[2em]
+\newinfrule{
+\Gamma[x : \tau]\vdash e : \tau'
+}
+{\Gamma\vdash \mbox{\texttt{\{fun \{}}x\}\ e\} : (\tau\rightarrow\tau')}
+\\[2em]
+\newinfrule{
+\Gamma\vdash e_1 : (\tau\rightarrow\tau')
+\rulesep
+\Gamma\vdash e_2 : \tau
+}
+{\Gamma\vdash \mbox{\texttt{\{}}e_1\ e_2\} : \tau'}
+\\[2em]
+\newinfrule{
+\Gamma\vdash e_1 : \tau
+\rulesep
+\Gamma[x : \mathit{Gen}_\Gamma(\tau)]\vdash e_2 : \tau'
+}
+{\Gamma\vdash \mbox{\texttt{\{with \{}}x\ e_1\}\ e_2\} : \tau'}
+\end{array}
+\end{array}
+\]
+\[
+\begin{array}{l@{~}l@{~}l}
+\sigma \succ \tau &\mbox{iff}& \sigma = (\forall \alpha_1 ( \cdots (\forall \alpha_n\ \tau_0)) \cdots)\ \ \wedge\ \
+\tau = \tau_0[\alpha_i \leftarrow \tau_i]\ \mbox{where }1 \le i \le n
+\\[1em]
+\mathit{Gen}_\Gamma(\tau) &=& (\forall \alpha_1 ( \cdots (\forall \alpha_n\ \tau)) \cdots)\
+\mbox{where } \{\alpha_1, \cdots, \alpha_n\} = \mathit{FTV}(\tau) \setminus \mathit{FTV}(\Gamma)
+\\[1em]
+\mathit{FTV}(\mbox{\texttt{num}}) &=& \emptyset
+\\
+\mathit{FTV}(\mbox{\texttt{(}}\tau_1\rightarrow\tau_2\mbox{\texttt{)}}) &=& \mathit{FTV}(\tau_1) \cup \mathit{FTV}(\tau_2)
+\\
+\mathit{FTV}(\alpha) &=& \{\alpha\}
+\\
+\mathit{FTV}(\Gamma) &=& \bigcup_{x:\sigma \in \Gamma}\mathit{FTV}(\sigma)\\
+\mathit{FTV}(\mbox{\texttt{(}}\forall\alpha\ \sigma\mbox{\texttt{)}}) &=& \mathit{FTV}(\sigma) \setminus \{\alpha\}
+\\
+\end{array}
+\]
+
+\begin{itemize}
+  \item[a)] Draw the type derivation of the following expression:
+
+\verb!{with {x {fun {z} z}} {seqn {x 42} {x true}}}!
+
+  \item[b)] Draw the type derivation of the following expression:
+
+\verb!{{fun {x} {seqn {x 42} {x true}}} {fun {z} z}}!
+\end{itemize}
+
+\item Consider the following language:
+\begin{itemize}
+  \item[]\textbf{ Abstract syntax}
+\[
+\begin{array}{r@{\hskip6pt}r@{\hskip6pt}l
+  r@{\hskip6pt}l@{\hskip10pt}
+  r@{\hskip6pt}r@{\hskip6pt}l@{\hskip10pt}
+  r@{\hskip6pt}r@{\hskip6pt}l@{\hskip10pt}
+  r@{\hskip4pt}c@{\hskip4pt}l@{\hskip10pt}
+  r@{\hskip4pt}c@{\hskip4pt}l}
+  e &::= & n &|& \lambda x.e & \tau &::= & \textsf{num} & \sigma &::=& \tau &
+  n &\in& \mathbb{Z} & \alpha &\in& \textit{ TV} \\
+  &|& b &|& e\ e &&|& \textsf{bool} &&|& \forall\alpha.\sigma &
+  b &\in &\{\textsf{true},\textsf{false}\} & \tau &\in& \textit{ Type} \\
+  &|& x &|& \textsf{val}\ x=e\ \textsf{in}\ e &&|& \tau\rightarrow\tau &&&&
+  x &\in & \textit{ Id} & \sigma &\in& \textit{ TScheme} \\
+  &|& e;e &&&&|& \alpha &&&& e &\in& \textit{ Expr} & \Gamma &\in& \textit{ Id}\rightarrow\textit{ TScheme} \\
+\end{array}
+\]
+  \item[]\textbf{ Typing rules}
+\[
+\begin{array}{ccc}
+  \Gamma\vdash n:\textsf{num}
+  \qquad
+  \Gamma\vdash b:\textsf{bool}
+  &
+  \multicolumn{2}{c}{
+  \inferrule
+  {
+    x\in\Dom{\Gamma} \rulesep
+    \Gamma(x) \succ \tau
+  }
+  { \Gamma\vdash x:\tau}
+  \qquad
+  \inferrule
+  {
+    \Gamma\vdash e_1:\tau_1 \rulesep
+    \Gamma\vdash e_2:\tau_2
+  }
+  { \Gamma\vdash e_1;e_2:\tau_2 }
+  }
+  \\[20pt]
+  \inferrule
+  { \Gamma[x : \tau]\vdash e : \tau' }
+  {\Gamma\vdash \lambda x.e : \tau\rightarrow\tau'}
+  &
+  \inferrule
+  {
+    \Gamma\vdash e_1 : \tau\rightarrow\tau' \rulesep
+    \Gamma\vdash e_2 : \tau
+  }
+  { \Gamma\vdash e_1\ e_2 : \tau' }
+  &
+  \inferrule
+  {
+    \Gamma\vdash e_1 : \tau \rulesep
+    \tau\prec_\Gamma\sigma \rulesep
+    \Gamma[x:\sigma]\vdash e_2 : \tau'
+  }
+  {\Gamma\vdash \textsf{val}\ x=e_1\ \textsf{in}\ e_2 : \tau'}
+\end{array}
+\]
+  \item[] \textbf{ Miscellaneous definitions}
+\[
+\begin{array}{r@{\hskip4pt}c@{\hskip4pt}l}
+  \fbox{$\sigma\succ\tau$}
+  &&
+  \forall\alpha_1.\cdots\forall\alpha_n.\tau\succ\tau[\alpha_1\leftarrow\tau_1,\ldots,\alpha_n\leftarrow\tau_n]
+  \\[1em]
+  \fbox{$\tau\prec_\Gamma\sigma$}
+  &&
+  \inferrule
+  { \textit{ FTV}(\tau)\setminus\textit{ FTV}(\Gamma)=\{\alpha_1,\ldots,\alpha_n\} }
+  { \tau\prec_\Gamma\forall\alpha_1.\cdots\forall\alpha_n.\tau }
+  \\[2em]
+\mathit{FTV}(\textsf{num}) &=& \emptyset
+\\
+\mathit{FTV}(\textsf{bool}) &=& \emptyset
+\\
+\mathit{FTV}(\tau_1\rightarrow\tau_2) &=& \mathit{FTV}(\tau_1) \cup \mathit{FTV}(\tau_2)
+\\
+\mathit{FTV}(\alpha) &=& \{\alpha\}
+\\
+\mathit{FTV}(\forall\alpha.\sigma) &=& \mathit{FTV}(\sigma) \setminus \{\alpha\}
+\\
+\mathit{FTV}(\Gamma) &=& \bigcup_{x\in\Dom{\Gamma}}\mathit{FTV}(\Gamma(x))
+\\
+\end{array}
+\]
+\end{itemize}
+
+\begin{itemize}
+\item[a)] Is the following expression well-typed? If so, prove it by
+  drawing a type derivation tree for the expression. Otherwise, just say that
+    the expression is not well-typed. \textbf{ If you write ``the expression is not
+    well-typed'' but the expression is well-typed in fact, you will get
+    -3~points, not~0 points, for this subquestion.}
+
+    \Space{1}
+    $(\lambda \texttt{x}.(\texttt{x}\ 42))\ \lambda \texttt{z}.\texttt{z}$
+    \Space{1}
+\item[b)] Is the following expression well-typed? If so, prove it by
+  drawing a type derivation tree for the expression. Otherwise, just say that
+    the expression is not well-typed. \textbf{ If you write ``the expression is not
+    well-typed'' but the expression is well-typed in fact, you will get
+    -6~points, not~0 points, for this subquestion.}
+
+    \Space{1}
+    $(\lambda \texttt{x}.((\texttt{x}\ 42); (\texttt{x}\ \textsf{true})))\ \lambda \texttt{z}.\texttt{z}$
+    \Space{1}
+\item[c)] Is the following expression well-typed? If so, prove it by
+  drawing a type derivation tree for the expression. Otherwise, just say that
+    the expression is not well-typed. \textbf{If you write ``the expression is not
+    well-typed'' but the expression is well-typed in fact, you will get
+    -6~points, not~0 points, for this subquestion.}
+
+    \Space{1}
+    $\textsf{val}\ \texttt{x}=\lambda \texttt{z}.\texttt{z}\ \textsf{in}\ ((\texttt{x}\ 42); (\texttt{x}\ \textsf{true}))$
+    \Space{1}
+\end{itemize}
+
+\item Rewrite the following code using explicit annotation of polymorphic types
+with \verb!tyfun! and \verb!@!
+to replace all the occurrences of \verb!?! with types
+and to make function calls to take explicit type arguments.
+
+\[
+\begin{array}{ll}
+% \begin{array}{rl}
+% e ::= & n\\
+% \mid& \verb!{+!\ e\ e\ \verb+}+\\
+% \mid& \verb!{-!\ e\ e\ \verb+}+\\
+% \mid& x\\
+% \mid& \verb+{fun {+x \verb+:+\tau \verb+} + e\verb+}+\\
+% \mid& \verb+{+e\ e \verb+}+\\
+% \mid& \verb+{if0 + e\ e\ e\verb+}+\\
+% \mid& \verb+[tyfun [+\alpha\verb+] + e\verb+]+\\
+% \mid& \verb+[@ +e\ \tau\verb+]+\\
+% \tau ::= & \verb+num+\\
+% \mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
+% \mid&\verb+(+\forall \alpha\ \tau\verb+)+\\
+% \mid&\alpha
+% \end{array}
+% &
+\begin{array}{ccc}
+\newinfrule
+{\Gamma[\alpha]\vdash e : \tau}
+{\Gamma\vdash\UseVerb{op}\alpha\UseVerb{cl}\ e\UseVerb{cl} : (\forall \alpha\ \tau)}
+&\qquad&
+\newinfrule{
+\Gamma\vdash \tau_0
+\rulesep
+\Gamma\vdash e : (\forall\alpha\ \tau_1)
+}
+{\Gamma\vdash\UseVerb{opp}\ e\ \tau_0\UseVerb{cl} : \tau_1[\alpha \leftarrow \tau_0]}
+\\[2em]
+\newinfrule{
+\Gamma[\alpha]\vdash \tau
+}
+{\Gamma\vdash(\forall\alpha\ \tau)}
+&&
+[\ldots\alpha\ldots]\vdash\alpha
+\end{array}
+\end{array}
+\]
+
+{
+\begin{verbatim}
+{with {f : ? {fun {g : ?} {fun {v : ?} {g v}}}}
+      {with {g : ? {fun {x : ?} x}}
+            {{f g} 10}}}
+\end{verbatim}
+}
+
+\item We'd like to allow the following expression:
+
+\begin{verbatim}
+{withtype {{alpha list} {empty num}
+                        {cons (alpha * {alpha list})}}
+          {rec {len : (forall alpha ({alpha list} -> num))
+                    [tyfun [alpha]
+                           {fun {l : {alpha list}}
+                                {cases {alpha list} l
+                                  {empty {n} 0}
+                                  {cons {fxr}
+                                        {+ 1 {len {snd fxr}}}}}}]}
+               {+ {[@ len num] {[@ cons num] {pair 1 {[@ empty num] 0}}}}
+                  {[@ len (num -> num)] {[@ empty (num -> num)] 0}}}}}
+\end{verbatim}
+and of course the following as well:
+\begin{verbatim}
+{withtype {fruit {banana num} {apple bool}}
+          {{fun {x : fruit} {cases fruit x {banana {n} {+ n 9}} {apple  {b} 76}}}
+           {banana 2}}}
+\end{verbatim}
+
+Thus, we define the following language:
+
+{
+~~~~~~~ $e$ ::= $n$\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb!{+! $e$ $e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| $x$\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{fun {+$x$\verb+:+$\tau$\verb+}+ $e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{+$e$ $e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{rec {+$x$\verb+:+$\tau$\ $e$\verb+}+ $e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{pair +$e$\ $e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{fst +$e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{snd +$e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{withtype {+$\gamma$\ \verb+{+$x$\ $\tau$\verb+}+
+\verb+{+$x$\ $\tau$\verb+}}+ $e$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| \verb+{cases +$\gamma$\ $e$\ 
+\verb+{+$x$\ \verb+{+$x$\verb+}+\ $e$\verb+}+
+\verb+{+$x$\ \verb+{+$x$\verb+}+\ $e$\verb+}}+\\
+\hspace*{0em}
+~~~~~~~~~~~| [tyfun [$\alpha$] $e$]\\
+\hspace*{0em}
+~~~~~~~~~~~| [@ $e$ $\tau$]\\
+
+~~~~~~~ $\tau$ ::= \mbox{\texttt{num}}\\
+\hspace*{0em}
+~~~~~~~~~~~| ($\tau\rightarrow\tau$)\\
+\hspace*{0em}
+~~~~~~~~~~~| ($\tau \times \tau$)\\
+\hspace*{0em}
+~~~~~~~~~~~| $\gamma$\\
+\hspace*{0em}
+~~~~~~~~~~~| $\alpha$\\
+\hspace*{0em}
+~~~~~~~~~~~| ($\forall \alpha$ $\tau$)\\
+
+~~~~~~~ $\gamma$ ::= \verb+{+$\alpha\ t$\verb+}+\\
+\hspace*{0em}
+~~~~~~~~~~~| $t$\\
+}
+
+\begin{itemize}
+  \item[a)] Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions
+\texttt{withtype}, \texttt{cases}, and \verb+{+$e$ $e$\verb+}+.
+
+  \item[b)] Write the typing rules of the form \fbox{$\Gamma\vdash e : \tau$} for the expressions
+\texttt{withtype} and \texttt{cases} and the well-formedness of user-defined types.
+
+  \item[c)] Consider the following expression:
+
+{
+\begin{verbatim}
+{withtype {fruit {apple num} {banana num}}
+          {{withtype {color {apple num} {banana num}}
+                     {fun {x : fruit}
+                          {cases fruit x
+                            {apple  {a} {apple  {+ a 1}}}
+                            {banana {b} {banana {+ b 1}}}}}}
+           {apple 42}}}
+\end{verbatim}
+}
+
+If the result of type checking the expression is \mtt{fruit}, explain why in detail.
+Otherwise, revise the typing rules to make it \mtt{fruit}.
+\end{itemize}
+
+\item Consider the following language, \texttt{TPFAE}:
+\[
+\begin{array}{rllrllr@{\hskip3pt}l}
+e::= & n &\qquad& \tau::= & \code{num} &\qquad& n\in & \mathbb{Z}\\
+\mid& e\verb!+!e &&\mid&\tau\rightarrow\tau && x\in & \mathit{Id}\\
+\mid& e\verb!-!e &&\mid&\alpha && \alpha\in & \mathit{TId}\\
+\mid& x &&\mid&\forall\alpha.\tau \\
+\mid& \lambda x\verb+:+\tau\verb+.+e \\
+\mid& e\ e \\
+\mid& \lambda\alpha\verb+.+e \\
+\mid& e\verb+[+\tau\verb+]+ \\
+\end{array}
+\]
+
+Type annotations do not take any roles during evaluation.
+Therefore, we define type-erasure semantics, which removes
+type annotations from an expression.
+
+Consider the following Scala code, which implements type erasure:
+\begin{verbatim}
+sealed trait TPFAE
+case class Num(n: Int) extends TPFAE
+case class Add(l: TPFAE, r: TPFAE) extends TPFAE
+case class Sub(l: TPFAE, r: TPFAE) extends TPFAE
+case class Id(x: String) extends TPFAE
+case class Fun(p: String, t: Type, b: TPFAE) extends TPFAE
+case class App(f: TPFAE, a: TPFAE) extends TPFAE
+case class TyFun(a: String, e: TPFAE) extends TPFAE
+case class TyApp(e: TPFAE, t: Type) extends TPFAE
+
+sealed trait Type
+case object NumT extends Type
+case class ArrowT(t0: Type, t1: Type) extends Type
+case class VarT(a: String) extends Type
+case class Forall(a: String, t: Type) extends Type
+
+sealed trait FAE
+case class FAENum(n: Int) extends FAE
+case class FAEAdd(l: FAE, r: FAE) extends FAE
+case class FAESub(l: FAE, r: FAE) extends FAE
+case class FAEId(x: String) extends FAE
+case class FAEFun(p: String, b: FAE) extends FAE
+case class FAEApp(f: FAE, a: FAE) extends FAE
+
+def erase(e: TPFAE): FAE = e match {
+  case Num(n) => FAENum(n)
+  case Add(l, r) => FAEAdd(erase(l), erase(r))
+  case Sub(l, r) => FAESub(erase(l), erase(r))
+  case Id(x) => FAEId(x)
+  case Fun(p, t, b) => FAEFun(p, erase(b))
+  case App(f, a) => FAEApp(erase(f), erase(a))
+  case TyFun(a: String, e: TPFAE) => erase(e)
+  case TyApp(e: TPFAE, t: Type) => erase(e)
+}
+\end{verbatim}
+Erasing a \texttt{TPFAE} expression results in an \texttt{FAE} expression.
+
+The following is the abstract syntax of \texttt{FAE}:
+\[
+\begin{array}{rl}
+E::= & n \\
+\mid& E\verb!+!E \\
+\mid& E\verb!-!E \\
+\mid& x  \\
+\mid& \lambda x.E \\
+\mid& E\ E  \\
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Complete the definition of type erasure \framebox{$[e]=E$} according to the Scala code
+by filling the blanks:
+\end{itemize}
+
+{
+\[
+\begin{array}{rcl}
+\lbrack n\rbrack &=& n \\
+\lbrack x\rbrack &=& x \\
+\lbrack e_1\code{+}e_2\rbrack &=& \lbrack e_1\rbrack\code{+}\lbrack e_2\rbrack \\
+\lbrack e_1\code{-}e_2\rbrack &=& \sblank \\
+\lbrack \lambda x\code{:}\tau\code{.}e\rbrack &=& \sblank \\
+\lbrack e_1\ e_2\rbrack &=& \sblank \\
+\lbrack \lambda\alpha\code{.}e\rbrack &=& \sblank \\
+\lbrack e\code{[}\tau\code{]}\rbrack &=& \sblank \\
+\end{array}
+\]
+}
+
+\begin{itemize}
+\item[b)] Fill the following blanks with the results of erasing:
+\end{itemize}
+
+{
+\[
+\begin{array}{rcl}
+\lbrack
+\code{($\lambda\alpha$.$\lambda$x:$\alpha$.x) [num] 1}
+\rbrack
+&=&\sblank \\
+\lbrack
+\code{($\lambda\alpha$.$\lambda\beta$.$\lambda$x:$\alpha$.$\lambda$y:$\beta$.y) [num] [num] 1 2}
+\rbrack
+&=&\sblank \\
+\end{array}
+\]
+}
+
+\begin{itemize}
+\item[c)] Fill the following blank with the expression before erasing:
+\end{itemize}
+
+{
+\[
+\begin{array}{rl@{\hskip-10pt}l}
+&\lbrack\code{$\lambda$x:$\forall\alpha$.$\alpha\rightarrow\alpha$.} \\
+&\lblank&\rbrack \\[10pt]
+=&\code{$\lambda$x.((x $\lambda$x.x) (x 1))}
+\end{array}
+\]
+}
+
+\item Consider the following language, \texttt{TpolyFAE}:
+\begin{itemize}
+  \item[]\textbf{Abstract syntax}
+\[
+\begin{array}{r@{\hskip6pt}r@{\hskip6pt}l
+  r@{\hskip6pt}l@{\hskip20pt}
+  r@{\hskip6pt}l@{\hskip20pt}
+  r@{\hskip4pt}c@{\hskip4pt}l@{\hskip20pt}
+  r@{\hskip4pt}c@{\hskip4pt}l}
+  e &::= & n &|& e\ e & \tau::= & \textsf{num} & n &\in& \mathbb{Z}& e &\in& \textit{Expr} \\
+  &|& x &|& \Lambda\alpha.e &|&\tau\rightarrow\tau & x &\in& \textit{Id}& \tau &\in& \textit{Type} \\
+  &|& \lambda x{:}\tau.e &|& e[\tau] &|&\alpha & \alpha &\in& \textit{TV}&
+  \Gamma &\in& (\textit{Id}\cup\textit{TV})\rightarrow(\textit{Type}\cup\{\cdot\}) \\
+  &&&&&|&\forall\alpha.\tau \\
+\end{array}
+\]
+  \item[]\textbf{Typing rules}
+\[
+\begin{array}{c@{\hskip20pt}c@{\hskip20pt}c}
+\Gamma\vdash n:\textsf{num}
+  &
+  \inferrule
+  { x\in\Dom{\Gamma} }
+  { \Gamma\vdash x:\Gamma(x) }
+  &
+  \inferrule
+  { \Gamma[x:\tau]\vdash e:\tau' \rulesep \Gamma\vdash\tau }
+  { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
+  \\[20pt]
+  \inferrule
+  { \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
+    \Gamma\vdash e_2:\tau }
+  { \Gamma\vdash e_1\ e_2:\tau' }
+  &
+  \inferrule
+  {
+    \alpha\not\in\Dom{\Gamma} \rulesep
+    \Gamma[\alpha]\vdash e:\tau
+  }
+  { \Gamma\vdash \Lambda\alpha.e:\forall\alpha.\tau }
+  &
+  \inferrule
+  {
+    \Gamma\vdash e:\forall\alpha.\tau_1 \rulesep
+    \Gamma\vdash\tau_0
+  }
+  { \Gamma\vdash e[\tau_0]:\tau_1[\alpha\leftarrow\tau_0] }
+\end{array}
+\]
+  \item[]\textbf{Well-formedness rules}
+\[
+\begin{array}{c@{\hskip40pt}c@{\hskip40pt}c@{\hskip40pt}c}
+  \Gamma\vdash\textsf{num}
+  &
+  \inferrule
+  { \Gamma\vdash\tau \rulesep \Gamma\vdash\tau' }
+  { \Gamma\vdash\tau\rightarrow\tau' }
+  &
+  \inferrule
+  { \alpha\in\Dom{\Gamma} }
+  { \Gamma\vdash\alpha }
+  &
+  \inferrule
+  { \Gamma[\alpha]\vdash\tau }
+  { \Gamma\vdash\forall\alpha.\tau }
+\end{array}
+\]
+\end{itemize}
+
+\Space{2}
+
+Type annotations do not take any roles during evaluation.
+Therefore, we define type-erasure semantics, which removes
+type annotations from an expression.
+Erasing types from a \texttt{TpolyFAE} expression results
+in an \texttt{FAE} expression. The following is the abstract syntax of \texttt{FAE}:
+\[
+  E::= n \ |\ x\ |\ \lambda x.E\ |\ E\ E \\
+\]
+
+\begin{itemize}
+\item[a)] 
+  Define type erasure of the form \framebox{$\textit{erase}(e)=E$} for \texttt{ TpolyFAE}.
+\end{itemize}
+
+\begin{itemize}
+\item[b)] 
+  Write \texttt{ FAE} expressions that are obtained by erasing types from the
+    following expressions.
+    \begin{itemize}
+      \item[$\circ$] $(\Lambda\alpha.\lambda \texttt{x}{:}\alpha.\texttt{x})\ [\textsf{num}]\ 1$
+      \item[$\circ$]
+        $(\Lambda\alpha.\Lambda\beta.\lambda\texttt{x}{:}\alpha.\lambda\texttt{y}{:}\beta.\texttt{y})
+        \ [\textsf{num}]\ [\textsf{num}]\ 1\ 2$
+    \end{itemize}
+\end{itemize}
+
+\begin{itemize}
+\item[c)] 
+  Write well-typed \texttt{ TpolyFAE} expressions that produce
+    the following \texttt{ FAE} expressions after the type erasure.
+    \begin{itemize}
+      \item[$\circ$] $(\lambda \texttt{x}.\lambda \texttt{y}.((\texttt{x}\ \texttt{x})\ \texttt{y}))\
+        (\lambda \texttt{x}.\texttt{x})\ 1$
+      \item[$\circ$] $\lambda \texttt{x}.((\texttt{x}\ \lambda \texttt{x}.\texttt{x})\ (\texttt{x}\ 1))$
+    \end{itemize}
+\end{itemize}
+
+\item The following language adds
+polymorphic non-recursive type definitions to \texttt{TpolyFAE}
+(the omitted parts are the same as \texttt{TpolyFAE}):
+
+\Space{1}
+$
+  \begin{array}{l}
+    e ::=\ \cdots\ \ |\ \ \textsf{type}\ t[\alpha]=x@\tau+x@\tau;\ e\ \ |\ \ 
+           e\ \textsf{match}\ x(x)\rightarrow e,\ x(x)\rightarrow e \\
+    v ::=\ \cdots\ \ |\ \ \Lambda\alpha.\langle x\rangle\ \ |\ \ \langle x\rangle\ \ |\ \  x(v) \\
+    \tau ::=\ \cdots\ \ |\ \  t[\tau] \\
+    \Gamma\ \in\ \finmap{(\embox{Id}\cup\embox{TVar}\cup\embox{TId})}
+    {(\embox{Type}\cup\{\cdot\}
+    \cup(\embox{TVar}\times\embox{Id}\times\embox{Type}\times\embox{Id}\times\embox{Type}))}
+  \end{array}
+$
+
+\[
+  \begin{array}{c}
+  \inferrule
+  { \eval{\sigma[x_1\mapsto\Lambda\alpha.\langle x_1\rangle,x_2\mapsto\Lambda\alpha.\langle x_2\rangle]}{e}{v} }
+  { \evald{\textsf{type}\ t[\alpha]=x_1@\tau_1+x_2@\tau_2;\ e}{v} }
+  \qquad\quad
+  \inferrule
+  { \evald{e}{\Lambda \alpha.\langle x\rangle} }
+  { \evald{\etapp{e}{\tau}}{\langle x\rangle} }
+  \qquad\quad
+  \inferrule
+  { \evald{e_1}{\langle x\rangle} \\ \evald{e_2}{v} }
+  { \evald{\eapp{e_1}{e_2}}{x(v)} }
+    \\[2em]
+  \inferrule
+  { \evald{e}{x_1(v')} \\ \eval{\sigma[x_3\mapsto v']}{e_1}{v} }
+  { \evald{e\ \textsf{match}\ x_1(x_3)\rightarrow e_1,x_2(x_4)\rightarrow e_2}{v} }
+  \qquad\qquad
+  \inferrule
+  { \evald{e}{x_2(v')} \\ \eval{\sigma[x_4\mapsto v']}{e_2}{v} }
+  { \evald{e\ \textsf{match}\ x_1(x_3)\rightarrow e_1,x_2(x_4)\rightarrow e_2}{v} }
+  \end{array}
+\]
+
+For example, programmers can write the following code, which defines a polymorphic
+option type, in this language:
+
+\Space{1}
+$
+  \begin{array}{l}
+    \textsf{type}\ \texttt{option}[\alpha]=\texttt{None}@\numt+\texttt{Some}@\alpha;\\
+    \textsf{val}\ \texttt{getOrElse}=\etfun{\alpha}{\efun{\texttt{x}{:}\texttt{option}[\alpha]}{
+      \efun{\texttt{y}{:}\alpha}{(}} \\
+    \ \ \ \ \texttt{x}\ \textsf{match}} \\
+    \ \ \ \ \ \ \ \ \texttt{None}(\texttt{z})\rightarrow\texttt{y}, \\
+    \ \ \ \ \ \ \ \ \texttt{Some}(\texttt{z})\rightarrow\texttt{z} \\
+    );\\
+    \eapp{\eapp{\etapp{\texttt{getOrElse}}{\numt}}{(\eapp{\etapp{\texttt{Some}}{\numt}}{1})}}{2}
+  \end{array}
+$
+\Space{1}
+
+On the other hand, the following code is not well-typed
+since types are not recursive in this language:
+
+\Space{1}
+$
+  \begin{array}{l}
+    \textsf{type}\ \texttt{foo}[\alpha]=\texttt{bar}@\numt+\texttt{baz}@\texttt{foo}[\alpha];\\
+    \ldots
+  \end{array}
+$
+\Space{1}
+
+Note that \texttt{foo} appears in the definition of itself, which implies that
+\texttt{foo} is a recursive type.
+
+\begin{enumerate}
+\item[a)]
+  Write the typing rules of the form
+    \fbox{$\typeofd{e}{\tau}$} of
+    $\textsf{type}\ t[\alpha]=x_1@\tau_1+x_2@\tau_2;\ e$ and
+    $e\ \textsf{match}\ x_1(x_3)\rightarrow e_1,\ x_2(x_4)\rightarrow e_2$.
+\item[b)]
+  Write the well-formedness rule of the form
+    \fbox{$\Gamma\vdash\tau$} of $t[\tau]$.
+\item[c)]
+  Write the type of \texttt{getOrElse} of the above example. You do not need to
+    draw the type derivation tree of \texttt{getOrElse}.
+\end{enumerate}
+
+
+
+\end{enumerate}

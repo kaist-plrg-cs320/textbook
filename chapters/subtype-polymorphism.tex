@@ -565,3 +565,1123 @@ expressions throwing exceptions or calling first-class continuations. Those
 expressions do not result in any values. They only change the flow of
 programs. Thus, it is quite natural to say that the type of such an expression
 is the bottom type.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Consider the following \texttt{SrecFAE} expressions.
+Write whether each expression is well-typed or not.
+If the expression is well-typed, show it by drawing the type derivation tree.
+Otherwise, just say that the expression is not well-typed.
+
+\begin{itemize}
+\item[a)]
+  $\textsf{if0}\ {1}\ {\{ \}}\ {2}$
+\item[b)]
+  $\textsf{if0}\ {1}\ {\{ \}}\ {\{\texttt{a}=2\}}$
+\end{itemize}
+
+($\{ \}$ is the empty record.)
+
+\item Consider the following language:\\
+
+\begin{tabular}{rr@{~}c@{~}ll}
+\mbox{class declaration} &
+$d$ &$::=$& class $C$ extends $C$ \verb+{+ $g^*\ k\ m^*$ \verb+}+\\
+\mbox{field declaration} &
+$g$ &$::=$&$x$:$C$;\\
+\mbox{constructor declaration} &
+$k$ &$::=$& $C$($(x\mtt{:} C)^*$) \verb+{+ super($x^*$); $(\mtt{this.}x \mtt{ = } x\mtt{;})^*$ \verb+}+\\
+\mbox{method declaration} &
+$m$ &$::=$& $f$($(x\mtt{:} C)^*$):$C$ \verb+{+ return $e$; \verb+}+\\
+\mbox{expression} &
+$e$ &$::=$& $x~\mid~e$.$x~\mid~e$.$f$($e^*$)$~\mid~$new $C$($e^*$)
+\end{tabular}
+
+where metavariables $C$, $D$, and $E$ range over class names,
+$x$ ranges over field names, and
+$f$ ranges over method names.
+We assume that the set of variables includes the special variable \mtt{this},
+which cannot be used as the name of an argument to a method.
+Instead, it is implicitly bound in every method declaration.
+The evaluation rule for method invocation will substitute an appropriate object
+for \mtt{this}, in addition to substituting the argument values for the parameters.
+
+With the following subtyping rules:
+
+\[
+\begin{array}{ccc}
+C~<:~C
+&\qquad
+\newinfrule{
+C~<:~D \qquad D~<:~E
+}
+{C~<:~E}
+&\qquad
+\newinfrule{
+\mtt{class}\ C\ \mtt{extends}\ D\ \{ \cdots \}
+}
+{C~<:~D}
+\end{array}
+\]
+and the following helper functions:
+
+\begin{tabular}{ll}
+$\embox{fields}(C) = x_1:C_1 \cdots x_n:C_n$
+& the fields of class $C$ are $x_1$ to $x_n$ of types $C_1$ to $C_n$, respectively
+\\[.5em]
+$\embox{mtype}(C, f) = C_1 \cdots C_n \rightarrow C_{n+1}$
+& the type of method $f$ defined in class $C$ is $C_1 \cdots C_n \rightarrow C_{n+1}$
+\\[.5em]
+$\embox{ctype}(C) = C_1 \cdots C_n \rightarrow C$
+& the type of the constructor of class $C$ is $C_1 \cdots C_n \rightarrow C$
+\end{tabular}
+
+\begin{itemize}
+  \item[a)] Write the typing rules of the form \fbox{$\Gamma\vdash e : C$} for the expressions.
+The typing rules for constructors and method invocations check that
+each actual argument has a type that is a subtype of the corresponding formal parameter type.
+The casting ``($C$)$e$'' is well typed only when the type of $e$ is a subtype of $C$.
+
+  \item[b)] The following judgment states that:
+
+\begin{center}
+\texttt{$C\ \vdash\ f$($x_1\mtt{:} C_1,\ \cdots\ x_n\mtt{:} C_n$):$C_{n+1}$ \{ return $e$; \}}
+\end{center}
+
+the method declaration defined in $C$ is well typed.
+Write its typing rule which checks the following:
+\begin{itemize}
+\item The type of $f$'s body expression $e$ should be a subtype of the annotated return type $C_{n+1}$.
+\item When class $C$ explicitly extends $D$
+(\verb!class! $C$ \verb!extends! $D$ \verb+{+ $\cdots$ \verb+}+),
+if $D$ defines any method of name $f$,
+the type of $f$ in $D$ should be the same with the type of $f$ in $C$.
+\end{itemize}
+
+\bigskip
+
+\hspace*{-5em}
+\newinfrule{}
+{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C\ \vdash\ f\mtt{(}x_1\mtt{:} C_1,\ \cdots\ x_n\mtt{:} C_n\mtt{):}C_{n+1} \mtt{\{ return}\ e\mtt{; \}}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~}
+\end{itemize}
+
+\item Consider the following language:
+\[
+\begin{array}{rllrl}
+e ::= & n &\qquad&\tau ::= & \verb+num+\\
+\mid& x&&\mid& \verb+(+\tau\verb+ -> +\tau\verb+)+\\
+\mid& \verb+(fun (+ x \verb+:+\tau\verb+) + e\verb+)+&&\mid& \verb!{!l\verb!:!\tau\verb!, ..., !l\verb!:!\tau\verb!}!\\
+\mid& \verb+(+e\ e\verb+)+&&\\
+\mid& \verb!{!l\verb!=!e\verb!, ..., !l\verb!=!e\verb+}+&&\\
+\mid& e\verb!.!l&&
+\end{array}
+\]
+
+with the following typing rules for records:
+\[
+\begin{array}{ccccc}
+\newinfrule
+{ \Gamma\vdash{e_1}:{\tau_1} \rulesep \cdots \rulesep \Gamma\vdash{e_n}:{\tau_n} }
+{ \Gamma\vdash{\{l_1\texttt{=} e_1,\cdots,l_n\texttt{=} e_n\}}:{\{l_1{:}\tau_1,\cdots,l_n{:}\tau_n\}} }
+&\qquad&
+\newinfrule
+{ \Gamma\vdash{e}:{\{\cdots,l{:}\tau,\cdots\}} }
+{ \Gamma\vdash{{e.l}}:{\tau} }
+&\qquad&
+\newinfrule
+{ \Gamma\vdash{e}:{\tau'} \rulesep {\tau'}<:{\tau} }
+{ \Gamma\vdash{e}:{\tau} }
+\\[2em]
+\{l_1{:}\tau_1,\cdots,l_n{:}\tau_n,l{:}\tau\}<:\{l_1{:}\tau_1,\cdots,l_n{:}\tau_n\}
+&\qquad&
+\newinfrule
+{ {\tau_0}<:{\tau_1} \rulesep {\tau_1}<:{\tau_2} }
+{ {\tau_0}<:{\tau_2} }
+&\qquad&
+{\tau}<:{\tau}
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Show that the following expression is not well-typed:
+\begin{verbatim}
+((fun (x:{a:{b:num,c:num}})
+      ((fun (y:{a:{b:num}}) y.a.b) x))
+ {a={b=2,c=3}})
+\end{verbatim}
+
+\item[b)] Define one additional (sub)typing rule of the form
+\fbox{$\Gamma\vdash{e}:{\tau}$} or \fbox{${\tau}<:{\tau}$}
+to make the above expression well-typed by filling the blanks:
+
+{
+\[
+\newinfrule
+{ \lblank }
+{ \mblank }
+\]
+}
+
+
+\end{itemize}
+
+\item When a programming language provides overloading,
+multiple function declarations may have the same name.  Consider the following example:
+\begin{verbatim}
+1 toString(x: Int): String = "line 1"
+2 toString(x: Bool): String = "line 2"
+3 toString(false)
+\end{verbatim}
+Even though two function declarations on lines 1 and 2 have the same name,
+it is clear that the one on line 2 is called on line 3 because of the different parameter types of the functions.
+
+When multiple function declarations may be called for a given function call like the following example:
+\begin{verbatim}
+4 toString(x: Int): String = "line 4"
+5 toString(x: Number): String = "line 5"
+6 toString(42)
+\end{verbatim}
+the function declaration that is \emph{more specific than} all the other function declarations
+that may be called for the given function call is called.
+We say that a function declaration $f(x_1:A_1, \cdots, x_n:A_n)$ is more specific than $f(x_1:B_1, \cdots, x_n:B_n)$,
+if $A_i$ is a subtype of $B_i$ ($A_i <: B_i$) for $1 \le i \le n$.
+We assume that \verb!Int! is a subtype of \verb!Number!.
+When no single function declaration is more specific than all the other function declarations
+that may be called for a given function call,
+the function call shows an \emph{ambiguous call error}.
+
+\begin{itemize}
+\item[(a)] Explain why the following example shows an ambiguous call error:
+\begin{verbatim}
+7 toString(x: Int, y: Number): String = "line 7"
+8 toString(x: Number, y: Int): String = "line 8"
+9 toString(42, 8)
+\end{verbatim}
+where both \verb!42! and \verb!8! have type \verb!Int!.
+
+Add one function declaration to remove the ambiguous call error.
+
+\item[(b)] For simplicity, we assume the following:
+\begin{itemize}
+\item Every function has exactly two parameters.
+\item The subtype relation is a parital order:
+
+\begin{tabular}{ll}
+reflexive &($T<:T$),\\
+antisymmetric &($T<:S$ and $S<:T$ implies $T=S$), and\\
+transitive &($T<:S$ and $S<:R$ implies $T<:R$).
+\end{tabular}
+\item If a type has two types as its supertypes, then the two supertypes also are in the subtype relation: if $T<:S$ and $T<:R$, then $S<:R$ or $R<:S$.
+\end{itemize}
+
+Now, we will create rules for a set of all the function declarations with the same name in a given program,
+which can ensure that there is no ambiguous function call if the rules are satisfied.
+Precisely, we want to make the following statement hold:
+\begin{quote}
+If a set of all the function declarations with the same name in a given program satisfies the rules,
+$\{m(x_{11}:T_{11},x_{12}:T_{12}): S_1=e_1,\ \cdots\ ,m(x_{n1}:T_{n1},x_{n2}:T_{n2}): S_n=e_n\}~\textsf{safe}$,\\
+then evaluation of the following program does not result in an ambiguous call error:
+\[
+\begin{array}{l}
+m(x_{11}:T_{11},x_{12}:T_{12}): S_1=e_1 \\
+\cdots \\
+m(x_{n1}:T_{n1},x_{n2}:T_{n2}): S_n=e_n \\
+m(e, e')
+\end{array}
+\]
+\end{quote}
+
+We formalize the \textsf{safe} rule as follows:\\[-2em]
+
+\[
+\inferrule
+{
+  \forall (i,j)\in\{(i,j):1\le i<j\le n\}.\ T_{i1}\neq T_{j1}\lor T_{i2}\neq T_{j2} \\
+  \forall (i,j)\in\{(i,j):1\le i<j\le n\}.\ (T_{i1},T_{i2})~\textsf{meet}~(T_{j1},T_{j2})~\textsf{wrt}~\{(T_{11},T_{12}),\ \cdots\ ,(T_{n1},T_{n2})\}
+}
+{ \{m(x_{11}:T_{11},x_{12}:T_{12}): S_1=e_1,\ \cdots\ ,m(x_{n1}:T_{n1},x_{n2}:T_{n2}): S_n=e_n\}~\textsf{safe} }
+\]
+
+The first premise prevents functions with the same parameter types.
+The second premise prevents ambiguous call errors for functions with different parameter types,
+and it has three subcases:
+
+\[
+\begin{array}{ll}
+(1) &
+\inferrule
+{ T_{i1}<:T_{j1} \quad T_{i2}<:T_{j2} }
+{ (T_{i1},T_{i2})~\textsf{meet}~(T_{j1},T_{j2})~\textsf{wrt}~\{(T_{11},T_{12}),...,(T_{n1},T_{n2})\} }
+\\
+(2) &
+\inferrule
+{ T_{j1}<:T_{i1} \quad T_{j2}<:T_{i2} }
+{ (T_{i1},T_{i2})~\textsf{meet}~(T_{j1},T_{j2})~\textsf{wrt}~\{(T_{11},T_{12}),...,(T_{n1},T_{n2})\} }
+\end{array}
+\]
+
+\textbf{Write the 3rd subcase} possibly using the following paritial function:
+
+\[\textsf{glb}(T,S)=\begin{cases}T&\text{if}~T<:S\\S&\text{if}~S<:T\end{cases}\]
+
+(\textit{Hint: consider the functions and your answer of (a).})
+
+\end{itemize}
+
+\item Consider the following language:
+\[
+\begin{array}{rllrllrllr@{\hskip3pt}l}
+e::= & n &\qquad& v::= & n &\qquad& \tau::=&\verb+num+ &\qquad& n\in & \mathbb{Z}\\
+\mid& x &&\mid&\verb+<+v\verb+,+\cdots\verb+,+v\verb+>+
+&&\mid&\code{[}\tau\code{]} &&x\in&\textit{Id} \\
+\mid& \verb+val +x\verb+=+e\verb+ in +e &&&&&\mid& \verb+Top+ &&v\in&\textit{Val}\\
+\mid&\verb+<+e\verb+,+\cdots\verb+,+e\verb+>+&&&&&&&&\tau\in&\textit{Type} \\
+\mid&e\verb+[+e\verb+]+ &&&&&&&&\sigma\in&\textit{Id}\rightarrow\textit{Val}\\
+&&&&&&&&&\Gamma\in&\textit{Id}\rightarrow\textit{Type}\\
+\end{array}
+\]
+
+with the follwing operational semantics:
+\[
+\begin{array}{ccccc}
+\sigma\vdash n\Rightarrow n
+&\qquad&
+\newinfrule
+{ x\in\mbox{Domain}(\sigma) }
+{ \sigma\vdash x\Rightarrow\sigma(x) }
+&\qquad&
+\newinfrule
+{ \sigma\vdash e_1\Rightarrow v_1 \rulesep
+  \sigma[x\mapsto v_1]\vdash e_2\Rightarrow v_2 }
+{ \sigma\vdash \code{val }x\code{=}e_1\code{ in }e_2\Rightarrow v_2 }
+\\[20pt]
+\multicolumn{3}{c}{
+\newinfrule
+{ \sigma\vdash e_1\Rightarrow \code{<}v_1\code{,}\cdots\code{,}v_{n'}\code{>} \rulesep
+   \sigma\vdash e_2\Rightarrow n \rulesep
+   1\le n\le n' }
+{ \sigma\vdash e_1\code{[}e_2\code{]} \Rightarrow v_n }
+}
+&\qquad&
+\newinfrule
+{ \sigma\vdash e_1\Rightarrow v_1\rulesep\cdots\rulesep \sigma\vdash e_n\Rightarrow v_n }
+{ \sigma\vdash\code{<}e_1\code{,}\cdots\code{,}e_n\code{>} \Rightarrow
+   \code{<}v_1\code{,}\cdots\code{,}v_n\code{>} }
+\\
+\end{array}
+\]
+
+Expression $\verb+<+e_1\verb+,+\cdots\verb+,+e_n\verb+>+$ creates a list containing
+values that are the results of evaluating from $e_1$ to $e_n$.
+To evaluate expression $e_1\verb+[+e_2\verb+]+$, $e_1$ must result in a list, and
+$e_2$ must result in an integer $n$. The result of the expression equals the $n$th
+element of the list. Note that the indices of a list starts from $1$, but not $0$.
+Value $\verb+<+v_1\verb+,+\cdots\verb+,+v_n\verb+>+$ is a list containing the values 
+from $v_1$ to $v_n$. If once a list is created, the order among the elements of the list never changes.
+Type \code{[}$\tau$\code{]} is the type of a list whose every element has type $\tau$.
+Type \code{Top} is the type of every value.
+
+\begin{itemize}
+\item[a)] Complete the following typing rules
+of the form \fbox{$\Gamma\vdash e:\tau$}
+by filling the blanks.
+Reading a value at an invalid index of a list is not considered
+as a type error.
+\end{itemize}
+
+\[
+\begin{array}{ccccc}
+\typed{n}{\code{num}}
+&\qquad&
+\newinfrule
+{ x\in\mbox{Domain}(\Gamma) }
+{ \typed{x}{\Gamma(x)} }
+&\qquad&
+\newinfrule
+{ \typed{e}{\tau'} \rulesep {\tau'}<:{\tau} }
+{ \typed{e}{\tau} }
+\end{array}
+\]
+
+{
+\[
+\newinfrule
+{ \lblank }
+{ \typed{\code{val }x\code{=}e_1\code{ in }e_2}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{\code{<}e_1\code{,}\cdots\code{,}e_n\code{>}}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{e_1\code{[}e_2\code{]}}{\sblank} }
+\]
+}
+
+\begin{itemize}
+\item[b)]
+Write the subtyping rules of the form
+\framebox{${\tau}<:{\tau}$} of the language.
+Write exactly two rules: one for reflexivity and the other for type \code{Top}.
+\end{itemize}
+\Space{-3}
+
+{
+\[
+{\sblank}<:{\sblank}
+\]
+\[
+{\sblank}<:{\sblank}
+\]
+}
+
+Now, we want to add subtyping rules for list types while preserving
+the type-soundness of the language. Consider the following rules:
+
+\[
+\begin{array}{ccc}
+\textbf{A} &\qquad& \textbf{B} \\[10pt]
+\newinfrule
+{ {\tau}<:{\tau'} }
+{ {\code{[}\tau\code{]}}<:{\code{[}\tau'\code{]}} } &&
+\newinfrule
+{ {\tau'}<:{\tau} }
+{ {\code{[}\tau\code{]}}<:{\code{[}\tau'\code{]}} }
+\end{array}
+\]
+
+We have four options:
+\begin{enumerate}
+\item[\rom{1})] Add both \textbf{A} and \textbf{B}.
+\item[\rom{2})] Add only \textbf{A}.
+\item[\rom{3})] Add only \textbf{B}.
+\item[\rom{4})] Add none of \textbf{A} and \textbf{B}.
+\end{enumerate}
+
+\begin{itemize}
+\item[c)] Choose one among \textbf{I)}, \textbf{II)}, \textbf{III)}, and \textbf{IV)}, and justify your answer.
+\end{itemize}
+
+Now, we extend the language with expressions updating lists:
+\[
+\begin{array}{ccc}
+\begin{array}{rl}
+e ::= & \cdots \\
+\mid& e\verb+[+e\verb+]=+e \\
+\end{array} &\qquad&
+\newinfrule
+{ \typed{e_1}{\code{[}\tau\code{]}} \rulesep \typed{e_2}{\code{num}}
+  \rulesep \typed{e_3}{\tau} }
+{ \typed{e_1\code{[}e_2\code{]=}e_3}{\tau} }
+\end{array}
+\]
+
+To evaluate expression $e_1\verb+[+e_2\verb+]=+e_3$, $e_1$ must result in a list,
+and $e_2$ must result in an integer $n$. If $e_3$ yields value $v$, evaluating
+the expression changes the $n$th value of the list to $v$. The result of the expression
+equals $v$.
+To define the operational semantics of the revised language, we need stores,
+but we simply omit the rules for brevity.
+
+\begin{itemize}
+\item[d)] Now, under the presence of update expressions, we consider subtyping rules for list types again.
+Choose one among \textbf{I)}, \textbf{II)}, \textbf{III)}, and \textbf{IV)}, and justify your answer.
+Your answer for this question may equal to or differ from your answer for question \textbf{c)}.
+\end{itemize}
+
+\item Consider the following language:
+
+\begin{itemize}
+\item[] \textbf{Abstract syntax}
+\[
+\begin{array}{r@{\hskip6pt}r@{\hskip6pt}l@{\hskip40pt}
+  r@{\hskip6pt}r@{\hskip6pt}l@{\hskip40pt}
+  r@{\hskip4pt}c@{\hskip4pt}l}
+  e &::=& n & v &::=& n & n &\in& \mathbb{Z} \\
+  &|& x &&|& \clo{x}{e}{\sigma} & x &\in& \textit{Id} \\
+  &|& \lambda x{:}\tau.e &&|& \{l=v,\ldots,l=v\} & l &\in& \textit{Label} \\
+  &|& e\ e & \tau &::=& \textsf{num} & v &\in& \textit{Val} \\
+  &|& \{l=e,\ldots,l=e\} &&|& \tau\rightarrow\tau & e &\in& \textit{Expr} \\
+  &|& e.l &&|& \{l{:}\tau,\ldots,l{:}\tau\} & \tau &\in& \textit{Type} \\
+  &&&&&& \sigma &\in& \textit{Id}\rightarrow \textit{Val} \\
+  &&&&&& \Gamma &\in &\textit{Id}\rightarrow \textit{Type} \\
+\end{array}
+\]
+\item[] \textbf{Operational semantics}
+\[
+\begin{array}{cc}
+\multicolumn{2}{c}{\begin{array}{c@{\hskip20pt}c@{\hskip20pt}c@{\hskip20pt}c}
+\sigma\vdash n\Rightarrow n
+&
+\inferrule
+{ x\in\Dom{\sigma} }
+{ \sigma\vdash x\Rightarrow \sigma(x) }
+&
+\sigma\vdash\lambda x{:}\tau.e\Rightarrow\clo{x}{e}{\sigma}
+&
+\inferrule
+{ \sigma\vdash e\Rightarrow \{\ldots,l=v,\ldots\} }
+{ \sigma\vdash {e}.{l}\Rightarrow v }
+\end{array}}
+\\[20pt]
+\inferrule
+{ \sigma\vdash e_1\Rightarrow v_1 \rulesep\cdots\rulesep \sigma\vdash
+  e_n\Rightarrow v_n }
+{ \sigma\vdash\{l_1=e_1,\ldots,l_n=e_n\}\Rightarrow\{l_1=v_1,\ldots,l_n=v_n\} }
+&
+\inferrule
+{ \sigma\vdash e_1\Rightarrow \clo{x}{e}{\sigma'} \rulesep
+  \sigma\vdash e_2\Rightarrow v_2 \rulesep
+  \sigma'[x\mapsto v_2]\vdash e\Rightarrow v }
+{ \sigma\vdash e_1\ e_2\Rightarrow v }
+\end{array}
+\]
+\item[] \textbf{Typing rules}
+\[
+\begin{array}{c@{\hskip20pt}c@{\hskip20pt}c}
+\multicolumn{3}{c}{\begin{array}{c@{\hskip20pt}c@{\hskip20pt}c@{\hskip20pt}c}
+\Gamma\vdash n:\textsf{num}
+  &
+\inferrule
+{ x\in\Dom{\Gamma} }
+{ \Gamma\vdash x:\Gamma(x) }
+  &
+\inferrule
+{ \Gamma[x:\tau]\vdash e:\tau' }
+{ \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
+  &
+\inferrule
+{ \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
+  \Gamma\vdash e_2:\tau }
+{ \Gamma\vdash e_1\ e_2:\tau' }
+\end{array}}
+\\[20pt]
+\inferrule
+{ \typed{e_1}{\tau_1} \rulesep \cdots \rulesep \typed{e_n}{\tau_n} }
+{ \typed{\{l_1=e_1,\ldots,l_n=e_n\}}{\{l_1{:}\tau_1,\ldots,l_n{:}\tau_n\}} }
+&
+\inferrule
+{ \typed{e}{\{\ldots,l{:}\tau,\ldots\}} }
+{ \typed{{e}.{l}}{\tau} }
+&
+\inferrule
+{ \typed{e}{\tau'} \rulesep {\tau'}<:{\tau} }
+{ \typed{e}{\tau} }
+\end{array}
+\]
+\item[] \textbf{Subtyping rules}
+\[
+\begin{array}{c@{\hskip20pt}c@{\hskip20pt}c}
+{\tau}<:{\tau}
+&
+\inferrule
+{ \subt{\tau_1}{\tau_2} \rulesep \subt{\tau_2}{\tau_3} }
+{ \subt{\tau_1}{\tau_3} }
+&
+\{l_1{:}\tau_1,\ldots,l_n{:}\tau_n,l{:}\tau\}<:\{l_1{:}\tau_1,\ldots,l_n{:}\tau_n\}
+\end{array}
+\]
+\end{itemize}
+
+\begin{itemize}
+\item[a)] Is the following expression well-typed? If so, prove it by
+  drawing a type derivation tree for the expression. Otherwise, just say that
+    the expression is not well-typed. \textbf{If you write ``the expression is not
+    well-typed'' but the expression is well-typed in fact, you will get
+    -5~points, not~0 points, for this subquestion.}
+
+\Space{1}
+
+$
+  \begin{array}{l}
+    ( \\
+    \ \ \lambda \texttt{y}{:}\{\texttt{a}{:}\{\texttt{b}{:}\textsf{num}\}\}.\texttt{y}.\texttt{a}.\texttt{b} \\
+    )\ \{\texttt{a}=\{\texttt{b}=2,\texttt{c}=3\}\}
+  \end{array}
+$
+\Space{1}
+
+\item[b)] Is the following expression well-typed? If so, prove it by
+  drawing a type derivation tree for the expression. Otherwise, just say that
+    the expression is not well-typed. \textbf{If you write ``the expression is not
+    well-typed'' but the expression is well-typed in fact, you will get
+    -5~points, not~0 points, for this subquestion.}
+\Space{1}
+
+$
+  \begin{array}{l}
+    ( \\
+    \ \ \lambda x{:}\{\texttt{a}{:}\{\texttt{b}{:}\textsf{num},\texttt{c}{:}\textsf{num}\}\}. \\
+    \ \ \ \ (\lambda \texttt{y}{:}\{\texttt{a}{:}\{\texttt{b}{:}\textsf{num}\}\}.
+    \texttt{y}.\texttt{a}.\texttt{b})\ \texttt{x} \\
+    )\ \{a=\{b=2,c=3\}\}
+  \end{array}
+$
+\Space{1}
+
+\item[c)] Add one subtyping rule of the form
+  \fbox{$\tau<:\tau$} that makes both of the above expressions
+  well-typed while retaining the type soundness of the language.
+  If both are already well-typed, then just say so and do not add a
+  subtyping rule.
+\end{itemize}
+
+\item A string next to a rule is the name of the rule.
+For example, if you see
+\[
+    \sigma\vdash n\Rightarrow n
+    \ \ \text{\scriptsize[O1]}
+\]
+then the name of the following rule is O1.
+\[
+    \sigma\vdash n\Rightarrow n
+\]
+You may use names in your answers.
+
+Consider the following language:
+  \begin{itemize}
+    \item[] \textbf{Abstract syntax}
+  \[
+    \begin{array}{
+        r@{\hskip5pt}r@{\hskip5pt}l@{\hskip40pt}
+        r@{\hskip5pt}r@{\hskip5pt}l@{\hskip40pt}
+        r@{\hskip3pt}r@{\hskip3pt}l
+      }
+      e &::=& n & v &::=& n & n &\in& \mathbb{Z} \\
+      &|& x &&|& \clo{x}{e}{\sigma} & x &\in& \textit{Id} \\
+      &|& \lambda x{:}\tau.e & \tau &::=& \textsf{num} & v &\in& \textit{Val} \\
+      &|& e\ e &&|& \tau\rightarrow\tau & e &\in& \textit{Expr} \\
+      &&&&|& \textsf{Any} & \tau &\in& \textit{Type} \\
+      &&&&&& \sigma &\in& \textit{Id}\rightarrow\textit{Val} \\
+      &&&&&& \Gamma &\in& \textit{Id}\rightarrow\textit{Type} \\
+    \end{array}
+  \]
+
+  \item[] \textbf{Operational semantics}
+\[
+  \begin{array}{c}
+    \sigma\vdash n\Rightarrow n
+    \ \ \text{\scriptsize[O1]}
+    \qquad
+    \inferrule
+    { x\in\Dom{\sigma} }
+    { \sigma\vdash x\Rightarrow \sigma(x) }
+    \ \ \text{\scriptsize[O2]}
+    \qquad
+    \sigma\vdash\lambda x{:}\tau.e\Rightarrow\clo{x}{e}{\sigma}
+    \ \ \text{\scriptsize[O3]}
+    \\[20pt]
+    \inferrule
+    { \sigma\vdash e_1\Rightarrow \clo{x}{e}{\sigma'} \rulesep
+      \sigma\vdash e_2\Rightarrow v_2 \rulesep
+      \sigma'[x\mapsto v_2]\vdash e\Rightarrow v }
+    { \sigma\vdash e_1\ e_2\Rightarrow v }
+    \ \ \text{\scriptsize[O4]}
+  \end{array}
+\]
+    \item[] \textbf{Typing rules}
+\[
+  \begin{array}{c}
+    \Gamma\vdash n:\textsf{num}
+    \ \ \text{\scriptsize[T1]}
+    \qquad
+    \inferrule
+    { x\in\Dom{\Gamma} }
+    { \Gamma\vdash x:\Gamma(x) }
+    \ \ \text{\scriptsize[T2]}
+    \qquad
+    \inferrule
+    { \Gamma[x:\tau]\vdash e:\tau' }
+    { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
+    \ \ \text{\scriptsize[T3]}
+    \\[20pt]
+    \inferrule
+    { \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
+      \Gamma\vdash e_2:\tau }
+    { \Gamma\vdash e_1\ e_2:\tau' }
+    \ \ \text{\scriptsize[T4]}
+    \qquad
+    \inferrule
+    { \Gamma\vdash e:\tau' \rulesep
+      \tau'<:\tau }
+    { \Gamma\vdash e:\tau }
+    \ \ \text{\scriptsize[T5]}
+  \end{array}
+\]
+
+    \item[] \textbf{Subtyping rules}
+\[
+  \begin{array}{c@{\hskip20pt}c@{\hskip20pt}c@{\hskip20pt}c}
+    \tau<:\tau
+    \ \ \text{\scriptsize[S1]}
+    &
+    \inferrule
+    { \tau_1<:\tau_2 \rulesep \tau_2<:\tau_3 }
+    { \tau_1<:\tau_3 }
+    \ \ \text{\scriptsize[S2]}
+    &
+    \tau<:\textsf{Any}
+    \ \ \text{\scriptsize[S3]}
+    &
+    \inferrule
+    { \tau_1<:\tau_1' \rulesep \tau_2<:\tau_2' }
+    { \tau_1\rightarrow\tau_2<:\tau_1'\rightarrow\tau_2' }
+    \ \ \text{\scriptsize[S4]}
+  \end{array}
+\]
+\end{itemize}
+
+\Space{1}
+The language is not type-sound.
+\begin{itemize}
+  \item[a)] Prove it by showing a counterexample to the
+type soundness, i.e. write an expression that is accepted by the type system but
+causes a run-time error. You DO NOT need to justify your answer. Just write an
+expression that is a counterexample to the type soundness.
+  \item[b)] Revise the language to be type-sound.
+\end{itemize}
+
+\item A string next to a rule is the name of the rule.
+For example, if you see
+\[
+    \sigma\vdash n\Rightarrow n
+    \ \ \text{\scriptsize[O1]}
+\]
+then the name of the following rule is O1.
+\[
+    \sigma\vdash n\Rightarrow n
+\]
+You may use names in your answers.
+
+Consider the following language:
+  \begin{itemize}
+    \item[] \textbf{Abstract syntax}
+  \[
+    \begin{array}{
+        r@{\hskip5pt}r@{\hskip5pt}l
+        r@{\hskip5pt}l@{\hskip20pt}
+        r@{\hskip5pt}r@{\hskip5pt}l
+        r@{\hskip5pt}r@{\hskip5pt}l@{\hskip20pt}
+        r@{\hskip3pt}r@{\hskip3pt}l@{\hskip10pt}
+        r@{\hskip3pt}r@{\hskip3pt}l
+      }
+      e &::=& n &|& x & v &::=& n & \tau &::=& \textsf{num} & n &\in& \mathbb{Z}
+      & e &\in& \textit{Expr} \\
+      &|& \lambda x{:}\tau.e &|& e\ e &&|& \clo{x}{e}{\sigma} &&|&
+      \tau\rightarrow\tau & x &\in& \mathit{Id}
+      & \sigma &\in& \finmap{\mathit{Id}}{\mathit{Val}} \\
+      &|& \textsf{ref}\ e &|& !e &&|& a &&|& \textsf{ref}\ \tau & a &\in&\mathit{Addr}
+      & M &\in& \mathit{Addr}\rightarrow\mathit{Val} \\
+      &|& e:=e &|& e;e &&&&&|&\textsf{Any}& v &\in&\mathit{Val}
+      & \Gamma &\in& \finmap{\mathit{Id}}{\mathit{Type}} \\
+      &&&&&&&&&&& \tau &\in&\mathit{Type} \\
+    \end{array}
+  \]
+
+  \item[] \textbf{Operational semantics}
+\[
+  \begin{array}{c}
+    \sigma,M\vdash n\Rightarrow n,M
+    \ \ \text{\scriptsize[O1]}
+    \qquad
+    \inferrule
+      { x\in\Dom{\sigma} }
+      { \sigma,M\vdash x\Rightarrow \sigma(x),M }
+    \ \ \text{\scriptsize[O2]}
+    \qquad
+    \sigma,M\vdash\lambda x{:}\tau.e\Rightarrow\clo{x}{e}{\sigma},M
+    \ \ \text{\scriptsize[O3]}
+    \\[20pt]
+    \inferrule
+      { \sigma,M_0\vdash e_1\Rightarrow \clo{x}{e}{\sigma'},M_1 \rulesep
+        \sigma,M_1\vdash e_2\Rightarrow v_2,M_2 \rulesep
+        \sigma'[x\mapsto v_2],M_2\vdash e\Rightarrow v,M_3 }
+      { \sigma,M_0\vdash e_1\ e_2\Rightarrow v,M_3 }
+    \ \ \text{\scriptsize[O4]}
+    \\[20pt]
+    \inferrule
+      { \sigma,M_0\vdash e\Rightarrow v,M_1\rulesep
+        a\not\in\Dom{M_1} }
+      { \sigma,M_0\vdash \textsf{ref}\ e\Rightarrow a,M_1[a\mapsto v] }
+    \ \ \text{\scriptsize[O5]}
+    \qquad
+    \inferrule
+      { \sigma,M_0\vdash e\Rightarrow a,M_1\rulesep
+        a\in\Dom{M_1} }
+      { \sigma,M_0\vdash !e\Rightarrow M_1(a),M_1 }
+    \ \ \text{\scriptsize[O6]}
+    \\[20pt]
+    \inferrule
+      { \sigma,M_0\vdash e_1\Rightarrow a,M_1\rulesep
+        \sigma,M_1\vdash e_2\Rightarrow v,M_2
+      }
+      { \sigma,M_0\vdash e_1:=e_2\Rightarrow v,M_2[a\mapsto v] }
+    \ \ \text{\scriptsize[O7]}
+    \qquad
+    \inferrule
+      { \sigma,M_0\vdash e_1\Rightarrow v_1,M_1\rulesep
+        \sigma,M_1\vdash e_2\Rightarrow v_2,M_2
+      }
+      { \sigma,M_0\vdash e_1;e_2\Rightarrow v_2,M_2 }
+    \ \ \text{\scriptsize[O8]}
+  \end{array}
+\]
+    \item[] \textbf{Typing rules}
+\[
+  \begin{array}{ccc}
+    \Gamma\vdash n:\textsf{num}
+    \ \ \text{\scriptsize[T1]}
+    &
+    \inferrule
+    { x\in\Dom{\Gamma} }
+    { \Gamma\vdash x:\Gamma(x) }
+    \ \ \text{\scriptsize[T2]}
+    &
+    \inferrule
+    { \Gamma[x:\tau]\vdash e:\tau' }
+    { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
+    \ \ \text{\scriptsize[T3]}
+    \\[20pt]
+    \inferrule
+    { \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
+      \Gamma\vdash e_2:\tau }
+    { \Gamma\vdash e_1\ e_2:\tau' }
+    \ \ \text{\scriptsize[T4]}
+    &
+    \inferrule
+    { \Gamma\vdash e:\tau }
+    { \Gamma\vdash \textsf{ref}\ e:\textsf{ref}\ \tau }
+    \ \ \text{\scriptsize[T5]}
+    &
+    \inferrule
+    { \Gamma\vdash e:\textsf{ref}\ \tau }
+    { \Gamma\vdash !e:\tau }
+    \ \ \text{\scriptsize[T6]}
+    \\[20pt]
+    \inferrule
+    { \Gamma\vdash e_1:\textsf{ref}\ \tau \rulesep
+      \Gamma\vdash e_2:\tau }
+    { \Gamma\vdash e_1:=e_2:\tau }
+    \ \ \text{\scriptsize[T7]}
+    &
+    \inferrule
+    { \Gamma\vdash e_1:\tau_1 \rulesep
+      \Gamma\vdash e_2:\tau_2 }
+    { \Gamma\vdash e_1;e_2:\tau_2 }
+    \ \ \text{\scriptsize[T8]}
+    &
+    \inferrule
+    { \Gamma\vdash e:\tau' \rulesep
+      \tau'<:\tau }
+    { \Gamma\vdash e:\tau }
+    \ \ \text{\scriptsize[T9]}
+  \end{array}
+\]
+
+    \item[] \textbf{Subtyping rules}
+\[
+  \begin{array}{c@{\hskip20pt}c@{\hskip20pt}c@{\hskip20pt}c}
+    \tau<:\tau
+    \ \ \text{\scriptsize[S1]}
+    &
+    \inferrule
+    { \tau_1<:\tau_2 \rulesep \tau_2<:\tau_3 }
+    { \tau_1<:\tau_3 }
+    \ \ \text{\scriptsize[S2]}
+    &
+    \tau<:\textsf{Any}
+    \ \ \text{\scriptsize[S3]}
+    &
+    \inferrule
+    { \tau_1<:\tau_2 }
+    { \textsf{ref}\ \tau_1<:\textsf{ref}\ \tau_2 }
+    \ \ \text{\scriptsize[S4]}
+  \end{array}
+\]
+\end{itemize}
+
+\Space{1}
+The language is not type-sound.
+\begin{itemize}
+  \item[a)] Prove it by showing a counterexample to the
+type soundness, i.e. write an expression that is accepted by the type system but
+causes a run-time error. You DO NOT need to justify your answer. Just write an
+expression that is a counterexample to the type soundness.
+  \item[b)] Revise the language to be type-sound.
+\end{itemize}
+
+\item Consider the following language, \texttt{TKFAE}:
+\[
+  \begin{array}{rl@{\hskip30pt}rl@{\hskip30pt}rl}
+    e::= & n & v::= & n & \kappa ::= & \square \\
+    |& \eadd{e}{e} &|& \clov{x}{e}{\sigma} &|&\sigma\vdash e::\kappa \\
+    |& x &|& \langle{\kappa},{s}\rangle &|&\textsf{(+)}::\kappa \\
+    |& \efun{x{:}\tau}{e} & \tau ::= & \textsf{num} &|&\textsf{(@)}::\kappa \\
+    |& \eapp{e}{e} &|& {\tau}\rightarrow{\tau} &s::=& \blacksquare \\
+    |& \textsf{vcc}\ {x};\ {e} &|& \textsf{Bottom}&|&v::s\\
+  \end{array}
+\]
+with the following small-step semantics
+of the form \fbox{$\kappa\ ||\ s\rightarrow\kappa\ ||\ s$}:
+\[
+\begin{array}{rcl}
+\sigma\vdash n::\kappa\ ||\ s&\rightarrow&\kappa\ ||\ n::s \\
+\sigma\vdash x::\kappa\ ||\ s&\rightarrow&\kappa\ ||\ \sigma(x)::s \\
+\sigma\vdash \efun{x{:}\tau}{e}::\kappa\ ||\ s
+&\rightarrow&\kappa\ ||\ \clov{x}{e}{\sigma}::s \\
+\end{array}
+\]
+and the following typing/subtyping rules:
+\[
+  \inferrule
+  { \Gamma\vdash{e}:{\tau'} \\ \subt{\tau'}{\tau} }
+  { \Gamma\vdash{e}:{\tau} }
+  \qquad
+  \inferrule{}{\subt{\tau}{\tau}}
+  \qquad
+  \inferrule
+  {\subt{\tau_1}{\tau_2} \\ \subt{\tau_2}{\tau_3}}
+  {\subt{\tau_1}{\tau_3}}
+  \qquad
+  \inferrule
+  { \subt{\tau_1'}{\tau_1} \\ \subt{\tau_2}{\tau_2'} }
+  { \subt{{\tau_1}\rightarrow{\tau_2}}{{\tau_1'}\rightarrow{\tau_2'}} }
+  \qquad
+  \inferrule{}{\subt{\textsf{Bottom}}{\tau}}
+\]
+
+\begin{enumerate}
+  \item[a)] Complete the small-step semantics of \texttt{TKFAE}.
+  \item[b)] 
+    The typing rules of \texttt{TKFAE} are the same as those of \texttt{TFAE}
+    except for $\textsf{vcc}\ {x};\ {e}$. To define the typing rule of
+    $\textsf{vcc}\ {x};\ {e}$, we change the syntax of the expression as follows:
+
+    \Space{1}
+    $e::=\ \cdots\ \ |\ \ (\textsf{vcc}\ {x};\ {e}){:}\tau$
+    \Space{1}
+
+    The type of
+    $(\textsf{vcc}\ {x};\ {e}){:}\tau$ is $\tau$ when it is well-typed.
+    Write the typing rule of $(\textsf{vcc}\ {x};\ {e}){:}\tau$
+    of the form \fbox{$\Gamma\vdash{e}:{\tau}$}.
+  \item[c)] Draw the type derivation tree of
+    $(\textsf{vcc}\ {\texttt{x}};\ {\eapp{(\eapp{\texttt{x}}{1})}{42}}){:}\textsf{num}$.
+\end{enumerate}
+
+\item We extend \texttt{TVFAE} to allow types with any numbers (including zero) of variants.
+
+\Space{1}
+$
+  \begin{array}{l}
+    e ::=\ \cdots\synsep{\textsf{type}}\ t=x@\tau+\ldots+x@\tau;\ e\synsep
+           e\ {\textsf{match}}\ x(x)\rightarrow e,\ldots,x(x)\rightarrow e \\
+  \end{array}
+$
+\Space{1}
+
+For example, you can write the following code in the extended language:
+
+\Space{1}
+$
+  \begin{array}{l}
+    {\textsf{type}}\ \texttt{fruit}=\texttt{apple}@\numt+\texttt{banana}@\numt+\texttt{cherry}@\numt;\\
+    \ldots
+  \end{array}
+$
+\Space{1}
+
+Suppose that the operational semantics and the typing rules are the same as
+those of \texttt{TVFAE} except that some rules are revised to handle zero or more
+variants properly.
+
+Some expressions are rejected by the type system even though
+they do not cause run-time errors. The following expression is such an example:
+
+\Space{1}
+$
+  \begin{array}{l}
+    \textsf{type}\ \texttt{abc}=\texttt{apple}@\numt+\texttt{banana}@\numt+\texttt{cherry}@\numt;\\
+    \textsf{val}\ \texttt{f}=\efun{\texttt{x}{:}\texttt{abc}}{(}\\
+    \ \ \ \ \texttt{x}\ \textsf{match} \\
+    \ \ \ \ \ \ \ \ \texttt{apple}(\texttt{a})\rightarrow\texttt{a} \\
+    \ \ \ \ \ \ \ \ \texttt{banana}(\texttt{b})\rightarrow\texttt{b} \\
+    \ \ \ \ \ \ \ \ \texttt{cherry}(\texttt{c})\rightarrow\texttt{c} \\
+    );\\
+    \textsf{type}\ \texttt{ab}=\texttt{apple}@\numt+\texttt{banana}@\numt;\\
+    \eapp{\texttt{f}}{(\eapp{\texttt{apple}}{42})}
+  \end{array}
+$
+\Space{1}
+
+We want to add subtyping to the language to allow more expressions including
+the above one.
+
+Add subtyping rule(s) of the form \fbox{$\Gamma\vdash\subt{\tau}{\tau}$}
+to the language. You cannot add anything other than the subtyping rules to the
+language. For example, you cannot define new types, such as $\textsf{Top}$ and $\textsf{Bottom}$.
+Assume that the following rules already exist:
+
+\[
+  \inferrule{}{\Gamma\vdash\subt{\tau}{\tau}}
+  \qquad
+  \inferrule
+  {\Gamma\vdash\subt{\tau_1}{\tau_2} \\ \Gamma\vdash\subt{\tau_2}{\tau_3}}
+  {\Gamma\vdash\subt{\tau_1}{\tau_3}}
+  \qquad
+  \inferrule
+  { \Gamma\vdash\subt{\tau_1'}{\tau_1} \\ \Gamma\vdash\subt{\tau_2}{\tau_2'} }
+  { \Gamma\vdash\subt{{\tau_1}\rightarrow{\tau_2}}{{\tau_1'}\rightarrow{\tau_2'}} }
+  \qquad
+  \inferrule
+  { \typeofd{e}{\tau'} \\ \Gamma\vdash\subt{\tau'}{\tau} }
+  { \typeofd{e}{\tau} }
+\]
+
+By adding the subtyping rule(s),
+you must make the type checking of the language
+accept expressions as many as possible,
+while maintaining the type soundness of the language.
+
+\item Consider the following language:
+\begin{itemize}
+  \item Abstract syntax\\[1em]
+$
+  \begin{array}{
+      r@{\hskip5pt}r@{\hskip5pt}l
+      r@{\hskip5pt}l@{\hskip20pt}
+      r@{\hskip5pt}r@{\hskip5pt}l
+      r@{\hskip5pt}r@{\hskip5pt}l
+    }
+    e &::=& n &|& x & v &::=& n & \tau &::=& \textsf{num} \\
+    &|& \lambda x{:}\tau.e &|& e\ e &&|& \clov{x}{e}{\sigma} &&|&
+    \tau\rightarrow\tau \\
+    &|& \textsf{ref}\ e &|& !e &&|& a &&|& \textsf{ref}\ \tau \\
+    &|& e:=e &|& e;e &&&&&|&\textsf{Any} \\
+  \end{array}
+$
+\\
+\item Operational semantics\\[1em]
+$
+  \begin{array}{c}
+    \sigma,M\vdash n\Rightarrow n,M
+    \qquad
+    \inferrule
+      { x\in\Dom{\sigma} }
+      { \sigma,M\vdash x\Rightarrow \sigma(x),M }
+    \qquad
+    \sigma,M\vdash\lambda x{:}\tau.e\Rightarrow\clov{x}{e}{\sigma},M
+    \\[2em]
+    \inferrule
+      { \sigma,M_0\vdash e_1\Rightarrow \clov{x}{e}{\sigma'},M_1 \\
+        \sigma,M_1\vdash e_2\Rightarrow v_2,M_2 \\
+        \sigma'[x\mapsto v_2],M_2\vdash e\Rightarrow v,M_3 }
+      { \sigma,M_0\vdash e_1\ e_2\Rightarrow v,M_3 }
+    \\[2em]
+    \inferrule
+      { \sigma,M_0\vdash e\Rightarrow v,M_1\\
+        a\not\in\Dom{M_1} }
+      { \sigma,M_0\vdash \textsf{ref}\ e\Rightarrow a,M_1[a\mapsto v] }
+    \qquad
+    \inferrule
+      { \sigma,M_0\vdash e\Rightarrow a,M_1\\
+        a\in\Dom{M_1} }
+      { \sigma,M_0\vdash !e\Rightarrow M_1(a),M_1 }
+    \\[2em]
+    \inferrule
+      { \sigma,M_0\vdash e_1\Rightarrow a,M_1\\
+        \sigma,M_1\vdash e_2\Rightarrow v,M_2
+      }
+      { \sigma,M_0\vdash e_1:=e_2\Rightarrow v,M_2[a\mapsto v] }
+    \qquad
+    \inferrule
+      { \sigma,M_0\vdash e_1\Rightarrow v_1,M_1\\
+        \sigma,M_1\vdash e_2\Rightarrow v_2,M_2
+      }
+      { \sigma,M_0\vdash e_1;e_2\Rightarrow v_2,M_2 }
+  \end{array}
+$
+\\
+\item Typing rules\\[1em]
+$
+  \begin{array}{ccc}
+    \Gamma\vdash n:\textsf{num}
+    &
+    \inferrule
+    { x\in\Dom{\Gamma} }
+    { \Gamma\vdash x:\Gamma(x) }
+    &
+    \inferrule
+    { \Gamma[x:\tau]\vdash e:\tau' }
+    { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
+    \\[2em]
+    \inferrule
+    { \Gamma\vdash e_1:\tau\rightarrow\tau' \\
+      \Gamma\vdash e_2:\tau }
+    { \Gamma\vdash e_1\ e_2:\tau' }
+    &
+    \inferrule
+    { \Gamma\vdash e:\tau }
+    { \Gamma\vdash \textsf{ref}\ e:\textsf{ref}\ \tau }
+    &
+    \inferrule
+    { \Gamma\vdash e:\textsf{ref}\ \tau }
+    { \Gamma\vdash !e:\tau }
+    \\[2em]
+    \inferrule
+    { \Gamma\vdash e_1:\textsf{ref}\ \tau \\
+      \Gamma\vdash e_2:\tau }
+    { \Gamma\vdash e_1:=e_2:\tau }
+    &
+    \inferrule
+    { \Gamma\vdash e_1:\tau_1 \\
+      \Gamma\vdash e_2:\tau_2 }
+    { \Gamma\vdash e_1;e_2:\tau_2 }
+    &
+    \inferrule
+    { \Gamma\vdash e:\tau' \\
+      \tau'<:\tau }
+    { \Gamma\vdash e:\tau }
+  \end{array}
+$
+\\
+\item Subtyping rules\\[1em]
+$
+  \begin{array}{c@{\hskip2em}c@{\hskip2em}c@{\hskip2em}c}
+    \tau<:\tau
+    &
+    \inferrule
+    { \tau_1<:\tau_2 \\ \tau_2<:\tau_3 }
+    { \tau_1<:\tau_3 }
+    &
+    \tau<:\textsf{Any}
+    &
+    \inferrule
+    { \tau_1<:\tau_2 }
+    { \textsf{ref}\ \tau_1<:\textsf{ref}\ \tau_2 }
+  \end{array}
+$
+\end{itemize}
+
+\Space{1}
+\begin{itemize}
+  \item[a)] Show that the language is not type-sound
+    by showing a counterexample to the
+    type soundness, i.e. write an expression that is accepted by the type system but
+    causes a run-time error.
+  \item[b)] Make the language be type-sound by revising
+    the following rule:
+  $
+    \inferrule
+    { \tau_1<:\tau_2 }
+    { \textsf{ref}\ \tau_1<:\textsf{ref}\ \tau_2 }
+  $
+\end{itemize}
+
+\end{enumerate}

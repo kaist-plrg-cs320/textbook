@@ -992,3 +992,461 @@ run(
 )
 // 5
 \end{verbatim}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item What are the evaluation results of the following?
+If it is an error, describe where the error occurs:
+
+\begin{itemize}
+  \item[a)] %{\bf(3pt)}
+{
+\begin{verbatim}
+{withtype {fruit {apple  bool}
+                 {banana num}}
+  {{withtype {animal {apple (num -> num)}
+                     {banana bool}}
+     {fun {x: fruit}
+          {cases fruit x
+            {apple  {b} b}
+            {banana {n} {- 8 n}}}}}
+   {banana true}}}
+\end{verbatim}
+}
+
+  \item[b)] %{\bf(2pt)}
+{
+\begin{verbatim}
+{withtype {fruit {apple  bool}
+                 {banana num}}
+  {{withtype {fruit {apple (num -> num)}
+                    {banana bool}}
+     {fun {x: fruit}
+          {cases fruit x
+            {apple  {f} {f 97}}
+            {banana {b} {not b}}}}}
+   {banana true}}}
+\end{verbatim}
+}
+\end{itemize}
+
+
+\item Given the following grammar:
+\[
+\begin{array}{rll}
+e ::= & \ldots\\
+%\mid& \verb+{fun {+x:\tau\verb+} +e\verb+}+\\
+%\mid& \verb+{+e\ e\verb+}+\\
+\mid& \verb+{throw}+\\
+\mid& \verb+{try +e\verb+ catch +e\verb+}+\\
+\mid& \verb+{withtype {+t\ \verb+{+x\ \tau\verb+} +\verb+{+x\ \tau\verb+}} +e\verb+}+\\
+\mid& \verb+{cases +t\ e\ \verb+{+x\ \verb+{+x\verb+} + e\verb+} {+x\ \verb+{+x\ \verb+}+\ e\verb+}}+\\
+\tau ::= &\ldots \\
+%\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
+\mid&t\\
+\mid&\verb+anyT+
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)]  Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
+\item[b)] Write the typing rules for the expressions.
+\item[c)] Draw the type derivation of the following expression:
+
+{
+\begin{verbatim}
+{withtype {fruit {apple num} {banana (bool -> num)}}
+          {cases fruit {banana {fun {x:num} 3}}
+             {apple  {n} n}
+             {banana {f} {f true}}}}
+\end{verbatim}
+}
+
+\end{itemize}
+
+\item Given the following grammar:
+\[
+\begin{array}{rlrl}
+e ::= & n&\tau ::=&\verb+num+\\
+\mid& b&\mid&\verb+bool+\\
+\mid& x&\mid&t\\
+\mid& \verb+{fun {+x:\tau\verb+} +e\verb+}+&\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
+\mid& \verb+{+e\ e\verb+}+\\
+\mid& \verb+{throw}+\\
+\mid& \verb+{try +e\verb+ catch +e\verb+}+\\
+\mid& \verb+{withtype {+t\ \verb+{+x\ \tau\verb+} +\verb+{+x\ \tau\verb+}} +e\verb+}+\\
+\mid& \verb+{cases +t\ e\ \verb+{+x\ \verb+{+x\verb+} + e\verb+} {+x\ \verb+{+x\ \verb+}+\ e\verb+}}+
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)]  Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
+Define the grammar for values.  Do not extend the syntax of expressions and types.
+
+\item[b)] Write the typing rules of the form \fbox{$\Gamma\vdash e : \tau$}
+for the expressions.
+
+\item[c)] Draw the type derivation of the following expression.
+Write every piece in the type derivation even in the presence of any type error.
+
+{
+\begin{verbatim}
+{withtype {fruit {apple num} {banana (bool -> num)}}
+          {cases fruit {banana {fun {x:bool} 3}}
+             {apple  {n} {throw}}
+             {banana {f} {f true}}}}
+\end{verbatim}
+}
+
+\item[d)] Draw the type derivation of the following expression.
+Write every piece in the type derivation even in the presence of any type error.
+
+{
+\begin{verbatim}
+{{try {true 249} catch {fun {x: animal} false}} 47}
+\end{verbatim}
+}
+\end{itemize}
+
+\item Given the following grammar:
+\[
+\begin{array}{rll}
+e ::= & \ldots\\
+\mid& \verb+{fun {+(x:\tau)^*\verb+} +e\verb+}+\\
+\mid& \verb+{+e\ e^*\verb+}+\\
+\mid& \verb+{withtype {+t\ (\verb+{+x\ \tau^*\verb!}!)^+\verb+}+\ e\verb+}+\\
+\mid& \verb+{cases +t\ e\ (\verb+{+x\ \verb+{+x^*\verb+} + e\verb+}+)^+\verb+}+\\
+\tau ::= &\mtt{num} \\
+\mid&\verb+(+\tau^*\verb+ -> +\tau\verb+)+\\
+\mid&t
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Write the typing rules for the expressions and type validity rules for the types
+by extending the semantics discussed in the course.
+
+\item[b)] Consider the following expression:
+
+{
+\begin{verbatim}
+{withtype {fruit {apple num} {banana num}}
+          {{withtype {color {apple num} {banana num}}
+                     {fun {x : fruit}
+                          {cases fruit x
+                            {apple  {a} {apple  {+ a 1}}}
+                            {banana {b} {banana {+ b 1}}}}}}
+           {apple 42}}}
+\end{verbatim}
+}
+
+What is the result of type checking the expression?
+
+\item[c)] If the result is \mtt{fruit}, explain why in detail.
+Otherwise, revise the typing rules to make it \mtt{fruit}.
+
+\item[d)] Draw the type derivation of the following expression:
+\end{itemize}
+
+{
+\begin{verbatim}
+{withtype {fruit {apple} {banana (fruit->num) fruit} {orange num}}
+          {cases fruit {apple}
+            {apple  {}  42}
+            {banana {f a} {f a}}
+            {orange {n} n}}}
+\end{verbatim}
+}
+
+\item The following example shows that TVRCFAE has a type soundness bug:
+{
+\begin{verbatim}
+{{withtype {foo {a num} {b num}}
+           {fun {x : foo} {cases foo x
+                                 {a {n} {+ n 3}}
+                                 {b {n} {+ n 4}}}}}
+ {withtype {foo {c (num -> num)} {d num}}
+           {c {fun {y : num} y}}}}
+\end{verbatim}
+}
+
+\begin{itemize}
+\item[a)] Explain how the example shows the type soundness bug in detail.
+
+\item[b)] When there is a type soundness bug in a language, how can one fix the bug?
+\end{itemize}
+
+\item Consider the following language:
+\[
+\begin{array}{rl@{\hskip0pt}rllr@{\hskip3pt}l}
+e::= & n & v::= & n &\quad& n\in & \mathbb{Z} \\
+\mid& x &\mid&\langle\lambda x.e,\sigma\rangle && x\in & \mathit{Id} \\
+\mid& \verb+{fun {+x\verb+:+\tau\verb+} +e\verb+}+ &\mid&\verb+constructorV(+x\verb+)+ && v\in & \mathit{Val} \\
+\mid& \verb+{+e\verb+ +e\verb+}+ &\mid&\verb+variantV(+x\verb+,+v\verb+)+ &&t\in&\mathit{TId} \\
+\mid& \verb+{withtype {+t\verb+ {+x\ \tau\verb+} {+x\ \tau\verb+}} +e\verb+}+
+&\tau::=& \verb+num+ &&\tau\in&\mathit{Type} \\
+\mid& \verb+{cases +t\verb+ +e\verb+ {+x\verb+ {+x\verb+} +e\verb+} {+x\verb+ {+x\verb+} +e\verb+}}+ 
+&\mid&\tau\rightarrow\tau && \sigma\in & \mathit{Id}\rightarrow\mathit{Val} \\
+&&\mid&t\\
+\Gamma\in & \mathit{Id}\cup\mathit{TId}\rightarrow\mathit{Val}\cup(\mathit{Id}\times\mathit{Type}\times\mathit{Id}\times\mathit{Type})
+\end{array}
+\]
+
+with the following operational semantics and typing rules:
+\[
+\begin{array}{c}
+\newinfrule
+{ \sigma[x_1\mapsto\code{constructorV(}x_1\code{)},x_2\mapsto\code{constructorV(}x_2\code{)}]
+\vdash e\Rightarrow v }
+{ \sigma\vdash
+\code{\{withtype \{}t\code{ \{}x_1\ \tau_1\code{\} \{}x_2\ \tau_2\code{\}\} }e\code{\}}
+\Rightarrow v }
+\\[20pt]
+\newinfrule
+{ \sigma\vdash e\Rightarrow\code{variantV(}x_1,v'\code{)} \rulesep
+  \sigma[x_3\mapsto v']\vdash e_1\Rightarrow v }
+{ \sigma\vdash
+\code{\{cases } t\code{ }e\code{ \{}x_1\code{ \{}x_3\code{\} }e_1\code{\} \{}
+x_2\code{ \{}x_4\code{\} }e_2\code{\}\}}
+\Rightarrow v }
+\\[20pt]
+\newinfrule
+{ \sigma\vdash e\Rightarrow\code{variantV(}x_2,v'\code{)} \rulesep
+  \sigma[x_4\mapsto v']\vdash e_2\Rightarrow v }
+{ \sigma\vdash
+\code{\{cases } t\code{ }e\code{ \{}x_1\code{ \{}x_3\code{\} }e_1\code{\} \{}
+x_2\code{ \{}x_4\code{\} }e_2\code{\}\}}
+\Rightarrow v }
+\\[20pt]
+\newinfrule
+{ \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow t,x_2:\tau_2\rightarrow t]
+  \rulesep t\not\in\mbox{Domain}(\Gamma) \rulesep \Gamma'\vdash\tau_1 \rulesep \Gamma'\vdash\tau_2
+  \rulesep \Gamma'\vdash e:\tau \rulesep \Gamma\vdash\tau }
+{ \Gamma\vdash
+\code{\{withtype \{}t\code{ \{}x_1\ \tau_1\code{\} \{}x_2\ \tau_2\code{\}\} }e\code{\}}
+:\tau }
+\\[20pt]
+\newinfrule
+{ t\in\mbox{Domain}(\Gamma) \rulesep \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \rulesep \typed{e}{t} \rulesep
+  \Gamma[x_3:\tau_1]\vdash e_1:\tau \rulesep \Gamma[x_4:\tau_2]\vdash e_2:\tau }
+{ \Gamma\vdash
+\code{\{cases } t\code{ }e\code{ \{}x_1\code{ \{}x_3\code{\} }e_1\code{\} \{}
+x_2\code{ \{}x_4\code{\} }e_2\code{\}\}}
+:\tau }
+\\[20pt]
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Complete the following well-formedness rules
+of the form \fbox{$\Gamma\vdash{\tau}$}
+by filling the blanks:
+\end{itemize}
+
+{\Large
+\[
+\newinfrule
+{ \lblank }
+{ \Gamma\vdash{\code{num}} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \Gamma\vdash{\tau_1\rightarrow\tau_2} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \Gamma\vdash{t} }
+\]
+}
+\begin{itemize}
+\item[b)] Assume that the typing rule for \code{withtype} has been changed as the following:
+\[
+\newinfrule
+{ \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow t,x_2:\tau_2\rightarrow t]
+  \rulesep t\not\in\mbox{Domain}(\Gamma) \rulesep \Gamma'\vdash\tau_2
+  \rulesep \Gamma'\vdash e:\tau \rulesep \Gamma\vdash\tau }
+{ \Gamma\vdash
+\code{\{withtype \{}t\code{ \{}x_1\ \tau_1\code{\} \{}x_2\ \tau_2\code{\}\} }e\code{\}}
+:\tau }
+\]
+It lacks the well-formedness check of $\tau_1$.
+\textbf{All the other rules remain the same.}
+Fill the blanks to make the expression break the type-soundness, i.e.
+the expression must be well-typed, but its evaluation results in a run-time error.
+\end{itemize}
+
+\[
+\begin{array}{l}
+\code{\{withtype \{foo \{x \sblank\} \{y num\}\} \{} \\
+~~~~\code{\{fun \{f:\sblank\}} \\
+~~~~~~~~\code{\{withtype \{\sblank \{z num\} \{w num$\rightarrow$num\}\}} \\
+~~~~~~~~~~~~\code{\{cases foo f} \\
+~~~~~~~~~~~~~~~~\code{\{x \{a\} \{cases bar a} \\
+~~~~~~~~~~~~~~~~~~~~\code{\{z \{c\} }\sblank\code{\}} \\
+~~~~~~~~~~~~~~~~~~~~\code{\{w \{d\} }\sblank\code{\}} \\
+~~~~~~~~~~~~~~~~\code{\}} \\
+~~~~~~~~~~~~~~~~\code{\{y \{b\} b\}} \\
+~~~~~~~~~~~~\code{\}} \\
+~~~~~~~~\code{\}} \\
+~~~~\code{\} \{withtype \{\sblank \{z num\} \{w num\}\}} \\
+~~~~~~~~\sblank \\
+~~~~\code{\}} \\
+\code{\}\}}
+\end{array}
+\]
+
+\begin{itemize}
+\item[c)] Explain why the above expression is not well-typed under the original type system.
+\end{itemize}
+
+\item Consider the following language:
+  \begin{itemize}
+    \item[] \textbf{Abstract syntax}
+  \[
+    \begin{array}{
+        r@{\hskip5pt}r@{\hskip5pt}l
+        r@{\hskip5pt}r@{\hskip5pt}l
+        r@{\hskip3pt}r@{\hskip3pt}l
+      }
+      e &::=& n & v &::=& n & n &\in& \mathbb{Z} \\
+      &|& x &&|& \clo{x}{e}{\sigma} & x &\in& \textit{Id} \\
+      &|& \lambda x{:}\tau.e &&|& \langle x\rangle & v &\in& \textit{Val} \\
+      &|& e\ e &&|& x(v) & t &\in& \textit{TId} \\
+      &|& \textsf{type}\ t=x@\tau+x@\tau;e & \tau &::=& \textsf{num} & \tau &\in&
+      \textit{Type}\\
+      &|& e\ \textsf{match}\ x(x)\rightarrow e\ |\ x(x)\rightarrow e &&|&
+      \tau\rightarrow\tau & e &\in& \textit{Expr} \\
+      &&&&|& t & \sigma&\in&\textit{Id}\rightarrow\textit{Val} \\
+      \multicolumn{9}{r}{
+        \Gamma \in (\textit{Id}\cup\textit{TId})\rightarrow
+        (\textit{Type}\cup(\textit{Id}\times\textit{Type}\times\textit{Id}\times\textit{Type}))
+      }
+    \end{array}
+  \]
+
+    \item[] \textbf{Operational semantics}
+\[
+  \begin{array}{cc}
+    \sigma\vdash n\Rightarrow n
+    \ \ \text{\scriptsize[O1]}
+    \qquad\qquad\qquad
+    \inferrule
+    { x\in\Dom{\sigma} }
+    { \sigma\vdash x\Rightarrow \sigma(x) }
+    \ \ \text{\scriptsize[O2]}
+    &
+    \sigma\vdash\lambda x{:}\tau.e\Rightarrow\clo{x}{e}{\sigma}
+    \ \ \text{\scriptsize[O3]}
+    \\[20pt]
+    \inferrule
+    { \sigma\vdash e_1\Rightarrow \clo{x}{e}{\sigma'} \rulesep
+      \sigma\vdash e_2\Rightarrow v_2 \rulesep
+      \sigma'[x\mapsto v_2]\vdash e\Rightarrow v }
+    { \sigma\vdash e_1\ e_2\Rightarrow v }
+    \ \ \text{\scriptsize[O4]}
+    &
+    \inferrule
+    { \sigma\vdash e_1\Rightarrow \langle x\rangle \rulesep
+      \sigma\vdash e_2\Rightarrow v }
+    { \sigma\vdash e_1\ e_2\Rightarrow x(v) }
+    \ \ \text{\scriptsize[O5]}
+    \\[20pt]
+    \multicolumn{2}{c}{
+    \inferrule
+    { \sigma[x_1\mapsto\langle x_1\rangle,x_2\mapsto\langle x_2\rangle] \vdash e\Rightarrow v }
+    { \sigma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2;e\Rightarrow v }
+    \ \ \text{\scriptsize[O6]}
+    \qquad
+    \inferrule
+    { \sigma\vdash e\Rightarrow x_1(v') \rulesep
+      \sigma[x_3\mapsto v']\vdash e_1\Rightarrow v }
+    { \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
+    e_2\Rightarrow v}
+    \ \ \text{\scriptsize[O7]}
+  }
+    \\[20pt]
+    \multicolumn{2}{c}{
+    \inferrule
+    { \sigma\vdash e\Rightarrow x_2(v') \rulesep
+      \sigma[x_4\mapsto v']\vdash e_2\Rightarrow v }
+    { \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
+    e_2\Rightarrow v}
+    \ \ \text{\scriptsize[O8]}
+  }
+  \end{array}
+\]
+
+    \item[] \textbf{Typing rules}
+\[
+  \begin{array}{c}
+    \Gamma\vdash n:\textsf{num}
+    \ \ \text{\scriptsize[T1]}
+    \qquad
+    \inferrule
+    { x\in\Dom{\Gamma} }
+    { \Gamma\vdash x:\Gamma(x) }
+    \ \ \text{\scriptsize[T2]}
+    \qquad
+    \inferrule
+    { \Gamma[x:\tau]\vdash e:\tau' \rulesep \Gamma\vdash\tau }
+    { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
+    \ \ \text{\scriptsize[T3]}
+    \\[20pt]
+    \inferrule
+    { \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
+      \Gamma\vdash e_2:\tau }
+    { \Gamma\vdash e_1\ e_2:\tau' }
+    \ \ \text{\scriptsize[T4]}
+    \qquad
+    \inferrule
+    { \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow t,x_2:\tau_2\rightarrow t]
+      \\ t\not\in\Dom{\Gamma} \rulesep \Gamma'\vdash\tau_2
+      \rulesep \Gamma'\vdash e:\tau \rulesep \Gamma\vdash\tau }
+    { \Gamma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2;e :\tau }
+    \ \ \text{\scriptsize[T5]}
+    \\[20pt]
+    \inferrule
+    { t\in\Dom{\Gamma} \rulesep
+      \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \rulesep
+      \Gamma\vdash e:t \rulesep
+      \Gamma[x_3:\tau_1]\vdash e_1:\tau \rulesep
+      \Gamma[x_4:\tau_2]\vdash e_2:\tau }
+    { \Gamma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
+    e_2:\tau}
+    \ \ \text{\scriptsize[T6]}
+  \end{array}
+\]
+
+    \item[] \textbf{Well-formedness rules}
+\[
+  \begin{array}{c@{\hskip30pt}c@{\hskip30pt}c}
+    \Gamma\vdash\textsf{num}
+    \ \ \text{\scriptsize[W1]}
+    &
+    \inferrule
+    { \Gamma\vdash\tau\rulesep\Gamma\vdash\tau' }
+    { \Gamma\vdash\tau\rightarrow\tau' }
+    \ \ \text{\scriptsize[W2]}
+    &
+    \inferrule
+    { t\in\Dom{\Gamma} }
+    { \Gamma\vdash t}
+    \ \ \text{\scriptsize[W3]}
+  \end{array}
+\]
+  \end{itemize}
+
+\Space{1}
+The language is not type-sound.
+\begin{itemize}
+  \item[a)] Prove it by showing a counterexample to the
+type soundness, i.e. write an expression that is accepted by the type system but
+causes a run-time error. You DO NOT need to justify your answer. Just write an
+expression that is a counterexample to the type soundness.
+  \item[b)] Revise the language to be type-sound.
+\end{itemize}
+
+\end{enumerate}
