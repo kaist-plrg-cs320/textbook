@@ -99,6 +99,17 @@
 \newcommand{\eset}[2]{#1{:}\shorteq#2}
 \newcommand{\eseq}[2]{#1;#2}
 
+\newcommand{\mtk}{\square}
+\newcommand{\evalk}[2]{#1\vdash#2::}
+\newcommand{\evalkd}[1]{\evalk{\sigma}{#1}}
+\newcommand{\evalke}[1]{\evalk{\emptyset}{#1}}
+\newcommand{\addk}{(+)::}
+\newcommand{\subk}{(-)::}
+\newcommand{\appk}{(@)::}
+
+\newcommand{\mts}{\blacksquare}
+\newcommand{\conss}[1]{#1::}
+
 \newcommand{\eval}[3]{#1\vdash#2\Rightarrow#3}
 \newcommand{\evaln}[3]{\ensuremath{#2} evaluates to \ensuremath{#3} under
 \ensuremath{#1}\xspace}
@@ -385,13 +396,14 @@
 % \newacronym[longplural={Frames per Second}]{fpsLabel}{FPS}{Frame per Second}
 % \newacronym[longplural={Tables of Contents}]{tocLabel}{TOC}{Table of Contents}
 \newacronym[longplural={algebraic data types}]{adtLabel}{ADT}{algebraic data type}
-\newacronym[longplural={real-eval-print-loop}]{replLabel}{REPL}{read-eval-print-loop}
+\newacronym[longplural={real-eval-print loop}]{replLabel}{REPL}{read-eval-print loop}
 \newacronym[longplural={Java Virtual Machines}]{jvmLabel}{JVM}{Java Virtual Machine}
 \newacronym[longplural={Backus-Naur forms}]{bnfLabel}{BNF}{Backus-Naur form}
 \newacronym[longplural={abstract syntax trees}]{astLabel}{AST}{abstract syntax tree}
 \newacronym[longplural={call-by-value}]{cbvLabel}{CBV}{call-by-value}
 \newacronym[longplural={call-by-reference}]{cbrLabel}{CBR}{call-by-reference}
 \newacronym[longplural={call-by-name}]{cbnLabel}{CBN}{call-by-name}
+\newacronym[longplural={continuation-passing style}]{cpsLabel}{CPS}{continuation-passing style}
 
 \setglossarystyle{listgroup} % Set the style of the glossary (see https://en.wikibooks.org/wiki/LaTeX/Glossary for a reference)
 \printglossary[title=Special Terms, toctitle=List of Terms] % Output the glossary, 'title' is the chapter heading for the glossary, toctitle is the table of contents heading

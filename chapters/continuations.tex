@@ -2,1013 +2,1265 @@
 \chapter{Continuations}
 \labch{continuations}
 
-The article deals with continuations. It defines redexes and continuations. It
-shows what continuation-passing style is and implements an interpreter with
-continuation-passing style. It defines small-step semantics of FAE and explains
-how the semantics and continuations are related.
+\renewcommand{\lang}{\textsf{FAE}\xspace}
+
+Many real-world languages support \textit{control diverters}, which alter the
+\textit{control flow} of programs.\index{control diverter}\index{control flow}
+For example, programmers can use \code{return} in Scala
+programs. Consider the following program:
+
+\begin{verbatim}
+def foo(x: Int): Int = {
+  val y = return x
+  x + x
+}
+
+foo(3)
+\end{verbatim}
+
+Its result is \code{3}, not \code{6}. When \code{return x} is evaluated, the
+value denoted by \code{x} is immediately returned by the function. \code{x + x}
+is never evaluated. It shows how \code{return} is different from many other
+expressions, including addition and function application. Most expressions
+produce values as results. However, \code{return} changes
+the control flow by making the function immediately return. We can find various
+control diverters other than \code{return} in real-world languages:
+\code{break}, \code{continue}, \code{goto}, \code{throw} (or \code{raise}), and
+so on.
+
+Control diverters are useful for writing programs with complex control flow.
+For instance, consider a function \code{numOfWordsInFile} that takes the name of
+a file and a string as arguments and returns how many times the string occurs in
+the file.
+
+\begin{verbatim}
+def numOfWordsInFile(name: String, word: String): Int = ...
+\end{verbatim}
+
+If such a file does not exist, the function returns \code{-1}.
+When the file is read for the first time, its content is cached, so the function
+must check the cache first to reuse the cached result if available.
+
+Assume that we have the following helper functions:
+
+\begin{verbatim}
+// checks whether a cached result exists
+def cached(name: String): Boolean
+
+// gets the cached result
+def getCache(name: String): String
+
+// checks whether a given file exists
+def exists(name: String): Boolean
+
+// reads the content of the file and caches it
+def read(name: String): String
+
+// counts the number of occurrences of `word` in `content`
+def numOfWords(content: String, word: String): Int
+\end{verbatim}
+
+Then, we can implement \code{numOfWordsInFile} with the helper functions and
+\code{return}.
+
+\begin{verbatim}
+def numOfWordsInFile(name: String, word: String): Int = {
+  val content =
+    if (cached(name))
+      getCache(name)
+    else if (exists(name))
+      read(name)
+    else
+      return -1
+  numOfWords(content, word)
+}
+\end{verbatim}
+
+First, the function checks whether there is a cached result by calling \code{cached}.
+If so, the cached result is acquired with \code{getCache} and stored in the variable
+\code{content}. Otherwise, the function checks whether the file exists with
+\code{exists}. The file is read with \code{read} if the file exists, and its
+content is stored in \code{content}. When the file is missing, the function
+immediately returns \code{-1} with \code{return -1}. Finally, the function
+counts the number of \code{word} in \code{content} with \code{numOfWords} to
+compute the result. Note that when both cached result and file are absent,
+\code{numOfWords} is never called because \code{return -1} terminates the
+function beforehand.
+
+Without \code{return}, we need to call \code{numOfWords} in multiple places.
+
+\begin{verbatim}
+def numOfWordsInFile(name: String, word: String): Int = {
+  if (cached(name))
+    numOfWords(getCache(name), word)
+  else if (exists(name))
+    numOfWords(read(name), word)
+  else
+    -1
+}
+\end{verbatim}
+
+The code looks fine, but we cannot directly express the idea that the function needs to
+call \code{numOfWords} except one errorneous case, where both cache and file are
+not found. It is not a big flaw in the current implementation of
+\code{numOfWordsInFile}.
+However, if we write a function with a large number of conditions, we would
+prefer \code{return} (\reffig{return}) to calling \code{numOfWords} multiple
+times (\reffig{multiple}).
+
+\begin{figure}[t]
+\begin{verbatim}
+def numOfWordsInFile(name: String, word: String): Int = {
+  val content =
+    if (A)
+      a
+    else if (B)
+      b
+
+    ...
+
+    else if (F)
+      f
+    else
+      return -1
+  numOfWords(content, word)
+}
+\end{verbatim}
+\caption{\code{numOfWordsInFile} with \code{return}}
+\labfig{return}
+\end{figure}
+
+\begin{figure}[t]
+\begin{verbatim}
+def numOfWordsInFile(name: String, word: String): Int = {
+  if (A)
+    numOfWords(a, word)
+  else if (B)
+    numOfWords(b, word)
+
+  ...
+
+  else if (F)
+    numOfWords(f, word)
+  else
+    -1
+}
+\end{verbatim}
+\caption{\code{numOfWordsInFile} without \code{return}}
+\labfig{multiple}
+\end{figure}
+
+Like mutation, control diverters make languages impure. In pure languages, the
+order of evaluation does not matter. Each expression only produces a result;
+there is no other \textit{side effect}.\index{side effect}
+On the other hand, in impure languages, the order
+of evaluation matters. Expressions can perform side effects, including mutation
+and control flow changes. Evaluting a certain expression can change the result
+of other expressions or make other expressions not evaluated. Therefore,
+programs written in impure languages require global reasoning, while programs
+wirtten in pure languages require local, modular reasoning.
+Mutation and control diverters make the reasoning of programs difficult despite
+their usefulness. Control diverters must be used with extra care of programmers.
+
+This chapter and the following two chapters introduce continuations, which are
+the most general explanation of control flow. This chapter focuses on what
+continuations are and how we can write programs and define semantics while
+exposing continuations explicitly. Then, the next chapter explains how we can
+add control diverters to langauges based on the notion of a continuation.
 
 \section{Redexes and Continuations}
 
-Evaluating an expression that is not a value requires one or more steps of
-computation. For example, $1+2$ needs computation that adds $1$ and $2$ to
-produce $3$. $(1+2)+3$ needs two steps of computation: adding $1$ and $2$ to get
-$3$ and adding $3$ and $3$ to get $6$. An order among steps of computation
-exists. $1+2$ must yield $3$ before $3$ is added to $3$. It is impossible to add
-$3$ to $3$ before $1+2$ results in $3$.
+Evaluating an expression requires one or more steps of computation.
+Consider $(1+2)+(3+4)$. Evaluation of this expression consists of the following
+seven steps of computation:\sidenote{Assume that we use the left-to-right order
+for subexpression evaluation in this chapter.}
 
-Let $E$ denote a step of computation. A step of computation and $E$ are informal
-concepts. The article introduces them for intuitive explanations. Evaluating
-expression $e$ requires multiple steps of computation, which are from $E_1$ to
-$E_n$. Consider $(1+2)+3$. $E_1$ is adding $1$ and $2$; $E_2$ is adding $3$ to
-the result of $E_1$. $E_2$ depends on the result of $E_1$. The order cannot
-change.
+\begin{enumerate}
+  \item Evaluate the expression $1$ to get the integer value $1$.
+  \item Evaluate the expression $2$ to get the integer value $2$.
+  \item Add the integer value $1$ to the integer value $2$ to get the integer
+    value $3$.
+  \item Evaluate the expression $3$ to get the integer value $3$.
+  \item Evaluate the expression $4$ to get the integer value $4$.
+  \item Add the integer value $3$ to the integer value $4$ to get the integer
+    value $7$.
+  \item Add the integer value $3$ to the integer value $7$ to get the integer
+    value $10$.
+\end{enumerate}
 
-Multiple steps of computation can be divided into two parts: the former and
-latter parts. Assume steps from $E_1$ to $E_n$. For some $i$ between $1$ and $n$,
-the former includes the steps from $E_1$ to $E_i$, and the latter includes the
-steps from $E_{i+1}$ to $E_n$. The latter relies on the result of the former. A
-subexpression evaluated by the former is a redex, which mean a reducible
-expression. The latter part, which finishes the evaluation with the value of the
-redex, is a continuation. Let the steps from $E_1$ to $E_i$ evaluate $e'$, which
-is a subexpression of $e$. $e'$ is the redex. Computation proceeded by the steps
-from $E_{i+1}$ to $E_n$ is the continuation. As an example, consider $(1+2)+3$
-again. Let $1+2$ be a redex. The continuation is adding $3$ to the result of the
-redex.
+We can split $N$ steps of computation into two parts: the former $n$ steps and the
+remaining $N-n$ steps. We call the expression evaluated by the former $n$ steps
+a \textit{redex}\index{redex}\sidenote{The term redex stands for a
+\textbf{red}ucible \textbf{ex}pression. However, we introduce the notion of a
+redex without explaining what ``reduction'' or ``reducible'' is. The notion can
+be understood without knowing what reduction is, so we do not care about the
+origin of the term.} and the remaining computation described by the
+latter $N-n$ steps the \textit{continuation}\index{continuation} of the redex.
 
-Consider another example: $(1+2)-(3+4)$. Let the former part and the latter part
-respectively be adding $1$ and $2$ and subtracting $3+4$ from the result of the
-former part. $1+2$ is a redex. Subtracting $3+4$ from the result of the
-continuation. $1+2$ produces $3$. Continuing the evaluation equals evaluating
-$3-(3+4)$. It follows from what the continuation is. The new expression can be
-divided into a redex and a continuation again. Computing $3+4$ allows subtracting
-the result from $3$ and finishing the evaluation. A redex is $3+4$, and the
-continuation is subtracting the result of the redex from $3$. $3+4$ yields $7$.
-Continuing the evaluation is evaluating $3-7$. It can be divided as well. The
-expression itself is the only redex. The continuation is doing nothing. $3-7$
-results in $-4$. There is no more computation to do. The evaluation finishes, and
-its result is $-4$. The following table summarizes the process:
+For example, if we split the above steps into step 1 and steps 2-7, then the redex is
+the expression $1$, and the continuation consists of the remaining steps.
+The important point is that the continuation requires the result of the redex to
+complete the evaluation. Without $1$, the result of step 1, the continuation
+cannot proceed beyond step 3. Step 3 can be accomplished only when the result of
+the redex is provided. Therefore, we can consider the continuation as an
+expression with a hole that must be filled with the result of a redex.
+Intuitively, the continuation of $1$ can be written as $(\square+2)+(3+4)$, where
+$\square$ denotes the place in which the result of the redex is used.
+Since the continuation takes the result of a redex as input and completes the
+remaining computation, the continuation can be interpreted as a function.
+Following this interpretation, we can express the continuation of $1$ as
+$\efun{\cx}{(\cx+2)+(3+4)}$.
 
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (1+2)-(3+4) & 1+2 & \text{Subtract }3+4\text{ from the result} & 3 \\
-\rightarrow&3-(3+4) & 3+4 & \text{Subtract the result from }3 & 7 \\
-\rightarrow&3-7 & 3-7 & \text{Do nothing} & -4
-\end{array}
-\]
+There are multiple ways to split the steps. The following table shows
+three different ways of splitting the evaluation of $(1+2)+(3+4)$ to find a redex and the
+continuation.
 
-Every continuation makes a result with the result of its redex. The results of
-both redex and continuing the evaluation are values. A continuation can be
-considered as a function from a value to a value. The below table rewrites the
-above table; it represents continuations with lambda abstractions. The article
-uses lambda abstractions to express continuations from this point. Note the
-following fact: when $e'$ and $k$ respectively are a redex and the continuation
-of $e$, the result of $e$ equals $k\ v$ where $v$ is the result of $e'$ because
-$k$ is a function.
+\begin{tabular}{|c|@{~}c|c|@{~}c@{~}|@{~}c@{~}|}
+  \hline
+  \multicolumn{2}{|c|}{Redex}&\multicolumn{3}{c|}{Continuation} \\
+  \hline
+  Steps & Expression & Steps & Hole & Function \\
+  \hline
+  \hline
+  1 & $1$ & 2-7 & $(\square+2)+(3+4)$ & $\efun{\cx}{(\cx+2)+(3+4)}$ \\
+  \hline
+  1-3 & $1+2$ & 4-7 & $\square+(3+4)$ & $\efun{\cx}{\cx+(3+4)}$ \\
+  \hline
+  1-7 & $(1+2)+(3+4)$ & $\cdot$ & $\square$ & $\efun{\cx}{\cx}$ \\
+  \hline
+\end{tabular}
 
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (1+2)-(3+4) & 1+2 & \lambda v.v-(3+4) & 3 \\
-\rightarrow&3-(3+4) & 3+4 & \lambda v.3-v & 7 \\
-\rightarrow&3-7 & 3-7 & \lambda v.v & -4
-\end{array}
-\]
+Note that $2$, $3$, $4$, and $3+4$ are not redexes, while $1$, $1+2$,
+and $(1+2)+(3+4)$ are redexes. A redex is an expression that can be evaluated first.
+Since $2$ cannot be evaluated until $1$ is evaluated, $2$ is not a redex.
+Similarly, $3$, $4$, and $3+4$ cannot be evaluated until $1+2$ is evaluated, so
+they are not redexes. On the other hand, $1+2$ is a redex because there is
+nothing need to be done before the evaluation of $1+2$.
 
-Multiple redexes can exist for an expression. The following table provides
-another computing process of $(1+2)-(3+4)$:
+Since a continuation also consists of multiple steps of computation, it can
+split again into a redex and the continuation of the redex. For example,
+consider the continuation of $1$, which consists of steps 2-7.
+If we split it into step 2 and steps 3-7, the redex is the expression
+$2$, and the continuation is $(\underline{1}+\square)+(3+4)$. Here, the
+line below $1$ expresses that $1$ is an integer value, not an expression.
 
+Therefore, evaluation of an expression repeats evaluation of a redex and
+application of the continuation. A given expression splits into a redex and the
+continuation. The redex evaluates to a value, and the continuation is applied
+to the value. Then, the continuation splits again into a redex and the
+continuation, and the redex is evaluated. This process repeats until there is no
+more remaining computation, i.e. the continuation becomes the identity function.
 
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (1+2)-(3+4) & (1+2)-(3+4) & \lambda v.v & -4 \\
-\end{array}
-\]
+\section{Continuation-passing style}
 
-Be aware of that $3+4$ cannot be a redex of $(1+2)-(3+4)$. The evaluation of
-$1+2$ always precedes that of $3+4$. Since a redex is the former part, it never
-equals $3+4$.
+\textit{Continuation-passing style}\index{continuation-passing style}
+(\acrshort{cpsLabel}) is a style of programming that
+passes the remaining computation to each function call. In CPS, programs never
+use return values; they pass continuations as arguments instead. Therefore, by
+writing programs in CPS, continuations become explicit in the source code of the
+programs.
 
-The following tables show other examples of redexes and continuations:
+Before moving on to the detail of CPS, recalling
+store-passing style, used in \refch{boxes} and \refch{mutable-variables}, would help you
+understand CPS. Those chapters
+choose to use store passing in order to show how we can implement mutation
+without mutation. The following code is part of implementation of a
+\textsf{BFAE} interprter in \refch{boxes}.
+\begin{verbatim}
+def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) =
+  e match {
+    ...
+    case Add(l, r) =>
+      val (NumV(n), ls) = interp(l, env, sto)
+      val (NumV(m), rs) = interp(r, env, ls)
+      (NumV(n + m), rs)
+    case NewBox(e) =>
+      val (v, s) = interp(e, env, sto)
+      val a = sto.keys.maxOption.getOrElse(0) + 1
+      (BoxV(a), s + (a -> v))
+  }
+\end{verbatim}
+A store-passing interpreter passes the current store to each function call, and
+each function call returns the resulting store.
 
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& 1+2 & 1+2 & \lambda v.v & 3
-\end{array}
-\]
+If we use mutable maps, we can implement interpreters of
+\textsf{BFAE} and \textsf{MFAE} without store-passing style. The following code
+is part of implementation of a \textsf{BFAE} interpreter using a mutable map.
+\begin{verbatim}
+type Sto = scala.collection.mutable.Map[Addr, Value]
+val sto: Sto = scala.collection.mutable.Map()
 
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (1+2)+3 & 1+2 & \lambda v.v+3 & 3 \\
-\rightarrow&3+3 & 3+3 & \lambda v.v & 6
-\end{array}
-\]
+def interp(e: Expr, env: Env): Value =
+  e match {
+    ...
+    case NewBox(e) =>
+      val v = interp(e, env)
+      val a = sto.keys.maxOption.getOrElse(0) + 1
+      sto += (a -> v)
+      BoxV(a)
+    case Add(l, r) =>
+      val NumV(n) = interp(l, env)
+      val NumV(m) = interp(r, env)
+      NumV(n + m)
+  }
+\end{verbatim}
+The variable \code{sto} denotes a mutable map. The function \code{interp}
+depends on \code{sto}, instead of passing stores as an argument and a return value.
+The \code{NewBox} case simply mutates \code{sto} to create a new box.
+Note that \code{sto += (a -> v)} mutates the map by adding a mapping from
+\code{a} to \code{v}.
+The \code{Add} case does not pass the resulting store from the evaluation of
+\code{l} to the evaluation of \code{r}. Store passing is unnecessary since there
+is a global, mutable map, which records every update.
 
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& ((1+2)-3)+4 & 1+2 & \lambda v.(v-3)+4 & 3 \\
-\rightarrow&(3-3)+4 & 3-3 & \lambda v.v+4 & 0 \\
-\rightarrow&0+4 & 0+4 & \lambda v.v & 4
-\end{array}
-\]
+Two code snippets clearly compare interpreters with and without store passing.
+In the former, with store passing, the current store at each point of execution
+is explicit. When we see the \code{Add} case, it is clear that
+\code{sto} is used for the evaluation of \code{l}, which may change the store,
+and the resulting store of \code{l} is used for the evaluation \code{r}.
+However, In the latter, without store passing, the current store at each point
+is implicit. The code does not reveal the fact that \code{interp(l,
+env)} can change the store and, therefore, affect the result of \code{interp(r,
+env)}. Implementation with store-passing style explicitly shows the use and flow of
+stores by passing stores from functions to functions, while implementation
+without store-passing style hides the use and flow of stores and makes the code
+shorter.
 
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& ((1+2)-3)+4 & (1+2)-3 &\lambda v.v+4 & 0 \\
-\rightarrow&0+4 & 0+4 & \lambda v.v & 4
-\end{array}
-\]
+CPS is similar to store-passing style. The difference is that CPS passes
+continuations, while store-passing style passes stores. Like that store-passing
+style exposes the store used by each function application, CPS exposes the
+continuation of each function application.
 
-Adding lambda abstractions and function applications does not make any changes
-for finding redexes and continuations. The following tables use substitution
-instead of closures and environments:
-
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (\lambda x.x)(1+1) & 1+1 & \lambda v.(\lambda x.x)v & 2 \\
-\rightarrow& (\lambda x.x)2 & (\lambda x.x)2 & \lambda v.v & 2
-\end{array}
-\]
-
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (\lambda x.\lambda y.x+y)\ 1\ 2 & (\lambda x.\lambda y.x+y)\ 1& \lambda v.v\ 2
-& \lambda y.1+y \\
-\rightarrow & (\lambda y.1+y)\ 2 & (\lambda y.1+y)\ 2 & \lambda v.v & 1+2 \\
-\rightarrow & 1+2 & 1+2 & \lambda v.v & 3
-\end{array}
-\]
-
-Substitution helps intuitive understanding while interpreters use closures and
-environments. The below table describes redexes and continuations of the same
-expressions but uses closures and environments unlike the above. Let
-$\sigma\vdash e$ denote evaluation of $e$ under $\sigma$. The notation is
-informal but effective for understanding. Besides, let closures be considered as
-expressions. For instance, $\langle\lambda x.x,\emptyset\rangle\ 1$ is an
-expression applying closure $\langle\lambda x.x,\emptyset\rangle$ to $1$.
-
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (\lambda x.x)(1+1) & \lambda x.x & \lambda v.v(1+1) & \langle\lambda
-x.x,\emptyset\rangle \\
-\rightarrow&\langle\lambda x.x,\emptyset\rangle(1+1) & 1+1 & \lambda
-v.(\langle\lambda x.x,\emptyset\rangle)v & 2 \\
-\equiv&\langle\lambda x.x,\emptyset\rangle(1+1) & 1+1 & \lambda v.[x\mapsto
-v]\vdash x & 2 \\
-\rightarrow& [x\mapsto 2]\vdash x & [x\mapsto 2]\vdash x & \lambda v.v & 2 \\
-\end{array}
-\]
-
-Symbol $\equiv$ implies that the line rewrites the line before it without any
-computation.
-
-\[
-\begin{array}{ccccc}
-&\text{Expression being Evaluated} & \text{Redex} & \text{Continuation} &
-\text{Result of Redex} \\
-& (\lambda x.\lambda y.x+y)\ 1\ 2 & \lambda x.\lambda y.x+y & \lambda v.v\ 1\ 2 &
-\langle\lambda x.\lambda y.x+y,             \emptyset\rangle \\
-\rightarrow&\langle\lambda x.\lambda y.x+y,\emptyset\rangle\ 1\ 2 &
-\langle\lambda x.\lambda y.x+y,\emptyset\rangle\ 1 & \lambda v.v\ 2 &  \\
-\equiv&\langle\lambda x.\lambda y.x+y,\emptyset\rangle\ 1\ 2 &
-[x\mapsto 1]\vdash\lambda y.x+y & \lambda v.v\ 2 &
-\langle\lambda y.x+y,[x\mapsto 1]\rangle \\
-\rightarrow& \langle\lambda y.x+y,[x\mapsto 1]\rangle\ 2 &
-\langle\lambda y.x+y,[x\mapsto 1]\rangle\ 2 & \lambda v.v & \\
-\equiv& \langle\lambda y.x+y,[x\mapsto 1]\rangle\ 2 &
-[x\mapsto 1,y\mapsto 2]\vdash x+y & \lambda v.v & 3 \\
-\end{array}
-\]
-
-\section{Continuation-Passing Style}
-
-Continuation-passing style is a style of programming. Programs following the
-style passes the result to the current continuation when no more computation
-exists and calls a function with a new proper continuation otherwise. Every
-function in the programs takes the current continuation as an argument. The body
-of every function must call a function once and only once. Then function being
-called can be the continuation or some other function.
-
-Consider a function calculating the factorial of a given integer. The following
-function does not use continuation-passing style:
-
+This section illustrates how we can write programs in CPS by giving factorial as
+an example. Consider a function calculating the factorial of a given integer.
+The following function does not use CPS:
 \begin{verbatim}
 def factorial(n: Int): Int =
-  if (n <= 1) 1
-  else n * factorial(n - 1)
-
-factorial(4)  // 24
-factorial(7)  // 5040
+  if (n <= 1)
+    1
+  else
+    n * factorial(n - 1)
 \end{verbatim}
+Since \code{factorial} does not use CPS, the continuation is implicit.
+For example, in \code{factorial(5) + 1},
+the continuation of \code{factorial(5)} is to add \code{1} to the
+result, i.e. \code{x => x + 1}. Although the continuation of \code{factorial(5)}
+does exist and be executed during the evaluation of \code{factorial(5) + 1},
+we cannot find \code{x => x + 1} in the code per se. The reason is that
+\code{factorial} does not use CPS.
 
-On the other hand, the \code{factorialC} function uses the style. It takes two
-arguments: the first is an integer; the second is the continuation. For some
-integer \code{n} and some function \code{k} from an integer to integer,
-\code{factorialC(n,k)} yields the value same as the result of
-\code{k(factorial(n))}.
+Let us transform this function to use CPS. Since each function in CPS takes the
+continuation as an argument, the first thing to do is to add a parameter to a
+function. The continuation of a function application uses the return value for
+certain computation.
+Therefore, a continuation can be interpreted as a function that takes
+the return value as input. In the case of \code{factorial}, the continuation
+takes an integer as input.
+On the other hand, there is no restriction on what the continuation
+computes; it can do whatever it wants. In \code{factorial(5) + 1}, the
+continuation of \code{factorial(5)} results in an integer. At the same time,
+\code{factorial(5) + 1} results in an integer, too. In \code{120 == factorial(5)},
+the continuation, which is \code{x => 120 == x}, results in a boolean. The whole
+expression \code{120 == factorial(5)} also results in a boolean.
+Therefore, the output of the continuation can have any type,
+but the type must be the same as the type of the whole program.
+
+Based on these observations, we can define the type of a continuation.
+It is a function type whose parameter type is \code{Int}.
+The return type can be any type, but
+for brevity, we fix the return type to \code{Int}.
 
 \begin{verbatim}
-def factorialC(n: Int, k: Int => Int): Int =
-  if (n <= 1) k(1)
-  else factorialC(n - 1, x => k(n * x))
-
-factorialC(4, x => x)  // 24
-factorialC(7, x => x)  // 5040
+type Cont = Int => Int
 \end{verbatim}
 
-When \code{n} is less than \code{1}, \code{factorial(n)} equals \code{1}. Thus,
-\code{k(factorial(n))} is \code{k(1)}. The function returns \code{k(1)} in such
-cases.
-
-Otherwise, \code{factorial(n)} equals \code{n * factorial(n - 1)}. The function
-must return a value that equals to \code{k(n * factorial(n - 1))}. The body
-cannot directly use the expression as it calls functions twice. It avoids
-continuation-passing style.
-
-Despite the incorrectness, \code{k(n * factorial(n - 1))} is a good starting
-point. The expression multiplies \code{factorial(n - 1)} by \code{n} and passes
-the result to \code{k}. Define function \code{f} as the following:
+Now, we can add a parameter that denotes the
+continuation of a function call to \code{factorial}.
+We call this new function \code{factorialCps}.
 
 \begin{verbatim}
-def f(x: Int): Int = k(n * x)
+def factorialCps(n: Int, k: Cont): Int = ...
 \end{verbatim}
 
-The expression is equivalent to \code{f(factorial(n - 1))}. Since the result of
-\code{k(factorial(n))} equals that of \code{factorialC(n, k)}, \code{factorialC(n
-- 1, f)} can replace \code{f(factorial(n - 1))}. Anonymous function \code{x =>
-k(n * x)} exactly does what \code{f} does. Finally, \code{factorialC(n - 1, x =>
-k(n * x))} appears. The following summarizes the transformation:
+\code{k} is the continuation of the function. Thus,
+\code{factorialCps(n, k)} means evaluating \code{factorial(n)} where its
+continuation is \code{k}. According to the definition of a continuation,
+\code{k(factorial(n))} must equal \code{factorialCps(n, k)}.
+The return type of \code{factorialCps} must be the same as the return type of
+\code{k}. Since the return type of \code{k} is fixed to \code{Int}, the return
+type of \code{factorialCps} also is \code{Int}.
 
-\[
+% The above function is not valid in Scala because it uses an unknown type
+% \code{?}. The idea we want to express is that the return type of \code{k} can be
+% any type but it must be the same as the return type of \code{factorialCps}.
+% We can encode the idea with parametric polymorphism of Scala. Since parametric
+% polymorphism is the topic of \refch{parametric-polymorphism}, we do not explain
+% the detail here.
+
+% The type of \code{k} is \code{Int => T}. It denotes that the second
+% argument for \code{factorialCps} can has any return type. Since the return type
+% of \code{factorialCps} also is \code{T}, the return type of \code{k} must be the
+% same as \code{factorialCps}. For example, if the second argument for
+% \code{factorialCps} has the type \code{Int => Int}, \code{factorialCps} must return an
+% integer. If the second argument has the type \code{Int => Boolean},
+% \code{factorial} must return a boolean.
+
+The most naïve implementation of \code{factorialCps} is as follows:
+
+\begin{verbatim}
+def factorialCps(n: Int, k: Cont): Int =
+  k(factorial(n))
+\end{verbatim}
+
+Obviously, it is not the correct implementation of \code{factorialCps} because
+it still depends on \code{factorial}; we want \code{factorialCps} to be
+independent of \code{factorial}.
+The current version is just specification, not implementation, of \code{factorialCps}.
+However, it is a good starting point. We can replace \code{factorial(n)} with
+the body of \code{factorial} to obtain the following code:
+
+\begin{verbatim}
+def factorialCps(n: Int, k: Cont): Int =
+  k(
+    if (n <= 1)
+      1
+    else
+      n * factorial(n - 1)
+  )
+\end{verbatim}
+
+Note that \code{f(if (e1) e2 else e3)} is the same as \code{if (e1) f(e2) else
+f(e3)}. Therefore, the above code is equivalent to the following code:
+
+\begin{verbatim}
+def factorialCps(n: Int, k: Cont): Int =
+  if (n <= 1)
+    k(1)
+  else
+    k(n * factorial(n - 1))
+\end{verbatim}
+
+It looks better than before but still depends on \code{factorial}, which is not
+a function written in CPS. The use of \code{factorial} must disappear. Now, the
+goal is eliminating \code{factorial} in \code{k(n * factorial(n - 1))}. It is
+possible by using \code{factorialCps} instead of \code{factorial}. The key
+intuition to achieve the goal is to recall that \code{k(factorial(n))} equals
+\code{factorialCps(n, k)}. Based on the equality, we can conclude that the following
+equation is true:
+
+$
 \begin{array}{cl}
-& \texttt{k(n * factorial(n – 1))} \\
-= & \texttt{(x => k(n * x))(factorial(n – 1))} \\
-= & \texttt{factorialC(n – 1, x => k(n * x))} \\
+& \code{k(n * factorial(n - 1))} \\
+= & \code{(x => k(n * x))(factorial(n - 1))} \\
+= & \code{factorialCps(n - 1, x => k(n * x))} \\
 \end{array}
-\]
+$
 
-Another explanation is possible. Let a redex be the factorial of \code{n} and
-\code{k} refer to the continuation. The factorial of \code{n} equals multiplying
-the factorial of \code{n - 1} by \code{n}. Therefore, the evaluation can be
-divided with another way: a redex is the factorial of \code{n - 1}; the
-continuation is multiplying the result by \code{n} and passing the result of the
-multiplication to \code{k}. The explanation also leads to \code{factorialC(n - 1,
-x => k(n * x))}.
-
-Programs using continuation-passing style never use the result of a function
-call. They pass any additional computation as continuations. \code{n *
-factorial(n - 1)} differs from the style because it uses the result of the
-function call. The continuation of \code{ factorial(n - 1)} is multiplying
-\code{n} by the result. On the other hand, continuation-passing style always
-explicitly expresses the current continuation and passes the continuation as an
-argument. \code{factorialC(n - 1, x => k(n * x))} implies that the continuation
-of computing the factorial of \code{n - 1} is \code{x => k(n * x)}. Since the
-expression explicitly passes the continuation, it follows the style.
-
-Changing the return type of every function to \code{Unit} allows checking whether
-a program is using continuation-passing style.
+\code{(x => k(n * x))(factorial(n - 1))} applies \code{x => k(n * x)} to the
+result of \code{factorial(n - 1)} and, thus, equals \code{k(n * factorial(n -
+1))}. Since \code{k(factorial(n))} equals \code{factorialCps(n, k)},
+\code{(x => k(n * x))(factorial(n - 1))} equals
+\code{factorialCps(n - 1, x => k(n * x))}. By utilizing the equality, we attain
+the following code:
 
 \begin{verbatim}
-def factorialC(n: Int, k: Int => Unit): Unit =
-  if (n <= 1) k(1)
-  else factorialC(n - 1, x => k(n * x))
-
-factorialC(4, println)  // 24
-factorialC(7, println)  // 5040
+def factorialCps(n: Int, k: Cont): Int =
+  if (n <= 1)
+    k(1)
+  else
+    factorialCps(n - 1, x => k(n * x))
 \end{verbatim}
 
-Since the return type is \code{Unit}, every return value is useless. It always is
-\code{()}, which contains zero information. Expressions such as \code{k(n *
-factorialC(n - 1, x => x))} produces a compile error because it is impossible to
-multiply \code{()}, which is not a number, by \code{n}.
+The function uses CPS because its recursive call explicitly passes the
+continuation as an argument. When \code{n} is greater than one,
+\code{factorialCps(n, k)} computes $(\code{n}-1)!$, multiplies the result by
+\code{n}, and applies \code{k} to the result of the multiplication. The first
+step, computing $(\code{n}-1)!$, is done by calling \code{factorialCps} itself.
+The subsequent two steps are the continuation of the recursive call. In the
+implementation, the continuation is \code{x => k(n * x)}. It exactly coincides
+with the aforementioned steps: multiplying the result by \code{n} and applying
+\code{k}.
 
-The \code{Unit} return type follows the definition of a continuation. A
-continuation is all of the remaining computation at some point. After calling the
-continuation, there must be nothing to do. A program cannot use the result of the
-continuation for any purposes. Calling the continuation equals finishing the
-evaluation. Continuation-passing style prohibits "coming back."
+Now, we can compute $5!$ with \code{factorialCps} by writing
+\code{factorialCps(5, x => x)}.
+The continuation is \code{x => x} because there is nothing more to do with
+$5!$, which is the desired result. In \code{factorial(5)}, the continuation is
+implicit since \code{x => x} is not written in the code. On the other hand,
+\code{x => x} is explicitly written in \code{factorialCps(5, x => x)}, which
+clearly illustrates the main characteristic of CPS.
+Similarly, to compute $5!+1$, we can write \code{factorialCps(5, x => x + 1)}
+instead of \code{factorial(5) + 1}. To obtain $5!+1$ from $5!$, the only thing
+to do is adding $1$. Therefore, the continuation is \code{x => x + 1}. Just like
+before, the code with \code{factorialCps} directly shows the continuation,
+while the code with \code{factorial} does not.
 
-Continuation-passing style is a style that programs pass continuations from
-functions to functions. All the other descriptions are analogical to it. "Call a
-function once and only once." "Express the current continuation explicitly and
-pass it as an argument." "Every return value is useless." "Once a function is
-called, it never returns."
+Since the output type of a continuation is \code{T}, any code using
+\code{factorial} can be rewritten with \code{factorialCps}. For example,
+\code{factorial(5) \% 2 == 0} checks whether $5!$ is an even integer. It is
+equivalent to \code{factorialCps(5, x => x \% 2 == 0)}, which explicitly shows
+the continuation. Similarly, \code{println(factorial(5))} prints \code{120},
+which is $5!$. It is the same as \code{factorialCps(5, println)}, which also
+reveals the continuation.
 
-The article finally implements an interpreter of FAE with continuation-passing
-style. The abstract syntax of FAE follows:
+The code written in CPS has the following characteristics:
+\begin{itemize}
+  \item Each function takes the continuation as an argument, and each function
+    application passes the continuation as an argument.
+  \item The continuation is used---called or passed to another function---
+    once and at most once in the body.
+  \item The return value of every function application is never used.
+  \item Every function call is a tail call.
+  \item Every function ends with a function call.
+\end{itemize}
+These are not individual ones; they are connected and express the same idea.
+Since the continuation is given as an argument, the only way to finish the
+computation is calling the continuation. Therefore, the continuation is used
+once and at most once in the body. Also, there is no need to do additional
+computation with the return value. The continuation does every additional
+computation with the return value, so the return values are not used at all.
+Since we do not use return
+values, every call is a tail call. Once a function calls another
+function, the result of the callee is the result of caller. Moreover, there is no
+way of returning from a function without calling any function. If the function
+is the last step of the computation, it must call the continuation. Otherwise,
+it needs to call another function to proceed the computation. Therefore, every
+function ends with a function call.
+
+% Writing functions with an arbitrary type \code{T} helps us check whether CPS is
+% correctly used. In the body of \code{def factorialCps[T](n: Int, k: Int => T):
+% T}, the only way of obtaining the value of \code{T} is using \code{k}. Since
+% \code{T} is an arbitrary type, a value of the type \code{T} cannot be
+% constructed without \code{k}. For example, the following function, which does
+% not use CPS correclty, is rejected by type checking:
+
+% \begin{verbatim}
+% def factorialCps[T](n: Int, k: Int => T): T =
+%   if (n <= 1)
+%     k(1)
+%   else
+%     factorialCps(n - 1, x => n * x)
+% \end{verbatim}
+
+% The last line does not apply the continuation by mistake.
+% For this reason, the type of the last line is \code{Int}, not \code{T}, and the
+% mistake can be detected by the compiler.
+% The use of \code{T} as the return type of \code{factorialCps}
+% enforces the function to use \code{k}.
+
+% While using \code{T} helps us to check the correctness, \code{T} can be replaced
+% with any concrete type without breaking the code. For example, if
+% \code{factorialCps} uses CPS correctly, we can change its signature to
+% \code{def factorialCps(n: Int, k: Int => Int): Int} without changing the
+% behavior of \code{factorialCps}. Note that the change may another part of the
+% program that uses \code{factorialCps} becomes problematic despite its harmless
+% to \code{factorialCps} itself. If there is an expression \code{factorialCps(5,
+% println)}, it will not work after the change because \code{println} returns
+% \code{Unit}, not \code{Int}. Using a concrete type instead of \code{T} in
+% \code{factorialCps} makes the function less general but never makes the function
+% wrong.
+
+CPS seems needless. The main reason is its complexity.
+If we compare \code{factorial} and \code{factorialCps}, the former looks more concise.
+It is difficult to implement programs correctly in CPS. One benefit of CPS is
+that it makes every function call be a tail call. If the implementation language
+supports tail-call optimization, CPS can be used to avoid stack overflow.
+However, this book uses Scala, which optimizes only tail-recursive calls.
+Scala programs written in CPS can suffer from stack overflow despite the use of
+CPS. Then, why does this section introduce CPS? The first reason is to help the
+readers understand the notion of a continuation. The other reason is that
+the characteristic of CPS, passing the continuation explicitly as a value, is
+sometimes useful. The next chapter shows such an example: an interpreter of a
+language with first-class continuations. We will see how CPS can contribute the
+implementation of an interpreter in the next chapter.
+
+\section{Interpreter in CPS}
+
+Let us implement an interpreter of \lang in CPS. As explained already, there is
+no reason to implement an interperter of \lang in CPS. However, CPS is an appropriate
+implementation strategy for the interpreter of the next chapter, and this
+section is preparation for the next chapter.
+
+First, recall the previous implementation:
 
 \begin{verbatim}
-sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
-
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-
-type Env = Map[String, Value]
-def lookup(x: String, env: Env): Value =
-  env.getOrElse(x, throw new Exception)
+def interp(e: Expr, env: Env): Value = e match {
+  case Num(n) => NumV(n)
+  case Add(l, r) =>
+    val v1 = interp(l, env)
+    val v2 = interp(r, env)
+    val NumV(n) = v1
+    val NumV(m) = v2
+    NumV(n + m)
+  case Sub(l, r) =>
+    val v1 = interp(l, env)
+    val v2 = interp(r, env)
+    val NumV(n) = v1
+    val NumV(m) = v2
+    NumV(n - m)
+  case Id(x) => env(x)
+  case Fun(x, b) => CloV(x, b, env)
+  case App(f, a) =>
+    val fv = interp(f, env)
+    val av = interp(a, env)
+    val CloV(x, b, fEnv) = fv
+    interp(b, fEnv + (x -> av))
+}
 \end{verbatim}
 
-\code{Cont} is the type of a continuation:
+To re-implement the interpreter in CPS, we should add the type of a
+continuation.
 
 \begin{verbatim}
 type Cont = Value => Value
 \end{verbatim}
 
-The original signature of the \code{interp} function equals the following:
+A continuation takes a value of \code{Value} as input because \code{interp}
+returns a value of \code{Value}. The return type of a continuation can be any
+type, but like before, we choose \code{Value} just for brevity.
+
+The following function, \code{interpCps}, is the CPS version of \code{interp}:
 
 \begin{verbatim}
-def interp(e: Expr, env: Env): Value = ...
+def interpCps(e: Expr, env: Env, k: Cont): Value = e match {
+  ...
+}
 \end{verbatim}
 
-To follow continuation-passing style, the function needs an additional parameter
-to take the current continuation as an argument.
+For any \code{e}, \code{env}, and \code{k}, \code{interpCps(e, env, k)} must equal
+\code{k(interp(e, env))}.
 
-\begin{verbatim}
-def interp(e: Expr, env: Env, k: Cont): Value = ...
-\end{verbatim}
-
-For any \code{e}, \code{env}, and \code{k}, \code{interp(e, env, k)} must produce
-the same result as that of \code{k(interp(e, env))}.
-
-\code{interp(Num(n), env)} equals \code{NumV(n)}. Hence, \code{k(interp(Num(n),
-env))} equals \code{k(NumV(n))}.
+Now, we need to implement each case of the pattern matching. First, consider the
+\code{Num} case. \code{interp(Num(n), env)} equals \code{NumV(n)}. Hence,
+\code{k(interp(Num(n), env))} equals \code{k(NumV(n))}. Since
+\code{interpCps(Num(n), env, k)} must also equal \code{k(NumV(n))}, the
+\code{Num} case can be implemented as follows:
 
 \begin{verbatim}
 case Num(n) => k(NumV(n))
 \end{verbatim}
 
-The \code{Id} and \code{Fun} cases are similar.
+It is similar to \code{k(1)} of \code{factorialCps} when \code{n} is less than
+or equal to one. Since there is no need of a recursive call, the function simply
+passes \code{NumV(n)} to the continuation.
+
+The \code{Id} and \code{Fun} cases are similar to the \code{Num} case.
 
 \begin{verbatim}
-case Id(x) => k(lookup(x, env))
+case Id(x) => k(env(x))
 case Fun(x, b) => k(CloV(x, b, env))
 \end{verbatim}
 
-Consider the explanation of the first section of the article. Let $e$ and $k$
-respectively denote a redex and the continuation. $k$ is a function. The
-evaluation equals passing the result of $e$ to $k$, which is evaluating $k\ e$.
-
-Let $k$ be the continuation of $e_1+e_2$. The whole evaluation equals
-$k(e_1+e_2)$. $e_1+e_2$ is equivalent to $(\lambda v_1.v_1+e_2)e_1$. $k((\lambda
-v_1.v_1+e_2)e_1)$ replaces $k(e_1+e_2)$, and $k((\lambda v_1.v_1+e_2)e_1)$ equals
-$(\lambda v_1.k(v_1+e_2))e_1$. Focus on $v_1+e_2$. It is equivalent to $(\lambda
-v_2.v_1+v_2)e_2$. $k(v_1+e_2)$ becomes $k((\lambda v_2.v_1+v_2)e_2)$, which is
-$(\lambda v_2.k(v_1+v_2))e_2$. Replacing $k(v_1+e_2)$ with $(\lambda
-v_2.k(v_1+v_2))e_2$ in $(\lambda v_1.k(v_1+e_2))e_1$ produces $(\lambda
-v_1.(\lambda v_2.k(v_1+v_2))e_2)e_1$. Therefore, the evaluation is newly divided
-into redex $e_1$ and continuation $\lambda v_1.(\lambda v_2.k(v_1+v_2))e_2$. The
-body of the continuation is $(\lambda v_2.k(v_1+v_2))e_2$, which can be divided
-into redex $e_2$ and continuation $\lambda v_2.k(v_1+v_2)$. The following
-summarizes the transformation:
-
-\[
-\begin{array}{rl}
-& k(e_1+e_2) \\
-= & k((\lambda v_1.v_1+e_2)e_1) \\
-= & (\lambda v_1.k(v_1+e_2))e_1 \\
-= & (\lambda v_1.k((\lambda v_2.v_1+v_2)e_2))e_1 \\
-= & (\lambda v_1.(\lambda v_2.k(v_1+v_2))e_2)e_1 \\
-\end{array}
-\]
-
-Let an Scala expression express the same thing. $\lambda v_2.k(v_1+v_2)$ equals
-\code{v2 => k(v1 + v2)}. It is the continuation of $e_2$. \code{interp(e2, env,
-v2 => k(v1 + v2))} expresses the evaluation. The continuation of $e_1$ is
-\code{v1 => interp(e2, env, v2 => k(v1 + v2))}. The complete code follows:
+The remaining cases are \code{Add}, \code{Sub}, and \code{App}. They are similar
+in the sense that each sort of expression consists of two subexpressions, so if you
+understand one of them, the others are straightforward. Let us consider the \code{Add} case
+first. The previous implementation is as follows:
 
 \begin{verbatim}
-case Add(e1, e2) =>
-  interp(e1, env, v1 =>
-    interp(e2, env, v2 =>
-      k(v1 + v2)))
+val v1 = interp(l, env)
+val v2 = interp(r, env)
+add(v1, v2)
 \end{verbatim}
 
-The only problem is that \code{v1 + v2} is impossible. The function must remove
-\code{NumV} and wrap the result with \code{NumV} again.
+where \code{add(v1, v2)} denotes \code{val NumV(n) = v1; val NumV(m) = v2; NumV(n
++ m)}.
+Since \code{interpCps(e, env, k)} equals \code{k(interp(e, env))}, we can start
+from the following code:
 
 \begin{verbatim}
-def numVAdd(v1: Value, v2: Value): Value = {
-  val NumV(n1) = v1
-  val NumV(n2) = v2
-  NumV(n1 + n2)
-}
+val v1 = interp(l, env)
+val v2 = interp(r, env)
+k(add(v1, v2))
 \end{verbatim}
 
-The \code{numVAdd} function corrects the code:
+By desugaring variable definitions into an anonymous function and a function
+application, we can find the continuation of \code{interp(l, env)}.
+Recall that \code{val x = e1; e2} is equivalent to \code{(x => e2)(e1)} as shown
+in \refch{first-class-functions}. Desugaring yields the following code:
 
 \begin{verbatim}
-case Add(e1, e2) =>
-  interp(e1, env, v1 =>
-    interp(e2, env, v2 =>
-      k(numVAdd(v1, v2))))
+(v1 => {
+  val v2 = interp(r, env)
+  k(add(v1, v2))
+})(interp(l, env))
 \end{verbatim}
 
-Another intuitive explanation for the code exists. The continuation of
-\code{Add(e1, e2)} is \code{k}. The evaluation requires three steps: letting
-\code{v1} denote the result of evaluating \code{e1}; letting \code{v2} denote the
-result of evaluating \code{e2}; passing \code{numVAdd(v1, v2)} to \code{k}. Thus,
-the continuation of \code{e1} is evaluating \code{e2}, which yields \code{v2},
-and passing \code{numVAdd(v1, v2)} to \code{k}. The continuation is evaluating
-\code{e2} with a continuation that is calling the result \code{v2} and passing
-\code{numVAdd(v1, v2)} to \code{k}. The continuation of \code{e2} is \code{v2 =>
-k(numVAdd(v1, v2))}. Evaluating \code{e2} is \code{interp(e2, env, v2 =>
-k(numVAdd(v1, v2)))}. The continuation of \code{e1} is \code{v1 => interp(e2,
-env, v2 => k(numVadd(v1, v2)))}.
+The function applied to \code{interp(l, env)} is the continuation of
+\code{interp(l, env)}. Then, \code{interp} can be replaced with
+\code{interpCps} because \code{k(interp(e, env))} is the same as
+\code{interpCps(e, env, k)}.
 
-The following summarization is another interpretation of the code.
+\begin{verbatim}
+interpCps(l, env, v1 => {
+  val v2 = interp(r, env)
+  k(add(v1, v2))
+})
+\end{verbatim}
 
-Things to do are three steps of computation:
+Now, let us focus on the body of the continuation.
 
-1. Evaluate \code{e1} and call the result \code{v1}.
-2. Evaluate \code{e2} and call the result \code{v2}.
-3. Evaluate \code{numVAdd(v1, v2)} and pass the result to \code{k}.
+\begin{verbatim}
+val v2 = interp(r, env)
+k(add(v1, v2))
+\end{verbatim}
 
-The continuation at step 1 includes steps 2 and 3. It equals the following:
+In a similary way, desugaring reveals the continuation of \code{interp(r, env)}.
 
-1. Take \code{v1} as an argument.
-2. Evaluate \code{e2} and call the result \code{v2}.
-3. Evaluate \code{numVAdd(v1, v2)} and pass the result to \code{k}.
+\begin{verbatim}
+(v2 =>
+  k(add(v1, v2))
+)(interp(r, env))
+\end{verbatim}
 
-The continuation at step 2 is step 3. It equals the following:
+Just like before, \code{interp} can be replaced with \code{interpCps}.
 
-1. Take \code{v2} as an argument.
-2. Evaluate \code{numVAdd(v1, v2)} and pass the result to \code{k}.
+\begin{verbatim}
+interpCps(r, env, v2 =>
+  k(add(v1, v2))
+)
+\end{verbatim}
 
-Step 2 equals \code{k(numVAdd(v1, v2))}. The continuation is \code{v2 =>
-k(numVAdd(v1, v2))}. Steps 2 and 3 of the second computation is \code{interp(e2,
-env, v2 => k(numVAdd(v1, v2)))}. The continuation of \code{e1} is \code{v1 =>
-interp(e2, env, v2 => k(numVAdd(v1, v2)))}. The whole evaluation equals
-\code{interp(e1, env, v1 => interp(e2, env, v2 => k(numVAdd(v1, v2))))}.
+Then, we can use this new expression as the body of the continuation.
+
+\begin{verbatim}
+interpCps(l, env, v1 =>
+  interpCps(r, env, v2 =>
+    k(add(v1, v2))
+  )
+)
+\end{verbatim}
+
+Finally, we obtain the complete implementation of the \code{Add} case by
+replacing \code{add} with its definition.
+
+\begin{verbatim}
+case Add(l, r) =>
+  interpCps(l, env, v1 =>
+    interpCps(r, env, v2 => {
+      val NumV(n) = v1
+      val NumV(m) = v2
+      k(NumV(n + m))
+    })
+  )
+\end{verbatim}
+
+The code explicitly shows the continuation of each function application.
+The first function application evaluates \code{l} under \code{env}. Its
+continuation is \code{v1 => interpCps(r, env, v2 => k(add(v1, v2)))}.
+Therefore, we can say that \code{r} is evaluated after the evaluation of
+\code{l}. In \code{k(add(v1, v2))},
+\code{v1} denotes the result of \code{l}. The second function application
+evaluates \code{r}. Its continuation
+is \code{v2 => k(add(v1, v2))}. In \code{k(add(v1, v2))}, \code{v2}
+denotes the result of \code{r}. \code{k(add(v1, v2))} makes \code{NumV(n + m)}
+from \code{v1} and \code{v2} and passes \code{NumV(n + m)} to \code{k}, the
+continuation of evaluating \code{Add(l, r)}.
 
 The \code{Sub} case is similar to the \code{Add} case.
 
 \begin{verbatim}
-def numVSub(v1: Value, v2: Value): Value = {
-  val NumV(n1) = v1
-  val NumV(n2) = v2
-  NumV(n1 - n2)
-}
+case Sub(l, r) =>
+  interpCps(l, env, v1 =>
+    interpCps(r, env, v2 => {
+      val NumV(n) = v1
+      val NumV(m) = v2
+      k(NumV(n - m))
+    })
+  )
 \end{verbatim}
 
+The \code{App} case is also similar but needs extra care.
+The previous implementation is as follows:
+
 \begin{verbatim}
-case Sub(e1, e2) =>
-  interp(e1, env, v1 =>
-    interp(e2, env, v2 =>
-      k(numVSub(v1, v2))))
+val fv = interp(f, env)
+val av = interp(a, env)
+val CloV(x, b, fEnv) = fv
+k(interp(b, fEnv + (x -> av)))
 \end{verbatim}
 
-The \code{App} case has some differences. Let a redex and the continuation
-respectively be $e_1\ e_2$ and $k$. It is equivalent to that the continuation of
-$e_1$ is $\lambda v_1.(\lambda v_2.k(v_1\ v_2))e_2$. Assume that $v_1$ is
-$\langle\lambda x_{v1}.e_{v1},\sigma_{v1}\rangle$. $v_1\ v_2$ implies evaluating
-the body of $v_1$ under the environment of $v_1$ with $v_2$.
-$\sigma_{v1}[x_{v1}\mapsto v_2]\vdash e_{v1}$ denotes it. As a result, $\lambda
-v_1.(\lambda v_2.k(v_1\ v_2))e_2$ equals $\lambda v_1.(\lambda
-v_2.k(\sigma_{v1}[x_{v1}\mapsto v_2]\vdash e_{v1}))e_2$. Note that
-$k(\sigma_{v1}[x_{v1}\mapsto v_2]\vdash e_{v1})$ means evaluating $e_{v1}$ under
-$\sigma_{v1}[x_{v1}\mapsto v_2]$ with continuation $k$, which is
-\code{interp(ev1, sigmav1 + (xv1 -> v2), k)}.
+By applying the same strategy, we attain the following code:
 
 \begin{verbatim}
-case App(e1, e2) =>
-  interp(e1, env, v1 =>
-    interp(e2, env, v2 =>
-      interp(ev1, sigmav1 + (xv1 -> v2), k)))
+interpCps(f, env, fv =>
+  interpCps(a, env, av => {
+    val CloV(x, b, fEnv) = fv
+    k(interp(b, fEnv + (x -> av)))
+  })
+)
 \end{verbatim}
 
-It contains free variables: \code{ev1}, \code{sigmav1}, and \code{xv1}.
+Unlike \code{Add} and \code{Sub}, an \code{interp} function call still exists.
+It is not CPS because the result of the function call is used by being passed to
+\code{k}. Replacing \code{interp} with \code{interpCps} resolves the problem.
 
 \begin{verbatim}
-case App(e1, e2) =>
-  interp(e1, env, v1 =>
-    interp(e2, env, v2 => {
-      val CloV(xv1, ev1, sigmav1) = v1
-      interp(ev1, sigmav1 + (xv1 -> v2), k)
+case App(f, a) =>
+  interpCps(f, env, fv =>
+    interpCps(a, env, av => {
+      val CloV(x, b, fEnv) = fv
+      interpCps(b, fEnv + (x -> av), k)
     })
   )
 \end{verbatim}
 
 The code does not directly call \code{k}. Instead of calling \code{k}, it passes
-\code{k} as an argument. Look at \code{interp(ev1, sigmav1 + (xv1 -> v2), k)}.
-\code{k} is passed to the \code{interp} function and therefore eventually called.
+\code{k} as an argument. Look at \code{interpCps(b, fEnv + (x -> av), k)}.
+\code{k} is passed to \code{interpCps} and, therefore, eventually called.
 
-The following is a complete interpreter:
+\section{Small-Step Operational Semantics}
 
-\begin{verbatim}
-def interp(e: Expr, env: Env, k: Cont): Value = e match {
-  case Num(n) => k(NumV(n))
-  case Id(x) => k(lookup(x, env))
-  case Fun(x, b) => k(CloV(x, b, env))
-  case Add(e1, e2) =>
-    interp(e1, env, v1 =>
-      interp(e2, env, v2 =>
-        k(numVAdd(v1, v2))))
-  case Sub(e1, e2) =>
-    interp(e1, env, v1 =>
-      interp(e2, env, v2 =>
-        k(numVSub(v1, v2))))
-  case App(e1, e2) =>
-    interp(e1, env, v1 =>
-      interp(e2, env, v2 => {
-        val CloV(xv1, ev1, sigmav1) = v1
-        interp(ev1, sigmav1 + (xv1 -> v2), k)
-      })
-    )
-}
-\end{verbatim}
-
-One can check its correctness as the following:
-
-\begin{verbatim}
-// (1 + 2) - (3 + 4)
-interp(
-  Sub(
-    Add(Num(1), Num(2)),
-    Add(Num(3), Num(4))
-  ),
-  Map.empty,
-  x => x
-)
-// -4
-
-// (lambda x.lambda y.x + y) 1 2
-interp(
-  App(
-    App(
-      Fun("x", Fun("y",
-        Add(Id("x"), Id("y")))),
-      Num(1)
-    ),
-    Num(2)
-  ),
-  Map.empty,
-  x => x
-)
-// 3
-\end{verbatim}
-
-To check whether the interpreter uses continuation-passing style, change the
-return types of continuations and the \code{interp} function to \code{Unit}.
-
-\begin{verbatim}
-type Cont = Value => Unit
-def interp(e: Expr, env: Env, k: Cont): Unit = ...
-\end{verbatim}
-
-The interpreter works well even after the change.
-
-\begin{verbatim}
-// (1 + 2) - (3 + 4)
-interp(
-  Sub(
-    Add(Num(1), Num(2)),
-    Add(Num(3), Num(4))
-  ),
-  Map.empty,
-  println
-)
-// -4
-
-// (lambda x.lambda y.x + y) 1 2
-interp(
-  App(
-    App(
-      Fun("x", Fun("y",
-        Add(Id("x"), Id("y")))),
-      Num(1)
-    ),
-    Num(2)
-  ),
-  Map.empty,
-  println
-)
-// 3
-\end{verbatim}
-
-Continuation-passing style seems needless. One may think that it complexifies the
-implementation of the interpreter. It is true that continuation-passing style
-creates unnecessary difficulties in the implementation. The style makes every
-function call be a tail call. It is one benefit. If an interpreter is written in
-a language with tail-call optimization, continuation-passing style prevents stack
-overflow. However, the Scala complier optimizes only tail-recursive calls. The
-possibility of stack overflow remains despite the use of continuation-passing
-style as the article uses Scala. The next article will give a reason that this
-article uses continuation-passing style to implement the interpreter. The next
-article adds a new feature whom an interpreter using continuation-passing style
-can easily support to FAE.
-
-\section{Small-Step Semantics}
-
-This section defines semantics that explicitly shows continuations for FAE. Every
-hitherto article has defined semantics in big-step style. Big-step semantics is
+This section defines semantics that explicitly shows continuations for \lang.
+Previous chapters define semantics in big-step style. Big-step semantics is
 intuitive, and its inference rules give nice clues to interpreter implementers.
-However, it is a bad way to formalize continuations. Its single inference rule
-defines the value of an expression. For instance, the big-step rule of a sum
-follows:
+A single rule usually corresponds to a single case of the pattern matching in
+an interpreter, so it is straightforward to implement an interpreter based on
+the big-step semantics and write semantics rules based on the implementation of
+an interpreter.
+
+However, it is difficult to formalize continuations in big-step semantics.
+The problem is that an inference rule of big-step semantics describes the result
+of an expression instead of one step of computation.
+For instance, consider the following rule:
 
 \[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow v_1\\
-  \sigma\vdash e_2\Rightarrow v_2 }
-{ \sigma\vdash e_1+e_2\Rightarrow v_1+v_2 }
+  \inferrule
+  { \evald{e_1}{n_1}\\
+    \evald{e_2}{n_2} }
+  { \evald{e_1+e_2}{n_1+n_2} }
 \]
 
-The rule implies that the value of $e_1+e_2$ is $v_1+v_2$, but lacks a way to
-evaluate $e_1$ and $e_2$. The only given step of computation is adding $v_1$ and
-$v_2$. Moreover, the rule does not specify the order of the computation. The
-evaluation of $e_1$ can precede that of $e_2$, and vice versa. Continuations rely
-on the two concepts. Defining them requires every step of computation and the
-exact order of computation. For this reason, the article avoids using big-step
-semantics.
+The rule implies that the value of $e_1+e_2$ is $n_1+n_2$. It does not explain
+how $e_1$ evaluates to $n_1$ and $e_2$ evaluates to $n_2$. Therefore, the rule does
+not describe steps that evalutes $e_1$ to $n_1$ and $e_2$ to $n_2$.
+The only step the rule describes is the last step: adding $n_1$ and $n_2$.
 
-Small-step semantics is another way to define semantics of a language. It defines
-a relation over expressions and expressions. The relation shows an expression
-obtained by applying one step of computation to a given expression. Small-step
-semantics clarifies every step of computation and the order among them. It fits
-defining continuations.
+Another problem is that rules of big-step semantics do not specify
+the order of the computation. Consider the above rule again. The rule does not
+decide the order between $e_1$ and $e_2$. The only two things the rule requires
+are that $e_1$ evaluates to $n_1$ and that $e_2$ evaluates to $n_2$.
+The evaluation of $e_1$ may precede that of $e_2$, and vice versa.
 
-Small-step semantics defines a relation describing one step of computation.
-Reduction refers to proceeding computation by a single step. A state is reduced
-to a new state. Various forms of small-step semantics vary in defining a state.
-Usually, a state is an expression. In this article, it is not the case. The later
-part will show what a state is. Defining small-step semantics is defining
-reduction so that another name of small-step semantics is reduction semantics.
+These two characteristics of big-step semantics hamper us from formalizing
+continuations. Continuations highly rely on presice steps of computation whose
+order is fixed. Big-step semantics neither shows all the steps nor specifies the
+order. Therefore, we do not use big-step semantics in this section.
 
-The abstract syntax of FAE is the following:
+\textit{Small-step operational semantics}\index{small-step operational semantics}
+is another way of defining the semantics of a language. While big-step semantics
+defines a relation over expressions and values, small-step semantics
+defines a relation between states and states.
+If one step of computation transfers the program from state $A$ to state $B$,
+$A$ and $B$ are related by the relation. Such one step of computation is called
+\textit{reduction}\index{reduction}. If reduction from $A$ to $B$ is possible,
+we say that $A$ is reducible and reduced to $B$. On the other
+hand, if a state cannot be reduced to any state, the state is irreducible.
+In small-step semantics, the definition
+of a state varies. One possible definition of a state is an expression.
+For example, $1+2$ and $3$ are states, and $1+2$ is reduced to $3$ by one step
+of computation. However, this section's small-step semantics does not use an
+expression as a state. We will introduce the definition of a state soon.
+The execution of a program is defined as repeated reduction. The execution
+starts from an initial state, and the state becomes reduced if possible. When
+no further reduction is possible, the execution stops, and the final state is
+the result.
+
+Small-step semantics fits formalizing continuations. Since execution is a
+sequence of multiple reduction steps, every step of computation can be
+identified. The order between the steps naturally arises. By splitting the steps
+into two parts, we can formally describe a redex and the continuation.
+
+Now, let us define states of \lang.
+A state of \lang is a pair of a computation stack and a value stack.
+The following defines computation and value stacks:
 
 \[
-\begin{array}{lrcl}
-\text{Integer} & n & \in & \mathbb{Z} \\
-\text{Variable} & x & \in & \textit{Id} \\
-\text{Expression} & e & ::= & n \\
-&& | & e + e \\
-&& | & e - e \\
-&& | & x \\
-&& | & \lambda x.e \\
-&& | & e\ e \\
-\text{Value} & v & ::= & n \\
-&& | & \langle\lambda x.e,\sigma\rangle \\
-\text{Environment} & \sigma & \in &
-\textit{Id} \hookrightarrow \text{Value}
+\begin{array}{rrl}
+k & ::= & \mtk
+  \ |\  \evalk{\sigma}{e} k
+  \ |\  \addk k
+  \ |\  \subk k
+  \ |\  \appk k \\
+s & ::= & \mts
+  \ |\ \conss{v} s
 \end{array}
 \]
 
-A state of FAE is a pair of a computation stack and a value stack. The following
-defines computation and value stacks:
+where metavariable $k$ ranges over computation stacks and metavariable $s$
+ranges over value stacks. Let $S_{\text{Comp}}$ be the set of every
+computation stack and $S_{\text{Val}}$ be the set of every value stack.
+We write $k\ ||\ s$ to denote a state that consists of
+a computation stack $k$ and a value stack $s$. $k$ includes remaining steps
+of computation, and $s$ includes values used by those steps.
 
-\[
-\begin{array}{lrcl}
-\text{Computation Stack} & k & ::= & \square \\
-&& | & \sigma\vdash e::k \\
-&& | & (+)::k \\
-&& | & (-)::k \\
-&& | & (@)::k \\
-\text{Value Stack} & s & ::= & \blacksquare \\
-&& | & v::s
-\end{array}
-\]
+A computation stack is a stack containing remaining steps of computation.
+The white square, $\mtk$, denotes the empty computation stack, which
+implies that there is nothing more to do. If the computation stack of a state is
+$\mtk$, no further reduction is possible, and the evaluation ends.
+There are four kinds of computation: $\sigma\vdash e$, $(+)$, $(-)$, and $(@)$.
+Their detailed descriptions and formal definitions will be provided soon.
+The computation at the top of the stack is the first step of computation. After
+finishing the step, the corresponding computation in the stack is popped.
+For example, $\evalk{\emptyset}{1}\mtk$ has one step of compuation:
+$\emptyset\vdash1$. After finishing the step, the stack becomes $\mtk$, and the
+evaluation finishes.
 
-A value stack is a stack containing values. Since it is a stack, push and pop are
-only available operations. The black square, $\blacksquare$, denotes the empty
-value stack.
+A value stack is a stack containing values. The black square, $\mts$, denotes the empty
+value stack. Therefore, $\conss{1}\conss{2}\mts$ is a stack that contains $1$
+and $2$. $1$ is at the top of the stack. Since a value stack is a stack, the
+only possible operations are push and pop. If we push $0$ onto
+$\conss{1}\conss{2}\mts$, we obtain $\conss{0}\conss{1}\conss{2}\mts$.
+If we pop the top element from $\conss{1}\conss{2}\mts$, we obtain
+$\conss{2}\mts$.
 
-A computation stack is a stack containing remaining steps of computation. The top
-of the stack represents the first computation to be done. The white square,
-$\square$, denotes the empty computation stack. The empty computation stack
-implies that there are no more things to do. It is the end of the evaluation.
-Four kinds of computation exist. $\sigma\vdash e$ evaluates $e$ under $\sigma$
-and then pushes the result into the value stack. $(+)$ pops two values from the
-value stack and then pushes the sum of the values into the value stack. $(-)$
-pops two values from the value stack and then pushes the difference of the values
-into the value stack. The difference equals an integer obtained by subtracting
-the firstly-popped value from the secondly-popped value. $(@)$ pops two values
-from the value stack, applies the secondly-popped value to the firstly-popped
-value, and pushes the result of the application to the value stack. Every
-completed computation disappears from the computation stack.
+Before moving on to the formal defintion of reduction, let us see the high-level
+idea of reduction first.
+Each reduction step pops the element at the top of the computation stack and
+manipluates the computation and value stacks depending on the popped computation.
+$\sigma\vdash e$ is the only kind that pushes a value onto the value stack.
+It evaluates $e$ under $\sigma$ and pushes the result of $e$ onto the value stack.
+Therefore, if the current state is $\evalk{\sigma}{e}k\ ||\ s$, then the redex
+is $e$, and the continuation is $k\ ||\ s$. Applying the continuation to a value is done by
+pushing the value onto the value stack. Therefore, if $e$ evaluates to $v$, the
+continuation is applied to $v$, so the state becomes $k\ ||\ \conss{v}s$.
+For example, $\evalk{\emptyset}{1}k\ ||\ s$ is reduced to $k\ ||\ \conss{1}s$.
+On the other hand, the other kinds of computation consume values in the value stack.
+$(+)$ pops two values from the
+value stack and then pushes the sum of the values onto the value stack.
+For instance, $\addk k\ ||\ \conss{2}\conss{1}s$ is reduced to $k\ ||\ \conss{3}s$.
+$(-)$ and $(@)$ are similar to $(+)$. $(-)$ performs subtraction, and $(@)$
+performs function application.
 
-$k\ ||\ s$ denotes that the computation stack and the value stack of the current
-state respectively are $k$ and $s$. $k$ includes remaining steps of computation;
-$s$ includes values used by the steps.
+It becomes clear that each kind of a computation step coincides our intuitive
+notion of a computation step when we see an example. Consider the evaluation of
+$1+2$ under the empty environment. The evaluation consists of three steps:
+\begin{enumerate}
+  \item Evaluate the expression $1$ to get the integer value $1$.
+  \item Evaluate the expression $2$ to get the integer value $2$.
+  \item Add the integer value $1$ to the integer value $2$ to get the integer
+    value $3$.
+\end{enumerate}
+Steps 1 and 2 can be represented by $\emptyset\vdash1$ and $\emptyset\vdash2$,
+repectively. $\emptyset\vdash1$ evalutes $1$ to get $1$ and pushes $1$ onto the
+value stack for the continuation. Similarly, $\emptyset\vdash2$ evaluates $2$ to
+get $2$ and pushes $2$ onto the value stack for the continuation. Finally,
+step 3, which can be represented by $(+)$, pops both values and computes the sum.
+The sum, $3$, is pushed onto the value stack and becomes the result of the
+execution. Therefore, the evalution of $1+2$ can be decomposed into three steps
+in the computation stack:
+$\evalk{\emptyset}{1} \evalk{\emptyset}{2} \addk \mtk$.
 
-$\rightarrow$ denotes reduction. Reduction produces a new state from a given
-state. Therefore, reduction is a relation over computations stacks, value stacks,
-computation stack, and value stacks.
+Now, we formally define reduction.
+Reduction is a relation over $S_{\text{Comp}}$, $S_{\text{Val}}$,
+$S_{\text{Comp}}$, and $S_{\text{Val}}$.
 
-\[\rightarrow \subseteq
-\text{Computation Stack}\times\text{Value Stack}
-\times\text{Computation Stack}\times\text{Value Stack} \]
+\[\rightarrow\subseteq S_{\text{Comp}}\times S_{\text{Val}}\times
+S_{\text{Comp}} \times S_{\text{Val}}\]
 
-$k_1\ ||\ s_1\rightarrow k_2\ ||\ s_2$ means reducing $k_1\ ||\ s_1$ results in
-$k_2\ ||\ s_2$.
+We write $k_1\ ||\ s_1\rightarrow k_2\ ||\ s_2$ if $k_1\ ||\ s_1$ is reduced to
+$k_2\ ||\ s_2$. For example, we write
+$\evalk{\emptyset}{1}\mtk\ ||\ \mts\rightarrow \mtk\ ||\ \conss{1}\mts$
 
-Repeating reduction until no more reduction is possible evaluates a state. If the
-computation stack is empty, reduction is impossible. If a value popped from the
-value stack is not an integer, both addition or subtraction are impossible so
-that reduction cannot happen. If the secondly-popped value is not a closure, a
-function application is impossible. It also makes reduction impossible. The first
-case and the remaining cases differ from each other. The empty stack implies the
-end of the evaluation. It corresponds to a normal termination of a program. On
-the other hand, an improper value in the value stack prevents further reduction
-although computation remains. It corresponds to an abnormal termination of a
-program due to a run-time error.
+As mentioned already, execution of a program is to repeat reduction until no
+more reduction is possible. When the state cannot be reduced any longer, the
+execution terminates, and the state represents the result. To formalize the
+notion of execution, we define the repeated reduction as the reflexive,
+transitive closure of the reduction relation.
+
+\begin{kaobox}[frametitle=Reflexive relations]
+Let $A$ be a set and $R$ be a binary relation over $A$ and $A$.
+
+If $(a,a)\in R$ for every $a\in A$, $R$ is reflexive.
+\end{kaobox}
+
+\begin{kaobox}[frametitle=Transitive relations]
+Let $A$ be a set and $R$ be a binary relation over $A$ and $A$.
+
+If $(a,b),(b,c)\in R$ implies $(a,c)\in R$ for every $a,b,c\in A$, $R$ is
+transitive.
+\end{kaobox}
+
+\begin{kaobox}[frametitle={Reflexive, transitive closures}]
+Let $A$ be a set and $R$ be a binary relation over $A$ and $A$.
+
+The reflexive, transitive closure of $R$ is the smallest set $S$ such that $R\subseteq
+  S\subseteq A\times A$ and $S$ is reflexive and transitive.
+\end{kaobox}
 
 $\rightarrow^\ast$ denotes repeated reduction. $k_1\ ||\ s_1\rightarrow^\ast k_n\
 ||\ s_n$ implies $k_1\ ||\ s_1\rightarrow k_2\ ||\ s_2$, $k_2\ ||\ s_2\rightarrow
 k_3\ ||\ s_3$, …, and $k_{n-1}\ ||\ s_{n-1}\rightarrow k_n\ ||\ s_n$. The
-following formalizes the relation:
+following rules formalize the relation:
 
 \[k\ ||\ s\rightarrow^{\ast}k\ ||\ s\]
 
 \[
 \inferrule
-{ k\ ||\ s\rightarrow^{\ast}k'' \ ||\ s'' \\
-  k'' \ ||\ s'' \rightarrow k'\ ||\ s' }
-{ k\ ||\ s\rightarrow^{\ast}k'\ ||\ s' }
+{ k_1\ ||\ s_1\rightarrow^{\ast}k_2 \ ||\ s_2 \\
+  k_2 \ ||\ s_2 \rightarrow k_3\ ||\ s_3 }
+{ k_1\ ||\ s_1\rightarrow^{\ast}k_3\ ||\ s_3 }
 \]
 
-Note that $\rightarrow^\ast$ does not require reduction to be impossible. It
-means zero or more times of reduction. All of $k_1\ ||\ s_1\rightarrow^\ast k_1\
+By definition, $\rightarrow^\ast$ is indeed the reflexive, transitive
+closure of $\rightarrow$. Intuitively,
+$k_1\ ||\ s_1\rightarrow^{\ast}k_2\ ||\ s_2$ implies that $k_2\ ||\ s_2$
+can be reached from $k_1\ ||\ s_1$ by zero or more steps of reduction.
+
+Note that $\rightarrow^\ast$ does not require the resulting state to be
+irreducible. It just denotes zero or more steps of reduction.
+When $k_1\ ||\ s_1\rightarrow k_2\ ||\ s_2$ and $k_2\ ||\ s_2\rightarrow k_3\
+||\ s_3$,
+all of $k_1\ ||\ s_1\rightarrow^\ast k_1\
 ||\ s_1$, $k_1\ ||\ s_1\rightarrow^\ast k_2\ ||\ s_2$, and $k_1\ ||\
 s_1\rightarrow^\ast k_3\ ||\ s_3$ are true.
+Therefore, we cannot say a program that starts with $k_1\ ||\ s_1$ terminates with
+$k_2\ ||\ s_2$ even if we know $k_1\ ||\ s_1\rightarrow^\ast k_2\ ||\ s_2$. $k_2\ ||\ s_2$
+might not be the final state. To say that the program terminates with $k_2\ ||\
+s_2$, we need an additional condition: $k_2\ ||\ s_2$ is irreducible.
 
-$\rightarrow^\ast$ is a reflexive transitive closure of $\rightarrow$. First,
-$\rightarrow^\ast$ subsumes $\rightarrow$ because $k_1\ ||\ s_1\rightarrow k_2\
-||\ s_2$ implies $k_1\ ||\ s_1\rightarrow^\ast k_2\ ||\ s_2$. Second,
-$\rightarrow^\ast$ is reflexive because for any $k$ and $s$, $k\ ||\
-s\rightarrow^\ast k\ ||\ s$. Third, $\rightarrow^\ast$ is transitive because for
-any $k_1$, $s_1$, $k_2$, $s_2$, $k_3$, and $s_3$, $k_1\ ||\ s_1\rightarrow^\ast
-k_3\ ||\ s_3$ if $k_1\ ||\ s_1\rightarrow^\ast k_2\ ||\ s_2$ and $k_2\ ||\
-s_2\rightarrow^\ast k_3\ ||\ s_3$.
+In small-step
+semantics, there are two kinds of termination. One kind is normal
+termination, which produces a value as a result. The execution terminates
+normally when the computation stack is empty. Since each reduction step pops a
+computation step, reduction is impossible when the stack is empty. The empty
+stack implies that there is no remaining computation, so this kind of
+termination is intended. The other kind is abnormal termination, i.e.
+termination due to a run-time error. It happens when the value stack contains
+values that cannot be used by the current computation step. For example,
+if a popped value is not an integer, both addition or subtraction are
+impossible, so reduction cannot happen when the popped computation is $(+)$ or
+$(-)$. It prevents further reduction even when
+there is remaining computation. Therefore, such termination is considered
+errorneous and harmful.
 
-How are the small-step semantics of the article and the existing big-step
-semantics related? $\sigma\vdash e\Rightarrow v$ implies that evaluating $e$
-under $\sigma$ results in $v$. The small-step semantics must make the following
-preposition true:
+When evaluation according to the small-step semantics succesfully produces a
+value, we can reach the same conclusion using the big-step semantics.
+Recall that $\sigma\vdash e\Rightarrow v$ implies that $e$ evaluates to $v$
+under $\sigma$. In small-step semantics, evaluation of $e$ under $\sigma$ starts
+with $\evalk{\sigma}{e}\mtk\ ||\ \mts$. The redex and the continuation of the
+state are $e$ and the identity function, repectively, so the state does evaluate
+$e$. If the evaluation results in $v$, the final state is
+$\mtk\ ||\ \conss{v}\mts$. The computation stack is empty, and the value stack
+contains only $v$, which is the result. Thus, the following proposition is true.
 
-\[\forall \sigma.\forall e.\forall v.(\sigma\vdash e\Rightarrow
-v)\leftrightarrow(\sigma\vdash e:: \square\ ||\
-\blacksquare\rightarrow^\ast\square\ ||\ v::\blacksquare)\]
+$\forall \sigma.\forall e.\forall v.(\sigma\vdash e\Rightarrow
+v)\leftrightarrow(\sigma\vdash e:: \mtk\ ||\
+\mts\rightarrow^\ast\mtk\ ||\ v::\mts)$
 
-More generally, the following must be true:
+More generally, the following statement is true:
 
-\[\forall \sigma.\forall e.\forall v.\forall k.\forall s.(\sigma\vdash
-e\Rightarrow                v)\leftrightarrow(\sigma\vdash e::k\ ||\
-s\rightarrow^\ast k\ ||\ v::s)\]
+$\forall \sigma.\forall e.\forall v.\forall k.\forall s.(\sigma\vdash
+e\Rightarrow v)\leftrightarrow(\sigma\vdash e::k\ ||\
+s\rightarrow^\ast k\ ||\ v::s)$
 
-Let the current state be $\sigma\vdash e::k\ ||\ s$. A redex is $e$, and the
-continuation is $k\ ||\ s$. Think about a representation of $k\ ||\ s$ in the
-function form. First, define $\mathit{eval}(k\ ||\ v::s)=v'$ when $k\ ||\
-v::s\rightarrow^\ast\square\ ||\ v'::\blacksquare$. Then, function $\lambda
-v.\mathit{eval}(k\ ||\ v::s)$ expresses the continuation. Continuation $k\ ||\ s$
-implies that the remaining computation is repeatedly reducing $k\ ||\ v::s$ where
-$v$ is the result of evaluating the redex.
+Now, we define the rules for reduction based on the interpreter implementation
+of the previous section. Consider the \code{Num} case first.
 
-As an example, consider arbitrary expression $e$. Let $v$ be the result of
-evaluating $e$ under $\sigma$ and the current state be $\sigma\vdash e::\square\
-||\ \blacksquare$. $e$ is a redex; $\square\ ||\ \blacksquare$ is the
-continuation. Since the computation stack is empty, the computation does nothing.
-As $e$ results in $v$, the final result also is $v$. The function form of the
-continuation is $\lambda v.\mathit{eval}(\square\ ||\ v::\blacksquare)$. Applying
-the function to $v$ produces $v$ because $\square\ ||\
-v::\blacksquare\rightarrow^\ast \square\ ||\ v::\blacksquare$ is true.
+\begin{verbatim}
+case Num(n) => k(NumV(n))
+\end{verbatim}
 
-Consider $\sigma\vdash e::(+)::\square\ ||\ n_1::\blacksquare$. Let integer $n_2$
-be the result of evaluating $e$ under $\sigma$. A redex is $e$; the continuation
-is $(+)::\square\ ||\ n_1::\blacksquare$. Its function form is $\lambda
-v.\mathit{eval}((+)::\square\ ||\ v::n_1::\blacksquare)$. It implies adding an
-argument to $n_1$. Suppose the continuation is applied to $n_2$. The result
-equals $\mathit{eval}((+)::\square\ ||\ n_2::n_1::\blacksquare)$, which is
-$n_1+n_2$ because $(+)$ adds two values popped from the value stack and pushes
-the result into the value stack. The whole computation equals applying the
-continuation to the result of the redex. Therefore, the final result is
-$n_1+n_2$.
-
-Now, the article finally defines reduction. Consider $(+)$ and $(-)$ first.
-
-\[(+)::k\ ||\ n_2::n_1::s\rightarrow k\ ||\ n_1+n_2::s\]
-
-\[(-)::k\ ||\ n_2::n_1::s\rightarrow k\ ||\ n_1-n_2::s\]
-
-It follows the meanings of $(+)$ and $(-)$ described before.
-
-The rule for $(@)$ is more complex.
-
-\[(@)::k\ ||\ v::\langle\lambda x.e,\sigma\rangle::s\rightarrow \sigma\lbrack
-x\mapsto             v\rbrack\vdash e::k\ ||\ s\]
-
-To get the result of a function application, the function body must be evaluated.
-Big-step semantics requires a single rule to include the evaluation of the
-function body. On the other hand, small-step semantics differs from that. Adding
-the evaluation of the function body to the computation stack is enough.
-
-The only remaining case is the evaluation of an expression. If an expression is
-either an integer, an identifier, or a function, its value is direct. Each rule
-must push the value into the value stack.
-
-\[\sigma\vdash n::k\ ||\ s\rightarrow k\ ||\ n::s\]
+When $n$ is the redex and \code{k} is the continuation, the evaluation proceeds
+by applying \code{k} to $n$. This state is represented by $\evalkd{n}k\
+||\ s$, where the continuation \code{k} is represented by $k\ ||\ s$.
+Applying $k\ ||\ s$ to $n$ is to evaluate $k\ ||\ \conss{n}s$. Therefore, we
+define the following reduction rule:
 
 \[
-\inferrule
-{ x\in\mathit{Domain}(\sigma) }
-{ \sigma\vdash x::k\ ||\ s\rightarrow k\ ||\ \sigma(x)::s }
+  \evalkd{n}k\ ||\ s\rightarrow k\ ||\ \conss{n}s
+  \quad\textsc{[Red-Num]}
 \]
 
-\[\sigma\vdash \lambda x.e::k\ ||\ s\rightarrow k\ ||\ \langle\lambda
-x.e,\sigma\rangle ::s\]
+The rule also matches our high-level intuition on reduction.
+$\sigma\vdash n$ evaluates $n$ and gets $n$. After the reduction, the
+computation step is removed from the computation stack, and the result is pushed
+onto the value stack.
 
-A completed step of computation disappears from the computation stack.
+In a similar manner, we can define the rules for the \code{Id} and \code{Fun}
+cases.
 
-Suppose that an expression is a sum. Let $n_1$ and $n_2$ respectively be the
-results of evaluating $e_1$ and $e_2$ under $\sigma$. The current state is
-$\sigma\vdash e_1+e_2::k\ ||\ s$. A correct definition of reduction makes
-$\sigma\vdash e_1+e_2::k\ ||\ s\rightarrow^\ast k\ ||\ n_1+n_2::s$ true. It is
-sure that both $e_1$ and $e_2$ must be evaluated to evaluate $e_1+e_2$. Also, the
-evaluation $e_1$ precedes that of $e_2$. The following is the first attempt to
-write the rule:
+\begin{verbatim}
+case Id(x) => k(env(x))
+case Fun(x, b) => k(CloV(x, b, env))
+\end{verbatim}
 
-\[\sigma\vdash e_1+e_2::k\ ||\ s\rightarrow \sigma\vdash e_1::\sigma\vdash
-e_2::k\ ||\ s\]
+\[
+  \evalkd{x}k\ ||\ s\rightarrow k\ ||\ \conss{\sigma(x)}s
+  \quad\textsc{[Red-Id]}
+\]
 
-Then, the following is true:
+\[
+  \evalkd{\efun{x}{e}}k ||\ s\rightarrow k\ ||\ \conss{\clov{x}{e}{\sigma}}s
+  \quad\textsc{[Red-Fun]}
+\]
+
+Now, let us consider the \code{Add} case.
+
+\begin{verbatim}
+case Add(l, r) =>
+  interpCps(l, env, v1 =>
+    interpCps(r, env, v2 =>
+      k(add(v1, v2))
+    )
+  )
+\end{verbatim}
+
+When $e_1+e_2$ is the redex, the evaluation splits into three parts:
+\begin{enumerate}
+  \item Evaluate $e_1$ to get $v_1$. (\code{interpCps(l, env, v1 =>})
+  \item Evaluate $e_2$ to get $v_2$. (\code{interpCps(r, env, v2 =>})
+  \item If both $v_1$ and $v_2$ are integers, add $v_1$ and $v_2$ to get $v_1+v_2$,
+    and apply the continuation to $v_1+v_2$. (\code{k(add(v1, v2))})
+\end{enumerate}
+Steps 1 and 2 can be represented by $\sigma\vdash e_1$ and $\sigma\vdash e_2$,
+respectively. First, $\sigma\vdash e_1$ pushes the result of $e_1$ onto the value
+stack, and then $\sigma\vdash e_2$ pushes the result of $e_2$ onto the value
+stack. Step 3 can be represented by $(+)$ since it pops two values from the
+value stack and adds them.
+From this observation, we define the following rules:
+
+\[
+  \evalkd{e_1+e_2}k\ ||\ s\rightarrow \evalkd{e_1}\evalkd{e_2}\addk k\ ||\ s
+  \quad\textsc{[Red-Add1]}
+\]
+
+\[
+  \addk k\ ||\ \conss{n_2}\conss{n_1}s\rightarrow k\ ||\ \conss{n_1+n_2}s
+  \quad\textsc{[Red-Add2]}
+\]
+
+Rule \textsc{Red-Add1} splits the evaluation of $e_1+e_2$ into aforementioned
+three parts. Then, the subsequent reduction steps evaluate $e_1$ and $e_2$ and
+pushes their results onto the value stack. After the evaluation of $e_2$, $(+)$
+is at the top of the computation stack. One more reduction step, which is
+defined by Rule \textsc{Red-Add2}, pops the values
+from the value stack and pushes their sum to the value stack. The following
+figure summarizes this process:
 
 \[
 \begin{array}{lrcr}
 & \sigma\vdash e_1+e_2::k & || & s \\
-\rightarrow & \sigma\vdash e_1::\sigma\vdash e_2::k & || & s \\
-\rightarrow^\ast & \sigma\vdash e_2::k & || & n_1::s \\
-\rightarrow^\ast & k & || & n_2::n_1::s \\
-\end{array}
-\]
-
-Achieving $k\ ||\ n_1+n_2::s$ requires one more step. Replacing $k$ with $(+)::k$
-makes the following true:
-
-\[
-\begin{array}{lrcr}
-& (+)::k & || & n_2::n_1::s \\
+\rightarrow & \sigma\vdash e_1::\sigma\vdash e_2::\addk k & || & s \\
+\rightarrow^\ast & \sigma\vdash e_2::\addk k & || & n_1::s \\
+\rightarrow^\ast & \addk k & || & n_2::n_1::s \\
 \rightarrow & k & || & n_1+n_2::s
 \end{array}
 \]
 
-In conclusion, the next state must be $\sigma\vdash e_1::\sigma\vdash e_2::
-(+)::k$ instead of $\sigma\vdash e_1::\sigma\vdash e_2::k$. The following rule is
-correct:
+We can define the rules for the \code{Sub} case in a similar way:
 
-\[\sigma\vdash e_1+e_2::k\ ||\ s\rightarrow \sigma\vdash e_1::\sigma\vdash
-e_2::(+)::k\ ||\ s\]
+\[
+  \evalkd{e_1-e_2}k\ ||\ s\rightarrow \evalkd{e_1}\evalkd{e_2}\subk k\ ||\ s
+  \quad\textsc{[Red-Sub1]}
+\]
 
-The rule makes the following true:
+\[
+  \addk k\ ||\ \conss{n_2}\conss{n_1}s\rightarrow k\ ||\ \conss{n_1-n_2}s
+  \quad\textsc{[Red-Sub2]}
+\]
+
+The only remaining case is \code{App}.
+
+\begin{verbatim}
+case App(f, a) =>
+  interpCps(f, env, fv =>
+    interpCps(a, env, av => {
+      val CloV(x, b, fEnv) = fv
+      interpCps(b, fEnv + (x -> av), k)
+    })
+  )
+\end{verbatim}
+
+When $e_1\ e_2$ is the redex, the evaluation splits into three parts:
+\begin{enumerate}
+  \item Evaluate $e_1$ to get $v_1$. (\code{interpCps(f, env, fv =>})
+  \item Evaluate $e_2$ to get $v_2$. (\code{interpCps(a, env, av =>})
+  \item If $v_1$ is $\clov{x}{e}{\sigma'}$,
+    evaluate $e$ under $\sigma'[x\mapsto v_2]$ with the given continuation.
+    (\code{interpCps(b, fEnv + (x -> av), k)})
+\end{enumerate}
+
+The first two steps are the same as those of \code{Add} and \code{Sub}.
+Therefore, we define the following rule:
+
+\[
+  \evalkd{e_1\ e_2}k\ ||\ s\rightarrow \evalkd{e_1}\evalkd{e_2}\appk k\ ||\ s
+  \quad\textsc{[Red-App1]}
+\]
+
+However, the last step is a bit different. In \code{Add} and \code{Sub}, the
+last step applies the continuation to a certain value, which is obtained by
+addition or subtraction. In \code{App}, the body of the function must be
+evaluated. Thus, we define the rule to evaluate the body with the same
+continuation instead of directly applying the continuation to a particular
+value.
+
+\[
+  \appk k\ ||\ \conss{v}\conss{\clov{x}{e}{\sigma}}s\rightarrow
+  \evalk{\sigma\lbrack x\mapsto v\rbrack}{e}k\ ||\ s
+  \quad\textsc{[Red-App2]}
+\]
+
+The following figure summarizes the evaluation of \code{App}:
 
 \[
 \begin{array}{lrcr}
-& \sigma\vdash e_1+e_2::k & || & s \\
-\rightarrow & \sigma\vdash e_1::\sigma\vdash e_2::(+)::k & || & s \\
-\rightarrow^\ast & \sigma\vdash e_2::(+)::k & || & n_1::s \\
-\rightarrow^\ast & (+)::k & || & n_2::n_1::s \\
-\rightarrow & k & || & n_1+n_2::s
+  & \sigma\vdash e_1\ e_2::k & || & s \\
+  \rightarrow & \sigma\vdash e_1::\sigma\vdash e_2::\appk k & || & s \\
+  \rightarrow^\ast & \sigma\vdash e_2::\appk k & || & \clov{x}{e}{\sigma'}::s \\
+  \rightarrow^\ast & \appk k & || & v_2::\clov{x}{e}{\sigma'}::s \\
+  \rightarrow & \evalk{\sigma'[x\mapsto v_2]}{e}k & || & s \\
+  \rightarrow^\ast & k & || & v::s
 \end{array}
 \]
 
-The rules for differences and function applications are similar.
-
-\[\sigma\vdash e_1-e_2::k\ ||\ s\rightarrow \sigma\vdash e_1::\sigma\vdash
-e_2::(-)::k\ ||\ s\]
-
-\[\sigma\vdash e_1\ e_2::k\ ||\ s\rightarrow \sigma\vdash e_1::\sigma\vdash
-e_2::(@)::k\ ||\ s\]
-
-The following shows all the rules at once:
+The following shows the reduction steps of $(1+2)-(3+4)$ as an example:
 
 \[
 \begin{array}{lrcr}
-&(+)::k& ||& n_2::n_1::s \\
-\rightarrow& k& ||& n_1+n_2::s\\
-&(-)::k& ||& n_2::n_1::s\\
-\rightarrow& k& ||& n_1-n_2::s\\
-&(@)::k& ||& v::\langle\lambda x.e,\sigma\rangle::s\\
-\rightarrow& \sigma\lbrack x\mapsto v\rbrack\vdash e::k& ||& s\\
-&\sigma\vdash n::k& ||&s\\
-\rightarrow& k& ||&n::s\\
-&\sigma\vdash x::k& ||&s\\
-\rightarrow& k& ||& \sigma(x)::s\\
-&\sigma\vdash \lambda x.e::k& ||& s\\
-\rightarrow& k& ||&\langle\lambda x.e,\sigma\rangle ::s\\
-&\sigma\vdash e_1+e_2::k& ||& s\\
-\rightarrow& \sigma\vdash e_1::\sigma\vdash e_2::(+)::k& ||& s\\
-&\sigma\vdash e_1-e_2::k& ||& s\\
-\rightarrow& \sigma\vdash e_1::\sigma\vdash e_2::(-)::k& ||& s\\
-&\sigma\vdash e_1\ e_2::k& ||& s\\
-\rightarrow& \sigma\vdash e_1::\sigma\vdash e_2::(@)::k& ||& s\\
-\end{array}
-\]
-
-Note that $(+)$, $(-)$, and $(@)$ decrease the size of the value stack by one. On
-the other hand, $\sigma\vdash e$ increases the size of the value stack by one.
-When the computation does nothing, the evaluation of an expression eventually
-makes the value stack contain a single value. The value is the final result of
-the evaluation.
-
-The following are examples of reduction according to the small-step semantics.
-
-\[
-\begin{array}{lrcr}
-& \emptyset\vdash(1+2)-(3+4)::\square &||& \blacksquare \\
-\rightarrow & \emptyset\vdash1+2::\emptyset\vdash3+4::(-)::\square &||&
-\blacksquare \\
+& \emptyset\vdash(1+2)-(3+4)::\mtk &||& \mts \\
+\rightarrow & \emptyset\vdash1+2::\emptyset\vdash3+4::\subk \mtk &||&
+\mts \\
 \rightarrow &
-\emptyset\vdash1::\emptyset\vdash2::(+)::\emptyset\vdash3+4::(-)::\square &||&
-\blacksquare \\
-\rightarrow & \emptyset\vdash2::(+)::\emptyset\vdash3+4::(-)::\square &||&
-1::\blacksquare \\
-\rightarrow & (+)::\emptyset\vdash3+4::(-)::\square &||& 2::1::\blacksquare \\
-\rightarrow & \emptyset\vdash3+4::(-)::\square &||& 3::\blacksquare \\
-\rightarrow & \emptyset\vdash3::\emptyset\vdash4::(+)::(-)::\square &||&
-3::\blacksquare \\
-\rightarrow & \emptyset\vdash4::(+)::(-)::\square &||& 3::3::\blacksquare \\
-\rightarrow & (+)::(-)::\square &||& 4::3::3::\blacksquare \\
-\rightarrow & (-)::\square &||& 7::3::\blacksquare \\
-\rightarrow & \square &||& -4::\blacksquare \\
+\emptyset\vdash1::\emptyset\vdash2::\addk \emptyset\vdash3+4::\subk \mtk &||&
+\mts \\
+\rightarrow & \emptyset\vdash2::\addk \emptyset\vdash3+4::\subk \mtk &||&
+1::\mts \\
+\rightarrow & \addk \emptyset\vdash3+4::\subk \mtk &||& 2::1::\mts \\
+\rightarrow & \emptyset\vdash3+4::\subk \mtk &||& 3::\mts \\
+\rightarrow & \emptyset\vdash3::\emptyset\vdash4::\addk \subk \mtk &||&
+3::\mts \\
+\rightarrow & \emptyset\vdash4::\addk \subk \mtk &||& 3::3::\mts \\
+\rightarrow & \addk \subk \mtk &||& 4::3::3::\mts \\
+\rightarrow & \subk \mtk &||& 7::3::\mts \\
+\rightarrow & \mtk &||& -4::\mts \\
 \end{array}
 \]
+
+The following shows the reduction steps of
+$(\efun{\cx}{\efun{\cy}{\cx+\cy}})\ 1\ 2$ as an example:
 
 \[
 \begin{array}{lrcr}
-& \emptyset\vdash(\lambda x.\lambda y.x+y)\ 1\ 2::\square &||& \blacksquare \\
-\rightarrow & \emptyset\vdash(\lambda x.\lambda y.x+y)\
-1::\emptyset\vdash2::(@)::\square &||&     \blacksquare \\
-\rightarrow & \emptyset\vdash\lambda x.\lambda y.x+y::\emptyset\vdash
-1::(@)::\emptyset\vdash2::(@ )::\square &||& \blacksquare \\
-\rightarrow & \emptyset\vdash 1::(@)::\emptyset\vdash2::(@)::\square &||&
-\langle\lambda x.\lambda y.x+y,\emptyset\rangle::\blacksquare \\
-\rightarrow & (@)::\emptyset\vdash2::(@)::\square &||& 1::\langle\lambda
-x.\lambda y.x+y,          \emptyset\rangle::\blacksquare \\
-\rightarrow & \lbrack x\mapsto 1\rbrack\vdash\lambda
-y.x+y::\emptyset\vdash2::(@)::\square &||&    \blacksquare \\
-\rightarrow & \emptyset\vdash2::(@)::\square &||& \langle\lambda y.x+y,\lbrack
-x\mapsto            1\rbrack\rangle::\blacksquare \\
-\rightarrow & (@)::\square &||& 2::\langle\lambda y.x+y,\lbrack x\mapsto
-1\rbrack\rangle::         \blacksquare \\
-\rightarrow & \lbrack x\mapsto 1,y\mapsto 2\rbrack\vdash x+y::\square &||&
-\blacksquare \\
-\rightarrow & \lbrack x\mapsto 1,y\mapsto 2\rbrack\vdash x::\lbrack x\mapsto
-1,y\mapsto            2\rbrack\vdash y::(+)::\square &||& \blacksquare \\
-\rightarrow & \lbrack x\mapsto 1,y\mapsto 2\rbrack\vdash y::(+)::\square &||&
-1::\blacksquare \\
-\rightarrow & (+)::\square &||& 2::1::\blacksquare \\
-\rightarrow & \square &||& 3::\blacksquare \\
+              & \evalke{e\ 1\ 2} \mtk &||& \mts \\
+  \rightarrow & \evalke{e\ 1} \evalke{2} \appk \mtk &||& \mts \\
+  \rightarrow & \evalke{e} \evalke{1} \appk \evalke{2} \appk \mtk &||& \mts \\
+  \rightarrow & \evalke{1} \appk \evalke{2} \appk \mtk &||& \conss{\langle e,\emptyset\rangle}\mts \\
+  \rightarrow & \appk \evalke{2} \appk \mtk &||& \conss{1}\conss{\langle e,\emptyset\rangle}\mts \\
+  \rightarrow & \evalk{\sigma_1}{\lambda \cy.\cx+\cy} \evalke{2} \appk \mtk &||& \mts \\
+  \rightarrow & \evalke{2} \appk \mtk &||& \conss{\clov{\cy}{\cx+\cy}{\sigma_1}}\mts \\
+  \rightarrow & \appk \mtk &||& \conss{2}\conss{\clov{\cy}{\cx+\cy}{\sigma_1}}\mts \\
+  \rightarrow & \evalk{\sigma_2}{\cx+\cy} \mtk &||& \mts \\
+  \rightarrow & \evalk{\sigma_2}{\cx} \evalk{\sigma_2}{\cy} \addk \mtk &||& \mts \\
+  \rightarrow & \evalk{\sigma_2}{\cy} \addk \mtk &||& \conss{1}\mts \\
+  \rightarrow & \addk \mtk &||& \conss{2}\conss{1}\mts \\
+  \rightarrow & \mtk &||& 3::\mts \\
 \end{array}
 \]
 
-How are the small-step semantics and the implementation of the interpreter
-related?
+where
 
-\[
-\begin{array}{lrcr}
-&\sigma\vdash e_1+e_2::k& ||& s\\
-\rightarrow& \sigma\vdash e_1::\sigma\vdash e_2::(+)::k& ||& s\\
-\end{array}
-\]
-
-A redex is $e_1+e_2$; the continuation is $k\ ||\ s$, which is $\lambda
-v.\mathit{eval}(k\ ||\ v::s)$. Call the function $K$. Reducing once yields
-$\sigma\vdash   e_1::\sigma\vdash e_2::(+)::k\ ||\ s$. A redex is $e_1$; the
-continuation is $\sigma\vdash e_2::(+)::k\ ||\ s$, which is $\lambda
-v_1.\mathit{eval}(\sigma\vdash e_2::(+)::k\ ||\ v_1::s)$. Focus on $\sigma\vdash
-e_2:: (+)::k\ ||\ v_1::s$, the state in the body of the continuation. A redex is
-$e_2$; the continuation is $(+)::k\ ||\ v_1::s$, which is $\lambda
-v_2.\mathit{eval}((+)::k\ ||\ v_2::v_1::s)$. $(+)::k\ ||\ v_2::v_1:: s\rightarrow
-k\ ||\ v_1+v_2::s$ is already known. By the definition of $K$, $\lambda
-v_2.\mathit{eval}((+)::k\ ||\ v_2::v_1::s)$ equals $\lambda v_2.\mathit{eval}(k\
-||\ v_1+v_2::s)$, which is $\lambda v_2.K(v_1+v_2)$. As a result, the
-continuation of $e_2$ is $\lambda v_2.K(v_1+v_2)$, whose Scala representation is
-\code{v2 => k(numVAdd(v1, v2))}. Therefore, \code{interp(e2, env, v2 =>
-k(numVAdd(v1, v2)))} expresses $\mathit{eval}(\sigma\vdash e_2::(+)::k\ ||\
-v_1::s)$. The continuation of $e_1$ is $\lambda v_1.\mathit{eval}(\sigma\vdash
-e_2::(+)::k\ ||\ v_1::s)$, whose Scala representation is \code{v1 => interp(e2,
-env, v2 =>  k(numVAdd(v1, v2)))}. Finally, \code{interp(e1, env, v1 => interp(e2,
-env, v2 => k(numVAdd(v1, v2))))} appears.
+\begin{itemize}
+  \item $e=\efun{\cx}{\efun{\cy}{\cx+\cy}}$
+  \item $\sigma_1=[\cx\mapsto1]$
+  \item $\sigma_2=[\cx\mapsto1,\cy\mapsto2]$
+\end{itemize}
