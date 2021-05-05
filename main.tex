@@ -56,6 +56,21 @@
 \usepackage{dirtree}
 \usepackage{xspace}
 \usepackage{tikz}
+\usepackage{fancyvrb}
+\usepackage{bussproofs,proof}
+
+\newcommand{\newfrac}[2] {
+        \frac
+                {#1}
+                {#2 \rule{0pt}{11pt}}
+}
+\newcommand{\newinfrule}[2] {
+  \ensuremath{\newfrac
+    {\displaystyle #1}
+    {\displaystyle #2}}
+}
+\newcommand{\rulesep}{\quad}
+
 
 \usetikzlibrary{arrows}
 \tikzset{
@@ -118,6 +133,12 @@
 \newcommand{\evald}[2]{\eval{\sigma}{#1}{#2}}
 \newcommand{\evaldn}[2]{\evaln{\sigma}{#1}{#2}}
 \newcommand{\evale}[2]{\eval{\emptyset}{#1}{#2}}
+\newcommand{\etfun}[2]{\Lambda#1.#2}
+\newcommand{\etapp}[2]{#1[#2]}
+\newcommand{\numt}{\textsf{num}}
+\newcommand{\typeof}[3]{#1\vdash#2:#3}
+\newcommand{\typeofd}[2]{\typeof{\Gamma}{#1}{#2}}
+\newcommand{\synsep}[0]{\ \ |\ \ }
 
 \newcommand{\stricte}[2]{#1\Downarrow#2}
 \newcommand{\stricten}[2]{\ensuremath{#1} strictly evaluates to \ensuremath{#2}}
@@ -139,6 +160,25 @@
 }
 \newcommand{\tand}{\text{ and }}
 \newcommand{\inred}[1]{{\color{red}{#1}}}
+\newcommand{\mtt}[1]{\mbox{\texttt{#1}}}
+\newcommand{\finmap}[2]{#1 \xrightarrow[]{\text{fin}} #2}
+\newcommand{\sblank}{\fbox{\rule{1.5in}{0pt}\rule{0pt}{0.2in}}}
+\newcommand{\mblank}{\fbox{\rule{4in}{0pt}\rule{0pt}{0.3in}}}
+\newcommand{\lblank}{~~~\fbox{\rule{5in}{0pt}\rule{0pt}{0.5in}}~~~}
+\newcommand{\lmblank}{~~~\fbox{\rule{5in}{0pt}\rule{0pt}{0.39in}}~~~}
+\newcommand{\MNSC}{\code{mini-Scala}\xspace}
+\newcommand{\Space}[1]{\vspace{#1ex}}
+\newcommand{\typed}[2]{\Gamma\vdash#1:#2}
+\newcommand{\rom}[1]{\uppercase\expandafter{\romannumeral #1\relax}}
+\newcommand{\wfd}[1]{\Gamma\vdash#1}
+\newcommand{\subt}[2]{#1<:#2}
+\newcommand{\Dom}[1]{\mbox{Domain}(#1)}
+\newcommand{\clo}[3]{\langle\lambda #1.#2,#3\rangle}
+\newcommand{\seq}{%
+    \settowidth{\@tempdima}{-}% Width of hyphen
+      \resizebox{\@tempdima}{\height}{=}%
+      }
+
 
 \makeindex[columns=3, title=Alphabetical Index, intoc] % Make LaTeX produce the files required to compile the index
 

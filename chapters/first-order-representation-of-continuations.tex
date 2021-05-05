@@ -573,3 +573,80 @@ $v_2\mapsto\kappa_1\Downarrow v$ denotes that the result of
 The conclusion, $v\mapsto[\square]\Downarrow v$, denotes that the result of
 \code{continue(MtK, $v$)} is $v$. The result of \code{continue(MtK, $v$)} is
 actually $v$.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Consider the following KCFAE expression:
+\[
+\!\!\!\!\!\!\!\!
+\begin{array}{l@{}l@{}l}
+\begin{array}{rrl}
+  e & ::= & n\\
+        & | & e + e\\
+        & | & x\\
+        & | & \lambda x.\ e\\
+        & | & e\ e\\
+        & | & \mbox{\texttt{withcc}}\ x\ e\\
+\end{array}
+&
+\begin{array}{rcll}
+  \kappa & ::= & {[\square]} &\mbox{\code{(mkK)}}\\
+        & | & {[\square + (e, \sigma)]} :: \kappa &\mbox{\code{(addSecondK e ds k)}}\\
+        & | & {[v + \square]} :: \kappa &\mbox{\code{(doAddK v k)}}\\
+        & | & {[\square\ (e, \sigma)]} :: \kappa &\mbox{\code{(appArgK e ds k)}}\\
+        & | & {[v\ \square]} :: \kappa &\mbox{\code{(doAppK v k)}}\\ \\
+\end{array}
+&
+\begin{array}{rl@{}c@{}l}
+  e \in& \mbox{Expr}&&\\
+  \sigma \in& \sigma &=& \finmap{\mbox{Var}}{\mbox{Val}}\\
+  x \in& \mbox{Var} &&\\
+\langle\lambda x. e,\ \sigma\rangle \in& \mbox{Clo} &=& \mbox{Var} \times \mbox{Expr} \times \sigma\\
+  v \in& \mbox{Val} &=& \mathbb{Z} + \mbox{Clo} + \mbox{Cont}\\
+  \kappa \in& \mbox{Cont} &&\\
+\end{array}
+\end{array}
+\]
+Write the big-step operational semantics of KCFAE
+of the form \fbox{$\sigma, \kappa \vdash e \Rightarrow v$}
+using the continue semantics of the form \fbox{$v_1 \mapsto \kappa \Downarrow v_2$},
+which denotes that $v_2$ is the result of continuation $\kappa$ taking the value~$v_1$.
+
+\begin{itemize}
+  \item[a)] \fbox{$v \mapsto \kappa \Downarrow v$}
+
+\begin{itemize}
+  \item ${[\square]}$
+    \begin{prooftree}
+      \AxiomC{$v \mapsto {[\square]} \Downarrow v$}
+    \end{prooftree}
+  \item ${[\square + (e, \sigma)]} :: \kappa$
+    \begin{prooftree}
+      \AxiomC{$\sigma, {[v_1 + \square]} :: \kappa \vdash e \Rightarrow v$}
+      \UnaryInfC{$v_1 \mapsto {[\square + (e, \sigma)]} :: \kappa \Downarrow v$}
+    \end{prooftree}
+  \item ${[v + \square]} :: \kappa$
+
+  \item ${[\square\ (e, \sigma)]} :: \kappa$
+
+  \item ${[v\ \square]} :: \kappa$
+\end{itemize}
+
+  \item[b)] \fbox{$\sigma, \kappa \vdash e \Rightarrow v$}
+\begin{itemize}
+  \item $n$
+    \begin{prooftree}
+      \AxiomC{$n \mapsto \kappa \Downarrow v $}
+      \UnaryInfC{$\sigma, \kappa \vdash n \Rightarrow v$}
+    \end{prooftree}
+
+  \item $e + e$
+  \item $x$
+  \item $\lambda x.\ e$
+  \item $e\ e$
+  \item $\mbox{\texttt{withcc}}\ x\ e$
+\end{itemize}
+\end{itemize}
+
+\end{enumerate}

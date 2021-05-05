@@ -371,3 +371,285 @@ run(
 )
 // 6
 \end{verbatim}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Write a \texttt{TRFAE} expression $e$ such that
+only one of $e$ and $\efun{\texttt{x}{:}\textsf{num}}{(\eapp{e}{\texttt{x}})}$ terminates,
+while both $e$ and $\efun{\texttt{x}{:}\textsf{num}}{(\eapp{e}{\texttt{x}})}$ are
+well-typed.
+
+\item Consider the following TRCFAE expression:
+{
+\begin{verbatim}
+        {rec {f : (num -> num) f}
+             {f 10}}
+\end{verbatim}
+}
+\begin{itemize}
+\item[a)] Draw the type derivation of the above expression.
+Write every piece in the type derivation even in the presence of any type error.
+
+\item[b)] What happens if we interpret it?  Describe it in detail.
+
+\item[c)] How can we solve this type soundness problem without changing the soundness theorem?
+\end{itemize}
+
+\item Recall \MNSC of the homework.
+Consider the following subset of \MNSC:
+\Space{-1}
+\[
+\begin{array}{rllrllrl}
+p ::= &s\ \cdots\ s\ e&\qquad&
+e ::= & n &\qquad&\tau ::= & \verb+num+\\
+s ::= &\verb+val +x\verb+:+\tau\verb+ = +e&&\mid& x&&\mid&\tau\verb+ => +\tau\\
+\mid&\verb+var +x\verb+:+\tau\verb+ = +e &\qquad&
+\mid& e\verb+(+e\verb+)+\\
+\mid&\verb+def +x\verb+(+x\verb+:+\tau\verb+)+\verb+:+\tau\verb+ = +e&&
+\mid& x\verb+ = +e&&\\
+\end{array}
+\]
+with the following typing rules:
+\[
+\begin{array}{ccccc}
+{ \typed{n}{\code{num}} }
+&\qquad&
+\newinfrule
+{ x\in\mbox{Domain}(\Gamma) }
+{ \typed{x}{\Gamma(x)} }
+&\qquad&
+\newinfrule
+{ \emptyset\vdash s_1:\Gamma_1 \rulesep \cdots \rulesep
+  \Gamma_{n-1}\vdash s_n:\Gamma_n \rulesep
+  \Gamma_n\vdash e:\tau }
+{ \vdash s_1\ \cdots\ s_n\ e:\tau }
+\\[15pt]
+\multicolumn{5}{c}{\begin{array}{ccc}
+\newinfrule
+{ \Gamma\vdash{\tau} \rulesep \typed{e}{\tau} }
+{ \typed{\code{val}\ x\code{:}\tau\ \code{=}\ e}{\Gamma[x\mapsto \tau]} }
+&\qquad&
+\newinfrule
+{ \Gamma\vdash{\tau} \rulesep \typed{e}{\tau} }
+{ \typed{\code{var}\ x\code{:}\tau\ \code{=}\ e}{\Gamma[x\mapsto \tau,x:\textsf{mutable}]} }
+\end{array}}
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Complete the typing rules 
+of the forms \fbox{$\typed{s}{\Gamma}$} and \fbox{$\typed{e}{\tau}$}
+by filling the blanks:
+\Space{-3}
+
+{
+\[
+\newinfrule
+{ \lmblank }
+{ \typed{\code{def}\ x_1\code{(}x_2\code{:}\tau_1\code{)}\code{:}\tau_2\ \code{=}\ e}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lmblank }
+{ \typed{e_1\code{(}e_2\code{)}}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lmblank }
+{ \typed{x\ \code{=}\ e}{\sblank} }
+\]
+}
+\item[b)]
+The following three programs are well-typed.
+The reason is that
+`\code{x} $:$ \textsf{mutable},' which denotes that \code{x} is mutable,
+is in the type environments when the assignment expressions are type-checked
+because of the first statement, $\verb+var x: num = 1+$:
+
+\begin{tabular}{|l@{\hskip35pt}|l@{\hskip35pt}|l}
+\verb+var x: num = 1+&\verb+var x: num = 1+&\verb+var x: num = 1+\\
+\verb+val x: num = 2+&\verb+def x(z: num): num = z+&\verb+def y(x: num): num = (x = 3)+\\
+\verb+x = 3+&\verb+def y(z: num): num = z+&\verb+1+\\
+&\verb+x = y+
+\end{tabular}
+
+Revise the following typing rules of the form \fbox{$\typed{s}{\Gamma}$}
+to make the above programs not well-typed by filling the blanks.
+You may use `$\Gamma\setminus(x:\textsf{mutable})$'
+to remove the mutable tag from variable $x$.
+For example, `$[\verb+x+\mapsto\verb+num+,\verb+x+:\textsf{mutable}]\setminus(x:\textsf{mutable})$'
+equals `$[\verb+x+\mapsto\verb+num+]$.'
+\Space{-3}
+
+{
+\[
+\newinfrule
+{ \lmblank }
+{ \typed{\code{val}\ x\code{:}\tau\ \code{=}\ e}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lmblank }
+{ \typed{\code{def}\ x_1\code{(}x_2\code{:}\tau_1\code{)}\code{:}\tau_2\ \code{=}\ e}{\sblank} }
+\]
+}
+\end{itemize}
+
+\item Consider the following language:
+\[
+\begin{array}{rllrllrllr@{\hskip3pt}l}
+e::= & n &\qquad& c::= & \verb+skip+ &\qquad& b::= & \verb+true+ &\qquad& n\in&\mathbb{Z}\\
+\mid& b &&\mid& x\verb+:=+e &&\mid& \verb+false+ && x\in&\mathit{Id}\\
+\mid& x &&\mid& \verb+if+\ e\ c\ c && v::= & n && v\in&\mathit{Val}\\
+\mid& e\verb!+!e &&\mid& \verb+while+\ e\ c &&\mid& b && \tau\in&\mathit{Type}\\
+\mid& e\verb!<!e &&\mid& c\verb+;+c &&\tau::= & \verb+num+ && \sigma\in&\mathit{Id}\rightarrow\mathit{Val}\\
+&&&&&&\mid& \verb+bool+ && \Gamma\in&\mathit{Id}\rightarrow\mathit{Type}\\
+\end{array}
+\]
+
+Metavariable $c$ ranges over commands.
+
+Under given environment $\sigma$, evaluation of an expression yields a value and does not
+change $\sigma$. The following is the operational semantics of the expressions:
+
+\[
+\begin{array}{ccc}
+\multicolumn{3}{c}{\begin{array}{ccccc}
+\sigma\vdash n\Rightarrow n &\qquad&
+\sigma\vdash b\Rightarrow b &\qquad&
+\newinfrule
+{ x\in\Dom{\sigma} }
+{ \sigma\vdash x\Rightarrow \sigma(x) }
+\end{array}} \\[20pt]
+\newinfrule
+{ \sigma\vdash e_1\Rightarrow n_1 \rulesep
+  \sigma\vdash e_2\Rightarrow n_2 }
+{ \sigma\vdash e_1\code{+}e_2\Rightarrow n_1+n_2 }
+&\qquad&
+\newinfrule
+{ \sigma\vdash e_1\Rightarrow n_1 \rulesep
+  \sigma\vdash e_2\Rightarrow n_2 }
+{ \sigma\vdash e_1\code{<}e_2\Rightarrow n_1<n_2 }
+\end{array}
+\]
+
+\begin{itemize}
+\item[a)] Complete the following typing rules
+of the form \fbox{$\typed{e}{\tau}$}
+by filling the blanks:
+\end{itemize}
+\Space{-2}
+
+{
+\[
+\Gamma\vdash n:\code{num}
+\]
+
+\[
+\newinfrule
+{ x\in\Dom{\Gamma} }
+{ \typed{x}{\Gamma(x)} }
+\]
+
+\[
+\newinfrule
+{ \lblank }
+{ \typed{b}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{e_1\code{+}e_2}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{e_1\code{<}e_2}{\sblank} }
+\]
+}
+
+Evaluation of a command produces a new environment.
+The following is the operational semantics of the commands:
+
+\[
+\begin{array}{ccccc}
+\sigma\vdash \code{skip}\Rightarrow \sigma
+&\qquad&
+\newinfrule
+{ \sigma\vdash e\Rightarrow v }
+{ \sigma\vdash x\code{:=}e\Rightarrow \sigma[x\mapsto v] }
+&\qquad&
+\newinfrule
+{ \sigma\vdash e\Rightarrow \code{true} \rulesep
+  \sigma\vdash c_1\Rightarrow \sigma_1 }
+{ \sigma\vdash \code{if}\ e\ c_1\ c_2\Rightarrow \sigma_1 }
+\\[20pt]
+\multicolumn{3}{c}{
+\newinfrule
+{ \sigma\vdash e\Rightarrow \code{true} \rulesep
+  \sigma\vdash c\Rightarrow \sigma_1 \rulesep
+  \sigma_1\vdash \code{while}\ e\ c\Rightarrow \sigma_2 }
+{ \sigma\vdash \code{while}\ e\ c\Rightarrow \sigma_2 }
+}
+&&
+\newinfrule
+{ \sigma\vdash e\Rightarrow \code{false} \rulesep
+  \sigma\vdash c_2\Rightarrow \sigma_1 }
+{ \sigma\vdash \code{if}\ e\ c_1\ c_2\Rightarrow \sigma_1 }
+\\[20pt]
+\multicolumn{3}{c}{
+\newinfrule
+{ \sigma\vdash e\Rightarrow \code{false} }
+{ \sigma\vdash \code{while}\ e\ c\Rightarrow \sigma }
+}
+&&
+\newinfrule
+{ \sigma\vdash c_1\Rightarrow \sigma_1 \rulesep
+  \sigma_1\vdash c_2\Rightarrow \sigma_2 }
+{ \sigma\vdash c_1\code{;}c_2\Rightarrow \sigma_2 }
+\end{array}
+\]
+
+\begin{itemize}
+\item[b)] Complete the following typing rules
+of the form \fbox{$\typed{c}{\Gamma}$}
+by filling the blanks.
+The following command must be well-typed: \verb+x := 1; x := 2+.
+However, the following command must be not well-typed: \verb+x := 1; x := true+.
+\end{itemize}
+
+{
+\[
+\newinfrule
+{ \lblank }
+{ \typed{\code{skip}}{\sblank} }
+\]
+\[
+\newinfrule
+{ x\not\in\Dom{\Gamma} \rulesep \mblank }
+{ \typed{x\code{:=}e}{\sblank} }
+\]
+\[
+\newinfrule
+{ x\in\Dom{\Gamma} \rulesep \mblank }
+{ \typed{x\code{:=}e}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{\code{if}\ e\ c_1\ c_2}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{\code{while}\ e\ c}{\sblank} }
+\]
+\[
+\newinfrule
+{ \lblank }
+{ \typed{c_1\code{;}c_2}{\sblank} }
+\]
+}
+
+\end{enumerate}

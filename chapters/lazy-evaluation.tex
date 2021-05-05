@@ -585,4 +585,36 @@ Explain the result of evaluating it under the following semantics:
     $\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{3}{\cx}})}{\cy})}}{5}$
 \end{enumerate}
 
+\item Consider the following language, LFAE:
+\[
+  \begin{array}{r@{\hskip6pt}r@{\hskip6pt}l@{\hskip40pt}
+    r@{\hskip6pt}r@{\hskip6pt}l@{\hskip40pt}
+    r@{\hskip4pt}c@{\hskip4pt}l}
+    e &::=& n & v &::=& n & n &\in& \mathbb{Z} \\
+    &|& e+e &&|& \clo{x}{e}{\sigma} & x &\in& \textit{Id} \\
+    &|& x &&|& (e,\sigma) & v &\in& \textit{Val} \\
+    &|& \lambda x.e &&&& e &\in& \textit{Expr} \\
+    &|& e\ e &&&& \sigma &\in& \textit{Id}\rightarrow \textit{Val} \\
+  \end{array}
+\]
+with the following ``strict'' evaluation of the form \fbox{$v \Downarrow v$}:
+\[
+\begin{array}{lll}
+n \Downarrow n
+&\qquad
+\clo{x}{e}{\sigma} \Downarrow \clo{x}{e}{\sigma}
+&\qquad
+\inferrule
+{\sigma \vdash e \Rightarrow v_1 \qquad
+v_1 \Downarrow v_2 }
+{(e, \sigma) \Downarrow v_2}
+\end{array}
+\]
+Write the operational semantics of LFAE of the form
+\fbox{$\sigma\vdash e\Rightarrow v$},
+where a value is strictly evaluted
+when it is used, that is, strict evaluation is deferred as much as possible.
+Thus, the evaluation of ``$(\lambda x.x)\ y$'' results in ``$(y,\emptyset)$,''
+rather than causing a run-time error.
+
 \end{enumerate}
