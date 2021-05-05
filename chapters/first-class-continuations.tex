@@ -302,26 +302,33 @@ case Vcc(x, b) =>
 The environment is extended with the continuation as a value,
 \code{ContV(k)}. Then, the body is evaluated under the extended environment.
 
+The above code clearly shows why the interpreter needs to use CPS. Without CPS,
+the continuation cannot be accessed in the source code of the interpreter. There
+is no way to construct \code{ContV(k)}. By using CPS, the \code{interp} function
+always receives the continuation as an argument and becomes able to use the continuation to
+construct \code{ContV(k)}. CPS takes the key role in implementing an interpreter of
+a language that provides first-class continuations.
+
 Now, let us fix the \code{App} case.
 The \code{interp} function must handle continuation application in the
 \code{App} case.
 
 \begin{verbatim}
-case App(e1, e2) =>
-  interp(e1, env, v1 =>
-    interp(e2, env, v2 => v1 match {
-      case CloV(xv1, ev1, sigmav1) =>
-        interp(ev1, sigmav1 + (xv1 -> v2), k)
-      case ContV(k) => k(v2)
+case App(f, a) =>
+  interp(f, env, fv =>
+    interp(a, env, av => fv match {
+      case CloV(x, e, fenv) =>
+        interp(e, fenv + (x -> av), k)
+      case ContV(nk) => nk(v2)
     })
   )
 \end{verbatim}
 
-When \code{v1} is a \code{CloV} instance, the interpreter behaves just like before.
-If \code{v1} is a \code{ContV} instance, the expression applies the continuation
-to the argument. The applied continuation is the field of \code{v1}, and the argument
-is \code{v2}. Since the interpreter expresses a continuation with a Scala function,
-applying the Scala function, the field of \code{v1}, to \code{v2} is enough.
+When \code{fv} is a \code{CloV} instance, the interpreter behaves just like before.
+If \code{fv} is a \code{ContV} instance, the expression applies the continuation
+to the argument. The applied continuation is the field of \code{fv}, and the argument
+is \code{av}. Since the interpreter expresses a continuation with a Scala function,
+applying the Scala function, the field of \code{fv}, to \code{av} is enough.
 There is no \code{interp} call. It coincides with that Rule \textsc{Red-App2-Cont}
 never adds $\sigma\vdash e$ to the computation stack.
 

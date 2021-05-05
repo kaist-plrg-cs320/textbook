@@ -894,7 +894,12 @@ of computation, and $s$ includes values used by those steps.
 
 A computation stack is a stack containing remaining steps of computation.
 The white square, $\mtk$, denotes the empty computation stack, which
-implies that there is nothing more to do. If the computation stack of a state is
+implies that there is nothing more to do.\sidenote{Note that $\mtk$ has no
+relation to $\square$ used to represent continuations intuitively. In the
+continuation $\square+1$, $\square$ means a hole, which should be filled by
+the result of the redex. On the other hand, in the small-step semantics,
+$\mtk$ is the empty computation stack. The overlapped use of $\square$ is
+just coincidence.} If the computation stack of a state is
 $\mtk$, no further reduction is possible, and the evaluation ends.
 There are four kinds of computation: $\sigma\vdash e$, $(+)$, $(-)$, and $(@)$.
 Their detailed descriptions and formal definitions will be provided soon.
