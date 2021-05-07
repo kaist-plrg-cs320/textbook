@@ -107,6 +107,7 @@
 \newcommand{\ebind}[3]{\textsf{val}\ #1\shorteq#2\ \textsf{in}\ #3}
 \newcommand{\evcc}[2]{\textsf{vcc}\ #1\ \textsf{in}\ #2}
 \newcommand{\efun}[2]{\lambda#1.#2}
+\newcommand{\efunt}[3]{\lambda#1{:}#2.#3}
 \newcommand{\eapp}[2]{#1\ #2}
 \newcommand{\eappfo}[2]{#1(#2)}
 \newcommand{\erec}[4]{\textsf{def}\ #1(#2)\shorteq#3\ \textsf{in}\ #4}
@@ -115,6 +116,10 @@
 \newcommand{\ederef}[1]{!#1}
 \newcommand{\eset}[2]{#1{:}\shorteq#2}
 \newcommand{\eseq}[2]{#1;#2}
+
+\newcommand{\tnum}{\textsf{num}}
+\newcommand{\tfun}{\textsf{fun}}
+\newcommand{\tarrow}[2]{#1\rightarrow#2}
 
 \newcommand{\mtk}{\square}
 \newcommand{\evalk}[2]{#1\vdash#2::}
@@ -133,12 +138,16 @@
 \newcommand{\evald}[2]{\eval{\sigma}{#1}{#2}}
 \newcommand{\evaldn}[2]{\evaln{\sigma}{#1}{#2}}
 \newcommand{\evale}[2]{\eval{\emptyset}{#1}{#2}}
-\newcommand{\etfun}[2]{\Lambda#1.#2}
-\newcommand{\etapp}[2]{#1[#2]}
-\newcommand{\numt}{\textsf{num}}
+
 \newcommand{\typeof}[3]{#1\vdash#2:#3}
 \newcommand{\typeofd}[2]{\typeof{\Gamma}{#1}{#2}}
-\newcommand{\synsep}[0]{\ \ |\ \ }
+\newcommand{\typeofe}[2]{\typeof{\emptyset}{#1}{#2}}
+\newcommand{\typeofn}[3]{the type of \ensuremath{#2} is
+\ensuremath{#3} under \ensuremath{#1}\xspace}
+\newcommand{\typeofdn}[2]{\typeofn{\Gamma}{#1}{#2}}
+\newcommand{\typeofnc}[3]{The type of \ensuremath{#2} is
+\ensuremath{#3} under \ensuremath{#1}\xspace}
+\newcommand{\typeofdnc}[2]{\typeofnc{\Gamma}{#1}{#2}}
 
 \newcommand{\stricte}[2]{#1\Downarrow#2}
 \newcommand{\stricten}[2]{\ensuremath{#1} strictly evaluates to \ensuremath{#2}}
@@ -158,7 +167,14 @@
 #2
 \vspace{1em}
 }
+\newcommand{\typerule}[2]{
+\vspace{1em}
+\textbf{Rule \textsc{#1}}\\
+#2
+\vspace{1em}
+}
 \newcommand{\tand}{\text{ and }}
+
 \newcommand{\inred}[1]{{\color{red}{#1}}}
 \newcommand{\mtt}[1]{\mbox{\texttt{#1}}}
 \newcommand{\finmap}[2]{#1 \xrightarrow[]{\text{fin}} #2}
@@ -174,6 +190,10 @@
 \newcommand{\subt}[2]{#1<:#2}
 \newcommand{\Dom}[1]{\mbox{Domain}(#1)}
 \newcommand{\clo}[3]{\langle\lambda #1.#2,#3\rangle}
+\newcommand{\etfun}[2]{\Lambda#1.#2}
+\newcommand{\etapp}[2]{#1[#2]}
+\newcommand{\numt}{\textsf{num}}
+\newcommand{\synsep}{\ \ |\ \ }
 \newcommand{\seq}{%
     \settowidth{\@tempdima}{-}% Width of hyphen
       \resizebox{\@tempdima}{\height}{=}%
