@@ -2,252 +2,335 @@
 \chapter{Typing Recursive Functions}
 \labch{typing-recursive-functions}
 
-The article defines TRFAE, which extends TFAE with conditional expressions and
-recursive functions. It defines the abstract syntax, the dynamic semantics, and
-the type system of TRFAE, and implement a type checker and an interpreter of
-TRFAE.
+\renewcommand{\plang}{\textsf{TFAE}\xspace}
+\renewcommand{\lang}{\textsf{TRFAE}\xspace}
 
-TFAE has the normalization property. Evaluation of every well-typed TFAE
-expression terminates in a finite time. It implies that the fixed point
-combinator is ill-typed in TFAE. Use of the fixed point combinator can create an
-expression whose evaluation does not terminate. Therefore, programmers cannot
-define recursive functions in TFAE. The article defines TRFAE, which features
-recursive functions. The type system accepts some expressions using recursive
-functions after the extension. The extension from FAE to RFAE does not increase
-the expressivity. It is only for convenience of programmers. On the other hand,
-the extension from TFAE to TRFAE does increase the expressivity by allowing
-recursive functions.
+In \textsf{FAE}, recursive functions can be considered as syntactic sugar.
+For example, a function that computes the sum from one to a given integer
+can be implemented as the following:
+
+$Z\ (\efun{\cf}{\efun{\cv}{\sumbodyfv}})$
+
+where
+
+$
+  Z=\efun{\cf}{\eapp
+    {(\efun{\cx}{\eapp{\cf}{(\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}})}})}
+    {(\efun{\cx}{\eapp{\cf}{(\efun{\cv}{\eapp{\eapp{\cx}{\cx}}{\cv}})}})}
+  }
+$
+
+Thus, \textsf{RFAE} has the exactly same expressive power as \textsf{FAE}.
+
+However, we cannot implement recursive functions in \plang. Why cannot we
+use the same approach as \textsf{FAE}? See the body of $Z$. We can find
+$\eapp{\cx}{\cx}$. Unfortunately, such an expression is ill-typed in \plang.
+Let us try to find the type of $\cx$. It is sure that the type cannot be $\tnum$
+because $\cx$ is applied to a value. Therefore, the type must be
+$\tarrow{\tau_1}{\tau_2}$ for some $\tau_1$ and $\tau_2$. Since a function
+of $\tarrow{\tau_1}{\tau_2}$ is applied to $\cx$, the type of $\cx$ must be
+$\tau_1$. It implies that the type of $\cx$ is $\tarrow{\tau_1}{\tau_2}$ and
+$\tau_1$ at the same time. Since a value has at most one type in \plang,
+$\tarrow{\tau_1}{\tau_2}$ must be the same as $\tau_1$. However, it is
+impossible. In \plang, such a type does not exist. A type cannot be the same as
+a part of itself. Since the fixed point combinator is ill-typed, we cannot
+desugar recursive functions to nonrecursive functions in \plang.
+
+More interestingly, not only recursive functions, but also any nonterminating
+programs cannot be written in \plang. In other words, every well-typed \plang
+expression evaluates to a value in a finite time. This is called the
+\textit{normalization}\index{normalization} property of \plang. The
+normalization property of \plang was proved by Tait in
+1967~\cite{tait1967intensional}.\sidenote{Actually, the Tait's proof is about
+the lazy version of \plang, but the same technique can be applied to \plang,
+which is eager, as Pierce metioned~\cite{pierce2002types}.}
+
+The chpater defines \lang, which extends \plang with recursive functions. By
+adding recursive functions to the language, programmers become able to implement
+recursive functions and nonterminating programs, which are impossible in \plang.
+Thus, while the extension from \textsf{FAE} to \textsf{RFAE} does not increase
+the expressivity, the extension from \plang to \lang dose.
 
 \section{Syntax}
 
-The following is the abstract syntax of TRFAE:
+The following is the syntax of \lang:
 
 \[
-\begin{array}{lrcl}
-\text{Expression} & e & ::= & \cdots \\
-&& | & \textsf{if0}\ e\ e\ e \\
-&& | & \textsf{def}\ x(x:\tau):\tau=e\ \textsf{in}\ e \\
-\text{Value} & v & ::= & n \\
-&& | & \langle \lambda x.e,\sigma \rangle \\
-\end{array}
+e\ ::=\ \cdots
+\ | \ \eifz{e}{e}{e}
+\ | \ \erect{x}{x}{\tau}{\tau}{e}{e}
 \]
 
-$\textsf{if0}\ e_1\ e_2\ e_3$ is the same as that of RFAE. $e_1$ is the
-condition; $e_2$ is the true branch; $e_3$ is the false branch.
-
-$\textsf{def}\ x_1(x_2:\tau_1):\tau_2=e_1\ \textsf{in}\ e_2$ defines a recursive
-function. It is similar to a recursive function of RFAE. The only difference is
-type annotation $\tau_1$ and $\tau_2$. $\tau_1$ denotes the parameter type of the
-function; $\tau_2$ denotes the return type of the function. The function must
-take an argument of type $\tau_1$ and return a value of type $\tau_2$. Type
-annotations are used for type checking, just like type annotations in TFAE.
+$\erect{x_1}{x_2}{\tau_1}{\tau_2}{e_1}{e_2}$ defines a recursive
+function. It is similar to a recursive function in \textsf{RFAE} but
+additionally has
+type annotations $\tau_1$ and $\tau_2$. $\tau_1$ denotes the parameter type of the
+function, and $\tau_2$ denotes the return type of the function. They are
+used for type checking, just like type annotations in \plang.
 
 \section{Dynamic Semantics}
 
-The dynamic semantics of TRFAE is similar to that of RFAE. The rules common to
-TFAE are omitted.
+The dynamic semantics of \lang is similar to that of \textsf{RFAE}, but type
+annotations are ignored during closure constructions.
 
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow 0 \\
-  \sigma\vdash e_2\Rightarrow v }
-{ \sigma\vdash\textsf{if0}\ e_1\ e_2\ e_3\Rightarrow v}
-\]
-
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow v' \\
-  v'\not=0 \\
-  \sigma\vdash e_3\Rightarrow v }
-{ \sigma\vdash\textsf{if0}\ e_1\ e_2\ e_3\Rightarrow v}
-\]
-
-\[
-\inferrule
-{ \sigma'=\sigma\lbrack x_1\mapsto\langle\lambda x_2.e,\sigma'\rangle\rbrack }
-{ \sigma\vdash\mu x_1:\tau_1\rightarrow\tau_2.\lambda
-x_2.e\Rightarrow\langle\lambda x_2.e,\sigma'\rangle}
-\]
-
-\section{Type System}
-
-The rules common to TFAE are omitted.
-
-\[
-\inferrule
-{ \Gamma\vdash e_1:\tau' \\
-  \Gamma\vdash e_2:\tau \\
-  \Gamma\vdash e_3:\tau }
-{ \Gamma\vdash\textsf{if0}\ e_1\ e_2\ e_3:\tau}
-\]
-
-The condition of a conditional expression must be well-typed. If the result of
-the condition is $0$, then the first branch is evaluated. Otherwise, the second
-branch is evaluated. Therefore, the result can be any value. $\Gamma\vdash
-e_1:\tau'$ denotes that. The rule cannot determine whether the first or the
-second branch will be evaluated. Since every expression has at most one type,
-$e_2$ and $e_3$ have the same type, $\tau$. The type of the whole expression is
-$\tau$.
-
-One may change the above rule to the following rule:
-
-\[
-\inferrule
-{ \Gamma\vdash e_1:\textsf{num} \\
-  \Gamma\vdash e_2:\tau \\
-  \Gamma\vdash e_3:\tau }
-{ \Gamma\vdash\textsf{if0}\ e_1\ e_2\ e_3:\tau}
-\]
-
-Both rules make the type system sound. The latter rejects more expressions than
-the former. However, programmers usually want to use an integer as a condition.
-Therefore, rejecting nonintegral values being used as a condition can prevent
-mistakes of programmers.
-
-\[
-\inferrule
-{
-  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2,x_2:\tau_1\rbrack\vdash e_1:\tau_2
-  \\
-  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2\rbrack\vdash e_2:\tau
+\semanticrule{Rec}{
+If
+  \evaln{\sigma'}{e_2}{v}, where
+  $\sigma'=\sigma[x_1\mapsto\clov{x_2}{e_1}{\sigma'}]$, \\
+then
+  \evaldn{\erect{x_1}{x_2}{\tau_1}{\tau_2}{e_1}{e_2}}{v}.
 }
-{ \Gamma\vdash\textsf{def}\ x_1(x_2:\tau_1):\tau_2=e_1\ \textsf{in}\ e_2:\tau}
-\]
 
-The static semantics of a recursive function is similar to that of a lambda
-abstraction. The rule needs to check the type of the function body. The body can
-use not only the parameter but also the function itself. The type of the function
-is $\tau_1\rightarrow\tau_2$. The type of the parameter is $\tau_1$. Type
-checking of the body uses the extended type environment, which has the type of
-the function and the parameter. The type of $e_1$ has to be equal to the return
-type of the function, which is $\tau_2$.
-
-The following proof tree proves that the type of $\textsf{def}\
-f(n:\textsf{num}):\textsf{
-num}=\textsf{if0}\ n\ 0\ (n+(f\ (n-1)))\ \textsf{in}\ f\ 3$ is $\textsf{num}$:
-
-\[\Gamma_1=\lbrack f:\textsf{num}\rightarrow\textsf{num},n:\textsf{num}\rbrack\]
-\[\Gamma_2=\lbrack f:\textsf{num}\rightarrow\textsf{num}\rbrack\]
+\vspace{-1em}
 
 \[
-\inferrule
-{
-  \Large
   \inferrule
   {
-    \inferrule
-    {n\in\mathit{Domain}(\Gamma_1)}
-    {\Gamma_1\vdash n:\textsf{num}} \\
-    \Gamma_1\vdash 0:\textsf{num} \\
-    \inferrule
-    {
-      \inferrule
-      {n\in\mathit{Domain}(\Gamma_1)}
-      { \Gamma_1\vdash n:\textsf{num} } \\
-      \inferrule
-      {
-        \inferrule
-        {f\in\mathit{Domain}(\Gamma_1)}
-        { \Gamma_1\vdash f:\textsf{num}\rightarrow\textsf{num} } \\
-        \inferrule
-        {
-          \inferrule
-          { n\in\mathit{Domain}(\Gamma_1) }
-          { \Gamma_1\vdash n:\textsf{num} } \\
-          \Gamma_1\vdash 1:\textsf{num}
-        }
-        { \Gamma_1\vdash n-1:\textsf{num} } \\
-      }
-      { \Gamma_1\vdash f\ (n-1):\textsf{num} }
-    }
-    { \Gamma_1\vdash n+(f\ (n-1)):\textsf{num} }
+    \sigma'=\sigma[x_1\mapsto\clov{x_2}{e_1}{\sigma'}] \\
+    \eval{\sigma'}{e_2}{v}
   }
-  { \Gamma_1\vdash \textsf{if0}\ n\ 0\ (n+(f\ (n-1))):\textsf{num} }
-  \\
-  \inferrule
-  {
-    \inferrule
-    { f\in\dom{\Gamma_2} }
-    { \Gamma_2\vdash f:\textsf{num}\rightarrow\textsf{num} }
-    \\
-    \Gamma_2\vdash 3:\textsf{num}
-  }
-  { \Gamma_2\vdash f\ 3:\textsf{num} }
-}
-{
-  \emptyset\vdash
-  \textsf{def}\ f(n:\textsf{num}):\textsf{num}=\textsf{if0}\ n\ 0\ (n+(f\ (n-1)))\ \textsf{in}\ f\
-3
-  :\textsf{num}
-}
+  { \evald{\erect{x_1}{x_2}{\tau_1}{\tau_2}{e_1}{e_2}}{v} }
+  \quad\textsc{[Rec]}
 \]
 
-\section{Implementing a Type Checker}
+\section{Interpreter}
 
-The following Scala code implements the abstract syntax of TRFAE:
+The following Scala code implements the syntax:
 
 \begin{verbatim}
 sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, t: Type, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
+...
 case class If0(c: Expr, t: Expr, f: Expr) extends Expr
-case class Rec(f: String, x: String, p: Type, r: Type, b: Expr, e: Expr) extends
-Expr
-
-sealed trait Type
-case object NumT extends Type
-case class ArrowT(p: Type, r: Type) extends Type
-
-type TEnv = Map[String, Type]
-
-def mustSame(t1: Type, t2: Type): Type =
-  if (t1 == t2) t1 else throw new Exception
+case class Rec(
+  f: String, x: String, p: Type, r: Type, b: Expr, e: Expr
+) extends Expr
 \end{verbatim}
 
-A \code{Expr} instance represent a TRFAE expression. The implementation is
-similar to that of RFAE.
+\code{If0($e_1$, $e_2$, $e_3$)} represents $\eifz{e_1}{e_2}{e_3}$, and
+\code{Rec($x_1$, $x_2$, $\tau_1$, $\tau_2$, $e_1$, $e_2$)} represents
+$\erect{x_1}{x_2}{\tau_1}{\tau_2}{e_1}{e_2}$.
+
+The \code{interp} function is similar to that of \textsf{RFAE}, but type
+annotations are ignored during closure constructions.
+
+\begin{verbatim}
+def interp(e: Expr, env: Env): Value = e match {
+  ...
+  case Rec(f, x, _, _, b, e) =>
+    val cloV = CloV(x, b, env)
+    val nenv = env + (f -> cloV)
+    cloV.e = nenv
+    interp(e, nenv)
+}
+\end{verbatim}
+
+\section{Static Semantics}
+
+We need to define typeing rules for conditional expressions and recursive
+functions. Let us consider conditional expressions first.
+
+\typerule{Typ-If0}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \typeofdn{e_1}{\tnum}, \\
+    & \typeofdn{e_2}{\tau}, and \\
+    & \typeofdn{e_3}{\tau}, \\
+    then \\
+    & \typeofdn{\eifz{e_1}{e_2}{e_3}}{\tau} \\
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeofd{e_1}{\tnum} \\
+    \typeofd{e_2}{\tau} \\
+    \typeofd{e_3}{\tau} }
+  { \typeofd{\eifz{e_1}{e_2}{e_3}}{\tau} }
+  \quad\textsc{[Typ-If0]}
+\]
+
+The condition of a conditional expression must be a value of $\tnum$.
+The rule cannot determine which branch will be evaluated at run time.
+Since every expression has at most one type, $e_2$ and $e_3$ must have the same
+type, $\tau$. The type of the whole expression also is $\tau$.
+
+Actually, the condition can have any type. If the result of
+the condition is $0$, then the true branch is evaluated. If the result is a
+nonzero integer or a closure, then the false branch is evaluated.
+A value of any type can be safely used as the condition.
+Therefore, the type system may use the following rule instead of
+Rule~\textsc{Typ-If0}:
+
+\typerule{Typ-If0'}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \typeofdn{e_1}{\tau'}, \\
+    & \typeofdn{e_2}{\tau}, and \\
+    & \typeofdn{e_3}{\tau}, \\
+    then \\
+    & \typeofdn{\eifz{e_1}{e_2}{e_3}}{\tau} \\
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeofd{e_1}{\tau'} \\
+    \typeofd{e_2}{\tau} \\
+    \typeofd{e_3}{\tau} }
+  { \typeofd{\eifz{e_1}{e_2}{e_3}}{\tau} }
+  \quad\textsc{[Typ-If0']}
+\]
+
+Both rules make the type system sound, but they are different from each other.
+Rule~\textsc{Typ-If0} rejects more expressions than Rule~\textsc{Typ-If0'}
+because the former allows only integers to be conditions, while the latter
+allows functions as well. Therefore, from the perspective of reducing false positives,
+Rule~\textsc{Typ-If0'} is better than Rule~\textsc{Typ-If0}.
+However, if the type of the condition is a function type, it is highly likely to
+be a mistake of the programmer. When the condition evaluates to a function, the
+conditional expression always evaluates its true branch. The use of a
+conditional expression is totally meaningless. Thus, from the perspective of
+detecting programmers' mistakes, Rule~\textsc{Typ-If0} is better than
+Rule~\textsc{Typ-If0'}.
+
+Now, we define the typing rule of a recursive function.
+
+\typerule{Typ-Rec}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \typeofn{\Gamma[x_1:\tarrow{\tau_1}{\tau_2},x_2:\tau_1]}{e_1}{\tau_2}
+    and \\
+    & \typeofn{\Gamma[x_1:\tarrow{\tau_1}{\tau_2}]}{e_2}{\tau}, \\
+    then \\
+    & \typeofdn{\erect{x_1}{x_2}{\tau_1}{\tau_2}{e_1}{e_2}}{\tau}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeof{\Gamma[x_1:\tarrow{\tau_1}{\tau_2},x_2:\tau_1]}{e_1}{\tau_2} \\
+    \typeof{\Gamma[x_1:\tarrow{\tau_1}{\tau_2}]}{e_2}{\tau} }
+  { \typeofd{\erect{x_1}{x_2}{\tau_1}{\tau_2}{e_1}{e_2}}{\tau} }
+  \quad\textsc{[Typ-Rec]}
+\]
+
+The principle of the rule is the same as the typing rule of a lambda
+abstraction: given type annotations are used during the type checking of the
+function body. Since the function itself can be used in the body, the type
+checking of the body requires the type of the function. This is the reason that
+the expression needs the return type annotation in addition to the parameter
+type annotation. To type-check the body, the return type must be known.
+For the type checking of the body, the type environment is extended with the
+type of the function, $\tau_1\rightarrow\tau_2$, and the type of the parameter,
+$\tau_1$. Since the type of the body is the return type, it must be $\tau_2$.
+After the type checking of the body, $e_2$ is type-checked. For $e_2$, only the
+type of the function is required; the parameter can be used only in the body.
+
+The following proof trees prove that the type of
+$\erect{\cf}{\cx}{\tnum}{\tnum}{\sumbodyf}{\cf\ 3}$
+is $\tnum$:
+
+\[
+  \footnotesize
+  \inferrule
+  {
+    \inferrule
+    { \cx\in\dom{\Gamma_1} }
+    { \typeof{\Gamma_1}{\cx}{\tnum} }
+    \\
+    \inferrule
+    {
+      \inferrule
+      { \cf\in\dom{\Gamma_1} }
+      { \typeof{\Gamma_1}{\cf}{\tarrow{\tnum}{\tnum}} }
+      \\
+      \inferrule
+      {
+        \inferrule
+        { \cx\in\dom{\Gamma_1} }
+        { \typeof{\Gamma_1}{\cx}{\tnum} }
+        \\
+        \typeof{\Gamma_1}{1}{\tnum}
+      }
+      { \typeof{\Gamma_1}{\cx-1}{\tnum} }
+    }
+    { \typeof{\Gamma_1}{\cf\ (\cx-1)}{\tnum} }
+  }
+  { \typeof{\Gamma_1}{\cx+(\cf\ (\cx-1))}{\tnum} }
+\]
+
+\[
+  \footnotesize
+  \inferrule
+  {
+    \inferrule
+    { \cx\in\dom{\Gamma_1} }
+    { \typeof{\Gamma_1}{\cx}{\tnum} }
+    \\
+    \typeof{\Gamma_1}{0}{\tnum}
+    \\
+    \typeof{\Gamma_1}{\cx+(\cf\ (\cx-1))}{\tnum}
+  }
+  { \typeof{\Gamma_1}{\sumbodyf}{\tnum} }
+\]
+
+\[
+  \footnotesize
+  \inferrule
+  {
+    \typeof{\Gamma_1}{\sumbodyf}{\tnum}
+    \\
+    \inferrule
+    {
+      \inferrule
+      { \cf\in\dom{\Gamma_2} }
+      { \typeof{\Gamma_2}{\cf}{\tarrow{\tnum}{\tnum}} }
+      \\
+      \typeof{\Gamma_2}{3}{\tnum}
+    }
+    { \typeof{\Gamma_2}{\cf\ 3}{\tnum} }
+  }
+  { \typeofe{\erect{\cf}{\cx}{\tnum}{\tnum}{\sumbodyf}{\cf\ 3}}{\tnum} }
+\]
+
+where
+$\Gamma_1=[\cf:\tarrow{\tnum}{\tnum},\cx:\tnum]$
+and
+$\Gamma_2=[\cf:\tarrow{\tnum}{\tnum}]$.
+
+\section{Type Checker}
+
+To implement a type checker, we need to add the \code{If0} and \code{Rec} cases
+to the \code{typeCheck} function for \plang.
 
 \begin{verbatim}
 case If0(c, t, f) =>
-  typeCheck(c, env)
-  mustSame(typeCheck(t, env), typeCheck(f, env))
+  mustSame(typeCheck(c, env), NumT)
+  val tt = typeCheck(t, env)
+  val tf = typeCheck(f, env)
+  mustSame(tt, tf)
+  tt
 \end{verbatim}
 
-\[
-\inferrule
-{ \Gamma\vdash e_1:\tau' \\
-  \Gamma\vdash e_2:\tau \\
-  \Gamma\vdash e_3:\tau }
-{ \Gamma\vdash\textsf{if0}\ e_1\ e_2\ e_3:\tau}
-\]
-
-The condition of an expression must be well-typed. The \code{typeCheck} function
-checks the type of \code{c}, and the result of type checking is unnecessary. The
-types of the two branches must be the same. The \code{typeCheck} function checks
-the types of \code{t} and \code{f}. The \code{mustSame} function compares the
-results. If they are the same, then the type is the type of the whole expression.
+The condition of an expression must belong to $\tnum$. The type of \code{c} is
+computed with \code{typeCheck} and compared to \code{NumT} with \code{mustSame}.
+The types of the branches must be the same. The \code{typeCheck} function
+computes the types of \code{t} and \code{f}, and the \code{mustSame} function
+compares them. If they are the same, then the type is the type of the whole expression.
 
 \begin{verbatim}
 case Rec(f, x, p, r, b, e) =>
   val t = ArrowT(p, r)
   val nenv = env + (f -> t)
-  mustSame(r, typeCheck(b, nenv + (x -> p)))
+  mustSame(typeCheck(b, nenv + (x -> p)), r)
   typeCheck(e, nenv)
 \end{verbatim}
-
-\[
-\inferrule
-{
-  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2,x_2:\tau_1\rbrack\vdash e_1:\tau_2
-  \\
-  \Gamma\lbrack x_1:\tau_1\rightarrow\tau_2\rbrack\vdash e_2:\tau
-}
-{ \Gamma\vdash\textsf{def}\ x_1(x_2:\tau_1):\tau_2=e_1\ \textsf{in}\ e_2:\tau}
-\]
 
 The parameter type is \code{p}, and the return type is \code{r}. Thus, the type
 of \code{f} is the function type from \code{p} to \code{r}. The type of \code{x}
@@ -259,119 +342,6 @@ hand, the parameter \code{x} cannot be used in \code{e}. Therefore, it is enough
 to add only the type of \code{f} to the type environment used to type-check
 \code{e}. The type of the whole expression is equal to the type of \code{e}.
 
-The following shows the complete code of the function:
-
-\begin{verbatim}
-def typeCheck(e: Expr, env: TEnv): Type = e match {
-  case Num(n) => NumT
-  case Add(l, r) =>
-    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
-  case Sub(l, r) =>
-    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
-  case Id(x) => env(x)
-  case Fun(x, t, b) =>
-    ArrowT(t, typeCheck(b, env + (x -> t)))
-  case App(f, a) =>
-    val ArrowT(t1, t2) = typeCheck(f, env)
-    val t3 = typeCheck(a, env)
-    mustSame(t1, t3)
-    t2
-  case If0(c, t, f) =>
-    typeCheck(c, env)
-    mustSame(typeCheck(t, env), typeCheck(f, env))
-  case Rec(f, x, p, r, b, e) =>
-    val t = ArrowT(p, r)
-    val nenv = env + (f -> t)
-    mustSame(r, typeCheck(b, nenv + (x -> p)))
-    typeCheck(e, nenv)
-}
-\end{verbatim}
-
-The following code checks the type of $\textsf{def}\
-f(n:\textsf{num}):\textsf{num}=\textsf{
-if0}\ n\ 0\ (n+(f\ (n-1)))\ \textsf{in}\ f\ 3$:
-
-\begin{verbatim}
-// def f(x: num): num = if0 n 0 (n + (f (n-1))); 3
-typeCheck(
-  Rec(
-    "f", "n", NumT, NumT,
-    If0(Id("n"),
-        Num(0),
-        Add(
-          Id("n"),
-          App(Id("f"), Sub(Id("n"), Num(1)))
-        )
-    ),
-    App(Id("f"), Num(3))
-  ),
-  Map.empty
-)
-// num
-\end{verbatim}
-
-\section{Implementing an Interpreter}
-
-The interpreter is similar to that of RFAE.
-
-\begin{verbatim}
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, var e: Env) extends Value
-
-type Env = Map[String, Value]
-
-def interp(e: Expr, env: Env): Value = e match {
-  case Num(n) => NumV(n)
-  case Add(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n + m)
-  case Sub(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n - m)
-  case Id(x) => env(x)
-  case Fun(x, _, b) => CloV(x, b, env)
-  case App(f, a) =>
-    val CloV(x, b, fEnv) = interp(f, env)
-    interp(b, fEnv + (x -> interp(a, env)))
-  case If0(c, t, f) =>
-    interp(if (interp(c, env) == NumV(0)) t else f, env)
-  case Rec(f, x, _, _, b, e) =>
-    val cloV = CloV(x, b, env)
-    val nenv = env + (f -> cloV)
-    cloV.e = nenv
-    interp(e, nenv)
-}
-
-def run(e: Expr): Value = {
-  typeCheck(e, Map.empty)
-  interp(e, Map.empty)
-}
-\end{verbatim}
-
-The following code executes $\textsf{def}\ f(n:\textsf{num}):\textsf{num}=\textsf{if0}\ n\ 0\
-(n+(f\ (n-1)))\ \textsf{in}\ f\ 3$:
-
-\begin{verbatim}
-// def f(x: num): num = if0 n 0 (n + (f (n-1))); 3
-run(
-  Rec(
-    "f", "n", NumT, NumT,
-    If0(Id("n"),
-        Num(0),
-        Add(
-          Id("n"),
-          App(Id("f"), Sub(Id("n"), Num(1)))
-        )
-    ),
-    App(Id("f"), Num(3))
-  )
-)
-// 6
-\end{verbatim}
-
 \section{Exercises}
 
 \begin{enumerate}
@@ -380,131 +350,15 @@ only one of $e$ and $\efun{\texttt{x}{:}\textsf{num}}{(\eapp{e}{\texttt{x}})}$ t
 while both $e$ and $\efun{\texttt{x}{:}\textsf{num}}{(\eapp{e}{\texttt{x}})}$ are
 well-typed.
 
-\item Consider the following TRCFAE expression:
-{
-\begin{verbatim}
-        {rec {f : (num -> num) f}
-             {f 10}}
-\end{verbatim}
-}
-\begin{itemize}
-\item[a)] Draw the type derivation of the above expression.
-Write every piece in the type derivation even in the presence of any type error.
-
-\item[b)] What happens if we interpret it?  Describe it in detail.
-
-\item[c)] How can we solve this type soundness problem without changing the soundness theorem?
-\end{itemize}
-
-\item Recall \MNSC of the homework.
-Consider the following subset of \MNSC:
-\Space{-1}
-\[
-\begin{array}{rllrllrl}
-p ::= &s\ \cdots\ s\ e&\qquad&
-e ::= & n &\qquad&\tau ::= & \verb+num+\\
-s ::= &\verb+val +x\verb+:+\tau\verb+ = +e&&\mid& x&&\mid&\tau\verb+ => +\tau\\
-\mid&\verb+var +x\verb+:+\tau\verb+ = +e &\qquad&
-\mid& e\verb+(+e\verb+)+\\
-\mid&\verb+def +x\verb+(+x\verb+:+\tau\verb+)+\verb+:+\tau\verb+ = +e&&
-\mid& x\verb+ = +e&&\\
-\end{array}
-\]
-with the following typing rules:
-\[
-\begin{array}{ccccc}
-{ \typed{n}{\code{num}} }
-&\qquad&
-\newinfrule
-{ x\in\mbox{Domain}(\Gamma) }
-{ \typed{x}{\Gamma(x)} }
-&\qquad&
-\newinfrule
-{ \emptyset\vdash s_1:\Gamma_1 \rulesep \cdots \rulesep
-  \Gamma_{n-1}\vdash s_n:\Gamma_n \rulesep
-  \Gamma_n\vdash e:\tau }
-{ \vdash s_1\ \cdots\ s_n\ e:\tau }
-\\[15pt]
-\multicolumn{5}{c}{\begin{array}{ccc}
-\newinfrule
-{ \Gamma\vdash{\tau} \rulesep \typed{e}{\tau} }
-{ \typed{\code{val}\ x\code{:}\tau\ \code{=}\ e}{\Gamma[x\mapsto \tau]} }
-&\qquad&
-\newinfrule
-{ \Gamma\vdash{\tau} \rulesep \typed{e}{\tau} }
-{ \typed{\code{var}\ x\code{:}\tau\ \code{=}\ e}{\Gamma[x\mapsto \tau,x:\textsf{mutable}]} }
-\end{array}}
-\end{array}
-\]
-
-\begin{itemize}
-\item[a)] Complete the typing rules 
-of the forms \fbox{$\typed{s}{\Gamma}$} and \fbox{$\typed{e}{\tau}$}
-by filling the blanks:
-\Space{-3}
-
-{
-\[
-\newinfrule
-{ \lmblank }
-{ \typed{\code{def}\ x_1\code{(}x_2\code{:}\tau_1\code{)}\code{:}\tau_2\ \code{=}\ e}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lmblank }
-{ \typed{e_1\code{(}e_2\code{)}}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lmblank }
-{ \typed{x\ \code{=}\ e}{\sblank} }
-\]
-}
-\item[b)]
-The following three programs are well-typed.
-The reason is that
-`\code{x} $:$ \textsf{mutable},' which denotes that \code{x} is mutable,
-is in the type environments when the assignment expressions are type-checked
-because of the first statement, $\verb+var x: num = 1+$:
-
-\begin{tabular}{|l@{\hskip35pt}|l@{\hskip35pt}|l}
-\verb+var x: num = 1+&\verb+var x: num = 1+&\verb+var x: num = 1+\\
-\verb+val x: num = 2+&\verb+def x(z: num): num = z+&\verb+def y(x: num): num = (x = 3)+\\
-\verb+x = 3+&\verb+def y(z: num): num = z+&\verb+1+\\
-&\verb+x = y+
-\end{tabular}
-
-Revise the following typing rules of the form \fbox{$\typed{s}{\Gamma}$}
-to make the above programs not well-typed by filling the blanks.
-You may use `$\Gamma\setminus(x:\textsf{mutable})$'
-to remove the mutable tag from variable $x$.
-For example, `$[\verb+x+\mapsto\verb+num+,\verb+x+:\textsf{mutable}]\setminus(x:\textsf{mutable})$'
-equals `$[\verb+x+\mapsto\verb+num+]$.'
-\Space{-3}
-
-{
-\[
-\newinfrule
-{ \lmblank }
-{ \typed{\code{val}\ x\code{:}\tau\ \code{=}\ e}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lmblank }
-{ \typed{\code{def}\ x_1\code{(}x_2\code{:}\tau_1\code{)}\code{:}\tau_2\ \code{=}\ e}{\sblank} }
-\]
-}
-\end{itemize}
-
 \item Consider the following language:
 \[
-\begin{array}{rllrllrllr@{\hskip3pt}l}
-e::= & n &\qquad& c::= & \verb+skip+ &\qquad& b::= & \verb+true+ &\qquad& n\in&\mathbb{Z}\\
-\mid& b &&\mid& x\verb+:=+e &&\mid& \verb+false+ && x\in&\mathit{Id}\\
-\mid& x &&\mid& \verb+if+\ e\ c\ c && v::= & n && v\in&\mathit{Val}\\
-\mid& e\verb!+!e &&\mid& \verb+while+\ e\ c &&\mid& b && \tau\in&\mathit{Type}\\
-\mid& e\verb!<!e &&\mid& c\verb+;+c &&\tau::= & \verb+num+ && \sigma\in&\mathit{Id}\rightarrow\mathit{Val}\\
-&&&&&&\mid& \verb+bool+ && \Gamma\in&\mathit{Id}\rightarrow\mathit{Type}\\
+\begin{array}{rllrllrll}
+  e::= & n &\qquad& c::= & \textsf{skip} &\qquad& b::= & \textsf{true} \\
+  |& b &&|& \eset{x}{e} &&|& \textsf{false} \\
+  |& x &&|& \eif{e}{c}{c} && v::= & n \\
+  |& e+e &&|& \textsf{while}\ e\ c &&|& b \\
+  |& e<e &&|& \eseq{c}{c} &&\tau::= & \tnum \\
+  &&&&&&|& \textsf{bool} \\
 \end{array}
 \]
 
@@ -512,144 +366,74 @@ Metavariable $c$ ranges over commands.
 
 Under given environment $\sigma$, evaluation of an expression yields a value and does not
 change $\sigma$. The following is the operational semantics of the expressions:
-
+    \vspace{-1em}
 \[
-\begin{array}{ccc}
-\multicolumn{3}{c}{\begin{array}{ccccc}
-\sigma\vdash n\Rightarrow n &\qquad&
-\sigma\vdash b\Rightarrow b &\qquad&
-\newinfrule
-{ x\in\Dom{\sigma} }
-{ \sigma\vdash x\Rightarrow \sigma(x) }
-\end{array}} \\[20pt]
-\newinfrule
-{ \sigma\vdash e_1\Rightarrow n_1 \rulesep
-  \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1\code{+}e_2\Rightarrow n_1+n_2 }
-&\qquad&
-\newinfrule
-{ \sigma\vdash e_1\Rightarrow n_1 \rulesep
-  \sigma\vdash e_2\Rightarrow n_2 }
-{ \sigma\vdash e_1\code{<}e_2\Rightarrow n_1<n_2 }
-\end{array}
+  \begin{array}{c}
+  \sigma\vdash n\Rightarrow n \qquad
+  \sigma\vdash b\Rightarrow b \qquad
+  \inferrule
+  { x\in\dom{\sigma} }
+  { \sigma\vdash x\Rightarrow \sigma(x) }
+  \\[20pt]
+  \inferrule
+  { \sigma\vdash e_1\Rightarrow n_1 \\
+    \sigma\vdash e_2\Rightarrow n_2 }
+  { \sigma\vdash e_1+e_2\Rightarrow n_1+n_2 }
+  \qquad
+  \inferrule
+  { \sigma\vdash e_1\Rightarrow n_1 \\
+    \sigma\vdash e_2\Rightarrow n_2 }
+  { \sigma\vdash e_1<e_2\Rightarrow n_1<n_2 }
+  \end{array}
 \]
 
-\begin{itemize}
-\item[a)] Complete the following typing rules
-of the form \fbox{$\typed{e}{\tau}$}
-by filling the blanks:
-\end{itemize}
-\Space{-2}
-
-{
-\[
-\Gamma\vdash n:\code{num}
-\]
-
-\[
-\newinfrule
-{ x\in\Dom{\Gamma} }
-{ \typed{x}{\Gamma(x)} }
-\]
-
-\[
-\newinfrule
-{ \lblank }
-{ \typed{b}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lblank }
-{ \typed{e_1\code{+}e_2}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lblank }
-{ \typed{e_1\code{<}e_2}{\sblank} }
-\]
-}
+\begin{enumerate}
+  \item Write the typing rules of the form \fbox{$\typed{e}{\tau}$}.
+\end{enumerate}
 
 Evaluation of a command produces a new environment.
 The following is the operational semantics of the commands:
-
+    \vspace{-1em}
 \[
-\begin{array}{ccccc}
-\sigma\vdash \code{skip}\Rightarrow \sigma
-&\qquad&
-\newinfrule
-{ \sigma\vdash e\Rightarrow v }
-{ \sigma\vdash x\code{:=}e\Rightarrow \sigma[x\mapsto v] }
-&\qquad&
-\newinfrule
-{ \sigma\vdash e\Rightarrow \code{true} \rulesep
-  \sigma\vdash c_1\Rightarrow \sigma_1 }
-{ \sigma\vdash \code{if}\ e\ c_1\ c_2\Rightarrow \sigma_1 }
-\\[20pt]
-\multicolumn{3}{c}{
-\newinfrule
-{ \sigma\vdash e\Rightarrow \code{true} \rulesep
-  \sigma\vdash c\Rightarrow \sigma_1 \rulesep
-  \sigma_1\vdash \code{while}\ e\ c\Rightarrow \sigma_2 }
-{ \sigma\vdash \code{while}\ e\ c\Rightarrow \sigma_2 }
-}
-&&
-\newinfrule
-{ \sigma\vdash e\Rightarrow \code{false} \rulesep
-  \sigma\vdash c_2\Rightarrow \sigma_1 }
-{ \sigma\vdash \code{if}\ e\ c_1\ c_2\Rightarrow \sigma_1 }
-\\[20pt]
-\multicolumn{3}{c}{
-\newinfrule
-{ \sigma\vdash e\Rightarrow \code{false} }
-{ \sigma\vdash \code{while}\ e\ c\Rightarrow \sigma }
-}
-&&
-\newinfrule
-{ \sigma\vdash c_1\Rightarrow \sigma_1 \rulesep
-  \sigma_1\vdash c_2\Rightarrow \sigma_2 }
-{ \sigma\vdash c_1\code{;}c_2\Rightarrow \sigma_2 }
-\end{array}
+  \begin{array}{c}
+    \sigma\vdash \textsf{skip}\Rightarrow \sigma
+    \quad
+    \inferrule
+    { \sigma\vdash e\Rightarrow v }
+    { \sigma\vdash \eset{x}{e}\Rightarrow \sigma[x\mapsto v] }
+    \\[20pt]
+    \inferrule
+    { \sigma\vdash e\Rightarrow \textsf{true} \\
+      \sigma\vdash c_1\Rightarrow \sigma_1 }
+    { \sigma\vdash \eif{e}{c_1}{c_2}\Rightarrow \sigma_1 }
+    \quad
+    \inferrule
+    { \sigma\vdash e\Rightarrow \textsf{false} \\
+      \sigma\vdash c_2\Rightarrow \sigma_1 }
+    { \sigma\vdash \eif{e}{c_1}{c_2}\Rightarrow \sigma_1 }
+    \\[20pt]
+    \inferrule
+    { \sigma\vdash e\Rightarrow \textsf{true} \\
+      \sigma\vdash c\Rightarrow \sigma_1 \\
+      \sigma_1\vdash \textsf{while}\ e\ c\Rightarrow \sigma_2 }
+    { \sigma\vdash \textsf{while}\ e\ c\Rightarrow \sigma_2 }
+    \\[20pt]
+    \inferrule
+    { \sigma\vdash e\Rightarrow \textsf{false} }
+    { \sigma\vdash \textsf{while}\ e\ c\Rightarrow \sigma }
+    \quad
+    \inferrule
+    { \sigma\vdash c_1\Rightarrow \sigma_1 \\
+      \sigma_1\vdash c_2\Rightarrow \sigma_2 }
+    { \sigma\vdash \eseq{c_1}{c_2}\Rightarrow \sigma_2 }
+  \end{array}
 \]
 
-\begin{itemize}
-\item[b)] Complete the following typing rules
-of the form \fbox{$\typed{c}{\Gamma}$}
-by filling the blanks.
+\begin{enumerate}
+    \setcounter{enumii}{1}
+\item Write the typing rules of the form \fbox{$\typed{c}{\Gamma}$}.
 The following command must be well-typed: \verb+x := 1; x := 2+.
 However, the following command must be not well-typed: \verb+x := 1; x := true+.
-\end{itemize}
-
-{
-\[
-\newinfrule
-{ \lblank }
-{ \typed{\code{skip}}{\sblank} }
-\]
-\[
-\newinfrule
-{ x\not\in\Dom{\Gamma} \rulesep \mblank }
-{ \typed{x\code{:=}e}{\sblank} }
-\]
-\[
-\newinfrule
-{ x\in\Dom{\Gamma} \rulesep \mblank }
-{ \typed{x\code{:=}e}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lblank }
-{ \typed{\code{if}\ e\ c_1\ c_2}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lblank }
-{ \typed{\code{while}\ e\ c}{\sblank} }
-\]
-\[
-\newinfrule
-{ \lblank }
-{ \typed{c_1\code{;}c_2}{\sblank} }
-\]
-}
+\end{enumerate}
 
 \end{enumerate}

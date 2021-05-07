@@ -673,7 +673,9 @@ type system to detect free identifier errors.
 
 \typerule{Typ-Fun}{
   If
-  \typeofn{\Gamma[x\mapsto\tau_1]}{e}{\tau_2}, \\
+  \typeofn{\Gamma[x:\tau_1]}{e}{\tau_2},\sidenote{
+    Since $\mapsto$ looks similar to arrows in types, we use $:$ instead of
+    $\mapsto$ to prevent confusion.} \\
   then
   \typeofdn{\efunt{x}{\tau_1}{e}}{\tarrow{\tau_1}{\tau_2}}.
 }
@@ -682,7 +684,7 @@ type system to detect free identifier errors.
 
 \[
   \inferrule
-  { \typeof{\Gamma[x\mapsto\tau_1]}{e}{\tau_2} }
+  { \typeof{\Gamma[x:\tau_1]}{e}{\tau_2} }
   { \typeofd{\efunt{x}{\tau_1}{e}}{\tarrow{\tau_1}{\tau_2}} }
   \quad\textsc{[Typ-Fun]}
 \]
@@ -697,7 +699,7 @@ compute the type of the body. Since a closure captures
 the environment when it is created, evaluation of its body can use variables in
 the environment. Thus, computation of the type of $e$ needs every information in
 $\Gamma$ and that the type of $x$ is $\tau_1$. The computation uses
-$\Gamma[x\mapsto\tau_1]$. If the type of $e$ is $\tau_2$, the return type of
+$\Gamma[x:\tau_1]$. If the type of $e$ is $\tau_2$, the return type of
 the function also is $\tau_2$. Finally, the type of the lambda abstraction becomes
 $\tarrow{\tau_1}{\tau_2}$.
 
@@ -764,8 +766,8 @@ where
 $
 \begin{array}{@{}r@{~}c@{~}l@{}}
   e&=&\efunt{\cx}{\tnum}{\efunt{\cy}{\tnum}{\cx+\cy}} \\
-  \Gamma_1&=&[\cx\mapsto\tnum] \\
-  \Gamma_2&=&[\cx\mapsto\tnum,\cy\mapsto\tnum] \\
+  \Gamma_1&=&[\cx:\tnum] \\
+  \Gamma_2&=&[\cx:\tnum,\cy:\tnum] \\
 \end{array}
 $
 
@@ -1038,7 +1040,7 @@ The static semantics is as follows:
 \typerule{Typ-Val}{
   If
     \typeofdn{e_1}{\tau_1} and
-    \typeofn{\Gamma[x\mapsto\tau_1]}{e_2}{\tau_2}, \\
+    \typeofn{\Gamma[x:\tau_1]}{e_2}{\tau_2}, \\
   then
     \typeofdn{\ebind{x}{e_1}{e_2}}{\tau_2}.
 }
@@ -1049,7 +1051,7 @@ The static semantics is as follows:
   \inferrule
   {
     \typeofd{e_1}{\tau_1} \\
-    \typeof{\Gamma[x\mapsto\tau_1]}{e_2}{\tau_2}
+    \typeof{\Gamma[x:\tau_1]}{e_2}{\tau_2}
   }
   { \typeofd{\ebind{x}{e_1}{e_2}}{\tau_2} }
   \quad\textsc{[Typ-Val]}
