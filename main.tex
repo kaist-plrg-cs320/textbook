@@ -118,6 +118,8 @@
 \newcommand{\eset}[2]{#1{:}\shorteq#2}
 \newcommand{\eseq}[2]{#1;#2}
 \newcommand{\erect}[6]{\textsf{def}\ #1(#2{:}#3){:}#4\shorteq#5\ \textsf{in}\ #6}
+\newcommand{\etdef}[6]{\textsf{type}\ #1=#2@#3+#4@#5\ \textsf{in}\ #6}
+\newcommand{\ematch}[7]{#1\ \textsf{match}\ #2(#3)\rightarrow #4,#5(#6)\rightarrow #7}
 
 \newcommand{\tnum}{\textsf{num}}
 \newcommand{\tfun}{\textsf{fun}}
@@ -150,6 +152,11 @@
 \newcommand{\typeofnc}[3]{The type of \ensuremath{#2} is
 \ensuremath{#3} under \ensuremath{#1}\xspace}
 \newcommand{\typeofdnc}[2]{\typeofnc{\Gamma}{#1}{#2}}
+
+\newcommand{\wft}[2]{#1\vdash#2}
+\newcommand{\wftd}[1]{\wft{\Gamma}{#1}}
+\newcommand{\wftn}[2]{\ensuremath{#2} is well-formed under \ensuremath{#1}}
+\newcommand{\wftdn}[1]{\wftn{\Gamma}{#1}}
 
 \newcommand{\stricte}[2]{#1\Downarrow#2}
 \newcommand{\stricten}[2]{\ensuremath{#1} strictly evaluates to \ensuremath{#2}}

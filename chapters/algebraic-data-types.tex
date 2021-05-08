@@ -2,607 +2,442 @@
 \chapter{Algebraic Data Types}
 \labch{algebraic-data-types}
 
-This article defines TVFAE by adding algebraic data types to TFAE. It defines
-the abstract syntax, the dynamic semantics, and the type system of TVFAE and
-implements a type checker and an interpreter for TVFAE.
+\renewcommand{\plang}{\textsf{TFAE}\xspace}
+\renewcommand{\lang}{\textsf{TVFAE}\xspace}
 
-\section{Algebraic Data Types}
+ADTs are ubiquitous in functional programming. \refch{pattern-matching} explains
+the concept of an ADT and how programmers can use ADTs in Scala. ADTs are useful
+when a single type includes values of different structures. Such types are
+common in computer science. For example, lists and options, which
+almost every program uses, are typically implemented as ADTs. In addition, ASTs,
+which all the compilers, interpreters, and static analyzers need, can be easily
+implemented as ADTs as well.
 
-You have already seen necessity and use of algebraic data types in the 'Pattern
-Matching' article. This article considers encoding algebraic data types with
-TFAE rather than explaining algebraic data types themselves.
-
-Suppose that a fruit is either an apple or banana. The shape of an apple can be
-approximated as a sphere, and the radius of the sphere determines the size of
-the apple. On the other hand, the shape of a banana can be approximated as a
-cylinder, and the radius and the height of the cylinder determines the size of
-the banana. It can be written in Scala as the following:
+Nonrecursive ADTs can be considered as syntactic sugar in
+\plang.\sidenote{Here, \plang means the extended version
+defined in \refsec{extension}.}
+Let us see how they can be desugared with an example. Consider the
+following Scala code:
 
 \begin{verbatim}
 sealed trait Fruit
-case class Apple(r: Int) extends Fruit
-case class Banana(h: Int, r: Int) extends Fruit
+case class Apple(radius: Int) extends Fruit
+case class Banana(radius: Int, height: Int) extends Fruit
 \end{verbatim}
 
-It shows a typical usage of an algebraic data type in Scala.
+A fruit is either an apple or a banana. In this example, we are interested in
+the sizes of fruits. An apple is approximated as a sphere and,
+therefore, parametrized by its radius. A banana is approximated as a cylinder
+and, therefore, parametrized by its radius and height.
 
-TFAE can encode algebraic data types with pairs. Although the original TFAE
-lacks pairs, I will assume that TFAE has pairs since a way to add pairs to TFAE
-has been covered already. In addition, assume that local variable declarations,
-Boolean values, and conditional expressions exist as well.
+We can easily create values that represent apples and bananas like below.
 
-The type of a fruit can be \(\textsf{bool}\times(\textsf{num}\times(\textsf{
-num}\times\textsf{num}))\). A fruit value is a pair. The first value of the pair
-indicates whether the fruits is an apple or a banana. If the value is \(\textsf{
-true}\), then it is an apple. Otherwise, it is a banana. The second value of the
+\begin{verbatim}
+val apple = Apple(5)
+val banana = Banana(2, 6)
+\end{verbatim}
+
+In the above code, \code{apple} represents an apple whose radius is \code{5},
+and \code{banana} represents a banana whose radius is \code{2} and height is
+\code{6}.
+
+In \plang, we can represent a fruit as a value of
+$\tnum\times(\tnum\times(\tnum\times\tnum))$. Thus, a fruit value is a pair.
+The first value of the pair indicates which fruit it is. If the value is $0$,
+it is an apple. Otherwise, it is a banana. The second value of the
 pair is another pair, which represents the size of the fruit. If the fruit is an
-apple, only the first value of the second pair is meaningful. Otherwise, only
-the second value of the pair is meaningful. The following expressions
-respectively represent an apple whose radius is $5$ and a banana whose height
-is $6$ and radius is $2$.
+apple, only the first value of the second pair is meaningful. The value denotes
+the radius of the apple. Therefore, the following value represents an apple
+whose radius is $5$:
 
-\[(\textsf{true},(5,(0,0)))\]
+$(0,(5,(0,0)))$
 
-\[(\textsf{false},(0,(6,2)))\]
+Note that $(0,0)$ can be replaced with any pair of integers. On the other hand,
+if the fruit is a banana, only the second value, which is a pair again, of the
+pair is meaningful. The pair consists of the radius and height of the banana.
+The following value represents a banana whose radius is $2$ and height is $6$:
+
+$(1,(0,(2,6)))$
+
+Note that $1$ can be replaced with any nonzero integer, and $0$ can be replaced
+with any integer.
 
 It is tedious and error-prone to make fruit values like the above, while Scala
-allows the following:
+provides a simple way to construct fruit values. In \plang, we can define
+functions to mimic constructors in Scala.
 
-\begin{verbatim}
-Apple(5)
-Banana(6, 2)
-\end{verbatim}
-
-Defining functions named $Apple$ and $Banana$ allows similar code. $Apple$
-takes an integer as an argument. Its result is a pair: the first value is
-\(\textsf{
-true}\); the second value is a pair whose first value is the integer passed as
-an argument and second value is a pair of two arbitrary integers. The following
-is such a function:
-
-\[\lambda x:\textsf{num}.(\textsf{true},(x,(0,0)))\]
-
-$Banana$ can be defined in a similar manner:
-
-\[\lambda x:\textsf{num}\times\textsf{num}.(\textsf{false},(0,x))\]
-
-You can now create fruit values with $Apple$ and $Banana$:
-
-\[Apple\ 5\]
-
-\[Banana\ (6,2)\]
-
-Consider a function \code{radius}, which compute the radius of a given fruit. In
-Scala, pattern matching can be used:
-
-\begin{verbatim}
-def radius(f: Fruit): Int = f match {
-  case Apple(r) => r
-  case Banana(_, r) => r
-}
-\end{verbatim}
-
-In TFAE, the first value of a given pair indicates whether the fruit is an apple
-or banana. According to the sort of the fruit, an expression computing the
-radius changes. The following defines the $radius$ function:
-
-\[\lambda
-f:\textsf{bool}\times(\textsf{num}\times(\textsf{num}\times\textsf{num})).
-\textsf{if}\ f.1\ f.2.1\ f.2.2.2\]
-
-Below collects all the previous code snippets. The Scala version comes first,
-and then the TFAE version comes.
-
-\begin{verbatim}
-sealed trait Fruit
-case class Apple(r: Int) extends Fruit
-case class Banana(h: Int, r: Int) extends Fruit
-
-def radius(f: Fruit): Int = f match {
-  case Apple(r) => r
-  case Banana(_, r) => r
-}
-
-radius(Apple(5)) + radius(Banana(6, 2))  // 7
-\end{verbatim}
-
-\[
-\begin{array}{l}
-\textsf{val}\ Apple=\lambda x:\textsf{num}.(\textsf{true},(x,(0,0)))\ \textsf{in}
-\\
-\textsf{val}\ Banana=\lambda
-x:\textsf{num}\times\textsf{num}.(\textsf{false},(0,x))\ \textsf{in} \\
-\textsf{val}\ radius=\lambda
-f:\textsf{bool}\times(\textsf{num}\times(\textsf{num}\times\textsf{num})).
-\textsf{if}\ f.1\ f.2.1\ f.2.2.2\ \textsf{in} \\
-(radius\ (Apple\ 5))+(radius\ (Banana\ (6,2)))
+$
+\begin{array}{@{}l}
+  \ebind{\code{Apple}}{\efunt{\cx}{\tnum}{(0,(\cx,(0,0)))}}{\\
+  \ebind{\code{Banana}}{\efunt{\cx}{(\tnum\times\tnum)}{(1,(0,\cx))}}{\\
+  \ldots}}
 \end{array}
-\]
+$
 
-Basic concepts in TFAE can mimic algebraic data types. Adding direct support of
-algebraic data types to TFAE does seem unnecessary.
+$\code{Apple}$ is a function that takes an integer as an argument and returns an
+apple whose radius is the given integer. Similarly, $\code{Banana}$ is a
+function that takes a pair of integers as an argument and returns a banana whose
+size is represented by the given pair. We can now easily create fruit values
+with $\code{Apple}$ and $\code{Banana}$.
 
-However, there are some inconvenience. $(0,0)$, which is a pair for the size
-of a banana, has to be constructed even when an apple value is defined.
-Similarly, a banana value requires a fake size of an apple. They adds
-unessential complexity and computation to code. On the other hand, code written
-in Scala is much more readable due to the direct support of algebraic data types
-in Scala.
+$
+\begin{array}{@{}l}
+  \ebind{\code{apple}}{\code{Apple}\ 5}{\\
+  \ebind{\code{banana}}{\code{Banana}\ (6,2)}{\\
+  \ldots}}
+\end{array}
+$
 
-A program using multiple algebraic data types introduces another problem. In
-practice, it is quite common the use multiple algebraic data types in a single
-program. The type of a fruit is \(\textsf{bool}\times(\textsf{num}\times(\textsf{
-num}\times\textsf{num}))\). The same type may represent other values as well. For
-example, the type of an electronic product can also be
-\(\textsf{bool}\times(\textsf{
-num}\times(\textsf{num}\times\textsf{num}))\). In this case, the type system allows a
-function intended to take a fruit to take, nevertheless, an electronic product
-as an argument. It does not cause a type error at run time but will show a
-behavior that the programmers have not expected. On the other hand, \code{Fruit}
-and
-\code{Electronics} are different types in Scala, and type checking thus desirably
-fails. The direct support of algebraic data types allows it.
+In Scala, a typical way to use a value of an ADT is pattern matching. For
+instance, consider a function that computes the radius of a given fruit.
+The function can be implemented like below.
 
-Furthermore, algebraic data types in most languages can be recursive. The
-following implements lists of integers in Scala:
+\begin{verbatim}
+def radius(f: Fruit): Int = f match {
+  case Apple(r) => r
+  case Banana(r, _) => r
+}
+\end{verbatim}
+
+\plang does not have pattern matching, but we can exploit the fact the
+first value of a given pair indicates which fruit it is. We use a conditional
+expression to perform a certain operation when the fruit is an apple, i.e. the
+first value is $0$, and another opertaion when the fruit is a banana,
+i.e. the first value is nonzero. The following expression defines the
+$\code{radius}$ function:
+
+$\ebind{\code{radius}}{\efunt{\cx}{(\tnum\times(\tnum\times(\tnum\times\tnum)))}
+{\eifz{\cx\textsf{.1}}{\cx\textsf{.2.1}}{\cx\textsf{.2.2.1}}}}{\ldots}$
+
+This example shows that we can desugar ADTs and pattern matching to pairs,
+functions, and conditional expressions in \plang. The ADT of the example has
+only two variants, which have one or two parameters. ADTs can have any number of
+variants, and vairants can have any number of parameters. The same strategy can be
+used to desugar ADTs with more variants and variants with more parameters.
+
+Although nonrecursive ADTs can be desugared in \plang, there are a few flaws.
+First, desugared programs have unnecessary values. Even when we make an apple, we
+need $(0,0)$, which is a pair for the size of a banana. Similarly, a banana
+value requires the size of an apple. They add unessential complexity and
+computation to the code. Second, a single type may represent conceptually
+different types when a single program uses multiple ADTs. In practice, it is
+common to use multiple ADTs in a single program. Recall that the type of a fruit
+is $\tnum\times(\tnum\times(\tnum\times\tnum))$. The same type may represent
+other types as well. For example, the type of an electronic product can also be
+$\tnum\times(\tnum\times(\tnum\times\tnum))$. In this case, the type system
+allows a function intended to take a fruit to take an electronic product
+as an argument. It does not incur any type errors at run time but can cause
+undesirable behaviors.
+
+These flaws can be resolved by adding primitive support for ADTs to the language.
+After adding ADTs,
+programs do not require unnecessary values to construct values of ADTs.
+In addition, each ADT can be defined as a separate type, so
+conceptually different types can be correctly distinguished even when they share
+the same structure.
+
+The most critical limitation of the current desugaring strategy is the missing
+support for recursive ADTs. Consider the following Scala code:
 
 \begin{verbatim}
 sealed trait List
-case class Nil(u: Unit) extends List
+case object Nil extends List
 case class Cons(h: Int, t: List) extends List
 \end{verbatim}
 
-The class \code{Cons} defines the type \code{List} and uses the type \code{List}
-at the same
-time. It is possible only when the type \code{List} is a recursive type.
+which implements an integer list type. A list is one of the most famous
+recursive types. Look at the definition of \code{Cons}. \code{Cons} is one
+variant of \code{List}, so it defines \code{List}. At the same time, the
+definition uses \code{List} as the type of the second parameter. Thus, \code{List}
+is a recursively defined type, whose definition depends on itself.
 
-Is it possible to encode lists, just like fruits, in TFAE? You need to determine
-the type of a list at first. Consider fruits again. Since an apple value
-contains a single integer and a banana value contains a pair of two integer,
-$\textsf{bool}\times(\textsf{num}\times(\textsf{num}\times\textsf{num}))$ is the type of
-every fruit. Now, let the type of a list be $\tau$. \code{Nil} has a value of the
-type \code{Unit}; \code{Cons} has a pair of an integer and a list. Therefore, the
-type of
-a list is $\textsf{bool}\times(\textsf{unit}\times(\textsf{num}\times\tau))$. It
-implies that $\tau$ has to be equal to \(\textsf{bool}\times(\textsf{
-unit}\times(\textsf{num}\times\tau))\). However, \(\textsf{bool}\times(\textsf{
-unit}\times(\textsf{num}\times\tau))\) already contains $\tau$. It never can be
-the same as $\tau$. Alas, there is no $\tau$ satisfying the condition. In
-conclusion, TFAE cannot represent the type of a list. The same conclusion
-applies to any other recursive algebraic data types. Without direct support of
-algebraic types, use of recursive types, such as lists, is impossible.
+Can we desugar the definition of a list in \plang? For desugaring, the first
+thing to do is to determine the type of a list. Let the type of a list be
+$\tau$. Then, $\tau$ equals $(\tnum, \tau')$ for some $\tau'$. The first element is an integer that
+indicates which variant the value denotes. When the integer is $0$, the value is
+$\code{Nil}$; otherwise, the value is $\code{Cons}$. When the value is
+$\code{Nil}$, no other data is required since $\code{Nil}$ does not have any
+parameters. Thus, the second element of a type $\tau'$ is for $\code{Cons}$. Since
+$\code{Cons}$ has two parameters, an integer and a list, $\tau'$ equals
+$(\tnum,\tau)$. Then, we obtain the equation $\tau=(\tnum,(\tnum,\tau))$.
+However, as mentioned in the previous chapter, no type in \plang can be the same
+as a part of itself. Therefore, there is no such $\tau$. We can conclude that we
+cannot desugar lists in \plang. In general, recursive ADTs cannot be expressed
+in \plang.
+
+This chapter defines \lang by extending \plang\sidenote{For the rest of the
+chapter, local variable definitions and types are not parts of \plang. However,
+we may keep using them in examples.} with ADTs, each of which can be
+either nonrecursive or recursive. It allows programmers to represent ADTs
+efficiently and concisely. In addition, many interesting recursive data types
+become able to be used in programs.
 
 \section{Syntax}
 
-The following is the abstract syntax of TVFAE that differs from that of TFAE.
+First, we introduce type identifiers, which are the names of types defined by
+programmers. For example,
+\code{Fruit} of the previous example is a type identifier. Let $\embox{TId}$ be
+the set of every type identifier.
 
+\[ t \in \embox{TId} \]
+
+Metavariable $t$ ranges over type identifiers. Since $\embox{TId}$ includes only
+the names of user-defined types, $\tnum$ is not a member of $\embox{TId}$.
+
+The names of user-defined types can be used as types. For example, \code{Fruit},
+which is a type name, is used as a type in \code{def radius(f: Fruit): Int = ...}.
+Therefore, we extend the syntax of types.
+
+\[ \tau \ ::= \ \cdots\ |\  t \]
+
+where $t$ is a type that includes every value of an ADT whose name is $t$.
+
+Now, we define the syntax of expressions:
 \[
-\begin{array}{rrcl}
-\text{Type Identifier} & t & \in & \mathit{TId} \\
-\text{Expression} & e & ::= & \cdots \\
-&&|& \textsf{type}\ t=x@\tau+x@\tau\ \textsf{in}\ e \\
-&&|& e\ \textsf{match}\ x(x)\rightarrow e\ |\ x(x)\rightarrow e \\
-\text{Value} & v & ::= & \cdots \\
-&&|& x(v) \\
-&&|& \langle x\rangle \\
-\text{Type} & \tau & ::= & \cdots \\
-&&|& t \\
-\end{array}
+e \ ::= \ \cdots
+\ |\ \etdef{t}{x}{\tau}{x}{\tau}{e}
+\ |\ \ematch{e}{x}{x}{e}{x}{x}{e}
 \]
 
-$t$ is a metavariable ranges over type identifiers, which is the names of
-types defined by programmers.
+\begin{itemize}
+  \item $\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}$ is an expression that defines a new
+    type. The name of the type is $t$, and the type has two variants. The name
+    of the first variant is $x_1$, and it has a single parameter whose type is
+    $\tau_1$. Similarly, the name of the second variant is $x_2$, and it has a
+    single parameter whose type is $\tau_2$. The names of the variants function
+    as constructors in $e$. The type name $t$ can be used in $e$ as a type. In
+    addition, since types can be recursively defined, $t$ can appear also in
+    $\tau_1$ and $\tau_2$.
+  \item $\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}$ is a pattern matching
+    expression. $e$ is the target of the pattern matching. $x_1$ is the name of
+    the variant handled by the first case, and $x_2$ is the name of the variant
+    handled by the second case. In the first case, $x_3$ denotes the value held
+    by the match target, and $e_1$ determines the result. Similarly, in the
+    second case, $x_4$ denotes the value held by the match target, and $e_2$
+    determines the result.
+\end{itemize}
 
-An expression $\textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e$ defines a new
-algebraic data type. $t$ is the name of the type. A single algebraic data type
-can have two variants in TVFAE. The restriction exists to make the language
-simple. Most real-world languages allow programmers to define any number of
-variants for a single type. It is straightforward to change the language to
-allow more than two variants. $x_1$ and $x_2$ are the names of the variants.
-They must differ from each other. $\tau_1$ is the type of value contained in a
-value of the first variant. Similarly, $\tau_2$ is the type for the second
-variant. In some languages like Scala, a value of a variant can contain multiple
-values. Previously shown $Banana$ is one such example. In fact, multiple
-values can form a single value by making a tuple (or a nested pair). For this
-reason, there are no fundamental difference between supporting multiple values
-and supporting only a single value. For simplicity, TVFAE restricts each value
-of a variant to carry only one value. The scopes of the variants $x_1$ and
-$x_2$ are both the same as $e$. On the other hand, the type $t$ can be
-used not only in $e$ but also in the types used to define the variants. The
-following expressions define fruits and list:
+Note that each type can have only two variants, and each variant can have only
+one parameter. This restriction can be easily removed. For brevity, this
+chapter keeps the restriction.
 
-\[\textsf{type}\
-Fruit=Apple@\textsf{num}+Banana@(\textsf{num}\times\textsf{num})\ \textsf{in}\
-\cdots\]
+Let us see some example expressions. The following expression defines the
+\code{Fruit} type and the \code{radius} function:
 
-\[\textsf{type}\ List=Nil@\textsf{unit}+Cons@(\textsf{num}\times List)\
-\textsf{in}\ \cdots\]
+$
+\etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{(\tnum\times\tnum)}{\\
+\ebind{\code{radius}}{\efunt{\cx}{\code{Fruit}}{
+  \ematch{\cx}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cy}{\cy\textsf{.1}}
+}}{\\
+\ldots
+}}$
 
-A value $x(v)$ is a value of variant named $x$. $v$ is a valued contained
-in $x(v)$. For example, $Apple(5)$ denotes an apple whose radius is $5$.
-$Banana((6,2))$ is a banana whose height is $6$ and radius is $2$.
+The following expression defines the \code{List} type:
 
-$t$ as a type is the type of a value of an algebraic data type whose name is
-$t$. In the previous example, since both $Apple$ and $Banana$ are variants
-of $Fruit$, the types of $Apple(5)$ and $Banana((6,2))$ are $Fruit$.
+$
+\etdef{\code{List}}{\code{Nil}}{\tnum}{\code{Cons}}{(\tnum\times\code{List})}
+{\ldots}$
 
-A value $\langle x\rangle$ is the constructor of a variant named $x$. Just
-like a function, a constructor can be applied to a value. If the value of
-$e_1$ is $\langle x\rangle$ and the value of $e_2$ is $v$, then the
-value of $e_1\ e_2$ is $x(v)$. When the variable $Apple$ denotes \(\langle
-Apple\rangle\), the result of $Apple\ 5$ is $Apple(5)$. Programmers want to
-write expressions like $Apple\ 5$ to construct values of variants. Therefore,
-after a type is defined, the environment has to contain the fact that the value
-of a variable whose name is equal to the name of a variant of the type is the
-constructor of the variant. For example, the environment must know that the
-value of the variable $Apple$ is $\langle Apple\rangle$. The type of a
-constructor is a function type from the type of a value contained by a value of
-the variant to the type of an algebraic data type whom the variant belongs to.
-For example, the type of $\langle Apple\rangle$ is \(\textsf{num}\rightarrow
-Fruit\). Since $\langle Apple\rangle$ can be used as a function and takes an
-integer $n$ to produce $Apple(n)$, whose type is $Fruit$, the type is
-correct.
+Note that \code{Nil} has one parameter since every variant of \lang must have a
+parameter. \code{Nil} can have any value because the value is not used at all anyway.
 
-An expression \(e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-e_2\) uses pattern matching on $e$. The result of $e$ is the target of the
-pattern matching. Let $v$ be the result of $e$. If $v$ is a value of a
-variant named $x_1$, $e_1$ is evaluated. Suppose that $v$ equals
-$x_1(v_1)$. When $e_1$ is evaluated, a value denoted by $x_3$ is $v_1$.
-The result of the whole expression is the same as the result of $x_1$.
-Similarly, if $v$ is a value of a variant named $x_2$, $e_2$ is evaluated.
-A value denoted by $x_4$ is $v_2$ during the evaluation of $e_2$, provided
-that $v$ equals $x_2(v_2)$. In this case, the result of the whole expression
-is that of $e_2$. Now, the previously shown $radius$ function can be defined
-as the following:
+Recursive data types are typically used with recursive functions. If we add
+recursive functions of \textsf{TRFAE} to the language, we can implement the
+following \code{sum} function, which calculates the sum of every integer in a
+given list:
 
-\[\lambda f:Fruit.f\ \textsf{match}\ Apple(x)\rightarrow x\ |\
-Banana(x)\rightarrow x.2\]
-
-The order between variants can change. The following also is correct:
-
-\[\lambda f:Fruit.f\ \textsf{match}\ Banana(x)\rightarrow x.2\ |\
-Apple(x)\rightarrow x\]
+$\erect{\code{sum}}{\cx}{\code{List}}{\tnum}{
+  \ematch{\cx}{\code{Nil}}{\cy}{0}{\code{Cons}}{\cy}{
+    \cy\textsf{.1}+(\code{sum}\ \cy\textsf{.2})
+  }
+}{\ldots}$
 
 \section{Dynamic Semantics}
 
-Rules common to TFAE are omitted.
+We should introduce two new sorts of a value: a variant value and a constructor.
+
+\[ v \ ::= \ \cdots\ |\ x(v)\ |\ \langle x\rangle \]
+
+\begin{itemize}
+  \item $x(v)$ is a value of a variant named $x$. It contains one value $v$.
+    A variant value can be the target of pattern matching.
+  \item $\langle x\rangle$ is a constructor of a variant named $x$. A
+    constructor can be considered as a special kind of a function because it can
+    be applied to a value. When a constructor is applied to a value, a variant
+    value is constructed.
+\end{itemize}
+
+For example, $\code{Apple}(5)$ is an apple value whose radius is $5$, and
+$\code{Banana}((2,6))$ is a banana value whose radius is $2$ and height is $6$.
+Both $\langle\code{Apple}\rangle$ and $\langle\code{Banana}\rangle$ are
+constructors. When $\langle\code{Apple}\rangle$ is applied to $5$, the result is
+$\code{Apple}(5)$, and when $\langle\code{Banana}\rangle$ is applied to $(2,6)$,
+the result is $\code{Banana}((2,6))$.
+
+Now, let us define the dynamic semantics of the added expressions. First,
+consider an expression that defines a new type.
+
+\semanticrule{TypeDef}{
+  If
+    \evaln{\sigma[x_1\mapsto \langle x_1\rangle,x_2\mapsto \langle x_2\rangle]}
+    {e}{v}, \\
+  then
+    \evaldn{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{v}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \sigma[x_1\mapsto \langle x_1\rangle,x_2\mapsto \langle x_2\rangle]\vdash
-e\Rightarrow v }
-{ \sigma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e\Rightarrow
-v }
-\]
-
-The result of $\textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e$ equals the
-result of $e$. The constructors of the variants have to be available during
-the evaluation of $e$. For this reason, the environment used for the
-evaluation of $e$ contains that $x_1$ denotes $\langle x_1\rangle$ and
-$x_2$ denotes $\langle x_2\rangle$.
-
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow \langle x\rangle \\
-  \sigma\vdash e_2\Rightarrow v }
-{ \sigma\vdash e_1\ e_2\Rightarrow x(v) }
-\]
-
-TFAE allows only closures to occur at the function position of function
-applications. However, TVFAE additionally allows constructors, and a rule for
-such cases are thus necessary. If $e_1$ results in $\langle x_1\rangle$ and
-$e_2$ results in $v$, then $e_1\ e_2$ results in $x(v)$. The constructor
-of the variant $x$ makes values of the variant.
-
-\[
-\inferrule
-{ \sigma\vdash e\Rightarrow x_1(v') \\
-  \sigma[x_3\mapsto v']\vdash e_1\Rightarrow v }
-{ \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-e_2\Rightarrow v }
-\]
-
-During pattern matching, the target has to be computed first. Therefore, $e$
-is the first expression to be evaluated in \(e\ \textsf{match}\ x_1(x_3)\rightarrow
-e_1\ |\ x_2(x_4)\rightarrow e_2\). If the result of $e$ is $x_1(v')$, then
-$e_1$ is the next expression to be evaluated. During the evaluation of
-$e_1$, the value of $x_3$ is $v'$, and the environment therefore has to
-know that. The result of $e_1$ is the result of the whole expression.
-
-\[
-\inferrule
-{ \sigma\vdash e\Rightarrow x_2(v') \\
-  \sigma[x_4\mapsto v']\vdash e_2\Rightarrow v }
-{ \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-e_2\Rightarrow v }
-\]
-
-On the other hand, if $e$ results in $x_2(v')$, $e_2$ is evaluated. In
-this case, the environment contains a mapping from $x_4$ to $v'$.
-
-The following proof tree proves that $\textsf{type}\
-Fruit=Apple@\textsf{num}+Banana@(\textsf{num}\times\textsf{num})\ \textsf{in}\
-(Apple\ 5)\ \textsf{match}\ Apple(x)\rightarrow x\ |\ Banana(x)\rightarrow x.2$
-results in $5$.
-
-\[
-\begin{array}{rcl}
-\sigma_1&=&\lbrack Apple\mapsto\langle Apple\rangle,Banana\mapsto\langle
-Banana\rangle\rbrack \\
-\sigma_2&=&\sigma_1\lbrack x\mapsto 5\rbrack
-\end{array}
-\]
-
-\[
-\inferrule
-{ \Large
   \inferrule
-  { \huge
+  { \eval{\sigma[x_1\mapsto \langle x_1\rangle,x_2\mapsto \langle x_2\rangle]}
+    {e}{v} }
+  { \evald{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{v} }
+  \quad\textsc{[TypeDef]}
+\]
+
+The result of $\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}$ equals the
+result of $e$. The constructors of the variants have to be available during
+the evaluation of $e$. For example, if the expression defines \code{Fruit}, then
+$e$ should be able to construct values with the constructors,
+$\langle\code{Apple}\rangle$ and $\langle\code{Banana}\rangle$. Programmers want
+to use the names of the variants to denote the constructors. They want to
+write code like $\code{Apple}\ 5$ and $\code{Banana}\ (2,6)$. It shows that
+the identifier $\code{Apple}$ must denote the value $\langle\code{Apple}\rangle$ and
+that the identifier $\code{Banana}$ must denote the value
+$\langle\code{Banana}\rangle$. For this reason, the environment used for the
+evaluation of $e$ contains a mapping from $x_1$ to $\langle x_1\rangle$ and
+a mapping from $x_2$ to $\langle x_2\rangle$.
+
+The other new expression is a pattern matching expression. Like the dynamic
+semantics of a conditional expression, we define two rules: one for when the
+target is handled by the first case and the other for when the target is handled
+by the second case.
+
+\semanticrule{Match-L}{
+  If
+    \evaldn{e}{x_1(v')} and
+    \evaln{\sigma[x_3\mapsto v']}{e_1}{v}, \\
+  then
+    \evaldn{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{v}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \evald{e}{x_1(v')} \\
+    \eval{\sigma[x_3\mapsto v']}{e_1}{v} }
+  { \evald{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{v} }
+  \quad\textsc{[Match-L]}
+\]
+
+For pattern matching, the target has to be evaluated first. Therefore, $e$
+is the first expression to be evaluated. If the result of $e$ is $x_1(v')$, then
+it matches the first case. Thus, $e_1$ is the next expression to be evaluated.
+During the evaluation of $e_1$, $x_3$ denotes $v'$. Therefore, the
+environment has a mapping from $x_3$ to $v'$. The result of $e_1$ is the result
+of the whole pattern matching expression.
+
+\semanticrule{Match-R}{
+  If
+    \evaldn{e}{x_2(v')} and
+    \evaln{\sigma[x_4\mapsto v']}{e_2}{v}, \\
+  then
+    \evaldn{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{v}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \evald{e}{x_2(v')} \\
+    \eval{\sigma[x_4\mapsto v']}{e_2}{v} }
+  { \evald{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{v} }
+  \quad\textsc{[Match-R]}
+\]
+
+On the other hand, if $e$ evaluates to in $x_2(v')$, it matches the second case.
+Then, $e_2$ is evaluated under the environment that contains a mapping from
+$x_4$ to $v'$. The result of $e_2$ is the result of the whole pattern matching
+expression.
+
+In addition, we should define a new rule for function application. In \plang,
+closures are the only values that can be applied to values. However, \lang has
+constructors, which also can be applied to values. We need a rule to handle
+such cases.
+
+\semanticrule{App-Cnstr}{
+  If
+    \evaldn{e_1}{\langle x\rangle} and
+    \evaldn{e_2}{v}, \\
+  then
+    \evaldn{e_1\ e_2}{x(v)}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \evald{e_1}{\langle x\rangle} \\
+    \evald{e_2}{v} }
+  { \evald{e_1\ e_2}{x(v)} }
+  \quad\textsc{[App-Cnstr]}
+\]
+
+If $e_1$ evaluates to the constructor of a variant named $x$, the application
+expression constructs a value of the variant.
+
+\newcommand{\fruitexpr}{
+\etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{(\tnum\times\tnum)}{
+\ematch{(\code{Apple}\
+5)}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cz}{\cz\textsf{.1}}
+}}
+
+Let $e$ be $\fruitexpr$.
+The following proof tree proves that $e$ evaluates to $5$:
+
+\[
+  \inferrule
+  {
     \inferrule
     {
       \inferrule
-      { Apple\in\mathit{Domain}(\sigma_1) }
-      { \sigma_1\vdash Apple\Rightarrow\langle Apple\rangle } \\
-      \sigma_1\vdash 5\Rightarrow 5
+      {
+        \inferrule
+        { \code{Apple}\in\dom{\sigma_1} }
+        { \eval{\sigma_1}{\code{Apple}}{\langle\code{Apple}\rangle} } \\
+        \eval{\sigma_1}{5}{5}
+      }
+      { \eval{\sigma_1}{\code{Apple}\ 5}{\code{Apple}(5)} } \\
+      \inferrule
+      { \cy\in\dom{\sigma_2} }
+      { \eval{\sigma_2}{\cy}{5} }
     }
-    { \sigma_1\vdash(Apple\ 5)\Rightarrow Apple(5) } \\
-    \inferrule
-    { x\in\mathit{Domain}(\sigma_2) }
-    { \sigma_2\vdash x\Rightarrow 5 }
+    { \eval{\sigma_1}{
+        \ematch{(\code{Apple}\
+        5)}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cz}{\cz\textsf{.1}}
+      }{5} }
   }
-  { \sigma_1\vdash(Apple\ 5)\ \textsf{match}\ Apple(x)\rightarrow x\ |\
-Banana(x)\rightarrow x.2
-    \Rightarrow 5 }
-}
-{ \emptyset\vdash
-  \textsf{type}\ Fruit=Apple@\textsf{num}+Banana@(\textsf{num}\times\textsf{num})
-  \ \textsf{in}\ (Apple\ 5)\ \textsf{match}\ Apple(x)\rightarrow x\ |\
-Banana(x)\rightarrow x.2
-  \Rightarrow 5 }
+  { \evale{e}{5} }
 \]
 
-\section{Type System}
+where
 
-The definition of a type environment needs to be revised to define the type
-system of TVFAE. In TFAE, type environments store the types of variables. They
-are partial functions from identifiers to types. In TVFAE, type environments
-have more things to do. They have to store information about algebraic data
-types. The type checking process uses the information. Let $\Gamma$ be the type
-environment when $\textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e$ is
-type-checked. Adding the information of $t$ to $\Gamma$ yields
-$\Gamma[t=\{(x_1,\tau_1),(x_2,\tau_2)\}]$. The variants are elements of a set
-since the order between them is unimportant. From now on,
-$x_1@\tau_1+x_2@\tau_2$ is a notation for $\{(x_1,\tau_1),(x_2,\tau_2)\}$.
-$@$ and $+$ do not have special meaning. They are just parts of the
-notation. The domain of a type environment now needs to include $t$, which is
-a type identifier. Also, the codomain has to contain $x_1@\tau_1+x_2@\tau_2$.
-Below is the revised definition. Note that $\mathcal{P}(A)$ denotes the power set
-of $A$.
+$
+  \begin{array}{@{}r@{~}c@{~}l}
+    \sigma_1&=&[\code{Apple}\mapsto\langle\code{Apple}\rangle,\code{Banana}\mapsto\langle
+    \code{Banana}\rangle] \\
+    \sigma_2&=&\sigma_1[\cy\mapsto 5]
+  \end{array}
+$
 
-\[
-\begin{array}{rrcl}
-\text{Type Environment} & \Gamma & \in &
-\mathit{Id}\cup\mathit{TId}\xrightarrow{\text{fin}}
-\text{Type}\cup\mathcal{P}(\mathit{Id}\times\text{Type}) \\
-\end{array}
-\]
+\section{Interpreter}
 
-\subsection{Well-Formed Types}
-
-An arbitrary type identifier can be a type in TVFAE. For example, $Fruit$ is a
-type. It is true regardless of whether the type $Fruit$ has been defined
-already. Even though $Fruit$ never has been defined before, one may make a
-function $\lambda x:Fruit.x$. It does not makes sense to allow a function
-whose type is $Fruit\rightarrow Fruit$ where $Fruit$ is an unknown type.
-Such expressions are weird and can, furthermore, break the type soundness of the
-type system.
-
-When a certain type appears in an expression, the well-formedness of the type
-must be passed. The type system has to reject an expression containing an
-ill-formed type. Types that do not need to be defined in an expression are
-always well-formed. $\textsf{num}$ is such a type. Types that need to be defined
-can also be well-formed type. For example, if $Fruit$ has been defined, it is
-well-formed. In addition, types consisting of well-formed types are well-formed
-as well. For instance, $\textsf{num}\rightarrow\textsf{num}$ is well-formed. Any
-other types are ill-formed: $Fruit$ is ill-formed if it has not been defined;
-$Fruit\rightarrow Fruit$ is ill-formed if $Fruit$ is so.
-
-It is time to define well-formed types formally. The well-formed relation is a
-relation over type environments and types.
-
-\[\vdash\in\text{Type Environment}\times\text{Type}\]
-
-The type environment is required since it contains the list of defined types.
-$\Gamma\vdash \tau$ denotes that $\tau$ is well-formed under $\Gamma$.
-
-\[\Gamma\vdash\textsf{num}\]
-
-$\textsf{num}$ is always well-formed.
-
-\[
-\inferrule
-{ \Gamma\vdash\tau_1 \\
-  \Gamma\vdash\tau_2 }
-{ \Gamma\vdash\tau_1\rightarrow\tau_2 }
-\]
-
-If both $\tau_1$ and $\tau_2$ is well-formed, then
-$\tau_1\rightarrow\tau_2$ also is well-formed.
-
-\[
-\inferrule
-{ t\in\mathit{Domain}(\Gamma) }
-{ \Gamma\vdash t }
-\]
-
-If $t$ has been defined, i.e. the domain of $\Gamma$ includes $t$, then
-$t$ is well-formed.
-
-If $\Gamma\vdash\tau$ is not provable, then $\tau$ is ill-formed under
-$\Gamma$.
-
-\section{Typing Rules}
-
-Now, typing rules of TVFAE can be defined. Typing rules are rules defining the
-types of expressions among inference rules consisting a type system.
-
-\[
-\inferrule
-{
-  t\not\in\mathit{Domain}(\Gamma) \\
-  \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow
-t,x_2:\tau_2\rightarrow t] \\
-  \Gamma'\vdash e:\tau \\
-  \Gamma'\vdash \tau_1 \\
-  \Gamma'\vdash \tau_2 \\
-  \Gamma\vdash \tau }
-{ \Gamma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e:\tau }
-\]
-
-The above rule defines the type of an expression \(\textsf{type}\
-t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e\). The type $t$ must have a different
-name from existing types. Dropping this premise from the rule makes the type
-system unsound. Before the type checking of $e$, the definition of $t$ must
-be added to the type environment. In addition, since $e$ can use the
-constructors, the type environment also contains that the types of $x_1$ and
-$x_2$ respectively are $\tau_1\rightarrow t$ and $\tau_2\rightarrow t$.
-$\Gamma'$ denotes the type environment after the addition. Well-formedness of
-$\tau_1$ and $\tau_2$ has to be check. It is essential to retain the type
-soundness. Note that the well-formedness conditions use $\Gamma'$, not
-$\Gamma$. Use of $\Gamma$ prevents recursively defined types, while
-$\Gamma'$ does not. Let the type of $e$ under $\Gamma'$ be $\tau$. It is
-guaranteed that $\tau$ is well-formed under $\Gamma'$ since it is the result
-of type checking. However, $\tau$ is required to be well-formed also under
-$\Gamma$. It prevents $t$ escaping its scope. Without the condition, the
-type system is unsound. If all the premises are satisfied, the type of the whole
-expression is $\tau$.
-
-Most premises check well-formedness to maintain the type soundness. Omitting
-them gives an insight to the rule:
-
-\[
-\inferrule
-{
-  \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow
-t,x_2:\tau_2\rightarrow t] \\
-  \Gamma'\vdash e:\tau }
-{ \Gamma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e:\tau }
-\]
-
-Important premises are adding the definition and the constructors and computing
-the type of the body.
-
-\[
-\inferrule
-{ \Gamma\vdash e:t \\
-  t\in\mathit{Domain}(\Gamma) \\
-  \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \\
-  \Gamma[x_3:\tau_1]\vdash e_1:\tau \\
-  \Gamma[x_4:\tau_2]\vdash e_2:\tau }
-{ \Gamma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-e_2:\tau }
-\]
-
-The above rule defined the type of \(e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\
-x_2(x_4)\rightarrow e_2\). First, the type of $e$, which is the target, is
-computed. The type must be $t$, which is a type identifier, and it must have
-been defined. In this case, the type environment has the definition of $t$.
-The names of the variants have to equal $x_1$ and $x_2$ in the expression.
-The order need not to be the same: when the type was defined, $x_2$ may
-precede $x_1$. Since a set represents the definition, the order is not
-recorded. Finally, the types of $e_1$ and $e_2$ are computed. The type of
-$x_3$ is $\tau_1$ during the type checking of $e_1$; the type of $x_4$
-is $\tau_2$ during the type checking of $e_2$. The types must coincide. The
-common type is the type of the whole expression.
-
-One rule from TFAE needs a revision. The rule for lambda abstractions is it.
-
-\[
-\inferrule
-{ \Gamma\vdash\tau \\ \Gamma\lbrack x:\tau\rbrack\vdash e:\tau' }
-{ \Gamma\vdash \lambda x:\tau.e:\tau\rightarrow\tau' }
-\]
-
-The parameter type annotation has to be well-typed. It is necessary for the type
-soundness.
-
-One may wonder which types require well-formedness checks. In every language
-treated in the articles, only type annotations provided by programmers need
-checks. However, in some other languages, situations can be more complex.
-Fortunately, such languages are beyond the scope of the articles.
-
-The following proof tree proves that the type of $\textsf{type}\
-Fruit=Apple@\textsf{num}+Banana@(\textsf{num}\times\textsf{num})\ \textsf{in}\
-(Apple\ 5)\ \textsf{match}\ Apple(x)\rightarrow x\ |\ Banana(x)\rightarrow x.2$
-is $\textsf{num}$.
-
-\[
-\begin{array}{rcl}
-\Gamma_1&=&\lbrack
-Fruit=Apple@\textsf{num}+Banana@(\textsf{num}\times\textsf{num}),
-Apple:\textsf{num}\rightarrow Fruit,
-Banana:(\textsf{num}\times\textsf{num})\rightarrow Fruit\rbrack \\
-\Gamma_2&=&\Gamma_1\lbrack x:\textsf{num}\rbrack \\
-\Gamma_3&=&\Gamma_1\lbrack x:\textsf{num}\times\textsf{num}\rbrack
-\end{array}
-\]
-
-% \[
-% \inferrule
-% {
-%   Fruit\not\in\mathit{Domain}(\emptyset) \\
-%   \Gamma_1=\Gamma_1 \\
-%   \Gamma_1\vdash \textsf{num} \\
-%   \inferrule
-%   { \Gamma_1\vdash \textsf{num} \\ \Gamma_1\vdash \textsf{num}}
-%   { \Gamma_1\vdash \textsf{num}\times\textsf{num} } \\
-%   \emptyset\vdash \textsf{num}
-%   \\
-%   \inferrule
-%   {
-%     \inferrule
-%     {
-%       \inferrule
-%       { Apple\in\mathit{Domain}(\Gamma_1) }
-%       { \Gamma_1\vdash Apple:\textsf{num}\rightarrow Fruit } \\
-%       \Gamma_1\vdash 5:\textsf{num}
-%     }
-%     { \Gamma_1\vdash (Apple\ 5):Fruit } \\
-%     \inferrule
-%     { x\in\mathit{Domain}(\Gamma_2) }
-%     { \Gamma_2\vdash x:\textsf{num} } \\
-%     \inferrule
-%     {
-%       \inferrule
-%       { x\in\mathit{Domain}(\Gamma_3) }
-%       { \Gamma_3\vdash x:\textsf{num}\times\textsf{num} }
-%     }
-%     { \Gamma_3\vdash x.2:\textsf{num} } }\\
-%     Fruit\in\mathit{Domain}(\Gamma_1) \\
-%     \Gamma_1(Fruit)=Apple@\textsf{num}+Banana@(\textsf{num}\times\textsf{num})
-%     \\
-%   \Gamma_1\vdash (Apple\ 5)\ \textsf{match}\ Apple(x)\rightarrow x\ |\
-% Banana(x)\rightarrow x.2
-%     :\textsf{num}
-% }
-% { \emptyset\vdash
-%   \textsf{type}\ Fruit=Apple@\textsf{num}+Banana@(\textsf{num}\times\textsf{num})
-%   \ \textsf{in}\ (Apple\ 5)\ \textsf{match}\ Apple(x)\rightarrow x\ |\
-% Banana(x)\rightarrow x.2 :\textsf{num} }
-% \]
-
-\section{Implementing Type Checker}
-
-The following Scala code implements the abstract syntax of TVFAE:
+The following code implements expressions of \lang:
 
 \begin{verbatim}
 sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, t: Type, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
+...
 case class TypeDef(
   t: String, v1: String, vt1: Type,
   v2: String, vt2: Type, b: Expr
@@ -611,842 +446,743 @@ case class Match(
   e: Expr, v1: String, x1: String, e1: Expr,
   v2: String, x2: String, e2: Expr
 ) extends Expr
-
-sealed trait Type
-case object NumT extends Type
-case class ArrowT(p: Type, r: Type) extends Type
-case class IdT(t: String) extends Type
-
-def mustSame(t1: Type, t2: Type): Type =
-  if (t1 == t2) t1 else throw new Exception
 \end{verbatim}
 
-An \code{Expr} instance represent a TVFAE expression; a \code{TypeDef} instance
-represents
-an expression defining an algebraic data type; a \code{Match} instance represents
-a
-pattern matching expression; an \code{IdT} instance represents a type identifier
-as a
-type. A type identifier is a string.
+\code{TypeDef($t$, $x_1$, $\tau_1$, $x_2$, $\tau_2$, $e$)} represents
+$\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}$, and
+\code{Match($e$, $x_1$, $x_3$, $e_1$, $x_2$, $x_4$, $e_2$)} represents
+$\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}$.
 
-\begin{verbatim}
-case class TEnv(
-  vars: Map[String, Type] = Map(),
-  tbinds: Map[String, Map[String, Type]] = Map()
-) {
-  def +(x: String, t: Type): TEnv =
-    TEnv(vars + (x -> t), tbinds)
-  def +(x: String, m: Map[String, Type]): TEnv =
-    TEnv(vars, tbinds + (x -> m))
-  def contains(x: String): Boolean =
-    tbinds.contains(x)
-}
-\end{verbatim}
-
-\code{TEnv} is the type of a type environment. Type environments in TFAE can be
-represented by maps whose keys are strings and values are types in TFAE.
-However, type environments in TVFAE have to store the definitions of types in
-addition. \code{TEnv} is now defined as a case class. It has two fields:
-\code{vars} and
-\code{tbinds}. The field \code{vars}, which is a map from strings to TVFAE types,
-contains
-the types of variables; the field \code{tbinds}, which is a map from strings to
-maps,
-contains the definitions of types. Maps used as values of the map use strings as
-keys and types as values. The strings are the names of variants; the types are
-the types of values contained in values of the variants. For example,
-\code{tbinds}
-containing the $Fruit$ type is the following:
-
-\begin{verbatim}
-Map("Fruit" -> Map("Apple" -> NumT, "Banana" -> PairT(NumT, NumT)))
-\end{verbatim}
-
-For the ease of adding variables and types to type environments, the \code{TEnv}
-class has two methods named \code{+}. Adding that the type of a variable $x$ is
-$\textsf{num}$ to \code{env} can be written as the following:
-
-\begin{verbatim}
-env + ("x", NumT)
-\end{verbatim}
-
-Adding the $Fruit$ type to \code{env} can be written as the following:
-
-\begin{verbatim}
-env + ("Fruit", Map("Apple" -> NumT, "Banana" -> PairT(NumT, NumT)))
-\end{verbatim}
-
-The \code{contains} method of the \code{TEnv} class checks whether a particular
-type
-identifier is the name of a type that has been already defined. For instance,
-the following code checks whether $Fruit$ has been defined:
-
-\begin{verbatim}
-env.contains("Fruit")
-\end{verbatim}
-
-A function checking the well-formedness of a type has to be defined first. Let
-\code{validType} be the name of the function. It takes a type environment and a
-type
-as arguments. If the type is well-formed under the type environment, then the
-function returns the type. Otherwise, it throws an exception.
-
-\begin{verbatim}
-def validType(t: Type, env: TEnv): Type = t match {
-  case NumT => t
-  case ArrowT(p, r) =>
-    ArrowT(validType(p, env), validType(r, env))
-  case IdT(t) =>
-    if (env.contains(t)) IdT(t)
-    else throw new Exception
-}
-\end{verbatim}
-
-Now, it is time to revise the \code{typeCheck} function.
-
-\begin{verbatim}
- case TypeDef(t, v1, vt1, v2, vt2, b) =>
-  if (env.contains(t)) throw new Exception
-  val nenv = env +
-    (t, Map(v1 -> vt1, v2 -> vt2)) +
-    (v1, ArrowT(vt1, IdT(t))) +
-    (v2, ArrowT(vt2, IdT(t)))
-  validType(vt1, nenv)
-  validType(vt2, nenv)
-  validType(typeCheck(b, nenv), env)
-\end{verbatim}
-
-\[
-\inferrule
-{
-  t\not\in\mathit{Domain}(\Gamma) \\
-  \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow
-t,x_2:\tau_2\rightarrow t] \\
-  \Gamma'\vdash e:\tau \\
-  \Gamma'\vdash \tau_1 \\
-  \Gamma'\vdash \tau_2 \\
-  \Gamma\vdash \tau }
-{ \Gamma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e:\tau }
-\]
-
-First, the function has to check whether the name of the type already exists in
-the type environment. If it exists, then the function rejects the expression.
-Otherwise, it adds the type and the constructors to the type environment and
-checks the well-formedness of the types of the variants under the new type
-environment. Finally, it computes the type of the body expression and check the
-well-formedness of the result type under the original type environment. If the
-type is well-formed, then it is the type of the whole expression.
-
-\begin{verbatim}
-case Match(e, v1, x1, e1, v2, x2, e2) =>
-  val IdT(t) = typeCheck(e, env)
-  val tdef = env.tbinds(t)
-  mustSame(
-    typeCheck(e1, env + (x1, tdef(v1))),
-    typeCheck(e2, env + (x2, tdef(v2)))
-  )
-\end{verbatim}
-
-\[
-\inferrule
-{ \Gamma\vdash e:t \\
-  t\in\mathit{Domain}(\Gamma) \\
-  \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \\
-  \Gamma[x_3:\tau_1]\vdash e_1:\tau \\
-  \Gamma[x_4:\tau_2]\vdash e_2:\tau }
-{ \Gamma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-e_2:\tau }
-\]
-
-First, the function computes the type of the target expression. The type must be
-a type identifier. The definition of the type can be found in the type
-environment. The definition gives the type of each variant of the type. The
-function computes the types of \code{e1} and \code{e2} under the respectively
-extended
-type environments. The types must be the same, and if it is the case, the common
-type is the type of the whole expression.
-
-\begin{verbatim}
-case Fun(x, t, b) =>
-  validType(t, env)
-  ArrowT(t, typeCheck(b, env + (x, t)))
-\end{verbatim}
-
-\[
-\inferrule
-{ \Gamma\vdash\tau \\ \Gamma\lbrack x:\tau\rbrack\vdash \tau' }
-{ \Gamma\vdash \lambda x:\tau.e:\tau\rightarrow\tau' }
-\]
-
-As previously mentioned, the \code{Fun} case needs a revision, though it is not a
-new
-case. The well-formedness of the parameter type annotation needs to be checked.
-
-\begin{verbatim}
-case Id(x) => env.vars(x)
-\end{verbatim}
-
-The \code{Id} case also has a small change: a way to find the type of a variable
-has
-been changed due to the new definition of a type environment.
-
-The following is the entire code of the \code{typeCheck} function:
-
-\begin{verbatim}
-def typeCheck(e: Expr, env: TEnv): Type = e match {
-  case Num(n) => NumT
-  case Add(l, r) =>
-    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
-  case Sub(l, r) =>
-    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
-  case Id(x) => env.vars(x)
-  case Fun(x, t, b) =>
-    validType(t, env)
-    ArrowT(t, typeCheck(b, env + (x, t)))
-  case App(f, a) =>
-    val ArrowT(t1, t2) = typeCheck(f, env)
-    val t3 = typeCheck(a, env)
-    mustSame(t1, t3)
-    t2
-  case TypeDef(t, v1, vt1, v2, vt2, b) =>
-    if (env.contains(t)) throw new Exception
-    val nenv = env +
-      (t, Map(v1 -> vt1, v2 -> vt2)) +
-      (v1, ArrowT(vt1, IdT(t))) +
-      (v2, ArrowT(vt2, IdT(t)))
-    validType(vt1, nenv)
-    validType(vt2, nenv)
-    validType(typeCheck(b, nenv), env)
-  case Match(e, v1, x1, e1, v2, x2, e2) =>
-    val IdT(t) = typeCheck(e, env)
-    val tdef = env.tbinds(t)
-    mustSame(
-      typeCheck(e1, env + (x1, tdef(v1))),
-      typeCheck(e2, env + (x2, tdef(v2)))
-    )
-}
-\end{verbatim}
-
-The following computes the type of $\textsf{type}\
-Fruit=Apple@\textsf{num}+Banana@\textsf{num}\ \textsf{in}\ (Apple\ 5)\
-\textsf{match}\ Apple(x)\rightarrow x\ |\ Banana(x)\rightarrow x$ with the type
-checker.
-
-\begin{verbatim}
-// type Fruit = Apple@num+Banana@num in
-//   (Apple 5) match
-//     Apple(x) -> x |
-//     Banana(x) -> x
-typeCheck(
-  TypeDef(
-    "Fruit", "Apple", NumT, "Banana", NumT,
-    Match(
-      App(Id("Apple"), Num(5)),
-      "Apple", "x", Id("x"),
-      "Banana", "x", Id("x")
-    )
-  ), TEnv()
-)
-// num
-\end{verbatim}
-
-\section{Implementing Interpreter}
-
-The following implements values in TVFAE:
+The following code implements values of \lang:
 
 \begin{verbatim}
 sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
+...
 case class VariantV(x: String, v: Value) extends Value
 case class ConstructorV(x: String) extends Value
-
-type Env = Map[String, Value]
 \end{verbatim}
 
-A \code{VariantV} instance represents a value of a variant; a \code{ConstructorV}
-instance
-represents the constructor of a variant.
+\code{VariantV($x$, $v$)} represents $x(v)$, and
+\code{ConstructorV($x$)} represents $\langle x\rangle$.
 
 \begin{verbatim}
 case TypeDef(_, v1, _, v2, _, b) =>
   interp(b, env + (v1 -> ConstructorV(v1)) + (v2 -> ConstructorV(v2)))
 \end{verbatim}
 
-\[
-\inferrule
-{ \sigma[x_1\mapsto \langle x_1\rangle,x_2\mapsto \langle x_2\rangle]\vdash
-e\Rightarrow v }
-{ \sigma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2\ \textsf{in}\ e\Rightarrow
-v }
-\]
-
-Evaluation of an expression defining a type is evaluating the body under the
+An expression defining a type evaluates its body under the
 environment with the constructors.
 
 \begin{verbatim}
 case Match(e, v1, x1, e1, v2, x2, e2) =>
   interp(e, env) match {
-    case VariantV(\code{v1}, v) => interp(e1, env + (x1 -> v))
-    case VariantV(\code{v2}, v) => interp(e2, env + (x2 -> v))
+    case VariantV(`v1`, v) => interp(e1, env + (x1 -> v))
+    case VariantV(`v2`, v) => interp(e2, env + (x2 -> v))
   }
 \end{verbatim}
 
-\[
-\inferrule
-{ \sigma\vdash e\Rightarrow x_1(v') \\
-  \sigma[x_3\mapsto v']\vdash e_1\Rightarrow v }
-{ \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-e_2\Rightarrow v }
-\]
-
-\[
-\inferrule
-{ \sigma\vdash e\Rightarrow x_2(v') \\
-  \sigma[x_4\mapsto v']\vdash e_2\Rightarrow v }
-{ \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-e_2\Rightarrow v }
-\]
-
-To evaluate a pattern matching expression, the function evaluates the target
-expression first. If the result is a variant value and its name is the same as
-\code{v1}, then \code{e1} is evaluated under the environment with the value of
-\code{x1}. If
-the names is the same as \code{v1}, then \code{e2} is evaluated under the
-environment with
-the value of \code{x1}.
+A pattern matching expression evaluates the target expression first.
+If the result is a variant value and its name is the same as \code{v1},
+then \code{e1} is evaluated under the environment with the value of
+\code{x1}. If the names is the same as \code{v2}, then \code{e2} is
+evaluated under the environment with the value of \code{x2}.
 
 \begin{verbatim}
-case App(f, a) => interp(f, env) match {
-  case CloV(x, b, fEnv) =>
-    interp(b, fEnv + (x -> interp(a, env)))
-  case ConstructorV(x) => VariantV(x, interp(a, env))
-}
-\end{verbatim}
-
-\[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow \langle x\rangle \\
-  \sigma\vdash e_2\Rightarrow v }
-{ \sigma\vdash e_1\ e_2\Rightarrow x(v) }
-\]
-
-A function application allows a constructor to occur at the function position.
-If a constructor appears, the argument is evaluated, and the final variant value
-contains a value denoted by the argument.
-
-The following shows the entire code of the \code{interp} function:
-
-\begin{verbatim}
-def interp(e: Expr, env: Env): Value = e match {
-  case Num(n) => NumV(n)
-  case Add(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n + m)
-  case Sub(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n - m)
-  case Id(x) => env(x)
-  case Fun(x, t, b) => CloV(x, b, env)
-  case App(f, a) => interp(f, env) match {
+case App(f, a) =>
+  val fv = interp(f, env)
+  val av = interp(a, env)
+  fv match {
     case CloV(x, b, fEnv) =>
-      interp(b, fEnv + (x -> interp(a, env)))
-    case ConstructorV(x) => VariantV(x, interp(a, env))
+      interp(b, fEnv + (x -> av))
+    case ConstructorV(x) =>
+      VariantV(x, av)
   }
-  case TypeDef(_, v1, _, v2, _, b) =>
-    interp(b, env + (v1 -> ConstructorV(v1)) + (v2 -> ConstructorV(v2)))
-  case Match(e, v1, x1, e1, v2, x2, e2) =>
-    interp(e, env) match {
-      case VariantV(\code{v1}, v) => interp(e1, env + (x1 -> v))
-      case VariantV(\code{v2}, v) => interp(e2, env + (x2 -> v))
-    }
-}
-
-def run(e: Expr): Value = {
-  typeCheck(e, TEnv())
-  interp(e, Map.empty)
-}
 \end{verbatim}
 
-The following evaluates $\textsf{type}\
-Fruit=Apple@\textsf{num}+Banana@\textsf{num}\ \textsf{in}\ (Apple\ 5)\
-\textsf{match}\ Apple(x)\rightarrow x\ |\ Banana(x)\rightarrow x$ with the
-interpreter:
+Function application allows a constructor to occur at the function position.
+If a constructor appears, the result is a variant value that
+contains the value denoted by the argument.
+
+\section{Static Semantics}
+
+To define the static semantics, the definition of a type environment should be
+revised first. In \plang, type environments store the types of variables. They
+are finite partial functions from identifiers to types. In \lang, type environments
+have more things to do. They have to store the information about user-defined types.
+The type checking process uses the information. Let $\Gamma$ be the type
+environment when $\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}$ is
+type-checked. Adding the information of $t$ to $\Gamma$ yields
+$\Gamma[t:\{(x_1,\tau_1),(x_2,\tau_2)\}]$. The variants are elements of a set
+since the order between them is unimportant. We will write
+$t=x_1@\tau_1+x_2@\tau_2$ to denote $t:\{(x_1,\tau_1),(x_2,\tau_2)\}$ just for
+the sake of intuitive notation.
+The domain of a type environment now needs to include $t$, which is
+a type identifier. Also, the codomain has to contain $x_1@\tau_1+x_2@\tau_2$.
+Below is the revised definition. Note that $\mathcal{P}(A)$ denotes the power set
+of $A$.
+
+\[
+\Gamma \in
+(\embox{Id}\cup\embox{TId})\finto
+(T\cup\mathcal{P}(\embox{Id}\times T)) \\
+\]
+
+\subsection{Well-Formed Types}
+
+An arbitrary type identifier can be a type in \lang. For example, $\code{Fruit}$ is a
+type. It is true regardless of whether the type $\code{Fruit}$ is bound by a type
+definition. Programmers can write $\efunt{\cx}{\code{Fruit}}{\cx}$ without defining
+\code{Fruit}. Such a function does not make sense at all since \code{Fruit} is a
+free type identifier, whose information is missing. Expressions with free type
+identifiers are weird and useless. Furthermore, they can break the type soundness of the
+type system.
+
+To prevent free type identifiers, we introduce the notion of a well-formed type.
+A \textit{well-formed}\index{well-formed} type is a type that does not contain
+any free type identifiers. The opposite of a well-formed type is an
+\textit{ill-formed}\index{ill-formed} type, which contains a free type identifier.
+
+When a type appears in an expression, the type must be well-formed. Any
+expression that contains an ill-formed type is rejected by the type system.
+In this way, weird programs like $\efunt{\cx}{\code{Fruit}}{\cx}$ can be
+effectively prevented by type checking.
+
+Now, we defined well-formed types. The well-formedness relation is a relation
+over type environments and types because we need type information in a type
+environment to decide whether a certain type identifier is free or not.
+
+\[\vdash\subseteq\embox{TEnv}\times T\]
+
+$\wftd{\tau}$ denotes that $\tau$ is well-formed under $\Gamma$.
+
+Well-formedness rules prescribe which types are well-formed.
+
+\typerule{Wf-NumT}{
+  \wftdn{\tnum}.
+}
+
+\vspace{-1em}
+
+\[
+  \wftd{\tnum}
+  \quad\textsc{[Wf-NumT]}
+\]
+
+The first well-formedness rule states that $\tnum$ is always well-formed.
+$\tnum$ is neither a type identifier nor the name of a user-defined type. It is
+a built-in type, which always exists. Thus, $\tnum$ is well-formed under any
+type environment.
+
+\typerule{Wf-ArrowT}{
+  If
+    \wftdn{\tau_1} and
+    \wftdn{\tau_2}, \\
+  then
+    \wftdn{\tarrow{\tau_1}{\tau_2}}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \wftd{\tau_1} \\
+    \wftd{\tau_2} }
+  { \wftd{\tarrow{\tau_1}{\tau_2}} }
+  \quad\textsc{[Wf-ArrowT]}
+\]
+
+If both $\tau_1$ and $\tau_2$ is well-formed, then
+$\tarrow{\tau_1}{\tau_2}$ also is well-formed. The reason is clear: if both
+$\tau_1$ and $\tau_2$ lack free type identifiers, then $\tarrow{\tau_1}{\tau_2}$
+also does.
+
+\typerule{Wf-IdT}{
+  If $t$ in the domain of $\Gamma$,\\
+  then \wftdn{t}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { t\in\dom{\Gamma} }
+  { \wftd{t} }
+  \quad\textsc{[Wf-IdT]}
+\]
+
+If a type identifier can be found in the type environment, the type identifier is
+a well-formed type. For example, if $\efunt{\cx}{\code{Fruit}}{\cx}$ is the
+whole expression, \code{Fruit} is ill-formed since there is no \code{Fruit} in
+the type environment. However, in
+$\etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{(\tnum\times\tnum)}{
+  \efunt{\cx}{\code{Fruit}}{\cx}}$, \code{Fruit} is well-formed since the
+expression puts the definition of \code{Fruit} into the type environment.
+
+\subsection{Typing Rules}
+
+Before defining the typing rules, we need to classify newly introduced values.
+The type of a variant value is the type that defines the variant. For example,
+if $x$ is a variant of $t$, then $x(v)$ is a value of $t$. The type of a
+constructor is a function type because constructors can be applied to values.
+Each constructor takes a value of the type that is specified in the type
+definition and returns a value of the type that constructor belongs to. For
+instance, if $x$ is a variant of $t$ and $t$ defines the parameter type of $x$
+to be $\tau$, then the type of $x$ is $\tarrow{\tau}{t}$.
+
+Now, let us define the typing rules. First, consider expressions that define
+types.
+
+\typerule{Typ-TypeDef}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & $\Gamma'$ denotes
+    $\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tarrow{\tau_1}{t},x_2:\tarrow{\tau_2}{t}]$, \\
+    & \wftn{\Gamma'}{\tau_1}, \\
+    & \wftn{\Gamma'}{\tau_2}, and \\
+    & \typeofn{\Gamma'}{e}{\tau}, \\
+    then \\
+    & \typeofdn{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tarrow{\tau_1}{t},x_2:\tarrow{\tau_2}{t}] \\
+    \wft{\Gamma'}{\tau_1} \\
+    \wft{\Gamma'}{\tau_2} \\
+    \typeof{\Gamma'}{e}{\tau} }
+  { \typeofd{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
+  \quad\textsc{[Typ-TypeDef]}
+\]
+
+Rule~\textsc{Typ-TypeDef} defines the type of an expression that defines a new type.
+First, the definition of $t$ must
+be added to the type environment. In addition, since $e$ can use the
+constructors, the type environment should also contain the types of $x_1$ and
+$x_2$. $\Gamma'$ denotes the type environment after adding the type definition
+and the constructors.
+Since $\tau_1$ and $\tau_2$ are user-written type annotations, they can be
+ill-formed types. To rule out ill-formed types, the well-formedness of $\tau_1$
+and $\tau_2$ is checked. For the well-formedness checking, $\Gamma'$ is used
+instead of $\Gamma$. The use of $\Gamma'$ allows recursively defined types.
+Since $\Gamma'$ contains the definition of $t$, $\tau_1$ and $\tau_2$ can be
+well-formed even when $t$ occurs in them. Finally, $e$ is type-checked under
+$\Gamma'$. The type of $e$ is the type of the whole type-defining expression.
+Note that the type of $e$ does not need well-formedness checking since it is the
+result of type checking, not a user-written type annotation. The same principle
+can be applied to all the other typing rules in \lang.
+
+\typerule{Typ-Match}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \typeofdn{e}{t}, \\
+    & $t$ is in the domain of $\Gamma$, \\
+    & $\Gamma(t)$ equals $x_1@\tau_1+x_2@\tau_2$, \\
+    & \typeofn{\Gamma[x_3:\tau_1]}{e_1}{\tau}, and \\
+    & \typeofn{\Gamma[x_4:\tau_2]}{e_2}{\tau}, \\
+    then \\
+    & \typeofdn{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{\tau}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeofd{e}{t} \\
+    t\in\dom{\Gamma} \\
+    \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \\
+    \typeof{\Gamma[x_3:\tau_1]}{e_1}{\tau} \\
+    \typeof{\Gamma[x_4:\tau_2]}{e_2}{\tau} }
+  { \typeofd{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{\tau} }
+  \quad\textsc{[Typ-Match]}
+\]
+
+Rule~\textsc{Typ-Match} defines the type of a pattern matching expression.
+First, the type of $e$, which is the target, is computed. Since pattern matching
+in \lang can be used for only user-defined types, the type of the target must be
+$t$, which is a type identifier. In addition, its definition must be
+found in the type environment. Since $x_1$ and $x_2$ in the cases denote the names
+of variants, the names of $t$'s variants must be $x_1$ and $x_2$. Note that
+the order does not need to be the same. The pattern matching expression can place
+$x_1$ first while the type definition places $x_2$ first. The fact that the
+order does not matter is reflected in the rule by representing variant
+information as $x_1@\tau_1+x_2@\tau_2$, which actually denotes a set
+$\{(x_1,\tau_1),(x_2,\tau_2)\}$. Finally, $e_1$ and $e_2$ are type-checked.
+The type of $x_3$ is $\tau_1$ during the type checking of $e_1$, and the type of
+$x_4$ is $\tau_2$ during the type checking of $e_2$. The type of $e_1$ must be
+the same as the type of $e_2$ because an expression can have at most one type.
+It is similar to the typing rule of a conditional expression. The common type to
+$e_1$ and $e_2$ is the type of the whole pattern matching expression.
+
+In addition, one typing rule from \plang needs a revision:
+Rule~\textsc{Typ-Fun}.
+
+\typerule{Typ-Fun}{
+  If
+    \wftdn{\tau_1} and
+    \typeofn{\Gamma[x:\tau_1]}{e}{\tau_2}, \\
+  then
+    \typeofdn{\efunt{x}{\tau_1}{e}}{\tarrow{\tau_1}{\tau_2}}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \wftd{\tau_1} \\
+    \typeof{\Gamma[x:\tau_1]}{e}{\tau_2} }
+  { \typeofd{\efunt{x}{\tau_1}{e}}{\tarrow{\tau_1}{\tau_2}} }
+  \quad\textsc{[Typ-Fun]}
+\]
+
+A lambda abstraction also has a user-written type annotation, which might be
+ill-formed. To rule out ill-formed types, the well-formedness of the type
+annotation must be checked.
+
+Let $e$ be $\fruitexpr$.
+The following proof trees prove that the type of $e$ is $\tnum$:
+
+\[
+  \small
+  \inferrule
+  {
+    \inferrule
+    { \code{Apple}\in\dom{\Gamma_1} }
+    { \typeof{\Gamma_1}{\code{Apple}}{\tarrow{\tnum}{\code{Fruit}}} }
+    \\
+    \typeof{\Gamma_1}{5}{\tnum}
+  }
+  { \typeof{\Gamma_1}{\code{Apple}\ 5}{\code{Fruit}} }
+\]
+
+\[
+  \small
+  \inferrule
+  { \cy\in\dom{\Gamma_2} }
+  { \typeof{\Gamma_2}{\cy}{\tnum} }
+\]
+
+\[
+  \small
+  \inferrule
+  {
+    \inferrule
+    { \cz\in\dom{\Gamma_3} }
+    { \typeof{\Gamma_3}{\cz}{\tnum\times\tnum} }
+  }
+  { \typeof{\Gamma_3}{\cz\textsf{.1}}{\tnum} }
+\]
+
+\[
+  \small
+  \inferrule
+  {
+    \typeof{\Gamma_1}{\code{Apple}\ 5}{\code{Fruit}}
+    \\
+    \code{Fruit}\in\dom{\Gamma_1}
+    \\
+    \Gamma_1(\code{Fruit})=\code{Apple}@\tnum+\code{Banana}@(\tnum\times\tnum)
+    \\
+    \typeof{\Gamma_2}{\cy}{\tnum}
+    \\
+    \typeof{\Gamma_3}{\cz\textsf{.1}}{\tnum}
+  }
+  { \typeof{\Gamma_1}{
+      \ematch{(\code{Apple}\
+      5)}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cz}{\cz\textsf{.1}}
+    }{\tnum} }
+\]
+
+\[
+  \small
+  \inferrule
+  {
+    \Gamma_1=\Gamma_1
+    \\
+    \wft{\Gamma_1}{\tnum}
+    \\
+    \inferrule
+    {
+      \wft{\Gamma_1}{\tnum}
+      \\
+      \wft{\Gamma_1}{\tnum}
+    }
+    { \wft{\Gamma_1}{\tnum\times\tnum} }
+    \\
+    \typeof{\Gamma_1}{
+      \ematch{(\code{Apple}\
+      5)}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cz}{\cz\textsf{.1}}
+    }{\tnum}
+  }
+  { \typeofe{e}{\tnum} }
+\]
+
+where
+
+$
+\small
+\begin{array}{@{}r@{~}c@{~}l}
+  \Gamma_1&=&[\code{Fruit}=\code{Apple}@\tnum+\code{Banana}@(\tnum\times\tnum),
+  \code{Apple}:\tnum\rightarrow\code{Fruit},
+  \code{Banana}:(\tnum\times\tnum)\rightarrow\code{Fruit}]\\
+  \Gamma_2&=&\Gamma_1[\cy:\tnum] \\
+  \Gamma_3&=&\Gamma_1[\cz:\tnum\times\tnum] \\
+\end{array}
+$
+
+\section{Type Checker}
+
+First, we extend the definition of a type since \lang has a new sort of a type.
 
 \begin{verbatim}
-// type Fruit = Apple@num+Banana@num in
-//   (Apple 5) match
-//     Apple(x) -> x |
-//     Banana(x) -> x
-run(
-  TypeDef(
-    "Fruit", "Apple", NumT, "Banana", NumT,
-    Match(
-      App(Id("Apple"), Num(5)),
-      "Apple", "x", Id("x"),
-      "Banana", "x", Id("x")
-    )
-  )
-)
-// 5
+sealed trait Type
+...
+case class IdT(t: String) extends Type
 \end{verbatim}
+
+\code{IdT($t$)} represents $t$.
+
+In \lang, type environments store type definitions and the types of variables.
+Thus, they cannot be represented by simple maps any longer. Now, they are
+represented by \code{TEnv} instances, each of which contains two maps.
+
+\begin{verbatim}
+case class TEnv(
+  vars: Map[String, Type],
+  tbinds: Map[String, Map[String, Type]]
+) {
+  def add(x: String, t: Type): TEnv =
+    TEnv(vars + (x -> t), tbinds)
+
+  def add(x: String, m: Map[String, Type]): TEnv =
+    TEnv(vars, tbinds + (x -> m))
+
+  def contains(x: String): Boolean =
+    tbinds.contains(x)
+}
+\end{verbatim}
+
+\code{TEnv} has two fields: \code{vars} and \code{tbinds}.
+The field \code{vars}, which is a map from strings to \lang types, contains
+the types of variables. The field \code{tbinds}, which is a map from strings to
+maps, contains type definitions. Each map in \code{tbinds} maps strings, which
+are the names of variants, to \lang types, which are the parameter types
+of variants. For example, \code{tbinds} containing the $\code{Fruit}$ type is
+as follows:
+
+\begin{verbatim}
+Map("Fruit" -> Map("Apple" -> NumT, "Banana" -> PairT(NumT, NumT)))
+\end{verbatim}
+
+For the ease of adding type definitions and variables to type environments, the \code{TEnv}
+class has two methods named \code{add}. Adding that the type of a variable $\cx$ is
+$\tnum$ to \code{env} can be written like below.
+
+\begin{verbatim}
+env.add("x", NumT)
+\end{verbatim}
+
+Adding the $\code{Fruit}$ type to \code{env} can be written like below.
+
+\begin{verbatim}
+env.add("Fruit", Map("Apple" -> NumT, "Banana" -> PairT(NumT, NumT)))
+\end{verbatim}
+
+The \code{contains} method of the \code{TEnv} class checks whether a particular
+type identifier is a bound type identifier. For instance,
+the following code checks whether $\code{Fruit}$ is bound:
+
+\begin{verbatim}
+env.contains("Fruit")
+\end{verbatim}
+
+Now let us define a function that checks the well-formedness of a type.
+The following \code{wfType} function checkes whether a given type is well-formed
+under a given type environment:
+
+\begin{verbatim}
+def wfType(t: Type, env: TEnv): Unit = t match {
+  case NumT =>
+  case ArrowT(p, r) =>
+    wfType(p, env)
+    wfType(r, env)
+  case IdT(t) =>
+    if (!env.contains(t))
+      throw new Exception
+}
+\end{verbatim}
+
+If the type is ill-formed under the type environment, the function throws
+an exception.
+
+Now, we add the \code{TypeDef} and \code{Match} cases to the \code{typeCheck} function.
+
+\begin{verbatim}
+ case TypeDef(t, v1, vt1, v2, vt2, b) =>
+  val nenv = env
+    .add(t, Map(v1 -> vt1, v2 -> vt2))
+    .add(v1, ArrowT(vt1, IdT(t)))
+    .add(v2, ArrowT(vt2, IdT(t)))
+  wfType(vt1, nenv)
+  wfType(vt2, nenv)
+  typeCheck(b, nenv)
+\end{verbatim}
+
+First, the function adds the type definition and the constructors to the type
+environment. Then, it checks the well-formedness of the parameter types of the
+variants under the new type environment. If both are well-formed,
+it type-checks the body expression. The type of the body is the type of the
+whole type-defining expression.
+
+\begin{verbatim}
+case Match(e, v1, x1, e1, v2, x2, e2) =>
+  val IdT(t) = typeCheck(e, env)
+  val tdef = env.tbinds(t)
+  val t1 = typeCheck(e1, env.add(x1, tdef(v1)))
+  val t2 = typeCheck(e2, env.add(x2, tdef(v2)))
+  mustSame(t1, t2)
+  t1
+\end{verbatim}
+
+First, the function type-checks the target expression. The type must be
+a type identifier. The definition of the type should be found in the type
+environment. The definition gives the parameter type of each variant. The
+function type-checks \code{e1} and \code{e2} under the type environments with the
+type of \code{x1} and with the type of \code{x2}, respectively.
+The types must be the same, and if it is the case, the common
+type is the type of the whole pattern mathcing expression.
+
+\begin{verbatim}
+case Fun(x, t, b) =>
+  wfType(t, env)
+  ArrowT(t, typeCheck(b, env.add(x, t)))
+\end{verbatim}
+
+As mentioned already, the \code{Fun} case needs a revision.
+The well-formedness of the parameter type annotation needs to be checked.
+
+\begin{verbatim}
+case Id(x) => env.vars(x)
+\end{verbatim}
+
+The \code{Id} case also has a small change. Due to the new definition of a type
+environment, a way to find the type of a variable is a bit different.
+
+\section{Type Soundness of \lang}
+
+Actually, \lang is not type sound. If an expression defines multiple types of
+the same name, the expression can be well-typed and incur a run-time error at the
+same time. Consider the following expression:
+
+\vspace{0.5em}
+$\begin{array}{@{}l}
+  \etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{(\tnum\times\tnum)}{( \\
+  \ \ \ \ (\efunt{\cf}{\tarrow{\code{Fruit}}{\tnum}}{ \\
+  \ \ \ \ \ \ \ \ \etdef{\code{Fruit}}{\code{Cherry}}{\tnum}{\code{Durian}}{(\tnum\times\tnum)}{ \\
+  \ \ \ \ \ \ \ \ \cf\ (\code{Cherry}\ 1)} \\
+  \ \ \ \ })\ (\efunt{\cx}{\code{Fruit}}{\ematch{\cx}{ \\
+  \ \ \ \ \ \ \ \ \code{Apple}}{\cy}{\cy}{ \\
+  \ \ \ \ \ \ \ \ \code{Banana}}{\cz}{\cz\textsf{.1}}} \\
+  \ \ \ \ ) \\
+  )}
+\end{array}$
+\vspace{0.5em}
+
+The expression defines \code{Fruit} twice in a nested manner. The outer
+\code{Fruit} has \code{Apple} and \code{Banana} as variants, and the inner
+\code{Fruit} has \code{Cherry} and \code{Durian} as variants. The expression
+applies a function of $\tarrow{(\tarrow{\code{Fruit}}{\tnum})}{\tnum}$ to a value
+of ${\tarrow{\code{Fruit}}{\tnum}}$, so it is well-typed. However, the
+expressions causes a run-time error. The function of
+$\tarrow{(\tarrow{\code{Fruit}}{\tnum})}{\tnum}$ applies a given function to a
+value of the \code{Cherry} variant because \code{Fruit} has \code{Cherry} and
+\code{Durian} inside the function. However, the inner definition of
+\code{Fruit} is unavailable outside the function, so the argument given to the
+function is a function that expects a value of \code{Apple} or \code{Banana}.
+Thus, at run time, the pattern matching fails and incurs a run-time error.
+
+The reason of broken type soundness is that the language allows multiple different
+types of the same name, while its type checking depends solely on the names of
+types to distinguish different types. Two different types may incorrectly
+considered as the same type when they have the same name.
+
+There are multiple ways to fix the problem. The first solution is to prohibit
+local type definitions. Every type definition should be at top level, just like
+functions in \textsf{F1VAE}. Then, types cannot be nested, and every type must
+have a different name from each other. Since there cannot be different types of
+the same name, the problem is resolved.
+
+The second solution is to prevent interaction between different types of the
+same name. It can be achieved by changing Rule~\textsc{Typ-TypeDef} like below.
+
+\typerule{Typ-TypeDef'}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & $t$ is not in the domain of $\Gamma$, \\
+    & $\Gamma'$ denotes
+    $\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tarrow{\tau_1}{t},x_2:\tarrow{\tau_2}{t}]$, \\
+    & \wftn{\Gamma'}{\tau_1}, \\
+    & \wftn{\Gamma'}{\tau_2}, \\
+    & \typeofn{\Gamma'}{e}{\tau}, and \\
+    & \wftn{\Gamma}{\tau}, \\
+    then \\
+    & \typeofdn{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau}.
+  \end{tabular}
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  {
+    t\not\in\dom{\Gamma} \\
+    \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tarrow{\tau_1}{t},x_2:\tarrow{\tau_2}{t}] \\
+    \wft{\Gamma'}{\tau_1} \\
+    \wft{\Gamma'}{\tau_2} \\
+    \typeof{\Gamma'}{e}{\tau} \\
+    \wft{\Gamma}{\tau} }
+  { \typeofd{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
+  \quad\textsc{[Typ-TypeDef']}
+\]
+
+The rule has two new premises:
+\begin{itemize}
+  \item $t\not\in\dom{\Gamma}$
+  \item $\wft{\Gamma}{\tau}$
+\end{itemize}
+The first one prevents nested types from having the same name. The second one
+prevents each locally defined types from escaping its scope. In this way, we can
+effectively solve the issue. A program still can have different types of the
+same name, but different types of the same name cannot meet each other,
+i.e. they cannot be used in the same place.
+
+The third solution is to rename types before type checking in order to remove
+any duplication in type names. Since the bound-bind relation between identifiers
+can be easily determined with simple syntactic checking, it is possible to
+rename types without changing the semantics of a given program. For instance,
+the above example becomes the following expression after the renaming:
+
+\vspace{0.5em}
+$\begin{array}{@{}l}
+  \etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{(\tnum\times\tnum)}{( \\
+  \ \ \ \ (\efunt{\cf}{\tarrow{\code{Fruit}}{\tnum}}{ \\
+  \ \ \ \ \ \ \ \ \etdef{\code{Fruit1}}{\code{Cherry}}{\tnum}{\code{Durian}}{(\tnum\times\tnum)}{ \\
+  \ \ \ \ \ \ \ \ \cf\ (\code{Cherry}\ 1)} \\
+  \ \ \ \ })\ (\efunt{\cx}{\code{Fruit}}{\ematch{\cx}{ \\
+  \ \ \ \ \ \ \ \ \code{Apple}}{\cy}{\cy}{ \\
+  \ \ \ \ \ \ \ \ \code{Banana}}{\cz}{\cz\textsf{.1}}} \\
+  \ \ \ \ ) \\
+  )}
+\end{array}$
+\vspace{0.5em}
+
+This expression is certainly ill-typed because $\code{Cherry}\ 1$ is a value of
+\code{Fruit1}, while $\cf$, which is applied to $\code{Cherry}\ 1$, is a
+function that expects a value of \code{Fruit}.
+This solution is desirable in the sense that it does not need any change in the
+language. It only requires one additional step of transformation, which can be
+easily implemented. On the other hand, the first solution changes the language
+at syntax level, and the second solution changes the static semantics of the
+language.
 
 \section{Exercises}
 
 \begin{enumerate}
-\item What are the evaluation results of the following?
-If it is an error, describe where the error occurs:
+\item What does each the following expressions evaluate to?
+If it is a run-time error, describe where the error occurs.
 
-\begin{itemize}
-  \item[a)] %{\bf(3pt)}
-{
-\begin{verbatim}
-{withtype {fruit {apple  bool}
-                 {banana num}}
-  {{withtype {animal {apple (num -> num)}
-                     {banana bool}}
-     {fun {x: fruit}
-          {cases fruit x
-            {apple  {b} b}
-            {banana {n} {- 8 n}}}}}
-   {banana true}}}
-\end{verbatim}
-}
+\begin{enumerate}
+  \item
+    $\small\etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{\tnum}{\\
+     \etdef{\code{Animal}}{\code{Apple}}{(\tarrow{\tnum}{\tnum})}{\code{Banana}}{(\tarrow{\tnum}{\tnum})}{\\
+     (\efunt{\cx}{\code{Fruit}}{
+       \ematch{\cx}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cy}{\cy}
+     })\ (\code{Banana}\ 10)
+     }}
+    $
 
-  \item[b)] %{\bf(2pt)}
-{
-\begin{verbatim}
-{withtype {fruit {apple  bool}
-                 {banana num}}
-  {{withtype {fruit {apple (num -> num)}
-                    {banana bool}}
-     {fun {x: fruit}
-          {cases fruit x
-            {apple  {f} {f 97}}
-            {banana {b} {not b}}}}}
-   {banana true}}}
-\end{verbatim}
-}
-\end{itemize}
+  \item
+    $\small\etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{\tnum}{\\
+     \etdef{\code{Fruit}}{\code{Apple}}{(\tarrow{\tnum}{\tnum})}{\code{Banana}}{(\tarrow{\tnum}{\tnum})}{\\
+     (\efunt{\cx}{\code{Fruit}}{
+       \ematch{\cx}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cy}{\cy}
+     })\ (\code{Banana}\ 10)
+     }}
+    $
+\end{enumerate}
 
+\item Consider the following expression:
 
-\item Given the following grammar:
+$
+    \begin{array}{@{}l}
+      \etdef{\code{Fruit}}{\code{Apple}}{\tnum}{\code{Banana}}{\tnum}{\\
+      (\etdef{\code{Color}}{\code{Apple}}{\tnum}{\code{Banana}}{\tnum}{\\
+      \efunt{\cx}{\code{Fruit}}{
+        \ematch{\cx}
+        {\\ \ \ \ \ \code{Apple}}{\cy}{\code{Apple}\ (\cy+1)}
+        {\\ \ \ \ \ \code{Banana}}{\cy}{\code{Banana}\ (\cy+1)}
+      }\\
+      )\ (\code{Banana}\ 10)
+      }}
+    \end{array}
+$
+
+What is the result of type-checking the expression?
+If the result is \code{Fruit}, explain why in detail.
+Otherwise, revise the typing rules to make it \code{Fruit}.
+
+\item This exercise extends \lang to have
+  \begin{itemize}
+      \item functions with multiple parameters
+      \item types with more than two variants
+      \item variants with multiple parameters
+  \end{itemize}
 \[
-\begin{array}{rll}
-e ::= & \ldots\\
-%\mid& \verb+{fun {+x:\tau\verb+} +e\verb+}+\\
-%\mid& \verb+{+e\ e\verb+}+\\
-\mid& \verb+{throw}+\\
-\mid& \verb+{try +e\verb+ catch +e\verb+}+\\
-\mid& \verb+{withtype {+t\ \verb+{+x\ \tau\verb+} +\verb+{+x\ \tau\verb+}} +e\verb+}+\\
-\mid& \verb+{cases +t\ e\ \verb+{+x\ \verb+{+x\verb+} + e\verb+} {+x\ \verb+{+x\ \verb+}+\ e\verb+}}+\\
-\tau ::= &\ldots \\
-%\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
-\mid&t\\
-\mid&\verb+anyT+
-\end{array}
+  \begin{array}{@{}r@{~~}r@{~~}l}
+    e & ::= & \cdots \\
+    &|& \efun{(x{:}\tau,\ldots,x{:}\tau)}{e} \\
+    &|& e(e,\ldots,e) \\
+    &|& \textsf{type}\ t=x@(\tau,\ldots,\tau)+\ldots+x@(\tau,\ldots,\tau)\ \textsf{in}\ e \\
+    &|& e\ \textsf{match}\ x(x,\ldots,x)\rightarrow e,\ldots,x(x,\ldots,x)\rightarrow e \\
+    \tau & ::= & \cdots \\
+    &|& \tarrow{(\tau,\ldots,\tau)}{\tau}
+  \end{array}
 \]
 
-\begin{itemize}
-\item[a)]  Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
-\item[b)] Write the typing rules for the expressions.
-\item[c)] Draw the type derivation of the following expression:
+\begin{enumerate}
+  \item Write the well-formedness rule for the added type.
+  \item Write the typing rules for the added expressions.
+  \item Draw the type derivation of the following expression:
 
-{
-\begin{verbatim}
-{withtype {fruit {apple num} {banana (bool -> num)}}
-          {cases fruit {banana {fun {x:num} 3}}
-             {apple  {n} n}
-             {banana {f} {f true}}}}
-\end{verbatim}
-}
+    $
+    \begin{array}{@{}l}
+      \textsf{type}\ \code{Fruit}=
+      \code{Apple}@()+
+      \code{Banana}@(\tarrow{\code{Fruit}}{\tnum},\code{Fruit})+
+      \code{Cherry}@(\tnum)\ \textsf{in} \\
+      \code{Apple}()\ \textsf{match} \\
+      \ \ \ \ \code{Apple}()\rightarrow 42,\\
+      \ \ \ \ \code{Banana}(\cf,\cx)\rightarrow \cf(\cx),\\
+      \ \ \ \ \code{Cherry}(\cx)\rightarrow \cx
+    \end{array}
+    $
+\end{enumerate}
 
-\end{itemize}
-
-\item Given the following grammar:
+\item Suppose that Rule~\textsc{Typ-TypeDef} has been changed as the following:
 \[
-\begin{array}{rlrl}
-e ::= & n&\tau ::=&\verb+num+\\
-\mid& b&\mid&\verb+bool+\\
-\mid& x&\mid&t\\
-\mid& \verb+{fun {+x:\tau\verb+} +e\verb+}+&\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
-\mid& \verb+{+e\ e\verb+}+\\
-\mid& \verb+{throw}+\\
-\mid& \verb+{try +e\verb+ catch +e\verb+}+\\
-\mid& \verb+{withtype {+t\ \verb+{+x\ \tau\verb+} +\verb+{+x\ \tau\verb+}} +e\verb+}+\\
-\mid& \verb+{cases +t\ e\ \verb+{+x\ \verb+{+x\verb+} + e\verb+} {+x\ \verb+{+x\ \verb+}+\ e\verb+}}+
-\end{array}
-\]
-
-\begin{itemize}
-\item[a)]  Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
-Define the grammar for values.  Do not extend the syntax of expressions and types.
-
-\item[b)] Write the typing rules of the form \fbox{$\Gamma\vdash e : \tau$}
-for the expressions.
-
-\item[c)] Draw the type derivation of the following expression.
-Write every piece in the type derivation even in the presence of any type error.
-
-{
-\begin{verbatim}
-{withtype {fruit {apple num} {banana (bool -> num)}}
-          {cases fruit {banana {fun {x:bool} 3}}
-             {apple  {n} {throw}}
-             {banana {f} {f true}}}}
-\end{verbatim}
-}
-
-\item[d)] Draw the type derivation of the following expression.
-Write every piece in the type derivation even in the presence of any type error.
-
-{
-\begin{verbatim}
-{{try {true 249} catch {fun {x: animal} false}} 47}
-\end{verbatim}
-}
-\end{itemize}
-
-\item Given the following grammar:
-\[
-\begin{array}{rll}
-e ::= & \ldots\\
-\mid& \verb+{fun {+(x:\tau)^*\verb+} +e\verb+}+\\
-\mid& \verb+{+e\ e^*\verb+}+\\
-\mid& \verb+{withtype {+t\ (\verb+{+x\ \tau^*\verb!}!)^+\verb+}+\ e\verb+}+\\
-\mid& \verb+{cases +t\ e\ (\verb+{+x\ \verb+{+x^*\verb+} + e\verb+}+)^+\verb+}+\\
-\tau ::= &\mtt{num} \\
-\mid&\verb+(+\tau^*\verb+ -> +\tau\verb+)+\\
-\mid&t
-\end{array}
-\]
-
-\begin{itemize}
-\item[a)] Write the typing rules for the expressions and type validity rules for the types
-by extending the semantics discussed in the course.
-
-\item[b)] Consider the following expression:
-
-{
-\begin{verbatim}
-{withtype {fruit {apple num} {banana num}}
-          {{withtype {color {apple num} {banana num}}
-                     {fun {x : fruit}
-                          {cases fruit x
-                            {apple  {a} {apple  {+ a 1}}}
-                            {banana {b} {banana {+ b 1}}}}}}
-           {apple 42}}}
-\end{verbatim}
-}
-
-What is the result of type checking the expression?
-
-\item[c)] If the result is \mtt{fruit}, explain why in detail.
-Otherwise, revise the typing rules to make it \mtt{fruit}.
-
-\item[d)] Draw the type derivation of the following expression:
-\end{itemize}
-
-{
-\begin{verbatim}
-{withtype {fruit {apple} {banana (fruit->num) fruit} {orange num}}
-          {cases fruit {apple}
-            {apple  {}  42}
-            {banana {f a} {f a}}
-            {orange {n} n}}}
-\end{verbatim}
-}
-
-\item The following example shows that TVRCFAE has a type soundness bug:
-{
-\begin{verbatim}
-{{withtype {foo {a num} {b num}}
-           {fun {x : foo} {cases foo x
-                                 {a {n} {+ n 3}}
-                                 {b {n} {+ n 4}}}}}
- {withtype {foo {c (num -> num)} {d num}}
-           {c {fun {y : num} y}}}}
-\end{verbatim}
-}
-
-\begin{itemize}
-\item[a)] Explain how the example shows the type soundness bug in detail.
-
-\item[b)] When there is a type soundness bug in a language, how can one fix the bug?
-\end{itemize}
-
-\item Consider the following language:
-\[
-\begin{array}{rl@{\hskip0pt}rllr@{\hskip3pt}l}
-e::= & n & v::= & n &\quad& n\in & \mathbb{Z} \\
-\mid& x &\mid&\langle\lambda x.e,\sigma\rangle && x\in & \mathit{Id} \\
-\mid& \verb+{fun {+x\verb+:+\tau\verb+} +e\verb+}+ &\mid&\verb+constructorV(+x\verb+)+ && v\in & \mathit{Val} \\
-\mid& \verb+{+e\verb+ +e\verb+}+ &\mid&\verb+variantV(+x\verb+,+v\verb+)+ &&t\in&\mathit{TId} \\
-\mid& \verb+{withtype {+t\verb+ {+x\ \tau\verb+} {+x\ \tau\verb+}} +e\verb+}+
-&\tau::=& \verb+num+ &&\tau\in&\mathit{Type} \\
-\mid& \verb+{cases +t\verb+ +e\verb+ {+x\verb+ {+x\verb+} +e\verb+} {+x\verb+ {+x\verb+} +e\verb+}}+ 
-&\mid&\tau\rightarrow\tau && \sigma\in & \mathit{Id}\rightarrow\mathit{Val} \\
-&&\mid&t\\
-\Gamma\in & \mathit{Id}\cup\mathit{TId}\rightarrow\mathit{Val}\cup(\mathit{Id}\times\mathit{Type}\times\mathit{Id}\times\mathit{Type})
-\end{array}
-\]
-
-with the following operational semantics and typing rules:
-\[
-\begin{array}{c}
-\newinfrule
-{ \sigma[x_1\mapsto\code{constructorV(}x_1\code{)},x_2\mapsto\code{constructorV(}x_2\code{)}]
-\vdash e\Rightarrow v }
-{ \sigma\vdash
-\code{\{withtype \{}t\code{ \{}x_1\ \tau_1\code{\} \{}x_2\ \tau_2\code{\}\} }e\code{\}}
-\Rightarrow v }
-\\[20pt]
-\newinfrule
-{ \sigma\vdash e\Rightarrow\code{variantV(}x_1,v'\code{)} \rulesep
-  \sigma[x_3\mapsto v']\vdash e_1\Rightarrow v }
-{ \sigma\vdash
-\code{\{cases } t\code{ }e\code{ \{}x_1\code{ \{}x_3\code{\} }e_1\code{\} \{}
-x_2\code{ \{}x_4\code{\} }e_2\code{\}\}}
-\Rightarrow v }
-\\[20pt]
-\newinfrule
-{ \sigma\vdash e\Rightarrow\code{variantV(}x_2,v'\code{)} \rulesep
-  \sigma[x_4\mapsto v']\vdash e_2\Rightarrow v }
-{ \sigma\vdash
-\code{\{cases } t\code{ }e\code{ \{}x_1\code{ \{}x_3\code{\} }e_1\code{\} \{}
-x_2\code{ \{}x_4\code{\} }e_2\code{\}\}}
-\Rightarrow v }
-\\[20pt]
-\newinfrule
-{ \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow t,x_2:\tau_2\rightarrow t]
-  \rulesep t\not\in\mbox{Domain}(\Gamma) \rulesep \Gamma'\vdash\tau_1 \rulesep \Gamma'\vdash\tau_2
-  \rulesep \Gamma'\vdash e:\tau \rulesep \Gamma\vdash\tau }
-{ \Gamma\vdash
-\code{\{withtype \{}t\code{ \{}x_1\ \tau_1\code{\} \{}x_2\ \tau_2\code{\}\} }e\code{\}}
-:\tau }
-\\[20pt]
-\newinfrule
-{ t\in\mbox{Domain}(\Gamma) \rulesep \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \rulesep \typed{e}{t} \rulesep
-  \Gamma[x_3:\tau_1]\vdash e_1:\tau \rulesep \Gamma[x_4:\tau_2]\vdash e_2:\tau }
-{ \Gamma\vdash
-\code{\{cases } t\code{ }e\code{ \{}x_1\code{ \{}x_3\code{\} }e_1\code{\} \{}
-x_2\code{ \{}x_4\code{\} }e_2\code{\}\}}
-:\tau }
-\\[20pt]
-\end{array}
-\]
-
-\begin{itemize}
-\item[a)] Complete the following well-formedness rules
-of the form \fbox{$\Gamma\vdash{\tau}$}
-by filling the blanks:
-\end{itemize}
-
-{\Large
-\[
-\newinfrule
-{ \lblank }
-{ \Gamma\vdash{\code{num}} }
-\]
-\[
-\newinfrule
-{ \lblank }
-{ \Gamma\vdash{\tau_1\rightarrow\tau_2} }
-\]
-\[
-\newinfrule
-{ \lblank }
-{ \Gamma\vdash{t} }
-\]
-}
-\begin{itemize}
-\item[b)] Assume that the typing rule for \code{withtype} has been changed as the following:
-\[
-\newinfrule
-{ \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow t,x_2:\tau_2\rightarrow t]
-  \rulesep t\not\in\mbox{Domain}(\Gamma) \rulesep \Gamma'\vdash\tau_2
-  \rulesep \Gamma'\vdash e:\tau \rulesep \Gamma\vdash\tau }
-{ \Gamma\vdash
-\code{\{withtype \{}t\code{ \{}x_1\ \tau_1\code{\} \{}x_2\ \tau_2\code{\}\} }e\code{\}}
-:\tau }
+  \inferrule
+  {
+    \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tarrow{\tau_1}{t},x_2:\tarrow{\tau_2}{t}] \\
+    \wft{\Gamma'}{\tau_2} \\
+    \typeof{\Gamma'}{e}{\tau} }
+  { \typeofd{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
 \]
 It lacks the well-formedness check of $\tau_1$.
-\textbf{All the other rules remain the same.}
-Fill the blanks to make the expression break the type-soundness, i.e.
-the expression must be well-typed, but its evaluation results in a run-time error.
-\end{itemize}
-
-\[
-\begin{array}{l}
-\code{\{withtype \{foo \{x \sblank\} \{y num\}\} \{} \\
-~~~~\code{\{fun \{f:\sblank\}} \\
-~~~~~~~~\code{\{withtype \{\sblank \{z num\} \{w num$\rightarrow$num\}\}} \\
-~~~~~~~~~~~~\code{\{cases foo f} \\
-~~~~~~~~~~~~~~~~\code{\{x \{a\} \{cases bar a} \\
-~~~~~~~~~~~~~~~~~~~~\code{\{z \{c\} }\sblank\code{\}} \\
-~~~~~~~~~~~~~~~~~~~~\code{\{w \{d\} }\sblank\code{\}} \\
-~~~~~~~~~~~~~~~~\code{\}} \\
-~~~~~~~~~~~~~~~~\code{\{y \{b\} b\}} \\
-~~~~~~~~~~~~\code{\}} \\
-~~~~~~~~\code{\}} \\
-~~~~\code{\} \{withtype \{\sblank \{z num\} \{w num\}\}} \\
-~~~~~~~~\sblank \\
-~~~~\code{\}} \\
-\code{\}\}}
-\end{array}
-\]
-
-\begin{itemize}
-\item[c)] Explain why the above expression is not well-typed under the original type system.
-\end{itemize}
-
-\item Consider the following language:
-  \begin{itemize}
-    \item[] \textbf{Abstract syntax}
-  \[
-    \begin{array}{
-        r@{\hskip5pt}r@{\hskip5pt}l
-        r@{\hskip5pt}r@{\hskip5pt}l
-        r@{\hskip3pt}r@{\hskip3pt}l
-      }
-      e &::=& n & v &::=& n & n &\in& \mathbb{Z} \\
-      &|& x &&|& \clo{x}{e}{\sigma} & x &\in& \textit{Id} \\
-      &|& \lambda x{:}\tau.e &&|& \langle x\rangle & v &\in& \textit{Val} \\
-      &|& e\ e &&|& x(v) & t &\in& \textit{TId} \\
-      &|& \textsf{type}\ t=x@\tau+x@\tau;e & \tau &::=& \textsf{num} & \tau &\in&
-      \textit{Type}\\
-      &|& e\ \textsf{match}\ x(x)\rightarrow e\ |\ x(x)\rightarrow e &&|&
-      \tau\rightarrow\tau & e &\in& \textit{Expr} \\
-      &&&&|& t & \sigma&\in&\textit{Id}\rightarrow\textit{Val} \\
-      \multicolumn{9}{r}{
-        \Gamma \in (\textit{Id}\cup\textit{TId})\rightarrow
-        (\textit{Type}\cup(\textit{Id}\times\textit{Type}\times\textit{Id}\times\textit{Type}))
-      }
-    \end{array}
-  \]
-
-    \item[] \textbf{Operational semantics}
-\[
-  \begin{array}{cc}
-    \sigma\vdash n\Rightarrow n
-    \ \ \text{\scriptsize[O1]}
-    \qquad\qquad\qquad
-    \inferrule
-    { x\in\Dom{\sigma} }
-    { \sigma\vdash x\Rightarrow \sigma(x) }
-    \ \ \text{\scriptsize[O2]}
-    &
-    \sigma\vdash\lambda x{:}\tau.e\Rightarrow\clo{x}{e}{\sigma}
-    \ \ \text{\scriptsize[O3]}
-    \\[20pt]
-    \inferrule
-    { \sigma\vdash e_1\Rightarrow \clo{x}{e}{\sigma'} \rulesep
-      \sigma\vdash e_2\Rightarrow v_2 \rulesep
-      \sigma'[x\mapsto v_2]\vdash e\Rightarrow v }
-    { \sigma\vdash e_1\ e_2\Rightarrow v }
-    \ \ \text{\scriptsize[O4]}
-    &
-    \inferrule
-    { \sigma\vdash e_1\Rightarrow \langle x\rangle \rulesep
-      \sigma\vdash e_2\Rightarrow v }
-    { \sigma\vdash e_1\ e_2\Rightarrow x(v) }
-    \ \ \text{\scriptsize[O5]}
-    \\[20pt]
-    \multicolumn{2}{c}{
-    \inferrule
-    { \sigma[x_1\mapsto\langle x_1\rangle,x_2\mapsto\langle x_2\rangle] \vdash e\Rightarrow v }
-    { \sigma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2;e\Rightarrow v }
-    \ \ \text{\scriptsize[O6]}
-    \qquad
-    \inferrule
-    { \sigma\vdash e\Rightarrow x_1(v') \rulesep
-      \sigma[x_3\mapsto v']\vdash e_1\Rightarrow v }
-    { \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-    e_2\Rightarrow v}
-    \ \ \text{\scriptsize[O7]}
-  }
-    \\[20pt]
-    \multicolumn{2}{c}{
-    \inferrule
-    { \sigma\vdash e\Rightarrow x_2(v') \rulesep
-      \sigma[x_4\mapsto v']\vdash e_2\Rightarrow v }
-    { \sigma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-    e_2\Rightarrow v}
-    \ \ \text{\scriptsize[O8]}
-  }
-  \end{array}
-\]
-
-    \item[] \textbf{Typing rules}
-\[
-  \begin{array}{c}
-    \Gamma\vdash n:\textsf{num}
-    \ \ \text{\scriptsize[T1]}
-    \qquad
-    \inferrule
-    { x\in\Dom{\Gamma} }
-    { \Gamma\vdash x:\Gamma(x) }
-    \ \ \text{\scriptsize[T2]}
-    \qquad
-    \inferrule
-    { \Gamma[x:\tau]\vdash e:\tau' \rulesep \Gamma\vdash\tau }
-    { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
-    \ \ \text{\scriptsize[T3]}
-    \\[20pt]
-    \inferrule
-    { \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
-      \Gamma\vdash e_2:\tau }
-    { \Gamma\vdash e_1\ e_2:\tau' }
-    \ \ \text{\scriptsize[T4]}
-    \qquad
-    \inferrule
-    { \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tau_1\rightarrow t,x_2:\tau_2\rightarrow t]
-      \\ t\not\in\Dom{\Gamma} \rulesep \Gamma'\vdash\tau_2
-      \rulesep \Gamma'\vdash e:\tau \rulesep \Gamma\vdash\tau }
-    { \Gamma\vdash \textsf{type}\ t=x_1@\tau_1+x_2@\tau_2;e :\tau }
-    \ \ \text{\scriptsize[T5]}
-    \\[20pt]
-    \inferrule
-    { t\in\Dom{\Gamma} \rulesep
-      \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \rulesep
-      \Gamma\vdash e:t \rulesep
-      \Gamma[x_3:\tau_1]\vdash e_1:\tau \rulesep
-      \Gamma[x_4:\tau_2]\vdash e_2:\tau }
-    { \Gamma\vdash e\ \textsf{match}\ x_1(x_3)\rightarrow e_1\ |\ x_2(x_4)\rightarrow
-    e_2:\tau}
-    \ \ \text{\scriptsize[T6]}
-  \end{array}
-\]
-
-    \item[] \textbf{Well-formedness rules}
-\[
-  \begin{array}{c@{\hskip30pt}c@{\hskip30pt}c}
-    \Gamma\vdash\textsf{num}
-    \ \ \text{\scriptsize[W1]}
-    &
-    \inferrule
-    { \Gamma\vdash\tau\rulesep\Gamma\vdash\tau' }
-    { \Gamma\vdash\tau\rightarrow\tau' }
-    \ \ \text{\scriptsize[W2]}
-    &
-    \inferrule
-    { t\in\Dom{\Gamma} }
-    { \Gamma\vdash t}
-    \ \ \text{\scriptsize[W3]}
-  \end{array}
-\]
-  \end{itemize}
-
-\Space{1}
-The language is not type-sound.
-\begin{itemize}
-  \item[a)] Prove it by showing a counterexample to the
-type soundness, i.e. write an expression that is accepted by the type system but
-causes a run-time error. You DO NOT need to justify your answer. Just write an
-expression that is a counterexample to the type soundness.
-  \item[b)] Revise the language to be type-sound.
-\end{itemize}
+Write a well-typed expression whose evaluation results in a run-time error.
+Your expression cannot define multiple types of the same name.
 
 \end{enumerate}
