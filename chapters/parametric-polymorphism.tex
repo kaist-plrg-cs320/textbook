@@ -2,345 +2,420 @@
 \chapter{Parametric Polymorphism}
 \labch{parametric-polymorphism}
 
-This article defines TpolyFAE by adding parametric polymorphism to TFAE. It
-defines the abstract syntax, the dynamic semantics, and the type system of
-TpolyFAE and implements a type checker and an interpreter of TFAE.
+\renewcommand{\plang}{\textsf{TFAE}\xspace}
+\renewcommand{\lang}{\textsf{PTFAE}\xspace}
 
-\section{Parametric Polymorphism}
-
-A function in TFAE is more restrictive than a function in FAE. Consider
-$\lambda x.x$ in FAE. It is an identity function, which takes a value as an
+A function in \plang is more restrictive than a function in \textsf{FAE}. Consider
+$\efun{\cx}{\cx}$ in \textsf{FAE}. It is an identity function, which takes a value as an
 argument and returns the value without changing it. Any value can be an argument
-for this function. Since the body of the function do nothing with the argument,
-the evaluation of the body never causes a type error. On the other hand,
-$\lambda x:\textsf{num}.x$ in TFAE is an identity function that takes only an
+for this function. Since the body of the function does nothing with the argument,
+the evaluation of the body never causes a run-time error. On the other hand,
+$\efunt{\cx}{\tnum}{\cx}$ in \plang is an identity function that takes only an
 integer. The parameter type annotation restricts the type of an argument to be
-only $\textsf{num}$. The type system rejects a program that passes a nonintegral
-value to the function. However, the body does not use the argument. Even if
-the argument is nonintegral, a type error never happens. If the parameter type
-annotation changes, the function will be able to take a value of another type
-as an argument without changing its body. For example, \(\lambda x:\textsf{
-bool}.x\) is a well-typed identity function for Boolean values. \(\lambda
-x:\textsf{num}.x\) and $\lambda x:\textsf{bool}.x$ do the exactly same thing but
-cannot be represented by a single function just because their parameter types
-are different.
+only $\tnum$. The type system rejects a program that passes a value other than
+an integer to the function. However, since the body simply returns the argument,
+a run-time error never happens even when the argument is not an integer.
+This example shows that a single identity function can be applied to a value of
+every type in \textsf{FAE}, while a different identity function is required for
+each type in \plang.
 
-The following FAE expression does not cause a type error:
+Because of this restrictiveness, programmers have to define more functions in
+\plang than \textsf{FAE} to implement the same program. For example, the
+following \textsf{FAE} expression does not incur run-time errors:\sidenote{Suppose
+that we extends \textsf{FAE} with booleans.}
 
-\[
-\begin{array}{l}
-\textsf{let}\ f=\lambda x.x\ \textsf{in} \\
-\textsf{let}\ x=f\ 1\ \textsf{in} \\
-f\ \textsf{true}
-\end{array}
-\]
+$
+  \begin{array}{@{}l}
+    \ebind{\cf}{\efun{\cx}{\cx}}{\\
+    \ebind{\cy}{\cf\ 1}{\\
+    \cf\ \textsf{true}
+    }}
+  \end{array}
+$
 
-The TFAE type system rejects the following TFAE expression even though does
-not cause a type error:
+On the other hand, the following \plang expression is rejected by the type
+system:
 
-\[
-\begin{array}{l}
-\textsf{let}\ f=\lambda x:\textsf{num}.x\ \textsf{in} \\
-\textsf{let}\ x=f\ 1\ \textsf{in} \\
-f\ \textsf{true}
-\end{array}
-\]
+$
+  \begin{array}{@{}l}
+    \ebind{\cf}{\efunt{\cx}{\tnum}{\cx}}{\\
+    \ebind{\cy}{\cf\ 1}{\\
+    \cf\ \textsf{true}
+    }}
+  \end{array}
+$
 
-The following expression is a revised version, which is well-typed because of
-an additional function $g$.
+The expression is ill-typed because $\cf\ \textsf{true}$ on the last line
+applies a function of $\tarrow{\tnum}{\tnum}$ to a value that does not belong to
+$\tnum$. To make an equivalent and well-typed expression, we should define
+one more function like below.\sidenote{Suppose that the type of a boolean is
+\tbool.}
 
-\[
-\begin{array}{l}
-\textsf{let}\ f=\lambda x:\textsf{num}.x\ \textsf{in} \\
-\textsf{let}\ g=\lambda x:\textsf{bool}.x\ \textsf{in} \\
-\textsf{let}\ x=f\ 1\ \textsf{in} \\
-g\ \textsf{true}
-\end{array}
-\]
+$
+  \begin{array}{@{}l}
+    \ebind{\cf}{\efunt{\cx}{\tnum}{\cx}}{\\
+    \ebind{\code{g}}{\efunt{\cx}{\tbool}{\cx}}{\\
+    \ebind{\cy}{\cf\ 1}{\\
+    \code{g}\ \textsf{true}
+    }}}
+  \end{array}
+$
 
-Polymorphism resolves the problem. Polymorphism is a notion of using a single
-entity as multiple types. For example, it may allow $\lambda x.x$ to be used
-as multiple types. Multiple sorts of polymorphism exist. Parametric
-polymorphism, subtype polymorphism, and ad-hoc polymorphism are most widely
-used. This article focuses on only parametric polymorphism. The next article
-will deal with subtype polymorphism. Overloading is one form of ad-hoc
-polymorphism, and ad-hoc polymorphism is outside the scope of the course.
+Now, the expression is well-typed since \code{g}, whose type is
+$\tarrow{\code{bool}}{\code{bool}}$, is applied to a value of $\code{bool}$.
 
-Parametric polymorphism allows an entity to be instantiated as multiple types
-with parameters. Until this point, the term "parameter" has been used to
-explain functions. $x$ is the parameter of $\lambda x.x+x$. The body,
-$x+x$, is parametrized by the parameter, $x$. A function abstracts an
-expression with an expression. Consider $\lambda x.x+x$. The expression
-$1+1$ is the same as $(\lambda x.x+x)\ 1$; $2+2$ is the same as
-$(\lambda x.x+x)\ 2$; $(1+2)+(1+2)$ is the same as \((\lambda x.x+x)\
-(1+2)\). A function abstracts an expression by replacing some portion of the
-expression with the parameter of a function. By applying a function to an
-expression, multiple expressions sharing the common form can be expressed in a
-consistent way. Parts that are different in each expression can be expressed
-by an argument.
+Because of this problem, writing programs in \plang is inconvenient. Programmers
+should define multiple functions of the same functionality to convince the type
+checker that their program does not incur any run-time errors. Such functions of
+an overlapping role lead to duplicated code, which increases the code length and
+harms maintainability. When a program has plenty of functions and types, the
+amount of duplicated code will become huge.
 
-Parametric polymorphism is a notion that applies the concept of a function to
-types. A function abstracts an expression with an expression. When a function
-is applied to an expression, the result is an expression. If a language
-supports parametric polymorphism, there are type functions and type
-applications. A type function abstracts an expression with a type. When a type
-function is applied to a type, the result is an expression. Consider \(\lambda
-x:\textsf{num}.x\) and $\lambda x:\textsf{bool}.x$. The only difference is their
-parameter type annotations. Let the type annotations be replaced with a
-parameter. $\Lambda\alpha.\lambda x:\alpha.x$ can be obtained. The
-expression is a type function, which abstracts an expression with a type. (The
-article uses $\Lambda$ instead of $\lambda$ to distinguish type functions
-from "normal" functions.) A type function can be applied to a type. The
-article uses $[]$ for type applications. $e\ [\tau]$ is an expression that
-applies a type function $e$ to a type $\tau$. Therefore, \(\lambda x:\textsf{
-num}.x\) is the same as $(\Lambda\alpha.\lambda x:\alpha.x)\ [\textsf{num}]$.
-Similarly, $\lambda x:\textsf{bool}.x$ is the same as \((\Lambda\alpha.\lambda
-x:\alpha.x)\ [\textsf{bool}]\). These show type applications, which are applying
-type functions to types.
+Polymorphism can resolve the problem. \textit{Polymorphism}\index{polymorphism}
+is to use a single entity as multiple types. For example, it may allow
+$\efun{\cx}{\cx}$ to have multiple types: $\tarrow{\tnum}{\tnum}$ and
+$\tarrow{\tbool}{\tbool}$. There are three widely-used ways to
+realize polymorphism in a language: parametric polymorphism, subtype
+polymorphism, and ad-hoc polymorphism. The topic of this chapter is parametric
+polymorphism. \refch{subtype-polymorphism} introduces subtype polymorphism, and
+ad-hoc polymorphism is outside the scope of this book.
 
-Via parametric polymorphism, the previous example can be a well-typed
-expression without defining function more than once.
+To introduce parametric polymorphism, we first need to discuss what
+parametrization is. Functions are well-known examples of parametrizing entities.
+Each function parametrizes an expression with a value
+(or an expression in the case of lazy languages). Consider $\efun{\cx}{\cx+\cx}$.
+In this function, $\cx$ is the parameter. The body, $\cx+\cx$ is parametrized by $\cx$.
+This function is the most general form of adding a value to the same value. By
+applying the function, we can express any expresion that adds a value to the
+same value. For example, $1+1$ is equivalent to $(\efun{\cx}{\cx+\cx})\ 1$, and
+$42+42$ is equivalent to $(\efun{\cx}{\cx+\cx})\ 42$. A function abstracts an
+expression by replacing some portion of the expression with the parameter. By
+applying a function to values, multiple expressions can be
+expressed without repeating the common constituents. Only different parts should
+be written as an argument in each case.
 
-\[
-\begin{array}{l}
-\textsf{let}\ f=\Lambda\alpha.\lambda x:\alpha.x\ \textsf{in} \\
-\textsf{let}\ x=f\ \lbrack\textsf{num}\rbrack\ 1\ \textsf{in} \\
-f\ \lbrack\textsf{bool}\rbrack\ \textsf{true}
-\end{array}
-\]
+\textit{Parametric polymorphism}\index{parametric polymorphism}
+allows entities to be parametrized by types. It is a new form of
+parametrization, which functions do not provide. Parametric polymorphism allows
+parametrizing an expression with a type, instead of a value. To distinguish this
+new notion of parametrization from functions, we use the term \textit{type
+abstraction}\index{type abstraction}. While functions are applied to values to
+replace their parameters with real values, type abstractions are applied to
+types to replace their \textit{type parameters}\index{type parameter} with real
+types. To differentiate application of type abstractions from application of
+functions, we use the term \textit{type application}\index{type application}.
+Since type abstractions parametrize expressions, the results of type application
+are values, just like functions.
+The following table compares functions and type abstractions:
+\begin{center}
+\begin{tabular}{c|c|c}
+  & Function & Type abstraction \\\hline
+  What is parametrized? & Expression & Expression \\
+  With what? & Value & Type \\
+  Applied to what? & Value & Type \\
+  Result of application & Value & Value \\
+\end{tabular}
+\end{center}
 
-It is more complex than the FAE expression, but defines a function only once,
-not like the TFAE expression. With a type function and type applications, it
-uses a single function, $\lambda x:\alpha.x$, as a function of the \(\textsf{
-num}\rightarrow\textsf{num}\) type and a function the
-\(\textsf{bool}\rightarrow\textsf{
-bool}\) type at the same time. The example shows why the term "parametric
-polymorphism" is used: a single entity with a type parameter can be used as
-multiple types.
+Consider $\efunt{\cx}{\tnum}{\cx}$ and $\efunt{\cx}{\tbool}{\cx}$.
+The only difference is the type annotation: $\tnum$ and $\tbool$.
+We can parametrize both expressions with a type by introducing a type parameter
+$\alpha$. By replacing $\tnum$ with $\alpha$ in $\efunt{\cx}{\tnum}{\cx}$, we
+obtain $\efunt{\cx}{\alpha}{\cx}$. Similarly, by replacing $\tbool$
+with $\alpha$ in $\efunt{\cx}{\tbool}{\cx}$, we obtain
+$\efunt{\cx}{\alpha}{\cx}$. The results are exactly identical to each other.
+We can make a type abstraction that takes a type $\tau$ as a \textit{type
+argument}\index{type argument} and returns $\efunt{\cx}{\tau}{\cx}$ as a result.
+This book uses $\Lambda$ to denote type abstractions. Thus, the type abstraction
+we want is $\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}}$. The type abstraction can
+be applied to types to recover the original expressions. This book uses $[]$ to
+denote type application. Then,
+$\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}$ is equivalent to
+$\efunt{\cx}{\tnum}{\cx}$, and
+$\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tbool}$ is equivalent to
+$\efunt{\cx}{\tbool}{\cx}$.
 
-Traditionally, functional languages have featured parametric polymorphism. For
-example, OCaml and Haskell is well-known for their type systems that support
-parametric polymorphism. On the other hand, object-oriented languages have
-featured only subtype polymorphism. For instance, in case of Java, versions
-from JDK 1.0 to J2SE 1.4 lack parametric polymorphism. However, programmers in
-these days require more features for languages as their programs become more
+After adding parametric polymorphism, we can make the previous example well-typed
+while defining a function only once.
+
+$
+  \begin{array}{@{}l}
+    \ebind{\cf}{\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}}}{\\
+    \ebind{\cy}{\etapp{\cf}{\tnum}\ 1}{\\
+    \etapp{\cf}{\tbool}\ \textsf{true}
+    }}
+  \end{array}
+$
+
+It is still more complex than the \textsf{FAE} version but defines a function
+only once, unlike the \plang version.
+
+Traditionally, parametric polymorphism was supported by only functional
+languages. For example, OCaml and Haskell have been well-known for their support for
+parametric polymorphism. On the other hand, object-oriented languages
+provided only subtype polymorphism. For instance, Java lacked parametric
+polymorphism until Java 4. However, programmers in these days require languages
+to provide more advanced features because their programs become more
 complicated. For this reason, Java has been supporting parametric polymorphism
-since J2SE 5.0. Many recent languages, such as Scala, are designed to be
-multi-paradigm languages and provide both parametric and subtype polymorphism.
+since Java 5. Many recent languages, such as Scala, provide both parametric and
+subtype polymorphism. In the context of object-oriented programming, parametric
+polymorphism is often called \textit{generics}\index{generics} since it allows
+generic programming.
 
-\section{Abstract Syntax}
+This chapter defines \lang by extending \plang with parametric polymorphism.
+\lang is known as System F in the programming language community. System F was
+first discoverd by Girard in the context of logic in
+1972~\cite{girard1972interpretation}. Later, Reynolds independently discoverd
+the equivalent system in the context of computer science in
+1974~\cite{reynolds1974towards}. System F, or \lang, is the most foundatinoal
+formulation of parametric polymorphism, and its metatheory and variants are
+widely studied even in these days.
 
-The following is a portion of the abstract syntax of TpolyFAE:
+\section{Syntax}
 
-\[
-\begin{array}{rrcl}
-\text{Type Identifier} & \alpha & \in & \mathit{TId} \\
-\text{Expression} & e & ::= & \cdots \\
-&&|& \Lambda\alpha.e \\
-&&|& e\ \lbrack\tau\rbrack \\
-\text{Value} & v & ::= & \cdots \\
-&&|& \langle \Lambda\alpha.e,\sigma\rangle \\
-\text{Type} & \tau & ::= & \cdots \\
-&&|& \alpha \\
-&&|& \forall\alpha.\tau \\
-\end{array}
-\]
+First, we introduce type identifiers, like in \textsf{TVFAE}. Type identifiers
+are used as type parameters. Let $\embox{TId}$ be the set of every type identifier.
+Metavariable $\alpha$ ranges over type identifiers.
 
-Omitted parts are the same as TFAE.
+\[ \alpha \in \embox{TId} \]
 
-Metavariable $\alpha$ ranges over type identifiers. Sometimes, type
-identifiers being used as type parameters are called type variables.
+We add two sorts of an expression: type abstraction and type application.
 
-$\Lambda\alpha.e$ is a type function. Another name of a type function is a
-type abstraction. $\alpha$ is the type parameter of the function. The scope of
-$\alpha$ is $e$. Here, $\alpha$ is a binding occurrence. If $\alpha$
-appears inside $e$, it is a bound occurrence. Previously shown
-$\Lambda\alpha.\lambda x:\alpha.x$ is one example of a type function.
+\[ e\ ::=\ \cdots \ |\ \Lambda\alpha.e \ |\ e[\tau] \]
 
-$\alpha$ can be a type. In $\Lambda\alpha.\lambda x:\alpha.x$, the second
-$\alpha$ is the type of $x$. It is similar to that $t$, which is the name
-of a type, can be a type in TVFAE. The syntax does not care where type
-identifiers occur. However, like in TVFAE, every type identifier must be used
-only inside its scope. Well-formedness rules and typing rules check whether a
-type identifier exist at a valid place.
+\begin{itemize}
+  \item $\etfun{\alpha}{e}$ is a type abstraction. $\alpha$ is the type
+    parameter, and $e$ is the body. $\alpha$ in $\etfun{\alpha}{e}$
+    is a binding occurrence whose scope is $e$.
+  \item $\etapp{e}{\tau}$ is a type application expression. $e$ is denotes the type
+    abstraction applied to $\tau$.
+\end{itemize}
 
-$\langle\Lambda\alpha.e,\sigma\rangle$ is a type function value. A function
-results in a closure, which is a function value; a type function results in a
-type function value. The body of a function is evaluated when the function is
-applied to an argument, and for the evaluation, the closure stores an
-environment that is provided when the closure is constructed. Similarly, the
-body of a type function is evaluated when the type function is applied to a type
-argument, and for the evaluation, the type function values captures the
-environment. Evaluation of $\Lambda\alpha.e$ under $\sigma$ results in
-$\langle\Lambda\alpha.e,\sigma\rangle$. For example, \(\Lambda\alpha.\lambda
-x:\alpha.x\) results in \(\langle\Lambda\alpha.\lambda
-x:\alpha.x,\emptyset\rangle\) under the empty environment.
+In addition, we add two sorts of a type.
 
-$\forall\alpha.\tau$ is the type of a type function. If the type of $e$ is
-$\tau$, then the type of $\Lambda\alpha.e$ is $\forall\alpha.\tau$. For
-instance, since the type of $\lambda x:\alpha.x$ is
-$\alpha\rightarrow\alpha$, the type of $\Lambda\alpha.\lambda x:\alpha.x$ is
-$\forall\alpha.\alpha\rightarrow\alpha$. Types of the form
-$\forall\alpha.\tau$ are called universal types or *universally quantified
-types*. Universal types bind type identifiers. In $\forall\alpha.\tau$,
-$\alpha$ is a binding occurrence, and its scope is $\tau$.
+\[ \tau\ ::=\ \cdots \ |\ \alpha \ |\ \tforall{\alpha}{\tau} \]
 
-$e\ [\tau]$ is a type application. If $e$ denotes a type function, \(e\
-[\tau]\) evaluates the body of the type function under the environment captured
-by the type function. A function application adds the value of an argument to
-the environment. Environments store values, and type environments stores types.
-However, type environments do not exist at run time. Thus, a type application
-cannot add a type argument to the type environment. Instead, it uses
-a substitution. If $e$ results in $\langle\Lambda\alpha.e',\sigma\rangle$,
-evaluating $e\ [\tau]$ is the same as evaluating an expression obtained by
-substituting $\alpha$ with $\tau$ in $e'$ under $\sigma$. Consider the
-previous example again. Since $\Lambda\alpha.\lambda x:\alpha.x$ results in
-$\langle\Lambda\alpha.\lambda x:\alpha.x,\emptyset\rangle$, evaluating
-$(\Lambda\alpha.\lambda x:\alpha.x)\ [\textsf{num}]$ is the same as evaluating
-$\lambda x:\textsf{num}.x$, which is obtained by substituting $\alpha$ with
-$\textsf{num}$ in $\lambda x:\alpha.x$, under $\emptyset$. The result is
-$\langle\lambda x:\textsf{num}.x,\emptyset\rangle$.
-
-A type function is an expression whose type is a universal type, while a type
-application is an expression that uses a value of a universal type. If the type
-of $e$ is $\forall\alpha.\tau'$, then the type of $e\ [\tau]$ is a type
-obtained by substituting $\alpha$ with $\tau$ in $\tau'$. In the previous
-example, the type of $\Lambda\alpha.\lambda x:\alpha.x$ is
-$\forall\alpha.\alpha\rightarrow\alpha$. Therefore, the type of
-$(\Lambda\alpha.\lambda x:\alpha.x)\ [\textsf{num}]$ is \(\textsf{
-num}\rightarrow\textsf{num}\), which is obtained by substituting $\alpha$ with
-$\textsf{num}$ in $\alpha\rightarrow\alpha$.
+\begin{itemize}
+  \item $\alpha$ is a type identifier as a type. Like in \textsf{TVFAE}, a
+    type identifier can be used as a type.
+    For example, in $\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}}$, the second
+    $\alpha$ is the type of $\cx$.
+  \item $\tforall{\alpha}{\tau}$ is a \textit{universally quantified
+    type}\index{universally quantified type}. It is the type of a type
+    abstraction that takes a type as a type argument and returns a value of the type
+    obtained by replacing every $\alpha$ with the given type in $\tau$.
+    $\alpha$ in $\tforall{\alpha}{\tau}$ is a binding occurrence whose scope is
+    $\tau$.
+    For instance, the type of $\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}}$ is
+    $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$ since applying the type
+    abstraction to $\tnum$ results in a function of $\tarrow{\tnum}{\tnum}$ and
+    applying to $\tbool$ results in a function of $\tarrow{\tbool}{\tbool}$.
+\end{itemize}
 
 \section{Dynamic Semantics}
 
-Substitutions must be defined first. Two sorts of substitutions exist:
-substitutions on types and substitutions on expressions. Consider substitutions
-on
-types first.
+The addition of type abstractions adds a new sort of a value to the language.
 
-$\tau'[\alpha\leftarrow\tau]$ is a type obtained by substituting $\alpha$
-with $\tau$ in $\tau'$. A substitution is a function from a type, a type
-identifier, and a type to a type. Substituting $\alpha$ with $\tau$ means
-replacing every free occurrence of $\alpha$ with $\tau$. Bound occurrences
-of $\alpha$ must not be replaced.
+\[ v\ ::=\ \cdots \ |\ \tclov{\alpha}{e}{\sigma} \]
 
-The following defines substitutions on types:
+$\tclov{\alpha}{e}{\sigma}$ is a type abstraction value. It is similar to a
+closure. A closure is a function value, which contains the definition of a
+function and the environment of when the function is defined. Similarly, a type
+abstraction value contains the definition of a type abstraction and the
+environment of when the type abstraction is defined.
 
-\[
-\begin{array}{rcl}
-\textsf{num} \lbrack\alpha\leftarrow\tau\rbrack &=& \textsf{num} \\
-(\tau_1\rightarrow\tau_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
-(\tau_1
-\lbrack\alpha\leftarrow\tau\rbrack)\rightarrow(\tau_2\lbrack\alpha\leftarrow\tau\rbrack)
-\\
-\alpha \lbrack\alpha\leftarrow\tau\rbrack &=& \tau \\
-\alpha' \lbrack\alpha\leftarrow\tau\rbrack &=& \alpha'\\
-\textsf{(if } \alpha\not=\alpha'\textsf{)} \\
-(\forall\alpha.\tau') \lbrack\alpha\leftarrow\tau\rbrack &=& \forall\alpha.\tau'
-\\
-(\forall\alpha'.\tau') \lbrack\alpha\leftarrow\tau\rbrack &=&
-\forall\alpha'.(\tau'\lbrack\alpha\leftarrow\tau\rbrack) \\
-\textsf{(if } \alpha\not=\alpha'\textsf{)} \\
-\end{array}
-\]
+Now, we define the dynamic semantics of \lang. We should define the rules for
+the added expressions.
 
-Now, consider substitutions on expressions. $e[\alpha\leftarrow\tau]$ is an
-expression obtained by substituting $\alpha$ with $\tau$ in $e$. In this
-case, a substitution is a function from an expression, a type identifier and a
-type to an expression. Only free occurrences of $\alpha$ in $e$ are replaced
-with $\tau$.
+\semanticrule{TyAbs}{
+  \evaldn{\etfun{\alpha}{e}}{\tclov{\alpha}{e}{\sigma}}.
+}
 
-The following defines substitutions on expressions:
+\vspace{-1em}
 
 \[
-\begin{array}{rcl}
-n \lbrack\alpha\leftarrow\tau\rbrack &=& n \\
-(e_1+e_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
-(e_1\lbrack\alpha\leftarrow\tau\rbrack) + (e_2\lbrack\alpha\leftarrow\tau\rbrack)
-\\
-(e_1-e_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
-(e_1\lbrack\alpha\leftarrow\tau\rbrack) - (e_2\lbrack\alpha\leftarrow\tau\rbrack)
-\\
-x \lbrack\alpha\leftarrow\tau\rbrack &=& x \\
-(\lambda x:\tau'.e) \lbrack\alpha\leftarrow\tau\rbrack &=&
-\lambda
-x:(\tau'\lbrack\alpha\leftarrow\tau\rbrack).(e\lbrack\alpha\leftarrow\tau\rbrack)
-\\
-(e_1\ e_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
-(e_1\lbrack\alpha\leftarrow\tau\rbrack)\ (e_2\lbrack\alpha\leftarrow\tau\rbrack)
-\\
-(\Lambda\alpha.e)\lbrack\alpha\leftarrow\tau\rbrack &=& \Lambda\alpha.e \\
-(\Lambda\alpha'.e)\lbrack\alpha\leftarrow\tau\rbrack &=&
-\Lambda\alpha'.(e\lbrack\alpha\leftarrow\tau\rbrack)\\
-\textsf{(if } \alpha\not=\alpha'\textsf{)} \\
-(e\ \lbrack\tau'\rbrack)\lbrack\alpha\leftarrow\tau\rbrack &=&
-(e\lbrack\alpha\leftarrow\tau\rbrack)\ \lbrack
-\tau'\lbrack\alpha\leftarrow\tau\rbrack\rbrack \\
-\end{array}
+  \evald{\etfun{\alpha}{e}}{\tclov{\alpha}{e}{\sigma}}
+  \quad\textsc{[TyAbs]}
 \]
 
-Finally, we define the dynamic semantics of TpolyFAE. Consider only rules that
-are not in the type system of TFAE.
+A type abstraction evaluates to a type abstraction value. It is almost the same
+as Rule~\textsc{Fun}.
+
+\semanticrule{TyApp}{
+  \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
+    If \\
+    & \evaldn{e}{\tclov{\alpha}{e'}{\sigma'}} and \\
+    & \evaln{\sigma'}{e'[\alpha\leftarrow\tau]}{v}, \\
+    then \\
+    & \evaldn{\etapp{e}{\tau}}{v}.
+  \end{tabular}
+}
+
+\vspace{-1em}
 
 \[
-\sigma\vdash \Lambda\alpha.e\Rightarrow \langle \Lambda\alpha.e,\sigma\rangle
+  \inferrule
+  { \evald{e}{\tclov{\alpha}{e'}{\sigma'}} \\
+    \eval{\sigma'}{e'[\alpha\leftarrow\tau]}{v} }
+  { \evald{\etapp{e}{\tau}}{v} }
+  \quad\textsc{[TyApp]}
 \]
 
-A type function results in a type function value. No computation is required.
-The type function value captures the current environment.
+To evaluate a type application expression, its only subexpression is evaluated.
+The result must be a type abstraction value. $e'[\alpha\leftarrow\tau]$ denotes
+an expression obtained by substituting every free occurrence of $\alpha$ with $\tau$
+in $e'$.\sidenote{We do not discuss substitution in detail here. Interested readers can
+refer to Exercise~8 of \refch{first-class-functions}, which introduces
+substition of an identifier with a value in an expression. The same principle
+applies to substition of a type identifier with a type in an expression.}
+Thus, the rule states that every occurrence of the type parameter is replaced with
+the given type argument in the body of the type abstraction. Finally, the
+expression obtained by the substitution is evaluated under the environment held
+by the type abstraction value. Its result is the result of the whole type
+application expression.
+
+One may wonder why Rule~\textsc{TyApp} needs substitution because types do not
+have any roles at run time. We can omit substitution in the dynamic semantics of
+\lang. However, if we extend the language to support any form of dynamic type
+testing, substitution is mandatory. In addition, if we want to prove type
+soundness, we should prove that every expression of a certain type evaluates to a
+value of the same type when the evaluation terminates. This property is called
+type preservation, and evaluation will not preserve the type of an expression if
+the rule omits substitution. For these reasons, Rule~\textsc{TyApp} requires
+substitution.
+
+The following proof trees prove that
+$\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}\ 1$
+evaluates to $1$:
 
 \[
-\inferrule
-{ \sigma\vdash e\Rightarrow \langle\Lambda\alpha.e',\sigma'\rangle \\
-  \sigma'\vdash e'\lbrack\alpha\leftarrow\tau\rbrack \Rightarrow v }
-{ \sigma\vdash e\ \lbrack\tau\rbrack\Rightarrow v }
+  \inferrule
+  {
+    \evale
+    {\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}}}
+    {\tclov{\alpha}{\efunt{\cx}{\alpha}{\cx}}{\emptyset}}
+    \\
+    \evale{\efunt{\cx}{\tnum}{\cx}}{\clov{\cx}{\cx}{\emptyset}}
+  }
+  { \evale
+    {\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}}
+    {\clov{\cx}{\cx}{\emptyset}}
+  }
 \]
-
-An expression at the type function position has to be evaluated to evaluate a
-type application. The result must be a type function value. The value of the
-whole expression is the same as the value of an expression obtained by
-substituting the type parameter with the type argument in the body.
-
-The following proof tree proves that the result of \((\Lambda\alpha.\lambda
-x:\alpha.x)\ [\textsf{num}]\ 1\) is $1$.
 
 \[
 \inferrule
 {
-  {\Large\inferrule
-  {
-    \emptyset\vdash\Lambda\alpha.\lambda x:\alpha.x
-    \Rightarrow\langle\Lambda\alpha.\lambda x:\alpha.x,\emptyset\rangle \\
-    \emptyset\vdash\lambda x:\textsf{num}.x
-    \Rightarrow\langle\lambda x.x,\emptyset\rangle
-  }
-  { \emptyset\vdash
-    (\Lambda\alpha.\lambda x:\alpha.x)\ \lbrack\textsf{num}\rbrack
-    \Rightarrow\langle\lambda x.x,\emptyset\rangle
-  }} \\
-  \emptyset\vdash 1\Rightarrow 1 \\
-  {\Large\inferrule
-  { x\in\mathit{Domain}(\lbrack x\mapsto1\rbrack) }
-  { \lbrack x\mapsto1\rbrack\vdash x\Rightarrow 1 }}
+  \evale
+  {\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}}
+  {\clov{\cx}{\cx}{\emptyset}}
+  \\
+  \evale{1}{1}
+  \\
+  \inferrule
+  { \cx\in\dom{\sigma_1} }
+  { \eval{\sigma_1}{\cx}{1} }
 }
-{ \emptyset\vdash
-(\Lambda\alpha.\lambda x:\alpha.x)\ \lbrack\textsf{num}\rbrack\ 1
-\Rightarrow 1 }
+{ \evale{\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}\ 1}{1} }
 \]
 
-\section{Type System}
+where $\sigma_1=[\cx\mapsto1]$.
 
-The definition of a type environment needs to be revised. A type environment in
-TpolyFAE has to be able to store type identifiers in addition to the type of
-variables. Type identifiers do not have further information. Only their
-existence is important. The following is a new definition:
+% \[
+% \begin{array}{rcl}
+% \textsf{num} \lbrack\alpha\leftarrow\tau\rbrack &=& \textsf{num} \\
+% (\tau_1\rightarrow\tau_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
+% (\tau_1
+% \lbrack\alpha\leftarrow\tau\rbrack)\rightarrow(\tau_2\lbrack\alpha\leftarrow\tau\rbrack)
+% \\
+% \alpha \lbrack\alpha\leftarrow\tau\rbrack &=& \tau \\
+% \alpha' \lbrack\alpha\leftarrow\tau\rbrack &=& \alpha'\\
+% \textsf{(if } \alpha\not=\alpha'\textsf{)} \\
+% (\forall\alpha.\tau') \lbrack\alpha\leftarrow\tau\rbrack &=& \forall\alpha.\tau'
+% \\
+% (\forall\alpha'.\tau') \lbrack\alpha\leftarrow\tau\rbrack &=&
+% \forall\alpha'.(\tau'\lbrack\alpha\leftarrow\tau\rbrack) \\
+% \textsf{(if } \alpha\not=\alpha'\textsf{)} \\
+% \end{array}
+% \]
+
+% \[
+% \begin{array}{rcl}
+% n \lbrack\alpha\leftarrow\tau\rbrack &=& n \\
+% (e_1+e_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
+% (e_1\lbrack\alpha\leftarrow\tau\rbrack) + (e_2\lbrack\alpha\leftarrow\tau\rbrack)
+% \\
+% (e_1-e_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
+% (e_1\lbrack\alpha\leftarrow\tau\rbrack) - (e_2\lbrack\alpha\leftarrow\tau\rbrack)
+% \\
+% x \lbrack\alpha\leftarrow\tau\rbrack &=& x \\
+% (\lambda x:\tau'.e) \lbrack\alpha\leftarrow\tau\rbrack &=&
+% \lambda
+% x:(\tau'\lbrack\alpha\leftarrow\tau\rbrack).(e\lbrack\alpha\leftarrow\tau\rbrack)
+% \\
+% (e_1\ e_2) \lbrack\alpha\leftarrow\tau\rbrack &=&
+% (e_1\lbrack\alpha\leftarrow\tau\rbrack)\ (e_2\lbrack\alpha\leftarrow\tau\rbrack)
+% \\
+% (\Lambda\alpha.e)\lbrack\alpha\leftarrow\tau\rbrack &=& \Lambda\alpha.e \\
+% (\Lambda\alpha'.e)\lbrack\alpha\leftarrow\tau\rbrack &=&
+% \Lambda\alpha'.(e\lbrack\alpha\leftarrow\tau\rbrack)\\
+% \textsf{(if } \alpha\not=\alpha'\textsf{)} \\
+% (e\ \lbrack\tau'\rbrack)\lbrack\alpha\leftarrow\tau\rbrack &=&
+% (e\lbrack\alpha\leftarrow\tau\rbrack)\ \lbrack
+% \tau'\lbrack\alpha\leftarrow\tau\rbrack\rbrack \\
+% \end{array}
+% \]
+
+% \section{Interpreter}
+
+% \begin{verbatim}
+% sealed trait Expr
+% ...
+% case class TFun(a: String, b: Expr) extends Expr
+% case class TApp(f: Expr, t: Type) extends Expr
+% \end{verbatim}
+
+% Now, consider an interpreter for \lang.
+
+% \begin{verbatim}
+% sealed trait Value
+% ...
+% case class TFunV(a: String, b: Expr, e: Env) extends Value
+% \end{verbatim}
+
+% A \code{TFunV} instance represents a type function value.
+
+% \begin{verbatim}
+% case TFun(a, b) => TFunV(a, b, env)
+% \end{verbatim}
+
+% A type function results in a type function value that captures the current
+% environment.
+
+% \begin{verbatim}
+% case TApp(f, t) =>
+%   val TFunV(a, b, fEnv) = interp(f, env)
+%   interp(subst(b, a, t), fEnv)
+% \end{verbatim}
+
+% For evaluation of a type application, the type function expression is evaluated
+% first. The result must be a type function value. Obtain an expression by
+% substituting the type parameter of the type function value with the type
+% argument in the body of the type function value. Evaluate the expression under
+% the environment captured by the type function value to acquire the final result.
+
+\section{Static Semantics}
+
+Like in \textsf{TVFAE}, the definition of a type environment needs to be
+revised. Type environments should be able to store type identifiers in
+addition to the types of variables. Unlike type definitions in \textsf{TVFAE},
+type identifiers in \lang do not have any further information. However, the type
+checking procedure needs to know whether a certain type identifier is free or
+not to determine the well-formedness of types. Thus, type environments store
+type identifiers to record their existence.
 
 \[
-\begin{array}{rrcl}
-\text{Type Environment} & \Gamma & \in &
-\mathit{Id}\cup\mathit{TId}\xrightarrow{\text{fin}}
-\text{Type}\cup\{\cdot\} \\
-\end{array}
+  \embox{TEnv}=(\embox{Id}\cup\embox{TId})\finto(T\cup\{\cdot\})
 \]
 
 Now, the codomain of a type environment contains $\cdot$, which is a
@@ -349,751 +424,430 @@ $\Gamma[\alpha:\cdot]$.
 
 \subsection{Well-Formed Types}
 
-Type environments stores type identifiers. Whether a type is well-formed or not
-has to be determined under a type environment.
+The well-formedness checking of \lang is similar to \textsf{TVFAE}.
+The following three rules are the same as those of \textsf{TVFAE}:
 
-\[\Gamma\vdash\textsf{num}\]
+\typerule{Wf-NumT}{
+  \wftdn{\tnum}.
+}
 
-\[
-\inferrule
-{ \Gamma\vdash\tau_1 \\
-  \Gamma\vdash\tau_2 }
-{ \Gamma\vdash\tau_1\rightarrow\tau_2 }
-\]
-
-The above rules are the same as those of TVFAE.
+\vspace{-1em}
 
 \[
-\inferrule
-{ \alpha\in\mathit{Domain}(\Gamma) }
-{ \Gamma\vdash\alpha }
+  \wftd{\tnum}
+  \quad\textsc{[Wf-NumT]}
 \]
 
-If $\alpha$ is in the type environment, it is well-formed.
+\typerule{Wf-ArrowT}{
+  If
+    \wftdn{\tau_1} and
+    \wftdn{\tau_2}, \\
+  then
+    \wftdn{\tarrow{\tau_1}{\tau_2}}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \Gamma\lbrack\alpha\rbrack\vdash\tau }
-{ \Gamma\vdash\forall\alpha.\tau }
+  \inferrule
+  { \wftd{\tau_1} \\
+    \wftd{\tau_2} }
+  { \wftd{\tarrow{\tau_1}{\tau_2}} }
+  \quad\textsc{[Wf-ArrowT]}
 \]
 
-In $\forall\alpha.\tau$, $\alpha$ can appear inside $\tau$. Therefore,
-$\alpha$ must be in the type environment when the well-formedness of $\tau$
-is checked. $\forall\alpha.\tau$ is well-formed under $\Gamma$ if $\tau$
-is well-formed under $\Gamma[\alpha]$. For example, $\forall\alpha.\alpha$
-is well-formed under the empty type environment, while $\forall\alpha.\beta$
+\typerule{Wf-IdT}{
+  If $\alpha$ in the domain of $\Gamma$,\\
+  then \wftdn{\alpha}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \alpha\in\dom{\Gamma} }
+  { \wftd{\alpha} }
+  \quad\textsc{[Wf-IdT]}
+\]
+
+One remaining sort of a type is a universally quantified type, which is new in
+\lang.
+
+\typerule{Wf-ForallT}{
+  If
+    \wftn{\Gamma[\alpha]}{\tau}, \\
+  then
+    \wftdn{\tforall{\alpha}{\tau}}.
+}
+
+\[
+  \inferrule
+  { \wft{\Gamma[\alpha]}{\tau} }
+  { \wftd{\tforall{\alpha}{\tau}} }
+  \quad\textsc{[Wf-ForallT]}
+\]
+
+In $\tforall{\alpha}{\tau}$, $\alpha$ is a binding occurrence and, thus, can
+appear in $\tau$. Therefore, $\alpha$ must be in the type environment when the
+well-formedness of $\tau$ is checked. For example, $\tforall{\alpha}{\alpha}$
+is well-formed under the empty type environment, while $\tforall{\alpha}{\beta}$
 is ill-formed under the same type environment.
 
 \subsection{Typing Rules}
 
-First, consider TFAE typing rules that need fixes.
+Now, let us define the typing rules of \lang.
+
+\typerule{Typ-TyAbs}{
+  If
+    \typeofn{\Gamma[\alpha]}{e}{\tau}, \\
+  then
+    \typeofdn{\etfun{\alpha}{e}}{\tforall{\alpha}{\tau}}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \Gamma\vdash\tau \\ \Gamma\lbrack x:\tau\rbrack\vdash e:\tau' }
-{ \Gamma\vdash \lambda x:\tau.e:\tau\rightarrow\tau' }
+  \inferrule
+  { \typeof{\Gamma[\alpha]}{e}{\tau} }
+  { \typeofd{\etfun{\alpha}{e}}{\tforall{\alpha}{\tau}} }
+  \quad\textsc{[Typ-TyAbs]}
 \]
 
-Like in TVFAE, the rule for lambda abstractions has to check the well-formedness
-of parameter types.
+The type of ${\etfun{\alpha}{e}}$ is $\tforall{\alpha}{\tau}$ if the type of $e$
+is $\tau$. Since $\alpha$ is a binding occurrence whose scope is $e$,
+$e$ should be type-checked under the type environment containing $\alpha$.
 
-The following is a TFAE typing rule for function applications.
+\typerule{Typ-TyApp}{
+  If
+    \wftdn{\tau} and
+    \typeofdn{e}{\tforall{\alpha}{\tau'}}, \\
+  then
+    \typeofdn{\etapp{e}{\tau}}{\tau'[\alpha\leftarrow\tau]}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \Gamma\vdash e_1:\tau'\rightarrow\tau \\
-  \Gamma\vdash e_2:\tau' }
-{ \Gamma\vdash e_1\ e_2:\tau }
+  \inferrule
+  { \wftd{\tau} \\
+    \typeofd{e}{\tforall{\alpha}{\tau'}} }
+  { \typeofd{\etapp{e}{\tau}}{\tau'[\alpha\leftarrow\tau]} }
+  \quad\textsc{[Typ-TyApp]}
 \]
 
-Using the exactly same rule does not break type soundness. However, it restricts
-the expressiveness of the language. Consider the following expression:
-
-\[(\lambda x:(\forall\alpha.\alpha\rightarrow\alpha).x)\ (\Lambda\beta.\lambda
-x:\beta.x)\]
-
-The type of $\Lambda\beta.\lambda x:\beta.x$ is
-$\forall\beta.\beta\rightarrow\beta$. The function \(\lambda
-x:(\forall\alpha.\alpha\rightarrow\alpha).x\) takes an argument of the
-$\forall\alpha.\alpha\rightarrow\alpha$ type. The above rule rejects the
-expression. However, in fact, $\forall\beta.\beta\rightarrow\beta$ is the same
-as $\forall\alpha.\alpha\rightarrow\alpha$ since the type parameter is
-consistently renamed. Defining equivalence of types resolves the issue.
-
-The following rules define equivalence of types:
-
-\[
-\tau\equiv\tau
-\]
-
-\[
-\inferrule
-{ \tau\equiv\tau'\lbrack\alpha'\leftarrow\alpha\rbrack }
-{ \forall\alpha.\tau\equiv\forall\alpha'.\tau' }
-\]
-
-Two equal types are equivalent. Two universal types are equivalent if types
-after consistent renaming of the type parameter is equivalent.
-
-\[
-\inferrule
-{ \Gamma\vdash e_1:\tau'\rightarrow\tau \\
-  \Gamma\vdash e_2:\tau'' \\
-  \tau'\equiv\tau'' }
-{ \Gamma\vdash e_1\ e_2:\tau }
-\]
-
-The above is a revised rule for function applications. It allows cases when the
-parameter type and the argument type are equivalent.
-
-Now, consider new typing rules for TpolyFAE.
-
-\[
-\inferrule
-{ \alpha\not\in\mathit{Domain}(\Gamma) \\
-  \Gamma\lbrack\alpha\rbrack\vdash e:\tau }
-{ \Gamma\vdash \Lambda \alpha.e:\forall\alpha.\tau }
-\]
-
-The type of $\Lambda\alpha.e$ is $\forall\alpha.\tau$ if the type of $e$
-is $\tau$. $\alpha$ is well-formed during the type checking of $e$.
-Therefore, $e$ needs to be type-checked under the type environment with
-$\alpha$. Note that there is a premise that $\alpha$ must not exist in the
-initial type environment. If the premise disappears, the language becomes no
-more type sound. Consider $\Lambda\alpha.\lambda x:\alpha.\Lambda\alpha.x$ to
-find how the type soundness can be broken.
-
-\[
-\inferrule
-{ \Gamma\vdash\tau \\ \Gamma\vdash e:\forall\alpha.\tau' }
-{ \Gamma\vdash e\ \lbrack\tau\rbrack:\tau'\lbrack\alpha\leftarrow\tau\rbrack }
-\]
-
-If the type of $e$ is $\forall\alpha.\tau'$, the type of $e\ [\tau]$ is a
+If the type of $e$ is ${\tforall{\alpha}{\tau'}}$, the type of $\etapp{e}{\tau}$
+is $\tau'[\alpha\leftarrow\tau]$, which is a
 type obtained by substituting $\alpha$ with $\tau$ in $\tau'$. Since
-$\tau$ is a type given by a programmer, well-formeness of $\tau$ must be
+$\tau$ is a user-written type annotation, the well-formeness of $\tau$ must be
 checked.
 
-The following proof tree proves the type of \((\Lambda\alpha.\lambda
-x:\alpha.x)\ [\textsf{num}]\ 1\) is $\textsf{num}$.
+In addition, like in \textsf{TVFAE}, Rule~\textsc{Typ-Fun} has to check the well-formedness
+of the parameter type annotation.
+
+\typerule{Typ-Fun}{
+  If
+    \wftdn{\tau_1} and
+    \typeofn{\Gamma[x:\tau_1]}{e}{\tau_2}, \\
+  then
+    \typeofdn{\efunt{x}{\tau_1}{e}}{\tarrow{\tau_1}{\tau_2}}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{
   \inferrule
-  {\huge
+  { \wftd{\tau_1} \\
+    \typeof{\Gamma[x:\tau_1]}{e}{\tau_2} }
+  { \typeofd{\efunt{x}{\tau_1}{e}}{\tarrow{\tau_1}{\tau_2}} }
+  \quad\textsc{[Typ-Fun]}
+\]
+
+The following proof trees prove that the type of
+$\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}\ 1$
+is $\tnum$:
+
+\[
+  \small
+  \inferrule
+  {
     \inferrule
     {
+      \wft{\emptyset}{\tnum}
+      \\
       \inferrule
       {
         \inferrule
-        { \alpha\in\mathit{Domain}(\lbrack\alpha\rbrack) }
-        { \lbrack\alpha\rbrack\vdash\alpha } \\
-        \inferrule
-        { x\in\mathit{Domain}(\lbrack\alpha,x:\alpha\rbrack) }
-        { \lbrack\alpha,x:\alpha\rbrack\vdash x:\alpha }
+        {
+          \inferrule
+          { \alpha\in\dom{[\alpha]} }
+          { \wft{[\alpha]}{\alpha} }
+          \\
+          \inferrule
+          { \cx\in\dom{[\alpha,\cx:\alpha]} }
+          { \typeof{[\alpha,\cx:\alpha]}{\cx}{\alpha} }
+        }
+        { \typeof{[\alpha]}{\efunt{\cx}{\alpha}{\cx}}{\tarrow{\alpha}{\alpha}} }
       }
-      { \lbrack\alpha\rbrack\vdash\lambda x:\alpha.x:\alpha\rightarrow\alpha }
+      { \typeofe{\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}}}
+        {\tforall{\alpha}{\tarrow{\alpha}{\alpha}}} }
     }
-    { \emptyset\vdash\Lambda\alpha.\lambda x:\alpha.x:
-      \forall\alpha.\alpha\rightarrow\alpha } \\
-    {\Large\emptyset\vdash\textsf{num}}
+    { \typeofe{\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}}
+      {\tarrow{\tnum}{\tnum}} }
+    \\
+    \typeofe{1}{\tnum}
   }
-  { \Large\emptyset\vdash(\Lambda\alpha.\lambda x:\alpha.x)\
-\lbrack\textsf{num}\rbrack:
-    \textsf{num}\rightarrow\textsf{num}
-  } \\
-  \emptyset\vdash 1:\textsf{num} \\
-  \textsf{num}\equiv\textsf{num}
-}
-{ \emptyset\vdash
-(\Lambda\alpha.\lambda x:\alpha.x)\ \lbrack\textsf{num}\rbrack\ 1:
-\textsf{num} }
+  {\typeofe{\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}\ 1}{\tnum}}
 \]
 
-\section{Implementing Type Checker}
+The current type system of \lang has two problems. First, multiple type
+parameters of the same name breaks the type soundness, as multiple type
+definitions of the same name does in \textsf{TVFAE}. Second, syntactic
+comparison of types makes the type checking too restrictive. For example, if
+$\etfun{\beta}{\efunt{\cx}{\beta}{\cx}}$ is given to a function
+that expects a value of $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$, syntactically comparing
+$\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$ and $\tforall{\beta}{\tarrow{\beta}{\beta}}$ judges them to be
+different and makes the type checking reject the program. However,
+$\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$ and $\tforall{\beta}{\tarrow{\beta}{\beta}}$ denote the same type
+semantically.
 
-The following Scala code implements the abstract syntax of TpolyFAE:
+The best solution to both of the problems is de Bruijn indices, introduced in
+\refch{nameless-representation-of-expressions}.
+\refch{nameless-representation-of-expressions} shows use of de Bruijn indices for
+expressions. However, de Bruijn indices are not limited to expressions; they
+can be applied to types. For instance, both $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$
+and $\tforall{\beta}{\tarrow{\beta}{\beta}}$ can be represented with
+$\Lambda.\tarrow{\underline{0}}{\underline{0}}$, so their semantic equivalence
+can be verified with syntactic comparison. In addition, de Bruijn indices
+prevent multiple types from being considered as the same type because of their
+names.
 
-\begin{verbatim}
-sealed trait Expr
-case class Num(n: Int) extends Expr
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Id(x: String) extends Expr
-case class Fun(x: String, t: Type, b: Expr) extends Expr
-case class App(f: Expr, a: Expr) extends Expr
-case class TFun(a: String, b: Expr) extends Expr
-case class TApp(f: Expr, t: Type) extends Expr
+De Bruijn indices seem to be the best solution, but, still, other solutions can
+be used. The three solutions described in \refch{algebraic-data-types} can
+applied to \lang in the same manner to resolve the first issue. The second issue
+can be fixed by renaming type parameters before the comparison. For example, simple syntactic
+transformation can transform $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$
+into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
 
-sealed trait Type
-case object NumT extends Type
-case class ArrowT(p: Type, r: Type) extends Type
-case class ForallT(a: String, t: Type) extends Type
-case class IdT(a: String) extends Type
-\end{verbatim}
+% \[
+% \tau\equiv\tau
+% \]
 
-An \code{Expr} instance represents a TpolyFAE expression; a \code{TFun} instance
-represents a type function; a \code{TApp} instance represents a type application;
-a
-\code{ForallT} instance represents a universal type; a \code{IdT} instance
-represents a
-type identifier as a type. A type identifier is any string.
+% \[
+% \inferrule
+% { \tau\equiv\tau'\lbrack\alpha'\leftarrow\alpha\rbrack }
+% { \forall\alpha.\tau\equiv\forall\alpha'.\tau' }
+% \]
 
-\begin{verbatim}
-case class TEnv(
-  vars: Map[String, Type] = Map(),
-  tbinds: Set[String] = Set()
-) {
-  def +(p: (String, Type)): TEnv =
-    copy(vars = vars + p)
-  def +(x: String): TEnv =
-    copy(tbinds = tbinds + x)
-  def contains(x: String): Boolean = tbinds(x)
-}
-\end{verbatim}
+% \[
+% \inferrule
+% { \Gamma\vdash e_1:\tau'\rightarrow\tau \\
+%   \Gamma\vdash e_2:\tau'' \\
+%   \tau'\equiv\tau'' }
+% { \Gamma\vdash e_1\ e_2:\tau }
+% \]
 
-\code{TEnv} is the type of a type environment. The field \code{vars} stores the
-types of
-variables; the filed \code{tbinds} stores bound type identifiers. The methods
-\code{+} and
-\code{contains} help using type environments. For example, the following shows
-adding
-a variable and a type to a type environment:
+% \section{Type Checker}
 
-\begin{verbatim}
-env + ("x" -> NumT)
-env + "alpha"
-\end{verbatim}
+% The following Scala code implements the abstract syntax of \lang:
 
-Also, the following shows how one can check whether a type identifier is bound
-to a type environment:
+% \begin{verbatim}
+% sealed trait Type
+% ...
+% case class ForallT(a: String, t: Type) extends Type
+% case class IdT(a: String) extends Type
+% \end{verbatim}
 
-\begin{verbatim}
-env.contains("alpha")
-\end{verbatim}
+% An \code{Expr} instance represents a \lang expression; a \code{TFun} instance
+% represents a type function; a \code{TApp} instance represents a type application;
+% a
+% \code{ForallT} instance represents a universal type; a \code{IdT} instance
+% represents a
+% type identifier as a type. A type identifier is any string.
 
-The following function \code{subst} defines substitutions on types:
+% \begin{verbatim}
+% case class TEnv(
+%   vars: Map[String, Type] = Map(),
+%   tbinds: Set[String] = Set()
+% ) {
+%   def +(p: (String, Type)): TEnv =
+%     copy(vars = vars + p)
+%   def +(x: String): TEnv =
+%     copy(tbinds = tbinds + x)
+%   def contains(x: String): Boolean = tbinds(x)
+% }
+% \end{verbatim}
 
-\begin{verbatim}
-def subst(t1: Type, a: String, t2: Type): Type = t1 match {
-  case NumT => t1
-  case ArrowT(p, r) => ArrowT(subst(p, a, t2), subst(r, a, t2))
-  case IdT(a1) => if (a == a1) t2 else t1
-  case ForallT(a1, t) => if (a == a1) t1 else ForallT(a1, subst(t, a, t2))
-}
-\end{verbatim}
+% \code{TEnv} is the type of a type environment. The field \code{vars} stores the
+% types of
+% variables; the filed \code{tbinds} stores bound type identifiers. The methods
+% \code{+} and
+% \code{contains} help using type environments. For example, the following shows
+% adding
+% a variable and a type to a type environment:
 
-The function \code{mustSame} now considers equivalence of types:
+% \begin{verbatim}
+% env + ("x" -> NumT)
+% env + "alpha"
+% \end{verbatim}
 
-\begin{verbatim}
-def mustSame(t1: Type, t2: Type): Type = (t1, t2) match {
-  case (NumT, NumT) => t1
-  case (ArrowT(p1, r1), ArrowT(p2, r2)) =>
-    ArrowT(mustSame(p1, p2), mustSame(r1, r2))
-  case (IdT(a1), IdT(a2)) if a1 == a2 => t1
-  case (ForallT(a1, t1), ForallT(a2, t2)) =>
-    ForallT(a1, mustSame(t1, subst(t2, a2, IdT(a1))))
-  case _ => throw new Exception
-}
-\end{verbatim}
+% Also, the following shows how one can check whether a type identifier is bound
+% to a type environment:
 
-The function \code{validType} checks whether a given type is well-formed under a
-given type environment:
+% \begin{verbatim}
+% env.contains("alpha")
+% \end{verbatim}
 
-\begin{verbatim}
-def validType(t: Type, env: TEnv): Type = t match {
-  case NumT => t
-  case ArrowT(p, r) =>
-    ArrowT(validType(p, env), validType(r, env))
-  case IdT(t) =>
-    if (env.contains(t)) IdT(t)
-    else throw new Exception
-  case ForallT(a, t) => ForallT(a, validType(t, env + a))
-}
-\end{verbatim}
+% The following function \code{subst} defines substitutions on types:
 
-Now, consider the function \code{typeCheck}.
+% \begin{verbatim}
+% def subst(t1: Type, a: String, t2: Type): Type = t1 match {
+%   case NumT => t1
+%   case ArrowT(p, r) => ArrowT(subst(p, a, t2), subst(r, a, t2))
+%   case IdT(a1) => if (a == a1) t2 else t1
+%   case ForallT(a1, t) => if (a == a1) t1 else ForallT(a1, subst(t, a, t2))
+% }
+% \end{verbatim}
 
-\begin{verbatim}
-case TFun(a, b) =>
-  if (env.contains(a)) throw new Exception
-  ForallT(a, typeCheck(b, env + a))
-\end{verbatim}
+% The function \code{mustSame} now considers equivalence of types:
 
-\[
-\inferrule
-{ \alpha\not\in\mathit{Domain}(\Gamma) \\
-  \Gamma\lbrack\alpha\rbrack\vdash e:\tau }
-{ \Gamma\vdash \lambda \alpha.e:\forall\alpha.\tau }
-\]
+% \begin{verbatim}
+% def mustSame(t1: Type, t2: Type): Type = (t1, t2) match {
+%   case (NumT, NumT) => t1
+%   case (ArrowT(p1, r1), ArrowT(p2, r2)) =>
+%     ArrowT(mustSame(p1, p2), mustSame(r1, r2))
+%   case (IdT(a1), IdT(a2)) if a1 == a2 => t1
+%   case (ForallT(a1, t1), ForallT(a2, t2)) =>
+%     ForallT(a1, mustSame(t1, subst(t2, a2, IdT(a1))))
+%   case _ => throw new Exception
+% }
+% \end{verbatim}
 
-The type parameter of a type function must not be in the type environment. The
-type of the body is computed under the type environment with the type parameter.
-The resulting type is a universal type that consists of the type parameter and
-the type of the body.
+% The function \code{validType} checks whether a given type is well-formed under a
+% given type environment:
 
-\begin{verbatim}
-case TApp(f, t) =>
-  validType(t, env)
-  val ForallT(a, t1) = typeCheck(f, env)
-  subst(t1, a, t)
-\end{verbatim}
+% \begin{verbatim}
+% def validType(t: Type, env: TEnv): Type = t match {
+%   case NumT => t
+%   case ArrowT(p, r) =>
+%     ArrowT(validType(p, env), validType(r, env))
+%   case IdT(t) =>
+%     if (env.contains(t)) IdT(t)
+%     else throw new Exception
+%   case ForallT(a, t) => ForallT(a, validType(t, env + a))
+% }
+% \end{verbatim}
 
-\[
-\inferrule
-{ \Gamma\vdash\tau \\ \Gamma\vdash e:\forall\alpha.\tau' }
-{ \Gamma\vdash e\ \lbrack\tau\rbrack:\tau'\lbrack\alpha\leftarrow\tau\rbrack }
-\]
+% Now, consider the function \code{typeCheck}.
 
-A type argument must be well-formed. The type of an expression at the type
-function position must be a universal type. The resulting type is obtained by
-substituting the type parameter of the universal type with the type argument in
-the body of the universal type.
+% \begin{verbatim}
+% case TFun(a, b) =>
+%   if (env.contains(a)) throw new Exception
+%   ForallT(a, typeCheck(b, env + a))
+% \end{verbatim}
 
-The following is the entire code of the \code{typeCheck} function:
+% The type parameter of a type function must not be in the type environment. The
+% type of the body is computed under the type environment with the type parameter.
+% The resulting type is a universal type that consists of the type parameter and
+% the type of the body.
 
-\begin{verbatim}
-def typeCheck(e: Expr, env: TEnv): Type = e match {
-  case Num(n) => NumT
-  case Add(l, r) =>
-    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
-  case Sub(l, r) =>
-    mustSame(mustSame(typeCheck(l, env), NumT), typeCheck(r, env))
-  case Id(x) => env.vars(x)
-  case Fun(x, t, b) =>
-    validType(t, env)
-    ArrowT(t, typeCheck(b, env + (x -> t)))
-  case App(f, a) =>
-    val ArrowT(t1, t2) = typeCheck(f, env)
-    val t3 = typeCheck(a, env)
-    mustSame(t1, t3)
-    t2
-  case TFun(a, b) =>
-    if (env.contains(a)) throw new Exception
-    ForallT(a, typeCheck(b, env + a))
-  case TApp(f, t) =>
-    validType(t, env)
-    val ForallT(a, t1) = typeCheck(f, env)
-    subst(t1, a, t)
-}
-\end{verbatim}
+% \begin{verbatim}
+% case TApp(f, t) =>
+%   validType(t, env)
+%   val ForallT(a, t1) = typeCheck(f, env)
+%   subst(t1, a, t)
+% \end{verbatim}
 
-The following computes the type of \((\Lambda\alpha.\lambda x:\alpha.x)\
-[\textsf{
-num}]\ 1\) with the type checker.
-
-\begin{verbatim}
-// (Lambda alpha.lambda x:alpha.x) [num] 1
-typeCheck(
-  App(
-    TApp(
-      TFun("alpha",
-        Fun("x", IdT("alpha"),
-          Id("x")
-        )
-      ),
-      NumT
-    ),
-    Num(1)
-  ),
-  TEnv()
-)
-// num
-\end{verbatim}
-
-\section{Implementing Interpreter}
-
-Now, consider an interpreter for TpolyFAE.
-
-\begin{verbatim}
-sealed trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-case class TFunV(a: String, b: Expr, e: Env) extends Value
-\end{verbatim}
-
-A \code{TFunV} instance represents a type function value.
-
-\begin{verbatim}
-case TFun(a, b) => TFunV(a, b, env)
-\end{verbatim}
-
-\[
-\sigma\vdash \Lambda\alpha.e\Rightarrow \langle \Lambda\alpha.e,\sigma\rangle
-\]
-
-A type function results in a type function value that captures the current
-environment.
-
-\begin{verbatim}
-case TApp(f, t) =>
-  val TFunV(a, b, fEnv) = interp(f, env)
-  interp(subst(b, a, t), fEnv)
-\end{verbatim}
-
-\[
-\inferrule
-{ \sigma\vdash e\Rightarrow \langle\Lambda\alpha.e',\sigma'\rangle \\
-  \sigma'\vdash e'\lbrack\alpha\leftarrow\tau\rbrack \Rightarrow v }
-{ \sigma\vdash e\ \lbrack\tau\rbrack\Rightarrow v }
-\]
-
-For evaluation of a type application, the type function expression is evaluated
-first. The result must be a type function value. Obtain an expression by
-substituting the type parameter of the type function value with the type
-argument in the body of the type function value. Evaluate the expression under
-the environment captured by the type function value to acquire the final result.
-
-The following is the entire of the \code{interp} and \code{run} functions:
-
-\begin{verbatim}
-def subst(e: Expr, a: String, t: Type): Expr = e match {
-  case Num(n) => Num(n)
-  case Add(l, r) => Add(subst(l, a, t), subst(r, a, t))
-  case Sub(l, r) => Sub(subst(l, a, t), subst(r, a, t))
-  case Id(x) => Id(x)
-  case Fun(x, t0, b) => Fun(x, subst(t0, a, t), subst(b, a, t))
-  case App(f, arg) => App(subst(f, a, t), subst(arg, a, t))
-  case TFun(a0, b) => if (a0 == a) TFun(a0, b) else TFun(a0, subst(b, a, t))
-  case TApp(f, t0) => TApp(subst(f, a, t), subst(t0, a, t))
-}
-
-def interp(e: Expr, env: Env): Value = e match {
-  case Num(n) => NumV(n)
-  case Add(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n + m)
-  case Sub(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n - m)
-  case Id(x) => env(x)
-  case Fun(x, t, b) => CloV(x, b, env)
-  case App(f, a) =>
-    val CloV(x, b, fEnv) = interp(f, env)
-    interp(b, fEnv + (x -> interp(a, env)))
-  case TFun(a, b) => TFunV(a, b, env)
-  case TApp(f, t) =>
-    val TFunV(a, b, fEnv) = interp(f, env)
-    interp(subst(b, a, t), fEnv)
-}
-
-def run(e: Expr): Value = {
-  typeCheck(e, TEnv())
-  interp(e, Map.empty)
-}
-\end{verbatim}
-
-The following computes the result of \((\Lambda\alpha.\lambda x:\alpha.x)\
-[\textsf{num}]\ 1\) with the interpreter.
-
-\begin{verbatim}
-// (Lambda alpha.lambda x:alpha.x) [num] 1
-run(
-  App(
-    TApp(
-      TFun("alpha",
-        Fun("x", IdT("alpha"),
-          Id("x")
-        )
-      ),
-      NumT
-    ),
-    Num(1)
-  )
-)
-// 1
-\end{verbatim}
+% A type argument must be well-formed. The type of an expression at the type
+% function position must be a universal type. The resulting type is obtained by
+% substituting the type parameter of the universal type with the type argument in
+% the body of the universal type.
 
 \section{Exercises}
 
-\SaveVerb{op}=[tyfun [=
-\SaveVerb{opp}=[@=
-\SaveVerb{cl}=]=
-
 \begin{enumerate}
-\item Given the following grammar and the partial typing rules:
-\[
-\begin{array}{ll}
-\begin{array}{rl}
-e ::= & n\\
-\mid& \verb!{+!\ e\ e\ \verb+}+\\
-\mid& \verb!{-!\ e\ e\ \verb+}+\\
-\mid& x\\
-\mid& \verb+{fun {+x \verb+:+\tau \verb+} + e\verb+}+\\
-\mid& \verb+{+e\ e \verb+}+\\
-\mid& \verb+{if0 + e\ e\ e\verb+}+\\
-\mid& \verb+[tyfun [+\alpha\verb+] + e\verb+]+\\
-\mid& \verb+[@ +e\ \tau\verb+]+\\
-\tau ::= & \verb+num+\\
-\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
-\mid&\verb+(+\forall \alpha\ \tau\verb+)+\\
-\mid&\alpha
-\end{array}
-&
-\begin{array}{c}
+\item Draw the type derivation of each the following expressions:
+  \begin{enumerate}
+    \item
+      $(\efunt{\cf}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{
+        \etapp{\cf}{\tnum}\ 10})\ (\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})$
+    \item
+      $
+        \etapp{\etapp{(\etfun{\alpha}{\etfun{\beta}{
+          \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+            \efunt{\cx}{\alpha}{\cf\ \cx}
+          }
+        }})}{\tnum}}{\tnum}\ (\efunt{\cy}{\tnum}{17-\cy})\ 9
+      $
+  \end{enumerate}
 
-\newinfrule
-{\Gamma[\alpha]\vdash e : \tau}
-{\Gamma\vdash\UseVerb{op}\alpha\UseVerb{cl}\ e\UseVerb{cl} : (\forall \alpha\ \tau)}
-\\[2em]
-\newinfrule{
-\Gamma\vdash \tau_0
-\rulesep
-\Gamma\vdash e : (\forall\alpha\ \tau_1)
-}
-{\Gamma\vdash\UseVerb{opp}\ e\ \tau_0\UseVerb{cl} : \tau_1[\alpha \leftarrow \tau_0]}
-\\[2em]
-\newinfrule{
-\Gamma[\alpha]\vdash \tau
-}
-{\Gamma\vdash(\forall\alpha\ \tau)}
-\\[2em]
-[\ldots\alpha\ldots]\vdash\alpha
-\end{array}
-\end{array}
-\]
+\item Rewrite the following code with type abstractions and type application
+to replace all the occurrences of $?$ with types
+and to make function calls take explicit type arguments.
 
-
-
-Draw the type derivation of the following expression:
-
-{
-\begin{verbatim}
-{{fun {f : (forall alpha (alpha -> alpha))}
-      {[@ f num] 10}}
- [tyfun [alpha] {fun {x : alpha} x}]}
-\end{verbatim}
-}
-
-\item Given the partial typing rules:
-\[
-\begin{array}{ll}
-% \begin{array}{rl}
-% e ::= & n\\
-% \mid& \verb!{+!\ e\ e\ \verb+}+\\
-% \mid& \verb!{-!\ e\ e\ \verb+}+\\
-% \mid& x\\
-% \mid& \verb+{fun {+x \verb+:+\tau \verb+} + e\verb+}+\\
-% \mid& \verb+{+e\ e \verb+}+\\
-% \mid& \verb+{if0 + e\ e\ e\verb+}+\\
-% \mid& \verb+[tyfun [+\alpha\verb+] + e\verb+]+\\
-% \mid& \verb+[@ +e\ \tau\verb+]+\\
-% \tau ::= & \verb+num+\\
-% \mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
-% \mid&\verb+(+\forall \alpha\ \tau\verb+)+\\
-% \mid&\alpha
-% \end{array}
-% &
-\begin{array}{c}
-
-\newinfrule
-{\Gamma[\alpha]\vdash e : \tau}
-{\Gamma\vdash\UseVerb{op}\alpha\UseVerb{cl}\ e\UseVerb{cl} : (\forall \alpha\ \tau)}
-\\[2em]
-\newinfrule{
-\Gamma\vdash \tau_0
-\rulesep
-\Gamma\vdash e : (\forall\alpha\ \tau_1)
-}
-{\Gamma\vdash\UseVerb{opp}\ e\ \tau_0\UseVerb{cl} : \tau_1[\alpha \leftarrow \tau_0]}
-\\[2em]
-\newinfrule{
-\Gamma[\alpha]\vdash \tau
-}
-{\Gamma\vdash(\forall\alpha\ \tau)}
-\\[2em]
-[\ldots\alpha\ldots]\vdash\alpha
-\end{array}
-\end{array}
-\]
-
-
-
-Draw the type derivation of the following expression:\\
-
-\verb+{with {apply +$(\forall \alpha\ (\forall \beta\ ((\alpha \rightarrow \beta)\ \alpha \rightarrow \beta)))$\\
-\verb+             [tyfun [+$\alpha$\verb+] [tyfun [+$\beta$\verb+] {fun {f : +$(\alpha \rightarrow \beta)$
-\verb+ x : +$\alpha$\verb+} {f x}}]]}+
-\begin{verbatim}
-  {[@ [@ apply (num -> num)] num] {fun {n : num} {- 17 n}} 9}}
-\end{verbatim}
-
-\item We'd like to allow the following expression:
-
-\begin{verbatim}
-{withtype {{alpha list} {empty num}
-           {cons (alpha * {alpha list})}}
-          {rec {len : (forall alpha ({alpha list} -> num))
-                    [tyfun [alpha]
-                           {fun {l : {alpha list}}
-                                {cases {alpha list} l
-                                  {empty {n} 0}
-                                  {cons {fxr}
-                                        {+ 1 {len {snd fxr}}}}}}]}
-               {+ {[@ len num] {[@ cons num] {pair 1 {[@ empty num] 0}}}}
-                  {[@ len (num -> num)] {[@ empty (num -> num)] 0}}}}}
-\end{verbatim}
-and of course the following as well:
-\begin{verbatim}
-{withtype {fruit {banana num} {apple bool}}
-          {{fun {x : fruit} {cases fruit x {banana {n} {+ n 9}} {apple  {b} 76}}}
-           {banana 2}}}
-\end{verbatim}
-
-\begin{itemize}
-  \item[a)] Define the language syntax.
-
-  \item[b)] Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions
-\texttt{withtype} and \texttt{cases}.
-
-  \item[c)] Write the typing rules of the form \fbox{$\Gamma\vdash e : \tau$} for the expressions
-\texttt{withtype} and \texttt{cases} and the well-formedness of the added types.
-
-  \item[d)] Draw the type derivation of the following expression:
-
-\begin{verbatim}
-{withtype {{alpha list} {empty num}
-                        {cons (alpha * {alpha list})}}
-          {[@ [tyfun [alpha]
-                     {fun {l : {alpha list}}
-                          {cases {alpha list} l {empty {n} n} {cons {p} 1}}}] num]
-           {[@ empty num] 0}}}
-\end{verbatim}
-\end{itemize}
-
-\item Given the following grammar and the partial typing rules:
-\[
-\begin{array}{ll}
-\begin{array}{rl}
-e ::= & n\\
-\mid& b\\
-\mid& \verb!{seqn!\ e\ e\verb+}+\\
-\mid& x\\
-\mid& \verb+{fun {+x\verb+} + e\verb+}+\\
-\mid& \verb+{+e\ e \verb+}+\\
-\mid& \verb+{with {+x\ e\verb+} + e\verb+}+\\
-\tau ::= & \verb+num+\\
-\mid&\verb!bool!\\
-\mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
-\mid&\alpha\\
-\sigma ::= & \tau\\
-\mid&\verb+(+\forall \alpha\ \sigma\verb+)+\\
-\end{array}
-&
-\begin{array}{c}
-
-\newinfrule
-{x : \sigma \in \Gamma\rulesep
-\sigma \succ \tau}
-{\Gamma\vdash x : \tau}
-\\[2em]
-\newinfrule{
-\Gamma[x : \tau]\vdash e : \tau'
-}
-{\Gamma\vdash \mbox{\texttt{\{fun \{}}x\}\ e\} : (\tau\rightarrow\tau')}
-\\[2em]
-\newinfrule{
-\Gamma\vdash e_1 : (\tau\rightarrow\tau')
-\rulesep
-\Gamma\vdash e_2 : \tau
-}
-{\Gamma\vdash \mbox{\texttt{\{}}e_1\ e_2\} : \tau'}
-\\[2em]
-\newinfrule{
-\Gamma\vdash e_1 : \tau
-\rulesep
-\Gamma[x : \mathit{Gen}_\Gamma(\tau)]\vdash e_2 : \tau'
-}
-{\Gamma\vdash \mbox{\texttt{\{with \{}}x\ e_1\}\ e_2\} : \tau'}
-\end{array}
-\end{array}
-\]
-\[
-\begin{array}{l@{~}l@{~}l}
-\sigma \succ \tau &\mbox{iff}& \sigma = (\forall \alpha_1 ( \cdots (\forall \alpha_n\ \tau_0)) \cdots)\ \ \wedge\ \
-\tau = \tau_0[\alpha_i \leftarrow \tau_i]\ \mbox{where }1 \le i \le n
-\\[1em]
-\mathit{Gen}_\Gamma(\tau) &=& (\forall \alpha_1 ( \cdots (\forall \alpha_n\ \tau)) \cdots)\
-\mbox{where } \{\alpha_1, \cdots, \alpha_n\} = \mathit{FTV}(\tau) \setminus \mathit{FTV}(\Gamma)
-\\[1em]
-\mathit{FTV}(\mbox{\texttt{num}}) &=& \emptyset
-\\
-\mathit{FTV}(\mbox{\texttt{(}}\tau_1\rightarrow\tau_2\mbox{\texttt{)}}) &=& \mathit{FTV}(\tau_1) \cup \mathit{FTV}(\tau_2)
-\\
-\mathit{FTV}(\alpha) &=& \{\alpha\}
-\\
-\mathit{FTV}(\Gamma) &=& \bigcup_{x:\sigma \in \Gamma}\mathit{FTV}(\sigma)\\
-\mathit{FTV}(\mbox{\texttt{(}}\forall\alpha\ \sigma\mbox{\texttt{)}}) &=& \mathit{FTV}(\sigma) \setminus \{\alpha\}
-\\
-\end{array}
-\]
-
-\begin{itemize}
-  \item[a)] Draw the type derivation of the following expression:
-
-\verb!{with {x {fun {z} z}} {seqn {x 42} {x true}}}!
-
-  \item[b)] Draw the type derivation of the following expression:
-
-\verb!{{fun {x} {seqn {x 42} {x true}}} {fun {z} z}}!
-\end{itemize}
+$
+\ebind{\cf}{\efunt{\code{g}}{?}{\efunt{\cx}{?}{\code{g}\ \cx}}}{\\
+\ebind{\code{g}}{\efunt{\cx}{?}{\cx}}{\\
+\cf\ \code{g}\ 10}}
+$
 
 \item Consider the following language:
-\begin{itemize}
-  \item[]\textbf{ Abstract syntax}
-\[
-\begin{array}{r@{\hskip6pt}r@{\hskip6pt}l
-  r@{\hskip6pt}l@{\hskip10pt}
-  r@{\hskip6pt}r@{\hskip6pt}l@{\hskip10pt}
-  r@{\hskip6pt}r@{\hskip6pt}l@{\hskip10pt}
-  r@{\hskip4pt}c@{\hskip4pt}l@{\hskip10pt}
-  r@{\hskip4pt}c@{\hskip4pt}l}
+
+\textbf{Syntax}
+    \vspace{0.5em}
+
+$
+  \small
+\begin{array}{@{}r@{\hskip2pt}r@{\hskip2pt}l
+  r@{\hskip2pt}l@{\hskip0pt}
+  r@{\hskip2pt}r@{\hskip2pt}l@{\hskip10pt}
+  r@{\hskip2pt}r@{\hskip2pt}l@{\hskip10pt}
+  r@{\hskip2pt}c@{\hskip2pt}l}
   e &::= & n &|& \lambda x.e & \tau &::= & \textsf{num} & \sigma &::=& \tau &
-  n &\in& \mathbb{Z} & \alpha &\in& \textit{ TV} \\
-  &|& b &|& e\ e &&|& \textsf{bool} &&|& \forall\alpha.\sigma &
-  b &\in &\{\textsf{true},\textsf{false}\} & \tau &\in& \textit{ Type} \\
-  &|& x &|& \textsf{val}\ x=e\ \textsf{in}\ e &&|& \tau\rightarrow\tau &&&&
-  x &\in & \textit{ Id} & \sigma &\in& \textit{ TScheme} \\
-  &|& e;e &&&&|& \alpha &&&& e &\in& \textit{ Expr} & \Gamma &\in& \textit{ Id}\rightarrow\textit{ TScheme} \\
+  \sigma&\in&\embox{TScheme}\\[-3pt]
+  &|& b &|& e\ e &&|& \tbool &&|& \forall\alpha.\sigma &
+  \Gamma&\in&\embox{Id}\finto\embox{TScheme}\\
+  &|& x &|& \textsf{val}\ x=e\ \textsf{in}\ e &&|& \tau\rightarrow\tau
+  &b&::=&\textsf{true} \\
+  &|& e;e &&&&|& \alpha &&|&\textsf{false} \\
 \end{array}
-\]
-  \item[]\textbf{ Typing rules}
-\[
-\begin{array}{ccc}
+$
+
+    \vspace{0.5em}
+\textbf{Typing rules}
+    \vspace{0.5em}
+
+$
+  \small
+\begin{array}{@{}c}
   \Gamma\vdash n:\textsf{num}
-  \qquad
-  \Gamma\vdash b:\textsf{bool}
-  &
-  \multicolumn{2}{c}{
+  \quad
+  \Gamma\vdash b:\tbool
+  \quad
   \inferrule
   {
     x\in\Dom{\Gamma} \rulesep
     \Gamma(x) \succ \tau
   }
   { \Gamma\vdash x:\tau}
-  \qquad
+  \\[20pt]
   \inferrule
   {
     \Gamma\vdash e_1:\tau_1 \rulesep
     \Gamma\vdash e_2:\tau_2
   }
   { \Gamma\vdash e_1;e_2:\tau_2 }
-  }
-  \\[20pt]
+  \quad
   \inferrule
   { \Gamma[x : \tau]\vdash e : \tau' }
   {\Gamma\vdash \lambda x.e : \tau\rightarrow\tau'}
-  &
+  \\[20pt]
   \inferrule
   {
     \Gamma\vdash e_1 : \tau\rightarrow\tau' \rulesep
     \Gamma\vdash e_2 : \tau
   }
   { \Gamma\vdash e_1\ e_2 : \tau' }
-  &
+  \quad
   \inferrule
   {
     \Gamma\vdash e_1 : \tau \rulesep
@@ -1102,10 +856,15 @@ e ::= & n\\
   }
   {\Gamma\vdash \textsf{val}\ x=e_1\ \textsf{in}\ e_2 : \tau'}
 \end{array}
-\]
-  \item[] \textbf{ Miscellaneous definitions}
-\[
-\begin{array}{r@{\hskip4pt}c@{\hskip4pt}l}
+$
+
+    \vspace{0.5em}
+\textbf{Miscellaneous definitions}
+    \vspace{0.5em}
+
+$
+  \small
+\begin{array}{@{}r@{\hskip4pt}c@{\hskip4pt}l}
   \fbox{$\sigma\succ\tau$}
   &&
   \forall\alpha_1.\cdots\forall\alpha_n.\tau\succ\tau[\alpha_1\leftarrow\tau_1,\ldots,\alpha_n\leftarrow\tau_n]
@@ -1116,519 +875,185 @@ e ::= & n\\
   { \textit{ FTV}(\tau)\setminus\textit{ FTV}(\Gamma)=\{\alpha_1,\ldots,\alpha_n\} }
   { \tau\prec_\Gamma\forall\alpha_1.\cdots\forall\alpha_n.\tau }
   \\[2em]
-\mathit{FTV}(\textsf{num}) &=& \emptyset
+\embox{FTV}(\tnum) &=& \emptyset
 \\
-\mathit{FTV}(\textsf{bool}) &=& \emptyset
+\embox{FTV}(\tbool) &=& \emptyset
 \\
-\mathit{FTV}(\tau_1\rightarrow\tau_2) &=& \mathit{FTV}(\tau_1) \cup \mathit{FTV}(\tau_2)
+\embox{FTV}(\tau_1\rightarrow\tau_2) &=& \embox{FTV}(\tau_1) \cup \embox{FTV}(\tau_2)
 \\
-\mathit{FTV}(\alpha) &=& \{\alpha\}
+\embox{FTV}(\alpha) &=& \{\alpha\}
 \\
-\mathit{FTV}(\forall\alpha.\sigma) &=& \mathit{FTV}(\sigma) \setminus \{\alpha\}
+\embox{FTV}(\forall\alpha.\sigma) &=& \embox{FTV}(\sigma) \setminus \{\alpha\}
 \\
-\mathit{FTV}(\Gamma) &=& \bigcup_{x\in\Dom{\Gamma}}\mathit{FTV}(\Gamma(x))
+\embox{FTV}(\Gamma) &=& \bigcup_{x\in\Dom{\Gamma}}\embox{FTV}(\Gamma(x))
 \\
 \end{array}
-\]
-\end{itemize}
+$
+    \vspace{0.5em}
 
-\begin{itemize}
-\item[a)] Is the following expression well-typed? If so, prove it by
-  drawing a type derivation tree for the expression. Otherwise, just say that
-    the expression is not well-typed. \textbf{ If you write ``the expression is not
-    well-typed'' but the expression is well-typed in fact, you will get
-    -3~points, not~0 points, for this subquestion.}
+For each of the following expressions, write whether the expression is
+well-typed. If so, draw the type derivation. Otherwise, explain why.
+\begin{enumerate}
+  \item $(\lambda \code{x}.(\code{x}\ 42))\ \lambda \code{z}.\code{z}$
+  \item $(\lambda \code{x}.((\code{x}\ 42); (\code{x}\ \textsf{true})))\ \lambda \code{z}.\code{z}$
+  \item $\textsf{val}\ \code{x}=\lambda \code{z}.\code{z}\ \textsf{in}\ ((\code{x}\ 42); (\code{x}\ \textsf{true}))$
+\end{enumerate}
 
-    \Space{1}
-    $(\lambda \texttt{x}.(\texttt{x}\ 42))\ \lambda \texttt{z}.\texttt{z}$
-    \Space{1}
-\item[b)] Is the following expression well-typed? If so, prove it by
-  drawing a type derivation tree for the expression. Otherwise, just say that
-    the expression is not well-typed. \textbf{ If you write ``the expression is not
-    well-typed'' but the expression is well-typed in fact, you will get
-    -6~points, not~0 points, for this subquestion.}
-
-    \Space{1}
-    $(\lambda \texttt{x}.((\texttt{x}\ 42); (\texttt{x}\ \textsf{true})))\ \lambda \texttt{z}.\texttt{z}$
-    \Space{1}
-\item[c)] Is the following expression well-typed? If so, prove it by
-  drawing a type derivation tree for the expression. Otherwise, just say that
-    the expression is not well-typed. \textbf{If you write ``the expression is not
-    well-typed'' but the expression is well-typed in fact, you will get
-    -6~points, not~0 points, for this subquestion.}
-
-    \Space{1}
-    $\textsf{val}\ \texttt{x}=\lambda \texttt{z}.\texttt{z}\ \textsf{in}\ ((\texttt{x}\ 42); (\texttt{x}\ \textsf{true}))$
-    \Space{1}
-\end{itemize}
-
-\item Rewrite the following code using explicit annotation of polymorphic types
-with \verb!tyfun! and \verb!@!
-to replace all the occurrences of \verb!?! with types
-and to make function calls to take explicit type arguments.
-
-\[
-\begin{array}{ll}
-% \begin{array}{rl}
-% e ::= & n\\
-% \mid& \verb!{+!\ e\ e\ \verb+}+\\
-% \mid& \verb!{-!\ e\ e\ \verb+}+\\
-% \mid& x\\
-% \mid& \verb+{fun {+x \verb+:+\tau \verb+} + e\verb+}+\\
-% \mid& \verb+{+e\ e \verb+}+\\
-% \mid& \verb+{if0 + e\ e\ e\verb+}+\\
-% \mid& \verb+[tyfun [+\alpha\verb+] + e\verb+]+\\
-% \mid& \verb+[@ +e\ \tau\verb+]+\\
-% \tau ::= & \verb+num+\\
-% \mid&\verb+(+\tau\verb+ -> +\tau\verb+)+\\
-% \mid&\verb+(+\forall \alpha\ \tau\verb+)+\\
-% \mid&\alpha
-% \end{array}
-% &
-\begin{array}{ccc}
-\newinfrule
-{\Gamma[\alpha]\vdash e : \tau}
-{\Gamma\vdash\UseVerb{op}\alpha\UseVerb{cl}\ e\UseVerb{cl} : (\forall \alpha\ \tau)}
-&\qquad&
-\newinfrule{
-\Gamma\vdash \tau_0
-\rulesep
-\Gamma\vdash e : (\forall\alpha\ \tau_1)
-}
-{\Gamma\vdash\UseVerb{opp}\ e\ \tau_0\UseVerb{cl} : \tau_1[\alpha \leftarrow \tau_0]}
-\\[2em]
-\newinfrule{
-\Gamma[\alpha]\vdash \tau
-}
-{\Gamma\vdash(\forall\alpha\ \tau)}
-&&
-[\ldots\alpha\ldots]\vdash\alpha
-\end{array}
-\end{array}
-\]
-
-{
-\begin{verbatim}
-{with {f : ? {fun {g : ?} {fun {v : ?} {g v}}}}
-      {with {g : ? {fun {x : ?} x}}
-            {{f g} 10}}}
-\end{verbatim}
-}
-
-\item We'd like to allow the following expression:
-
-\begin{verbatim}
-{withtype {{alpha list} {empty num}
-                        {cons (alpha * {alpha list})}}
-          {rec {len : (forall alpha ({alpha list} -> num))
-                    [tyfun [alpha]
-                           {fun {l : {alpha list}}
-                                {cases {alpha list} l
-                                  {empty {n} 0}
-                                  {cons {fxr}
-                                        {+ 1 {len {snd fxr}}}}}}]}
-               {+ {[@ len num] {[@ cons num] {pair 1 {[@ empty num] 0}}}}
-                  {[@ len (num -> num)] {[@ empty (num -> num)] 0}}}}}
-\end{verbatim}
-and of course the following as well:
-\begin{verbatim}
-{withtype {fruit {banana num} {apple bool}}
-          {{fun {x : fruit} {cases fruit x {banana {n} {+ n 9}} {apple  {b} 76}}}
-           {banana 2}}}
-\end{verbatim}
-
-Thus, we define the following language:
-
-{
-~~~~~~~ $e$ ::= $n$\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb!{+! $e$ $e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| $x$\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{fun {+$x$\verb+:+$\tau$\verb+}+ $e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{+$e$ $e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{rec {+$x$\verb+:+$\tau$\ $e$\verb+}+ $e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{pair +$e$\ $e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{fst +$e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{snd +$e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{withtype {+$\gamma$\ \verb+{+$x$\ $\tau$\verb+}+
-\verb+{+$x$\ $\tau$\verb+}}+ $e$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| \verb+{cases +$\gamma$\ $e$\ 
-\verb+{+$x$\ \verb+{+$x$\verb+}+\ $e$\verb+}+
-\verb+{+$x$\ \verb+{+$x$\verb+}+\ $e$\verb+}}+\\
-\hspace*{0em}
-~~~~~~~~~~~| [tyfun [$\alpha$] $e$]\\
-\hspace*{0em}
-~~~~~~~~~~~| [@ $e$ $\tau$]\\
-
-~~~~~~~ $\tau$ ::= \mbox{\texttt{num}}\\
-\hspace*{0em}
-~~~~~~~~~~~| ($\tau\rightarrow\tau$)\\
-\hspace*{0em}
-~~~~~~~~~~~| ($\tau \times \tau$)\\
-\hspace*{0em}
-~~~~~~~~~~~| $\gamma$\\
-\hspace*{0em}
-~~~~~~~~~~~| $\alpha$\\
-\hspace*{0em}
-~~~~~~~~~~~| ($\forall \alpha$ $\tau$)\\
-
-~~~~~~~ $\gamma$ ::= \verb+{+$\alpha\ t$\verb+}+\\
-\hspace*{0em}
-~~~~~~~~~~~| $t$\\
-}
-
-\begin{itemize}
-  \item[a)] Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions
-\texttt{withtype}, \texttt{cases}, and \verb+{+$e$ $e$\verb+}+.
-
-  \item[b)] Write the typing rules of the form \fbox{$\Gamma\vdash e : \tau$} for the expressions
-\texttt{withtype} and \texttt{cases} and the well-formedness of user-defined types.
-
-  \item[c)] Consider the following expression:
-
-{
-\begin{verbatim}
-{withtype {fruit {apple num} {banana num}}
-          {{withtype {color {apple num} {banana num}}
-                     {fun {x : fruit}
-                          {cases fruit x
-                            {apple  {a} {apple  {+ a 1}}}
-                            {banana {b} {banana {+ b 1}}}}}}
-           {apple 42}}}
-\end{verbatim}
-}
-
-If the result of type checking the expression is \mtt{fruit}, explain why in detail.
-Otherwise, revise the typing rules to make it \mtt{fruit}.
-\end{itemize}
-
-\item Consider the following language, \texttt{TPFAE}:
-\[
-\begin{array}{rllrllr@{\hskip3pt}l}
-e::= & n &\qquad& \tau::= & \code{num} &\qquad& n\in & \mathbb{Z}\\
-\mid& e\verb!+!e &&\mid&\tau\rightarrow\tau && x\in & \mathit{Id}\\
-\mid& e\verb!-!e &&\mid&\alpha && \alpha\in & \mathit{TId}\\
-\mid& x &&\mid&\forall\alpha.\tau \\
-\mid& \lambda x\verb+:+\tau\verb+.+e \\
-\mid& e\ e \\
-\mid& \lambda\alpha\verb+.+e \\
-\mid& e\verb+[+\tau\verb+]+ \\
-\end{array}
-\]
-
-Type annotations do not take any roles during evaluation.
-Therefore, we define type-erasure semantics, which removes
+\item Type annotations do not take any roles during evaluation.
+Therefore, this exercise defines type-erasure semantics, which removes
 type annotations from an expression.
-
 Consider the following Scala code, which implements type erasure:
 \begin{verbatim}
-sealed trait TPFAE
-case class Num(n: Int) extends TPFAE
-case class Add(l: TPFAE, r: TPFAE) extends TPFAE
-case class Sub(l: TPFAE, r: TPFAE) extends TPFAE
-case class Id(x: String) extends TPFAE
-case class Fun(p: String, t: Type, b: TPFAE) extends TPFAE
-case class App(f: TPFAE, a: TPFAE) extends TPFAE
-case class TyFun(a: String, e: TPFAE) extends TPFAE
-case class TyApp(e: TPFAE, t: Type) extends TPFAE
+sealed trait Expr
+case class Num(n: Int) extends Expr
+case class Add(l: Expr, r: Expr) extends Expr
+case class Sub(l: Expr, r: Expr) extends Expr
+case class Id(x: String) extends Expr
+case class Fun(p: String, t: Type, b: Expr) extends Expr
+case class App(f: Expr, a: Expr) extends Expr
+case class TyFun(a: String, e: Expr) extends Expr
+case class TyApp(e: Expr, t: Type) extends Expr
 
 sealed trait Type
 case object NumT extends Type
-case class ArrowT(t0: Type, t1: Type) extends Type
+case class ArrowT(p: Type, r: Type) extends Type
 case class VarT(a: String) extends Type
 case class Forall(a: String, t: Type) extends Type
 
-sealed trait FAE
-case class FAENum(n: Int) extends FAE
-case class FAEAdd(l: FAE, r: FAE) extends FAE
-case class FAESub(l: FAE, r: FAE) extends FAE
-case class FAEId(x: String) extends FAE
-case class FAEFun(p: String, b: FAE) extends FAE
-case class FAEApp(f: FAE, a: FAE) extends FAE
+object Expr {
+  sealed trait Expr
+  case class Num(n: Int) extends Expr
+  case class Add(l: Expr, r: Expr) extends Expr
+  case class Sub(l: Expr, r: Expr) extends Expr
+  case class Id(x: String) extends Expr
+  case class Fun(p: String, b: Expr) extends Expr
+  case class App(f: Expr, a: Expr) extends Expr
+}
 
-def erase(e: TPFAE): FAE = e match {
-  case Num(n) => FAENum(n)
-  case Add(l, r) => FAEAdd(erase(l), erase(r))
-  case Sub(l, r) => FAESub(erase(l), erase(r))
-  case Id(x) => FAEId(x)
-  case Fun(p, t, b) => FAEFun(p, erase(b))
-  case App(f, a) => FAEApp(erase(f), erase(a))
-  case TyFun(a: String, e: TPFAE) => erase(e)
-  case TyApp(e: TPFAE, t: Type) => erase(e)
+def erase(e: Expr): FAE.Expr = e match {
+  case Num(n) => FAE.Num(n)
+  case Add(l, r) => FAE.Add(erase(l), erase(r))
+  case Sub(l, r) => FAE.Sub(erase(l), erase(r))
+  case Id(x) => FAE.Id(x)
+  case Fun(p, t, b) => FAE.Fun(p, erase(b))
+  case App(f, a) => FAE.App(erase(f), erase(a))
+  case TyFun(a, e) => erase(e)
+  case TyApp(e, t) => erase(e)
 }
 \end{verbatim}
-Erasing a \texttt{TPFAE} expression results in an \texttt{FAE} expression.
-
-The following is the abstract syntax of \texttt{FAE}:
+Applying the type erasure to a \lang expression results in an \textsf{FAE} expression.
+The following is the syntax of \textsf{FAE}:
 \[
-\begin{array}{rl}
-E::= & n \\
-\mid& E\verb!+!E \\
-\mid& E\verb!-!E \\
-\mid& x  \\
-\mid& \lambda x.E \\
-\mid& E\ E  \\
-\end{array}
+E\ ::=\ n
+\ |\ E+E
+\ |\ E-E
+\ |\ x
+\ |\ \lambda x.E
+\ |\ E\ E
 \]
+\begin{enumerate}
+  \item Write the formal definition of the type erasure
+    \framebox{$\embox{erase}(e)=E$} according to the Scala code.
+\item Write the result of applying the type erasure to each of the following
+  expressions:
+    \begin{enumerate}
+      \item $\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}\ 1$
+      \item $\etapp{\etapp{(\etfun{\alpha}{\etfun{\beta}{
+          \efunt{\cx}{\alpha}{\efunt{\cy}{\beta}{\cy}}}})}{\tnum}}{\tnum}\ 1\ 2$
+    \end{enumerate}
+\item Write a well-typed expression that becomes the following
+  expression by the type erasure:
 
-\begin{itemize}
-\item[a)] Complete the definition of type erasure \framebox{$[e]=E$} according to the Scala code
-by filling the blanks:
-\end{itemize}
-
-{
-\[
-\begin{array}{rcl}
-\lbrack n\rbrack &=& n \\
-\lbrack x\rbrack &=& x \\
-\lbrack e_1\code{+}e_2\rbrack &=& \lbrack e_1\rbrack\code{+}\lbrack e_2\rbrack \\
-\lbrack e_1\code{-}e_2\rbrack &=& \sblank \\
-\lbrack \lambda x\code{:}\tau\code{.}e\rbrack &=& \sblank \\
-\lbrack e_1\ e_2\rbrack &=& \sblank \\
-\lbrack \lambda\alpha\code{.}e\rbrack &=& \sblank \\
-\lbrack e\code{[}\tau\code{]}\rbrack &=& \sblank \\
-\end{array}
-\]
-}
-
-\begin{itemize}
-\item[b)] Fill the following blanks with the results of erasing:
-\end{itemize}
-
-{
-\[
-\begin{array}{rcl}
-\lbrack
-\code{($\lambda\alpha$.$\lambda$x:$\alpha$.x) [num] 1}
-\rbrack
-&=&\sblank \\
-\lbrack
-\code{($\lambda\alpha$.$\lambda\beta$.$\lambda$x:$\alpha$.$\lambda$y:$\beta$.y) [num] [num] 1 2}
-\rbrack
-&=&\sblank \\
-\end{array}
-\]
-}
-
-\begin{itemize}
-\item[c)] Fill the following blank with the expression before erasing:
-\end{itemize}
-
-{
-\[
-\begin{array}{rl@{\hskip-10pt}l}
-&\lbrack\code{$\lambda$x:$\forall\alpha$.$\alpha\rightarrow\alpha$.} \\
-&\lblank&\rbrack \\[10pt]
-=&\code{$\lambda$x.((x $\lambda$x.x) (x 1))}
-\end{array}
-\]
-}
-
-\item Consider the following language, \texttt{TpolyFAE}:
-\begin{itemize}
-  \item[]\textbf{Abstract syntax}
-\[
-\begin{array}{r@{\hskip6pt}r@{\hskip6pt}l
-  r@{\hskip6pt}l@{\hskip20pt}
-  r@{\hskip6pt}l@{\hskip20pt}
-  r@{\hskip4pt}c@{\hskip4pt}l@{\hskip20pt}
-  r@{\hskip4pt}c@{\hskip4pt}l}
-  e &::= & n &|& e\ e & \tau::= & \textsf{num} & n &\in& \mathbb{Z}& e &\in& \textit{Expr} \\
-  &|& x &|& \Lambda\alpha.e &|&\tau\rightarrow\tau & x &\in& \textit{Id}& \tau &\in& \textit{Type} \\
-  &|& \lambda x{:}\tau.e &|& e[\tau] &|&\alpha & \alpha &\in& \textit{TV}&
-  \Gamma &\in& (\textit{Id}\cup\textit{TV})\rightarrow(\textit{Type}\cup\{\cdot\}) \\
-  &&&&&|&\forall\alpha.\tau \\
-\end{array}
-\]
-  \item[]\textbf{Typing rules}
-\[
-\begin{array}{c@{\hskip20pt}c@{\hskip20pt}c}
-\Gamma\vdash n:\textsf{num}
-  &
-  \inferrule
-  { x\in\Dom{\Gamma} }
-  { \Gamma\vdash x:\Gamma(x) }
-  &
-  \inferrule
-  { \Gamma[x:\tau]\vdash e:\tau' \rulesep \Gamma\vdash\tau }
-  { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
-  \\[20pt]
-  \inferrule
-  { \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
-    \Gamma\vdash e_2:\tau }
-  { \Gamma\vdash e_1\ e_2:\tau' }
-  &
-  \inferrule
-  {
-    \alpha\not\in\Dom{\Gamma} \rulesep
-    \Gamma[\alpha]\vdash e:\tau
-  }
-  { \Gamma\vdash \Lambda\alpha.e:\forall\alpha.\tau }
-  &
-  \inferrule
-  {
-    \Gamma\vdash e:\forall\alpha.\tau_1 \rulesep
-    \Gamma\vdash\tau_0
-  }
-  { \Gamma\vdash e[\tau_0]:\tau_1[\alpha\leftarrow\tau_0] }
-\end{array}
-\]
-  \item[]\textbf{Well-formedness rules}
-\[
-\begin{array}{c@{\hskip40pt}c@{\hskip40pt}c@{\hskip40pt}c}
-  \Gamma\vdash\textsf{num}
-  &
-  \inferrule
-  { \Gamma\vdash\tau \rulesep \Gamma\vdash\tau' }
-  { \Gamma\vdash\tau\rightarrow\tau' }
-  &
-  \inferrule
-  { \alpha\in\Dom{\Gamma} }
-  { \Gamma\vdash\alpha }
-  &
-  \inferrule
-  { \Gamma[\alpha]\vdash\tau }
-  { \Gamma\vdash\forall\alpha.\tau }
-\end{array}
-\]
-\end{itemize}
-
-\Space{2}
-
-Type annotations do not take any roles during evaluation.
-Therefore, we define type-erasure semantics, which removes
-type annotations from an expression.
-Erasing types from a \texttt{TpolyFAE} expression results
-in an \texttt{FAE} expression. The following is the abstract syntax of \texttt{FAE}:
-\[
-  E::= n \ |\ x\ |\ \lambda x.E\ |\ E\ E \\
-\]
-
-\begin{itemize}
-\item[a)] 
-  Define type erasure of the form \framebox{$\textit{erase}(e)=E$} for \texttt{ TpolyFAE}.
-\end{itemize}
-
-\begin{itemize}
-\item[b)] 
-  Write \texttt{ FAE} expressions that are obtained by erasing types from the
-    following expressions.
-    \begin{itemize}
-      \item[$\circ$] $(\Lambda\alpha.\lambda \texttt{x}{:}\alpha.\texttt{x})\ [\textsf{num}]\ 1$
-      \item[$\circ$]
-        $(\Lambda\alpha.\Lambda\beta.\lambda\texttt{x}{:}\alpha.\lambda\texttt{y}{:}\beta.\texttt{y})
-        \ [\textsf{num}]\ [\textsf{num}]\ 1\ 2$
-    \end{itemize}
-\end{itemize}
-
-\begin{itemize}
-\item[c)] 
-  Write well-typed \texttt{ TpolyFAE} expressions that produce
-    the following \texttt{ FAE} expressions after the type erasure.
-    \begin{itemize}
-      \item[$\circ$] $(\lambda \texttt{x}.\lambda \texttt{y}.((\texttt{x}\ \texttt{x})\ \texttt{y}))\
-        (\lambda \texttt{x}.\texttt{x})\ 1$
-      \item[$\circ$] $\lambda \texttt{x}.((\texttt{x}\ \lambda \texttt{x}.\texttt{x})\ (\texttt{x}\ 1))$
-    \end{itemize}
-\end{itemize}
+    $\efun{\cx}{(\cx\ (\efun{\cx}{\cx})\ (\cx\ 1))}$
+\end{enumerate}
 
 \item The following language adds
-polymorphic non-recursive type definitions to \texttt{TpolyFAE}
-(the omitted parts are the same as \texttt{TpolyFAE}):
+polymorphic non-recursive type definitions to \texttt{\lang}
+(the omitted parts are the same as \texttt{\lang}):
 
 \Space{1}
 $
   \begin{array}{l}
-    e ::=\ \cdots\ \ |\ \ \textsf{type}\ t[\alpha]=x@\tau+x@\tau;\ e\ \ |\ \ 
+    e ::=\ \cdots\ \ |\ \ \textsf{type}\ t[\alpha]=x@\tau+x@\tau;\ e\ \ |\ \
            e\ \textsf{match}\ x(x)\rightarrow e,\ x(x)\rightarrow e \\
     v ::=\ \cdots\ \ |\ \ \Lambda\alpha.\langle x\rangle\ \ |\ \ \langle x\rangle\ \ |\ \  x(v) \\
     \tau ::=\ \cdots\ \ |\ \  t[\tau] \\
-    \Gamma\ \in\ \finmap{(\embox{Id}\cup\embox{TVar}\cup\embox{TId})}
-    {(\embox{Type}\cup\{\cdot\}
-    \cup(\embox{TVar}\times\embox{Id}\times\embox{Type}\times\embox{Id}\times\embox{Type}))}
+    \Gamma\ \in\ (\embox{Id}\cup\embox{TId}\cup\embox{TN})\finto
+    {(T\cup\{\cdot\}
+    \cup(\embox{TId}\times\embox{Id}\times T\times\embox{Id}\times T))}
   \end{array}
 $
+\vspace{0.5em}
 
-\[
+$
   \begin{array}{c}
   \inferrule
   { \eval{\sigma[x_1\mapsto\Lambda\alpha.\langle x_1\rangle,x_2\mapsto\Lambda\alpha.\langle x_2\rangle]}{e}{v} }
   { \evald{\textsf{type}\ t[\alpha]=x_1@\tau_1+x_2@\tau_2;\ e}{v} }
-  \qquad\quad
+  \quad
   \inferrule
   { \evald{e}{\Lambda \alpha.\langle x\rangle} }
   { \evald{\etapp{e}{\tau}}{\langle x\rangle} }
-  \qquad\quad
+  \\[2em]
   \inferrule
   { \evald{e_1}{\langle x\rangle} \\ \evald{e_2}{v} }
   { \evald{\eapp{e_1}{e_2}}{x(v)} }
-    \\[2em]
+  \\[2em]
   \inferrule
   { \evald{e}{x_1(v')} \\ \eval{\sigma[x_3\mapsto v']}{e_1}{v} }
   { \evald{e\ \textsf{match}\ x_1(x_3)\rightarrow e_1,x_2(x_4)\rightarrow e_2}{v} }
-  \qquad\qquad
+  \\[2em]
   \inferrule
   { \evald{e}{x_2(v')} \\ \eval{\sigma[x_4\mapsto v']}{e_2}{v} }
   { \evald{e\ \textsf{match}\ x_1(x_3)\rightarrow e_1,x_2(x_4)\rightarrow e_2}{v} }
   \end{array}
-\]
+$
+\vspace{0.5em}
 
 For example, programmers can write the following code, which defines a polymorphic
 option type, in this language:
 
-\Space{1}
+\vspace{0.5em}
 $
   \begin{array}{l}
-    \textsf{type}\ \texttt{option}[\alpha]=\texttt{None}@\numt+\texttt{Some}@\alpha;\\
-    \textsf{val}\ \texttt{getOrElse}=\etfun{\alpha}{\efun{\texttt{x}{:}\texttt{option}[\alpha]}{
-      \efun{\texttt{y}{:}\alpha}{(}} \\
-    \ \ \ \ \texttt{x}\ \textsf{match}} \\
-    \ \ \ \ \ \ \ \ \texttt{None}(\texttt{z})\rightarrow\texttt{y}, \\
-    \ \ \ \ \ \ \ \ \texttt{Some}(\texttt{z})\rightarrow\texttt{z} \\
+    \textsf{type}\ \code{option}[\alpha]=\code{None}@\numt+\code{Some}@\alpha;\\
+    \textsf{val}\ \code{getOrElse}=\etfun{\alpha}{\efun{\code{x}{:}\code{option}[\alpha]}{
+      \efun{\code{y}{:}\alpha}{(}} \\
+    \ \ \ \ \code{x}\ \textsf{match}} \\
+    \ \ \ \ \ \ \ \ \code{None}(\code{z})\rightarrow\code{y}, \\
+    \ \ \ \ \ \ \ \ \code{Some}(\code{z})\rightarrow\code{z} \\
     );\\
-    \eapp{\eapp{\etapp{\texttt{getOrElse}}{\numt}}{(\eapp{\etapp{\texttt{Some}}{\numt}}{1})}}{2}
+    \eapp{\eapp{\etapp{\code{getOrElse}}{\numt}}{(\eapp{\etapp{\code{Some}}{\numt}}{1})}}{2}
   \end{array}
 $
-\Space{1}
+\vspace{0.5em}
 
 On the other hand, the following code is not well-typed
 since types are not recursive in this language:
 
-\Space{1}
+\vspace{0.5em}
 $
   \begin{array}{l}
-    \textsf{type}\ \texttt{foo}[\alpha]=\texttt{bar}@\numt+\texttt{baz}@\texttt{foo}[\alpha];\\
+    \textsf{type}\ \code{foo}[\alpha]=\code{bar}@\numt+\code{baz}@\code{foo}[\alpha];\\
     \ldots
   \end{array}
 $
-\Space{1}
+\vspace{0.5em}
 
-Note that \texttt{foo} appears in the definition of itself, which implies that
-\texttt{foo} is a recursive type.
+Note that \code{foo} appears in the definition of itself, which implies that
+\code{foo} is a recursive type.
 
 \begin{enumerate}
-\item[a)]
+\item
   Write the typing rules of the form
     \fbox{$\typeofd{e}{\tau}$} of
     $\textsf{type}\ t[\alpha]=x_1@\tau_1+x_2@\tau_2;\ e$ and
     $e\ \textsf{match}\ x_1(x_3)\rightarrow e_1,\ x_2(x_4)\rightarrow e_2$.
-\item[b)]
+\item
   Write the well-formedness rule of the form
     \fbox{$\Gamma\vdash\tau$} of $t[\tau]$.
-\item[c)]
-  Write the type of \texttt{getOrElse} of the above example. You do not need to
-    draw the type derivation tree of \texttt{getOrElse}.
+\item
+  Write the type of \code{getOrElse} of the above example.
 \end{enumerate}
-
-
 
 \end{enumerate}

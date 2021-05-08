@@ -100,6 +100,7 @@
 
 \newcommand{\fundef}[3]{\textsf{def}\ #1(#2)\shorteq#3}
 \newcommand{\clov}[3]{\langle\efun{#1}{#2},#3\rangle}
+\newcommand{\tclov}[3]{\langle\etfun{#1}{#2},#3\rangle}
 \newcommand{\contv}[2]{\langle#1,#2\rangle}
 \newcommand{\exprv}[2]{(#1,#2)}
 \newcommand{\eadd}[2]{#1+#2}
@@ -122,8 +123,10 @@
 \newcommand{\ematch}[7]{#1\ \textsf{match}\ #2(#3)\rightarrow #4,#5(#6)\rightarrow #7}
 
 \newcommand{\tnum}{\textsf{num}}
+\newcommand{\tbool}{\textsf{bool}}
 \newcommand{\tfun}{\textsf{fun}}
 \newcommand{\tarrow}[2]{#1\rightarrow#2}
+\newcommand{\tforall}[2]{\forall#1.#2}
 
 \newcommand{\mtk}{\square}
 \newcommand{\evalk}[2]{#1\vdash#2::}
