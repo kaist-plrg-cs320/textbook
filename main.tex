@@ -59,19 +59,6 @@
 \usepackage{fancyvrb}
 \usepackage{bussproofs,proof}
 
-\newcommand{\newfrac}[2] {
-        \frac
-                {#1}
-                {#2 \rule{0pt}{11pt}}
-}
-\newcommand{\newinfrule}[2] {
-  \ensuremath{\newfrac
-    {\displaystyle #1}
-    {\displaystyle #2}}
-}
-\newcommand{\rulesep}{\quad}
-
-
 \usetikzlibrary{arrows}
 \tikzset{
   treenode/.style = {align=center, inner sep=0pt, text centered},
@@ -121,6 +108,8 @@
 \newcommand{\erect}[6]{\textsf{def}\ #1(#2{:}#3){:}#4\shorteq#5\ \textsf{in}\ #6}
 \newcommand{\etdef}[6]{\textsf{type}\ #1=#2@#3+#4@#5\ \textsf{in}\ #6}
 \newcommand{\ematch}[7]{#1\ \textsf{match}\ #2(#3)\rightarrow #4,#5(#6)\rightarrow #7}
+\newcommand{\etfun}[2]{\Lambda#1.#2}
+\newcommand{\etapp}[2]{#1[#2]}
 
 \newcommand{\tnum}{\textsf{num}}
 \newcommand{\tbool}{\textsf{bool}}
@@ -161,6 +150,9 @@
 \newcommand{\wftn}[2]{\ensuremath{#2} is well-formed under \ensuremath{#1}}
 \newcommand{\wftdn}[1]{\wftn{\Gamma}{#1}}
 
+\newcommand{\subt}[2]{#1<:#2}
+\newcommand{\subtn}[2]{\ensuremath{#1} is a subtype of \ensuremath{#2}}
+
 \newcommand{\stricte}[2]{#1\Downarrow#2}
 \newcommand{\stricten}[2]{\ensuremath{#1} strictly evaluates to \ensuremath{#2}}
 
@@ -186,31 +178,6 @@
 \vspace{1em}
 }
 \newcommand{\tand}{\text{ and }}
-
-\newcommand{\inred}[1]{{\color{red}{#1}}}
-\newcommand{\mtt}[1]{\mbox{\texttt{#1}}}
-\newcommand{\finmap}[2]{#1 \xrightarrow[]{\text{fin}} #2}
-\newcommand{\sblank}{\fbox{\rule{1.5in}{0pt}\rule{0pt}{0.2in}}}
-\newcommand{\mblank}{\fbox{\rule{4in}{0pt}\rule{0pt}{0.3in}}}
-\newcommand{\lblank}{~~~\fbox{\rule{5in}{0pt}\rule{0pt}{0.5in}}~~~}
-\newcommand{\lmblank}{~~~\fbox{\rule{5in}{0pt}\rule{0pt}{0.39in}}~~~}
-\newcommand{\MNSC}{\code{mini-Scala}\xspace}
-\newcommand{\Space}[1]{\vspace{#1ex}}
-\newcommand{\typed}[2]{\Gamma\vdash#1:#2}
-\newcommand{\rom}[1]{\uppercase\expandafter{\romannumeral #1\relax}}
-\newcommand{\wfd}[1]{\Gamma\vdash#1}
-\newcommand{\subt}[2]{#1<:#2}
-\newcommand{\Dom}[1]{\mbox{Domain}(#1)}
-\newcommand{\clo}[3]{\langle\lambda #1.#2,#3\rangle}
-\newcommand{\etfun}[2]{\Lambda#1.#2}
-\newcommand{\etapp}[2]{#1[#2]}
-\newcommand{\numt}{\textsf{num}}
-\newcommand{\synsep}{\ \ |\ \ }
-\newcommand{\seq}{%
-    \settowidth{\@tempdima}{-}% Width of hyphen
-      \resizebox{\@tempdima}{\height}{=}%
-      }
-
 
 \makeindex[columns=3, title=Alphabetical Index, intoc] % Make LaTeX produce the files required to compile the index
 

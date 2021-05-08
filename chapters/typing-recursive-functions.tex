@@ -388,7 +388,7 @@ change $\sigma$. The following is the operational semantics of the expressions:
 \]
 
 \begin{enumerate}
-  \item Write the typing rules of the form \fbox{$\typed{e}{\tau}$}.
+  \item Write the typing rules of the form \fbox{$\typeofd{e}{\tau}$}.
 \end{enumerate}
 
 Evaluation of a command produces a new environment.
@@ -431,7 +431,7 @@ The following is the operational semantics of the commands:
 
 \begin{enumerate}
     \setcounter{enumii}{1}
-\item Write the typing rules of the form \fbox{$\typed{c}{\Gamma}$}.
+\item Write the typing rules of the form \fbox{$\typeofd{c}{\Gamma}$}.
 The following command must be well-typed: \verb+x := 1; x := 2+.
 However, the following command must be not well-typed: \verb+x := 1; x := true+.
 \end{enumerate}

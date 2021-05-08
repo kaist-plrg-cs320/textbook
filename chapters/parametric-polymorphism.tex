@@ -825,14 +825,14 @@ $
   \quad
   \inferrule
   {
-    x\in\Dom{\Gamma} \rulesep
+    x\in\dom{\Gamma} \\
     \Gamma(x) \succ \tau
   }
   { \Gamma\vdash x:\tau}
   \\[20pt]
   \inferrule
   {
-    \Gamma\vdash e_1:\tau_1 \rulesep
+    \Gamma\vdash e_1:\tau_1 \\
     \Gamma\vdash e_2:\tau_2
   }
   { \Gamma\vdash e_1;e_2:\tau_2 }
@@ -843,15 +843,15 @@ $
   \\[20pt]
   \inferrule
   {
-    \Gamma\vdash e_1 : \tau\rightarrow\tau' \rulesep
+    \Gamma\vdash e_1 : \tau\rightarrow\tau' \\
     \Gamma\vdash e_2 : \tau
   }
   { \Gamma\vdash e_1\ e_2 : \tau' }
   \quad
   \inferrule
   {
-    \Gamma\vdash e_1 : \tau \rulesep
-    \tau\prec_\Gamma\sigma \rulesep
+    \Gamma\vdash e_1 : \tau \\
+    \tau\prec_\Gamma\sigma \\
     \Gamma[x:\sigma]\vdash e_2 : \tau'
   }
   {\Gamma\vdash \textsf{val}\ x=e_1\ \textsf{in}\ e_2 : \tau'}
@@ -885,7 +885,7 @@ $
 \\
 \embox{FTV}(\forall\alpha.\sigma) &=& \embox{FTV}(\sigma) \setminus \{\alpha\}
 \\
-\embox{FTV}(\Gamma) &=& \bigcup_{x\in\Dom{\Gamma}}\embox{FTV}(\Gamma(x))
+\embox{FTV}(\Gamma) &=& \bigcup_{x\in\dom{\Gamma}}\embox{FTV}(\Gamma(x))
 \\
 \end{array}
 $
@@ -971,7 +971,7 @@ E\ ::=\ n
 polymorphic non-recursive type definitions to \texttt{\lang}
 (the omitted parts are the same as \texttt{\lang}):
 
-\Space{1}
+\vspace{1em}
 $
   \begin{array}{l}
     e ::=\ \cdots\ \ |\ \ \textsf{type}\ t[\alpha]=x@\tau+x@\tau;\ e\ \ |\ \
@@ -1016,14 +1016,14 @@ option type, in this language:
 \vspace{0.5em}
 $
   \begin{array}{l}
-    \textsf{type}\ \code{option}[\alpha]=\code{None}@\numt+\code{Some}@\alpha;\\
+    \textsf{type}\ \code{option}[\alpha]=\code{None}@\tnum+\code{Some}@\alpha;\\
     \textsf{val}\ \code{getOrElse}=\etfun{\alpha}{\efun{\code{x}{:}\code{option}[\alpha]}{
       \efun{\code{y}{:}\alpha}{(}} \\
     \ \ \ \ \code{x}\ \textsf{match}} \\
     \ \ \ \ \ \ \ \ \code{None}(\code{z})\rightarrow\code{y}, \\
     \ \ \ \ \ \ \ \ \code{Some}(\code{z})\rightarrow\code{z} \\
     );\\
-    \eapp{\eapp{\etapp{\code{getOrElse}}{\numt}}{(\eapp{\etapp{\code{Some}}{\numt}}{1})}}{2}
+    \eapp{\eapp{\etapp{\code{getOrElse}}{\tnum}}{(\eapp{\etapp{\code{Some}}{\tnum}}{1})}}{2}
   \end{array}
 $
 \vspace{0.5em}
@@ -1034,7 +1034,7 @@ since types are not recursive in this language:
 \vspace{0.5em}
 $
   \begin{array}{l}
-    \textsf{type}\ \code{foo}[\alpha]=\code{bar}@\numt+\code{baz}@\code{foo}[\alpha];\\
+    \textsf{type}\ \code{foo}[\alpha]=\code{bar}@\tnum+\code{baz}@\code{foo}[\alpha];\\
     \ldots
   \end{array}
 $
