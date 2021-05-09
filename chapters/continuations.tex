@@ -4,8 +4,8 @@
 
 \renewcommand{\lang}{\textsf{FAE}\xspace}
 
-Many real-world languages support \textit{control diverters}, which alter the
-\textit{control flow} of programs.\index{control diverter}\index{control flow}
+Many real-world languages support \textit{control diverters}, which alter
+\textit{control flows} of programs.\index{control diverter}\index{control flow}
 For example, programmers can use \code{return} in Scala code. Consider the
 following Scala program:
 
@@ -28,7 +28,7 @@ control diverters other than \code{return} in real-world languages:
 \code{break}, \code{continue}, \code{goto}, \code{throw} (or \code{raise}), and
 so on.
 
-Control diverters are useful for writing programs with complex control flow.
+Control diverters are useful for writing programs with complex control flows.
 For instance, consider a function \code{numOfWordsInFile} that takes the name of
 a file and a string as arguments and returns how many times the string occurs in
 the file.
@@ -105,7 +105,7 @@ call \code{numOfWords} except one errorneous case, where both cache and file are
 not found. It is not a big flaw in the current implementation of
 \code{numOfWordsInFile}.
 However, if we write a function with a large number of conditions, we would
-prefer \code{return} (\reffig{return}) to calling \code{numOfWords} multiple
+prefer \code{return} (\reffig{return}) to call \code{numOfWords} multiple
 times (\reffig{multiple}).
 
 \begin{figure}[t]
@@ -166,7 +166,7 @@ This chapter and the following two chapters introduce continuations, which are
 the most general explanation of control flow. This chapter focuses on what
 continuations are and how we can write programs and define semantics while
 exposing continuations explicitly. Then, the next chapter explains how we can
-add control diverters to langauges based on the notion of a continuation.
+add control diverters to languages based on the notion of a continuation.
 
 \section{Redexes and Continuations}
 
@@ -245,17 +245,17 @@ $2$, and the continuation is $(\underline{1}+\square)+(3+4)$. Here, the
 line below $1$ expresses that $1$ is an integer value, not an expression.
 
 Therefore, evaluation of an expression repeats evaluation of a redex and
-application of the continuation. A given expression splits into a redex and the
+application of a continuation. A given expression splits into a redex and a
 continuation. The redex evaluates to a value, and the continuation is applied
-to the value. Then, the continuation splits again into a redex and the
+to the value. Then, the continuation splits again into a redex and a
 continuation, and the redex is evaluated. This process repeats until there is no
 more remaining computation, i.e. the continuation becomes the identity function.
 
-\section{Continuation-passing style}
+\section{Continuation-Passing Style}
 
 \textit{Continuation-passing style}\index{continuation-passing style}
 (\acrshort{cpsLabel}) is a style of programming that
-passes the remaining computation to each function call. In CPS, programs never
+passes remaining computations to function calls. In CPS, programs never
 use return values; they pass continuations as arguments instead. Therefore, by
 writing programs in CPS, continuations become explicit in the source code of the
 programs.
@@ -264,8 +264,8 @@ Before moving on to the detail of CPS, recalling
 store-passing style, used in \refch{boxes} and \refch{mutable-variables}, would help you
 understand CPS. Those chapters
 choose to use store passing in order to show how we can implement mutation
-without mutation. The following code is part of implementation of a
-\textsf{BFAE} interprter in \refch{boxes}.
+without mutation. The following code is part of the implementation of a
+\textsf{BFAE} interpreter in \refch{boxes}.
 \begin{verbatim}
 def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) =
   e match {
@@ -281,11 +281,11 @@ def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) =
   }
 \end{verbatim}
 A store-passing interpreter passes the current store to each function call, and
-each function call returns the resulting store.
+each function call returns its resulting store.
 
 If we use mutable maps, we can implement interpreters of
 \textsf{BFAE} and \textsf{MFAE} without store-passing style. The following code
-is part of implementation of a \textsf{BFAE} interpreter using a mutable map.
+is part of the implementation of a \textsf{BFAE} interpreter using a mutable map.
 \begin{verbatim}
 type Sto = scala.collection.mutable.Map[Addr, Value]
 val sto: Sto = scala.collection.mutable.Map()
@@ -293,32 +293,32 @@ val sto: Sto = scala.collection.mutable.Map()
 def interp(e: Expr, env: Env): Value =
   e match {
     ...
+    case Add(l, r) =>
+      val NumV(n) = interp(l, env)
+      val NumV(m) = interp(r, env)
+      NumV(n + m)
     case NewBox(e) =>
       val v = interp(e, env)
       val a = sto.keys.maxOption.getOrElse(0) + 1
       sto += (a -> v)
       BoxV(a)
-    case Add(l, r) =>
-      val NumV(n) = interp(l, env)
-      val NumV(m) = interp(r, env)
-      NumV(n + m)
   }
 \end{verbatim}
 The variable \code{sto} denotes a mutable map. The function \code{interp}
 depends on \code{sto}, instead of passing stores as an argument and a return value.
+The \code{Add} case does not pass the resulting store from the evaluation of
+\code{l} to the evaluation of \code{r}.
 The \code{NewBox} case simply mutates \code{sto} to create a new box.
 Note that \code{sto += (a -> v)} mutates the map by adding a mapping from
 \code{a} to \code{v}.
-The \code{Add} case does not pass the resulting store from the evaluation of
-\code{l} to the evaluation of \code{r}. Store passing is unnecessary since there
-is a global, mutable map, which records every update.
+Store passing is unnecessary since there is a global, mutable map, which records every update.
 
 Two code snippets clearly compare interpreters with and without store passing.
 In the former, with store passing, the current store at each point of execution
 is explicit. When we see the \code{Add} case, it is clear that
 \code{sto} is used for the evaluation of \code{l}, which may change the store,
-and the resulting store of \code{l} is used for the evaluation \code{r}.
-However, In the latter, without store passing, the current store at each point
+and the resulting store of \code{l} is used for the evaluation of \code{r}.
+However, in the latter, without store passing, the current store at each point
 is implicit. The code does not reveal the fact that \code{interp(l,
 env)} can change the store and, therefore, affect the result of \code{interp(r,
 env)}. Implementation with store-passing style explicitly shows the use and flow of
@@ -345,13 +345,13 @@ Since \code{factorial} does not use CPS, the continuation is implicit.
 For example, in \code{factorial(5) + 1},
 the continuation of \code{factorial(5)} is to add \code{1} to the
 result, i.e. \code{x => x + 1}. Although the continuation of \code{factorial(5)}
-does exist and be executed during the evaluation of \code{factorial(5) + 1},
+does exist and is executed during the evaluation of \code{factorial(5) + 1},
 we cannot find \code{x => x + 1} in the code per se. The reason is that
 \code{factorial} does not use CPS.
 
-Let us transform this function to use CPS. Since each function in CPS takes the
+Let us transform this function to use CPS. Since each function in CPS takes a
 continuation as an argument, the first thing to do is to add a parameter to a
-function. The continuation of a function application uses the return value for
+function. The continuation of a function application uses the return value of
 certain computation.
 Therefore, a continuation can be interpreted as a function that takes
 the return value as input. In the case of \code{factorial}, the continuation
@@ -360,12 +360,13 @@ On the other hand, there is no restriction on what the continuation
 computes; it can do whatever it wants. In \code{factorial(5) + 1}, the
 continuation of \code{factorial(5)} results in an integer. At the same time,
 \code{factorial(5) + 1} results in an integer, too. In \code{120 == factorial(5)},
-the continuation, which is \code{x => 120 == x}, results in a boolean. The whole
+the continuation of \code{factorial(5)}, which is \code{x => 120 == x}, results in a boolean. The whole
 expression \code{120 == factorial(5)} also results in a boolean.
-Therefore, the output of the continuation can have any type,
-but the type must be the same as the type of the whole program.
+Therefore, the output of a continuation can have any type,
+but the type must be the same as the type of the whole expression.
 
-Based on these observations, we can define the type of a continuation.
+Based on these observations, we can define the type of the
+continuation of \code{factorial}.
 It is a function type whose parameter type is \code{Int}.
 The return type can be any type, but
 for brevity, we fix the return type to \code{Int}.
@@ -415,7 +416,7 @@ def factorialCps(n: Int, k: Cont): Int =
 Obviously, it is not the correct implementation of \code{factorialCps} because
 it still depends on \code{factorial}; we want \code{factorialCps} to be
 independent of \code{factorial}.
-The current version is just specification, not implementation, of \code{factorialCps}.
+The current version is just a specification, not an implementation, of \code{factorialCps}.
 However, it is a good starting point. We can replace \code{factorial(n)} with
 the body of \code{factorial} to obtain the following code:
 
@@ -504,25 +505,26 @@ reveals the continuation.
 
 The code written in CPS has the following characteristics:
 \begin{itemize}
-  \item Each function takes the continuation as an argument, and each function
-    application passes the continuation as an argument.
-  \item The continuation is used---called or passed to another function---
-    once and at most once in the body.
+  \item Each function takes a continuation as an argument, and each function
+    application passes a continuation as an argument.
+  \item A continuation is used---called or passed to another function---
+    once and at most once in a function body.
   \item The return value of every function application is never used.
   \item Every function call is a tail call.
   \item Every function ends with a function call.
 \end{itemize}
 These are not individual ones; they are connected and express the same idea.
-Since the continuation is given as an argument, the only way to finish the
-computation is calling the continuation. Therefore, the continuation is used
-once and at most once in the body. Also, there is no need to do additional
-computation with the return value. The continuation does every additional
-computation with the return value, so the return values are not used at all.
+Since a continuation is given as an argument, the only way to finish a
+computation is calling the continuation. Therefore, a continuation is used
+once and at most once in a function body. Also, there is no need to do additional
+computation with the return value of a function application.
+The continuation does every additional
+computation with the return value, so return values are not used at all.
 Since we do not use return
 values, every call is a tail call. Once a function calls another
 function, the result of the callee is the result of caller. Moreover, there is no
 way of returning from a function without calling any function. If the function
-is the last step of the computation, it must call the continuation. Otherwise,
+is the last step of a computation, it must call its continuation. Otherwise,
 it needs to call another function to proceed the computation. Therefore, every
 function ends with a function call.
 
@@ -559,19 +561,19 @@ function ends with a function call.
 % \code{factorialCps} makes the function less general but never makes the function
 % wrong.
 
-CPS seems needless. The main reason is its complexity.
+While CPS may seem to be needlessly complex, it is useful in various cases.
 If we compare \code{factorial} and \code{factorialCps}, the former looks more concise.
 It is difficult to implement programs correctly in CPS. One benefit of CPS is
-that it makes every function call be a tail call. If the implementation language
-supports tail-call optimization, CPS can be used to avoid stack overflow.
+that it makes every function call be a tail call. If implementation languages
+support tail-call optimization, CPS can be used to avoid stack overflow.
 However, this book uses Scala, which optimizes only tail-recursive calls.
 Scala programs written in CPS can suffer from stack overflow despite the use of
-CPS. Then, why does this section introduce CPS? The first reason is to help the
+CPS. Then, why does this section introduce CPS? The first reason is to help
 readers understand the notion of a continuation. The other reason is that
-the characteristic of CPS, passing the continuation explicitly as a value, is
+the characteristic of CPS, passing a continuation explicitly as a value, is
 sometimes useful. The next chapter shows such an example: an interpreter of a
-language with first-class continuations. We will see how CPS can contribute the
-implementation of an interpreter in the next chapter.
+language with first-class continuations. We will see how CPS can
+contribute to the implementation of an interpreter in the next chapter.
 
 \section{Interpreter in CPS}
 
@@ -810,9 +812,9 @@ The code does not directly call \code{k}. Instead of calling \code{k}, it passes
 \section{Small-Step Operational Semantics}
 
 This section defines semantics that explicitly shows continuations for \lang.
-Previous chapters define semantics in big-step style. Big-step semantics is
+Previous chapters define semantics in a big-step style. Big-step semantics is
 intuitive, and its inference rules give nice clues to interpreter implementers.
-A single rule usually corresponds to a single case of the pattern matching in
+A single rule usually corresponds to a single case of pattern matching in
 an interpreter, so it is straightforward to implement an interpreter based on
 the big-step semantics and write semantics rules based on the implementation of
 an interpreter.
@@ -831,17 +833,17 @@ For instance, consider the following rule:
 
 The rule implies that the value of $e_1+e_2$ is $n_1+n_2$. It does not explain
 how $e_1$ evaluates to $n_1$ and $e_2$ evaluates to $n_2$. Therefore, the rule does
-not describe steps that evalutes $e_1$ to $n_1$ and $e_2$ to $n_2$.
+not describe steps that evalute $e_1$ to $n_1$ and $e_2$ to $n_2$.
 The only step the rule describes is the last step: adding $n_1$ and $n_2$.
 
 Another problem is that rules of big-step semantics do not specify
-the order of the computation. Consider the above rule again. The rule does not
+the order of computation. Consider the above rule again. The rule does not
 decide the order between $e_1$ and $e_2$. The only two things the rule requires
 are that $e_1$ evaluates to $n_1$ and that $e_2$ evaluates to $n_2$.
 The evaluation of $e_1$ may precede that of $e_2$, and vice versa.
 
 These two characteristics of big-step semantics hamper us from formalizing
-continuations. Continuations highly rely on presice steps of computation whose
+continuations. Continuations highly rely on precise steps of computation whose
 order is fixed. Big-step semantics neither shows all the steps nor specifies the
 order. Therefore, we do not use big-step semantics in this section.
 
@@ -849,7 +851,7 @@ order. Therefore, we do not use big-step semantics in this section.
 is another way of defining the semantics of a language. While big-step semantics
 defines a relation over expressions and values, small-step semantics
 defines a relation between states and states.
-If one step of computation transfers the program from state $A$ to state $B$,
+If one step of computation transfers a program from state $A$ to state $B$,
 $A$ and $B$ are related by the relation. Such one step of computation is called
 \textit{reduction}\index{reduction}. If reduction from $A$ to $B$ is possible,
 we say that $A$ is reducible and reduced to $B$. On the other
@@ -867,7 +869,7 @@ the result.
 Small-step semantics fits formalizing continuations. Since execution is a
 sequence of multiple reduction steps, every step of computation can be
 identified. The order between the steps naturally arises. By splitting the steps
-into two parts, we can formally describe a redex and the continuation.
+into two parts, we can formally describe a redex and a continuation.
 
 Now, let us define states of \lang.
 A state of \lang is a pair of a computation stack and a value stack.
@@ -885,7 +887,7 @@ s & ::= & \mts
 \end{array}
 \]
 
-where metavariable $k$ ranges over computation stacks and metavariable $s$
+where the metavariable $k$ ranges over computation stacks and the metavariable $s$
 ranges over value stacks. Let $S_{\text{Comp}}$ be the set of every
 computation stack and $S_{\text{Val}}$ be the set of every value stack.
 We write $k\ ||\ s$ to denote a state that consists of
@@ -897,7 +899,7 @@ The white square, $\mtk$, denotes the empty computation stack, which
 implies that there is nothing more to do.\sidenote{Note that $\mtk$ has no
 relation to $\square$ used to represent continuations intuitively. In the
 continuation $\square+1$, $\square$ means a hole, which should be filled by
-the result of the redex. On the other hand, in the small-step semantics,
+the result of a redex. On the other hand, in the small-step semantics,
 $\mtk$ is the empty computation stack. The overlapped use of $\square$ is
 just coincidence.} If the computation stack of a state is
 $\mtk$, no further reduction is possible, and the evaluation ends.
@@ -932,7 +934,7 @@ On the other hand, the other kinds of computation consume values in the value st
 $(+)$ pops two values from the
 value stack and then pushes the sum of the values onto the value stack.
 For instance, $\addk k\ ||\ \conss{2}\conss{1}s$ is reduced to $k\ ||\ \conss{3}s$.
-$(-)$ and $(@)$ are similar to $(+)$. $(-)$ performs subtraction, and $(@)$
+$(-)$ and $(@)$ are similar to $(+)$. $(-)$ performs subtraction and $(@)$
 performs function application.
 
 It becomes clear that each kind of a computation step coincides with our intuitive
@@ -1035,7 +1037,7 @@ if a popped value is not an integer, both addition or subtraction are
 impossible, so reduction cannot happen when the popped computation is $(+)$ or
 $(-)$. It prevents further reduction even when
 there is remaining computation. Therefore, such termination is considered
-errorneous and harmful.
+erroneous and harmful.
 
 When evaluation according to the small-step semantics succesfully produces a
 value, we can reach the same conclusion using the big-step semantics.
@@ -1135,7 +1137,7 @@ From this observation, we define the following rules:
 
 Rule \textsc{Red-Add1} splits the evaluation of $e_1+e_2$ into aforementioned
 three parts. Then, the subsequent reduction steps evaluate $e_1$ and $e_2$ and
-pushes their results onto the value stack. After the evaluation of $e_2$, $(+)$
+push their results onto the value stack. After the evaluation of $e_2$, $(+)$
 is at the top of the computation stack. One more reduction step, which is
 defined by Rule \textsc{Red-Add2}, pops the values
 from the value stack and pushes their sum to the value stack. The following

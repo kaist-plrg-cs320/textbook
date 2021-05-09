@@ -29,7 +29,7 @@ is the remaining computation. Once a continuation is called and evaluated,
 the execution finishes. Calling a continuation changes the
 current continuation to the called one. It changes the control flow of the
 execution. First-class continuations allow programmers to express
-computation with complex control flow concisely.
+computations with complex control flows concisely.
 
 This chapter defines \lang by extending \plang with first-class continuations.
 It defines the small-step semantics of \lang and implements an interpreter of
@@ -148,7 +148,7 @@ computation stack to $\sigma[x\mapsto\contv{k}{s}]\vdash e$.
 
 Adding Rule \textsc{Red-Vcc} is not enough to define the semantics of \lang.
 Due to the existence of first-class continuations, function application
-expressions must be able to handle not only closures, but also first-class
+expressions must be able to handle not only closures but also first-class
 continuations. To define the reduction rule, recall the reduction rule that
 handles function application.
 
@@ -310,7 +310,7 @@ construct \code{ContV(k)}. CPS takes the key role in implementing an interpreter
 a language that provides first-class continuations.
 
 Now, let us fix the \code{App} case.
-The \code{interp} function must handle continuation application in the
+The \code{interp} function must handle continuation applications in the
 \code{App} case.
 
 \begin{verbatim}
@@ -319,7 +319,7 @@ case App(f, a) =>
     interp(a, env, av => fv match {
       case CloV(x, e, fenv) =>
         interp(e, fenv + (x -> av), k)
-      case ContV(nk) => nk(v2)
+      case ContV(nk) => nk(av)
     })
   )
 \end{verbatim}
@@ -335,18 +335,18 @@ never adds $\sigma\vdash e$ to the computation stack.
 \section{Use of First-Class Continuations}
 
 Imperative languages provide control diverters, such as \code{return},
-\code{break}, and \code{continue}, to allow programmers to change the control
-flow. However, \lang supports only first-class continuations.
+\code{break}, and \code{continue}, to allow programmers to change control
+flows. However, \lang supports only first-class continuations.
 
 In fact, first-class continuations are the most general form of control flow
-manipulation. Continuations represent the control flow of programs because the
+manipulation. Continuations represent control flows of programs because the
 continuation at some point of execution is the remaining computation.
 Changing the current continuation is equivalent to changing the control flow by
 making the program compute different things.
 In \lang, programmers can change the current
 continuation freely by calling continuations. Therefore, first-class
-continuations allow arbitrary changes of the control flow.
-Expressions like \code{return} change the control flow in a fixed way according
+continuations allow arbitrary changes of control flows.
+Expressions like \code{return} change control flows in a fixed way according
 to their semantics. On the other hand, programmers using \lang can make first-class
 continuations with $\textsf{vcc}$ and call them at any points. The expressivity of
 first-class continuations surpasses that of other control diverters.
@@ -360,11 +360,11 @@ preventing the language from being complicated.
 
 \subsection{Return}
 
-A \code{return} expression makes the function immediately return.
+A \code{return} expression makes a function immediately return.
 Instead of adding \code{return} to \lang, we can desugar \code{return} to
-$\textsf{vcc}$ and continuation application.
+$\textsf{vcc}$ and a continuation application.
 
-If a programmer write
+If a programmer writes
 $\code{return}\ e$ in the body of a function, $\code{return}\ e$
 can be desugared to $\code{r}\ e$, where $\code{r}$ is just an identifier.
 \sidenote{Assume that the rest of the expression does not use $\code{r}$ at all.}
@@ -403,7 +403,7 @@ semantics of \code{return}.
 \subsection{Break and Continue}
 
 Many imperative languages provide \code{break} and \code{continue}. Programmers
-use them inside loops to change the control flow. A \code{break} expression
+use them inside loops to change control flows. A \code{break} expression
 immediately terminates the loop, and a \code{continue} expression makes the
 loop skip the current iteration and directly move on to the beginning of the
 next iteration.
@@ -424,7 +424,7 @@ continuation of the loop, \code{break} can be desugared to $\code{b}\ 0$.
 To make \code{b} the continuation of a loop, \textsf{vcc} that binds \code{b}
 should enclose the loop. Therefore, every loop containing \code{break} must be
 desugared. An expression $\textsf{while0}\ e_1\ e_2$ is desugared to
-$\evcc{\code{b}}{\textsf{while0}\ e_1\ e_2}$
+$\evcc{\code{b}}{\textsf{while0}\ e_1\ e_2}$.
 
 For example, consider the following expression:
 
@@ -434,7 +434,7 @@ This expression is desugared to the following expression:
 
 $\evcc{\code{b}}{\textsf{while0}\ 0\ (\code{b}\ 0)}$
 
-Then, the \code{b} is the continuation finishing the evaluation.
+Then, \code{b} is the continuation finishing the evaluation.
 Inside the loop, \code{b} is applied to $0$, so the program terminates and
 produces $0$ as a result. It coincides with the expected behavior of \code{break}.
 Even though the condition of the loop never changes from $0$, the loop

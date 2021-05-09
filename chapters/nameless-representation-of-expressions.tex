@@ -20,7 +20,7 @@ source code as input.
 First, two variables may not be distinguished when their names are the same.
 Environments can easily deal with variables of the same name well, but
 substitution is often used instead of environments to define the semantics of
-languages. For instance, defining the semantics of function application with
+languages. For instance, defining the semantics of function applications with
 substitutions is as follows: evaluating $(\lambda \cx.\cx + \cx)\ 1$
 is the same as evaluating $1+1$, which is obtained by substituting $\cx$ with
 $1$ in the function body $\cx+\cx$.\sidenote{Since the main purpose of mentioning
@@ -34,7 +34,7 @@ the expression is the same as evaluating $\lambda \cx.\lambda \cy.\cx$,
 which is obtained by substituting $\cf$ with $\lambda \cy.\cx$ in
 $\lambda \cx.\cf$. Alas, it is wrong. $\cx$ in the original argument
 $\lambda \cy.\cx$ is a free identifier, while $\cx$ in $\lambda \cx.\lambda \cy.\cx$
-is a binding occurrence. The meaning of $\cx$
+is a bound occurrence. The meaning of $\cx$
 before and after the substitution is completely different. This example shows
 that the current semantics is incorrect, and the root cause of the problem is
 two different variables of the same name $\cx$.
@@ -65,7 +65,7 @@ places. Consider optimization of expressions.
 
 The above expression defined the functions $\cf$ and $\code{g}$ and, then,
 evaluate $(\cf\ 1)+(\code{g}\ 2)$. $\cf$ and $\code{g}$ are semantically
-equivalent, but the names of their parameter are different. If a compiler is
+equivalent, but the names of their parameters are different. If a compiler is
 aware of their equivalence, it can reduce the size of the program by
 modifying the expression like below:
 
@@ -156,7 +156,7 @@ of de Bruijn indices, a simple syntactic check will find out that two expression
 are equal.
 
 Now, let us define the procedure that transforms named expressions into nameless
-expressions. It helps the readers understand de Bruijn indices. At the same time, the
+expressions. It helps readers understand de Bruijn indices. At the same time, the
 procedure is practically valuable. Use of names is the best way to denote
 variables for programmers. Therefore, expressions written by programmers have
 names. On the other hand, programs like interpreters and compilers sometimes need
@@ -167,7 +167,7 @@ First, we define indices as follows:
 
 \[ i \in \mathbb{N} \]
 
-where metavariable $i$ ranges over indices.
+where the metavariable $i$ ranges over indices.
 
 Then, we can define nameless expressions as follows:
 \sidenote{This chapter uses $e$ to denote both named expressions and nameless
@@ -195,7 +195,7 @@ distance between a variable and its definition.
 
 \[\chi\in\embox{Id}\finto\mathbb{N}\]
 
-Metavariable $\chi$ ranges over contexts.
+The metavariable $\chi$ ranges over contexts.
 
 Let $[e]\chi$ be a nameless expression representing $e$ under a context $\chi$.
 The definition of $[e]\chi$ is as follows:
@@ -223,8 +223,8 @@ there is no $\lambda$ between the use and the definition. The context must know
 that the index of $x$ is 0. In addition, indices in $\chi$ need changes. Suppose
 that $x'$ is in $\chi$ and its index is 0. If $x'$ occurs in $e$, its index is
 not 0 anymore. Since $e$ is the body of $\lambda x.e$, there is one $\lambda$
-between $x'$ and is definition. During the transformation of $e$, the index of
-$x'$ is 1, not 0. Similarly, if there is a variable whose index of 1 in $\chi$,
+between $x'$ and its definition. During the transformation of $e$, the index of
+$x'$ is 1, not 0. Similarly, if there is a variable whose index is 1 in $\chi$,
 its index must be 2 during the transformation of $e$. In conclusion, every index
 in $\chi$ has to increase by one. $\uparrow\chi$ denotes the context same as
 $\chi$ but whose indices are one larger. The context used during the
@@ -310,7 +310,7 @@ moving each name backward by one slot. Therefore, if a context is a list,
 prepending a new name in front of the list does everything we need to extend
 the context. For
 example, consider a context containing $\cx$ and $\cy$. Let the indices of
-$\cx$ and $\cy$ respectively be 0 and 1. The context is represented by
+$\cx$ and $\cy$, respectively, be 0 and 1. The context is represented by
 \code{List("x", "y")}. It is enough to prepend $\cz$ to the list to add
 $\cz$ to the context. The resulting list is \code{List("z", "x", "y")}---$\cz$ at
 index 0, $\cx$ at index 1, and $\cy$ at index 2. Since $\cz$ is the new

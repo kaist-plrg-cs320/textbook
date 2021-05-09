@@ -14,8 +14,8 @@ stored in \code{ContV} because \lang supports first-class continuations.
 first-class functions. Since functions are values in Scala, the interpreter can
 represent continuations with functions and uses them as values.
 
-The use of first-class functions is problematic. First, low-level languages, such
-as C, lack first-class functions.\sidenote{C provides functions pointers, but not
+The use of first-class functions is problematic for some cases. First, low-level languages, such
+as C, lack first-class functions.\sidenote{C provides function pointers but not
 closures. Closures are necessary to represent continuations.} There must be
 another way to implement an interpreter of \lang for those who use low-level languages.
 Second, functions do not give useful information. The only ability of functions
@@ -106,7 +106,7 @@ in the interpreter:
   \item \code{v2 => v1 match ...}
 \end{itemize}
 
-The first continuation, \code{v1 => interp(e2, env, v2 => continue(k, numVAdd(v1,
+The first continuation, \code{v1 => interp(e2, env, v2 => continue(k, add(v1,
 v2)))}, is used after the evaluation of the left operand of addition. It
 evaluates the right operand, calculates the sum, and passes the sum to the
 continuation of the entire addition. The parameter \code{v1} denotes the value of
@@ -125,30 +125,30 @@ continuation instead of a function, it cannot be applied to a value. We need a n
 way to continue evaluation when a continuation and a value are given. The clue
 already exists---look at the body of the function representing a continuation.
 When the function is applied to \code{v1}, the result is \code{interp(e2, env,
-v2 => continue(k, numVAdd(v1, v2)))}. Now, \code{(e2, env, k)} and \code{v1} are
+v2 => continue(k, add(v1, v2)))}. Now, \code{(e2, env, k)} and \code{v1} are
 provided instead of the function and \code{v1}. It is enough to evaluate
-\code{interp(e2, env, v2 => continue(k, numVAdd(v1, v2)))} with \code{v1},
+\code{interp(e2, env, v2 => continue(k, add(v1, v2)))} with \code{v1},
 \code{e2}, \code{env}, and \code{k}. It evaluates the same thing as the
 original function application.
 
 Below compare the previous and current strategies:
 
 \begin{itemize}
-  \item Previous: \code{v1 => interp(e2, env, v2 => continue(k ,numVAdd(v1, v2)))} and
+  \item Previous: \code{v1 => interp(e2, env, v2 => continue(k ,add(v1, v2)))} and
   \code{v1} are given. Then, evaluate \code{interp(e2, env, v2 => continue(k,
-  numVAdd(v1, v2)))} by applying \code{v1 => interp(e2, env, v2 => continue(k
-  ,numVAdd(v1, v2)))} to \code{v1}.
+  add(v1, v2)))} by applying \code{v1 => interp(e2, env, v2 => continue(k
+  ,add(v1, v2)))} to \code{v1}.
   \item Current: \code{(e2, env, k)} and \code{v1} are given. Then, evaluate
-  \code{interp(e2, env, v2 => continue(k, numVAdd(v1, v2)))} with \code{e2},
+  \code{interp(e2, env, v2 => continue(k, add(v1, v2)))} with \code{e2},
   \code{env}, \code{k}, and \code{v1}.
 \end{itemize}
 
-Both strategies evaluate \code{interp(e2, env, v2 => continue(k, numVAdd(v1,
+Both strategies evaluate \code{interp(e2, env, v2 => continue(k, add(v1,
 v2)))} in the end. While the previous strategy represents continuations with
 functions, the current strategy represents continuations with triples.
 
 Once you understand the first sort of continuations, the remaining ones are
-straightforward. The second continuation, \code{v2 => continue(k, numVAdd(v1,
+straightforward. The second continuation, \code{v2 => continue(k, add(v1,
 v2))}, is used after the evaluation of the right operand of addition. It
 calculates the sum of the operands and passes the sum to the continuation of the
 addition. The parameter \code{v2} denotes the value of the right operand. The
@@ -157,28 +157,28 @@ the continuation of the addition; \code{v1} is the value of the left operand. In
 a similar fashion, \code{v1} and \code{k} are enough to determine what the
 continuation does. Therefore, \code{(v1, k)}, a pair of a value and a
 continuation, can represent the continuation. To continue the evaluation when
-\code{(v1, k)} and \code{v2} are given, \code{continue(k, numVAdd(v1, v2))} needs
+\code{(v1, k)} and \code{v2} are given, \code{continue(k, add(v1, v2))} needs
 to be evaluated.
 
 \begin{itemize}
-  \item Previous: \code{v2 => continue(k, numVAdd(v1, v2))} and \code{v2} are given.
-  Then, evaluate \code{continue(k, numVAdd(v1, v2))} by applying \code{v2 =>
-  continue(k, numVAdd(v1, v2))} to \code{v2}.
+  \item Previous: \code{v2 => continue(k, add(v1, v2))} and \code{v2} are given.
+  Then, evaluate \code{continue(k, add(v1, v2))} by applying \code{v2 =>
+  continue(k, add(v1, v2))} to \code{v2}.
   \item Current: \code{(v1, k)} and \code{v2} are given. Then, evaluate
-  \code{continue(k, numVAdd(v1, v2))} with \code{v1}, \code{k}, and \code{v2}.
+  \code{continue(k, add(v1, v2))} with \code{v1}, \code{k}, and \code{v2}.
 \end{itemize}
 
 The third continuation, \code{v1 => interp(e2, env, v2 => v1 match ...)}, is
 used after the evaluation of the expression at the function position of
-function application. It evaluates the argument and applies the function (or
-the continuation) to the argument.
+a function application. It evaluates an argument and applies a function (or
+a continuation) to the argument.
 \code{v1} denotes the value of the expression at the function position. The body
 of the function representing the continuation contains three free variables:
 \code{e2}, \code{env}, and \code{k}.\sidenote{\code{k} is in \code{...}.}
 \code{e2} is the expression at the argument
 position; \code{env} is the current environment; \code{k} is the continuation of
 the application. Therefore, \code{e2}, \code{env},
-and \code{k} determines what the continuation does, and \code{(e2, env, k)}, a
+and \code{k} determine what the continuation does, and \code{(e2, env, k)}, a
 triple of an expression, an environment, and a continuation, can represent the
 continuation. Continuing the evaluation is evaluating \code{interp(e2, env, v2 =>
 v1 match ...)}, which can be done with \code{(e2, env, k)} and \code{v1}.
@@ -193,8 +193,8 @@ v1 match ...)}, which can be done with \code{(e2, env, k)} and \code{v1}.
 \end{itemize}
 
 The fourth continuation, \code{v2 => v1 match ...}, is used after the
-evaluation of the argument of function application. It applies the function (or
-the continuation) to the argument.
+evaluation of the argument of a function application. It applies a function (or
+a continuation) to the argument.
 \code{v2} denotes the value of the argument. The body of the function
 representing the continuation contains two free variables: \code{v1} and
 \code{k}.\sidenote{\code{k} is in \code{...}.}
@@ -212,9 +212,9 @@ with \code{(v1, k)} and \code{v2}.
 \end{itemize}
 
 In fact, there is one more continuation, which does not appear in the implementation of
-\code{interp}. It is one that is represented as the identity function and is
+\code{interp}. It is the one that is represented as the identity function and is
 passed to \code{interp} in the beginning. The identity function returns a given
-argument without any changes. No addition information is necessary to determine the
+argument without any changes. No additional information is necessary to determine the
 behavior of the continuation. Therefore, \code{()}, the zero-length tuple (the
 \code{Unit} value in Scala) can represent the continuation. To continue the
 evaluation with the continuation and a value \code{v}, it is enough to give
@@ -227,7 +227,7 @@ evaluation with the continuation and a value \code{v}, it is enough to give
   \code{v}.
 \end{itemize}
 
-In summary, the \lang interpreter consists of continuations of the following five
+In summary, the \lang interpreter uses continuations of the following five
 sorts:
 
 \begin{itemize}
@@ -240,10 +240,10 @@ sorts:
 
 Note that the first and the third are different even though they look the same.
 The first continuation computes \code{interp(e2, env, v2 => continue(k,
-numVAdd(v1, v2)))} with its data, while the third continuation computes
+add(v1, v2)))} with its data, while the third continuation computes
 \code{interp(e2, env, v2 => v1 match ...)} with its data. Similarly, the
 second and the fourth are diffent as well. The second computes \code{continue(k,
-numVAdd(v1, v2))}, while the fourth computes \code{v1 match ...}.
+add(v1, v2))}, while the fourth computes \code{v1 match ...}.
 
 As explained in \refch{pattern-matching}, an ADT is the best way to implement a
 type that consists of values of various shapes.
@@ -280,10 +280,10 @@ previous explanations, but with the names of the case classes and object.
 
 \begin{itemize}
   \item \code{AddSecondK(e2, env, k)} and \code{v1} are given. Then, evaluate \code{interp(e2,
-  env, v2 => continue(k, numVAdd(v1, v2)))} with \code{e2}, \code{env}, \code{k},
+  env, v2 => continue(k, add(v1, v2)))} with \code{e2}, \code{env}, \code{k},
   and \code{v1}.
   \item \code{DoAddK(v1, k)} and \code{v2} are given. Then, evaluate \code{continue(k,
-  numVAdd(v1, v2))} with \code{v1}, \code{k}, and \code{v2}.
+  add(v1, v2))} with \code{v1}, \code{k}, and \code{v2}.
   \item \code{AppArgK(e2, env, k)} and \code{v1} are given. Then, evaluate \code{interp(e2,
   env, v2 => v1 match ...)} with \code{e2}, \code{env}, \code{k}, and
   \code{v1}.
@@ -294,7 +294,7 @@ previous explanations, but with the names of the case classes and object.
 
 The first and third explanations still pass functions to \code{interp} even
 though continuations are not functions anymore. They need small changes. Now,
-\code{DoAddK(v1, k)} represents \code{v2 => continue(k, numVAdd(v1, v2))}, and
+\code{DoAddK(v1, k)} represents \code{v2 => continue(k, add(v1, v2))}, and
 \code{DoAppK(v1, k)} represents \code{v2 => v1 match ...}.
 
 \begin{itemize}
@@ -309,7 +309,7 @@ The new implementation of \code{continue} is as follows:
 \begin{verbatim}
 def continue(k: Cont, v: Value): Value = k match {
   case AddSecondK(e2, env, k) => interp(e2, env, DoAddK(v, k))
-  case DoAddK(v1, k) => continue(k, numVAdd(v1, v))
+  case DoAddK(v1, k) => continue(k, add(v1, v))
   case AppArgK(e2, env, k) => interp(e2, env, DoAppK(v, k))
   case DoAppK(v1, k) => v1 match {
     case CloV(x, e, fenv) =>
@@ -338,7 +338,7 @@ def interp(e: Expr, env: Env, k: Cont): Value = e match {
 
 Only the \code{Add} and \code{App} cases are different from before. The \code{Add} case
 uses \code{AddSecondK(e2, env, k)} to represent \code{v1 => interp(e2, env, v2 =>
-continue(k, numVAdd(v1, v2)))}; the \code{App} case uses \code{AppArgK(e2, env,
+continue(k, add(v1, v2)))}; the \code{App} case uses \code{AppArgK(e2, env,
 k)} to represent \code{v1 => interp(e2, env, v2 => v1 match ...)}.
 
 Note that \code{MtK} does not appear in \code{interp}. \code{MtK} is used to
@@ -432,7 +432,7 @@ NumV($n$))} is $v$.
   \quad\textsc{[Interp-Fun]}
 \]
 
-The rules for variables and functions are similar the rule for integers.
+The rules for variables and functions are similar to the rule for integers.
 
 \[
   \inferrule
@@ -479,7 +479,7 @@ Now, we define inference rules related to \code{continue}.
 \begin{verbatim}
 def continue(k: Cont, v: Value): Value = k match {
   case AddSecondK(e2, env, k) => interp(e2, env, DoAddK(v, k))
-  case DoAddK(v1, k) => continue(k, numVAdd(v1, v))
+  case DoAddK(v1, k) => continue(k, add(v1, v))
   case AppArgK(e2, env, k) => interp(e2, env, DoAppK(v, k))
   case DoAppK(v1, k) => v1 match {
     case CloV(xv1, ev1, sigmav1) =>
@@ -520,7 +520,7 @@ The conclusion, $n_2\mapsto[n_1+\square]::\kappa\Downarrow v$, denotes that the
 result of \code{continue(DoAddK(NumV($n_1$), $\kappa$),
 NumV($n_2$))} is $v$. The result of \code{continue(DoAddK(NumV($n_1$),
 $\kappa$), NumV($n_2$))} is the same as that of \code{continue($\kappa$,
-numVAdd(NumV($n_1$), NumV($n_2$)))}. Note that \code{numVAdd(NumV($n_1$),
+add(NumV($n_1$), NumV($n_2$)))}. Note that \code{add(NumV($n_1$),
 NumV($n_2$))} equals \code{NumV($n_1+n_2$)}.
 
 $n_1+n_2\mapsto\kappa\Downarrow v$ denotes that the result of
