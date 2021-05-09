@@ -5,11 +5,11 @@
 \renewcommand{\plang}{\textsf{TFAE}\xspace}
 \renewcommand{\lang}{\textsf{TVFAE}\xspace}
 
-ADTs are ubiquitous in functional programming. \refch{pattern-matching} explains
+Algebraic Data Types (ADTs) are ubiquitous in functional programming. \refch{pattern-matching} explains
 the concept of an ADT and how programmers can use ADTs in Scala. ADTs are useful
 when a single type includes values of different structures. Such types are
 common in computer science. For example, lists and options, which
-almost every program uses, are typically implemented as ADTs. In addition, ASTs,
+almost every programming language provides, are typically implemented as ADTs. In addition, ASTs,
 which all the compilers, interpreters, and static analyzers need, can be easily
 implemented as ADTs as well.
 
@@ -99,7 +99,7 @@ def radius(f: Fruit): Int = f match {
 }
 \end{verbatim}
 
-\plang does not have pattern matching, but we can exploit the fact the
+\plang does not have pattern matching, but we can exploit the fact that the
 first value of a given pair indicates which fruit it is. We use a conditional
 expression to perform a certain operation when the fruit is an apple, i.e. the
 first value is $0$, and another opertaion when the fruit is a banana,
@@ -160,7 +160,7 @@ $\code{Nil}$, no other data is required since $\code{Nil}$ does not have any
 parameters. Thus, the second element of a type $\tau'$ is for $\code{Cons}$. Since
 $\code{Cons}$ has two parameters, an integer and a list, $\tau'$ equals
 $(\tnum,\tau)$. Then, we obtain the equation $\tau=(\tnum,(\tnum,\tau))$.
-However, as mentioned in the previous chapter, no type in \plang can be the same
+However, as discussed in the previous chapter, no type in \plang can be the same
 as a part of itself. Therefore, there is no such $\tau$. We can conclude that we
 cannot desugar lists in \plang. In general, recursive ADTs cannot be expressed
 in \plang.
@@ -181,12 +181,12 @@ the set of every type identifier.
 
 \[ t \in \embox{TId} \]
 
-Metavariable $t$ ranges over type identifiers. Since $\embox{TId}$ includes only
+The metavariable $t$ ranges over type identifiers. Since $\embox{TId}$ includes only
 the names of user-defined types, $\tnum$ is not a member of $\embox{TId}$.
 
 The names of user-defined types can be used as types. For example, \code{Fruit},
 which is a type name, is used as a type in \code{def radius(f: Fruit): Int = ...}.
-Therefore, we extend the syntax of types.
+Therefore, we extend the syntax of types as follows:
 
 \[ \tau \ ::= \ \cdots\ |\  t \]
 
@@ -204,7 +204,7 @@ e \ ::= \ \cdots
     type. The name of the type is $t$, and the type has two variants. The name
     of the first variant is $x_1$, and it has a single parameter whose type is
     $\tau_1$. Similarly, the name of the second variant is $x_2$, and it has a
-    single parameter whose type is $\tau_2$. The names of the variants function
+    single parameter whose type is $\tau_2$. The names of the variants serve
     as constructors in $e$. The type name $t$ can be used in $e$ as a type. In
     addition, since types can be recursively defined, $t$ can appear also in
     $\tau_1$ and $\tau_2$.
@@ -299,8 +299,8 @@ The result of $\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}$ equals the
 result of $e$. The constructors of the variants have to be available during
 the evaluation of $e$. For example, if the expression defines \code{Fruit}, then
 $e$ should be able to construct values with the constructors,
-$\langle\code{Apple}\rangle$ and $\langle\code{Banana}\rangle$. Programmers want
-to use the names of the variants to denote the constructors. They want to
+$\langle\code{Apple}\rangle$ and $\langle\code{Banana}\rangle$. Programmers can
+use the names of the variants to denote the constructors. They can
 write code like $\code{Apple}\ 5$ and $\code{Banana}\ (2,6)$. It shows that
 the identifier $\code{Apple}$ must denote the value $\langle\code{Apple}\rangle$ and
 that the identifier $\code{Banana}$ must denote the value
@@ -356,7 +356,7 @@ of the whole pattern matching expression.
   \quad\textsc{[Match-R]}
 \]
 
-On the other hand, if $e$ evaluates to in $x_2(v')$, it matches the second case.
+On the other hand, if $e$ evaluates to $x_2(v')$, it matches the second case.
 Then, $e_2$ is evaluated under the environment that contains a mapping from
 $x_4$ to $v'$. The result of $e_2$ is the result of the whole pattern matching
 expression.
@@ -484,7 +484,7 @@ case Match(e, v1, x1, e1, v2, x2, e2) =>
 A pattern matching expression evaluates the target expression first.
 If the result is a variant value and its name is the same as \code{v1},
 then \code{e1} is evaluated under the environment with the value of
-\code{x1}. If the names is the same as \code{v2}, then \code{e2} is
+\code{x1}. If the name is the same as \code{v2}, then \code{e2} is
 evaluated under the environment with the value of \code{x2}.
 
 \begin{verbatim}
@@ -591,7 +591,7 @@ type environment.
   \quad\textsc{[Wf-ArrowT]}
 \]
 
-If both $\tau_1$ and $\tau_2$ is well-formed, then
+If both $\tau_1$ and $\tau_2$ are well-formed, then
 $\tarrow{\tau_1}{\tau_2}$ also is well-formed. The reason is clear: if both
 $\tau_1$ and $\tau_2$ lack free type identifiers, then $\tarrow{\tau_1}{\tau_2}$
 also does.
@@ -962,7 +962,7 @@ case Fun(x, t, b) =>
   ArrowT(t, typeCheck(b, env.add(x, t)))
 \end{verbatim}
 
-As mentioned already, the \code{Fun} case needs a revision.
+As discussed already, the \code{Fun} case needs a revision.
 The well-formedness of the parameter type annotation needs to be checked.
 
 \begin{verbatim}
@@ -997,7 +997,7 @@ The expression defines \code{Fruit} twice in a nested manner. The outer
 \code{Fruit} has \code{Cherry} and \code{Durian} as variants. The expression
 applies a function of $\tarrow{(\tarrow{\code{Fruit}}{\tnum})}{\tnum}$ to a value
 of ${\tarrow{\code{Fruit}}{\tnum}}$, so it is well-typed. However, the
-expressions causes a run-time error. The function of
+expression causes a run-time error. The function of
 $\tarrow{(\tarrow{\code{Fruit}}{\tnum})}{\tnum}$ applies a given function to a
 value of the \code{Cherry} variant because \code{Fruit} has \code{Cherry} and
 \code{Durian} inside the function. However, the inner definition of
@@ -1055,7 +1055,7 @@ The rule has two new premises:
   \item $\wft{\Gamma}{\tau}$
 \end{itemize}
 The first one prevents nested types from having the same name. The second one
-prevents each locally defined types from escaping its scope. In this way, we can
+prevents each locally defined type from escaping its scope. In this way, we can
 effectively solve the issue. A program still can have different types of the
 same name, but different types of the same name cannot meet each other,
 i.e. they cannot be used in the same place.
@@ -1064,7 +1064,7 @@ The third solution is to rename types before type checking in order to remove
 any duplication in type names. Since the bound-bind relation between identifiers
 can be easily determined with simple syntactic checking, it is possible to
 rename types without changing the semantics of a given program. For instance,
-the above example becomes the following expression after the renaming:
+the above example becomes the following expression after renaming:
 
 \vspace{0.5em}
 $\begin{array}{@{}l}
@@ -1092,7 +1092,7 @@ language.
 \section{Exercises}
 
 \begin{enumerate}
-\item What does each the following expressions evaluate to?
+\item What does each of the following expressions evaluate to?
 If it is a run-time error, describe where the error occurs.
 
 \begin{enumerate}

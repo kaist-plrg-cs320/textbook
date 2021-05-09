@@ -35,14 +35,14 @@ environment, evaluating $\cx\ \cx$ is equivalent to evaluating $(\lambda
 we can say that the evaluation of $(\lambda \cx.\cx\ \cx)\ (\lambda \cx.\cx\
 \cx)$ leads to the evaluation of the exactly same expression. The evaluation
 runs forever and never terminates. There are many nonterminating programs in
-real world. If a language support recursive functions or loops, writing
+real world. If a language supports recursive functions or loops, writing
 nonterminating programs becomes much easier. Some of them are created by
 programmers' mistakes. Wrong use of recursive functions or loops makes programs
 run forever, contrary to the expectation of the programmers. However,
 programmers sometimes intentionally write nonterminating programs.
 Consider operating systems, web servers, and shells. They do not finish their
-execution unless the user inputs a termination command. If an operating system
-terminates although the user has not given any commands, such a behavior should
+execution unless a user inputs a termination command. If an operating system
+terminates although a user has not given any commands, such a behavior should
 be considered as a bug. These examples clearly show the necessity of writing
 nonterminating programs.
 
@@ -54,7 +54,7 @@ cannot proceed beyond the addition. Thus, the evaluation terminates at the
 middle of the computation rather than reaching the final stage and producing a
 result. The second example, $1\ 0$, applies an integer to a value. Functions can
 be applied to values, but intgers cannot. Such an application expression also
-makes the evaluation terminates abnormally. In the last example, $\cx$ is a free
+makes the evaluation terminate abnormally. In the last example, $\cx$ is a free
 identifier. Its value is unknown, so there is no way to subtract the value of
 $\cx$ from $2$. Expressions in this group correspond to programs that incur
 \textit{run-time errors}.\index{run-time error}
@@ -64,13 +64,13 @@ that incur run-time errors is programmers' mistakes. Run-time errors terminate
 programs abnormally before the programs produce meaningful results. Programmers
 write programs to achieve their goals: getting particular results or performing
 certain tasks forever. Run-time errors hinder programmers from achieving the
-goals. Run-time errors are problematic not only to programmers, but also to other
+goals. Run-time errors are problematic not only to programmers but also to other
 people. In commercial software, run-time errors are unpleasant experiences for users
 and harm the profits and reputations of the company. Moreover,
 people use programs for various purposes these days, so run-time errors can
 cause much more serious problems. Programs control cars, airplanes, and medical
 devices. Improper operations of such devices may kill or hurt people. A device
-will operate in a weird way if the program controlling the device terminates suddenly.
+will operate in a weird way if the program controlling the device terminates abnormally.
 Programmers surely need a way to check the existence of run-time errors before
 they deploy programs.
 
@@ -84,12 +84,12 @@ this chapter, we are interested in existence of run-time errors, so analysis
 means to detect run-time errors.
 It is straightforward to find run-time errors in a
 program with dynamic analysis. If execution finishes due to a
-run-time error, the program needs revision. Otherwise, the program is usable
-without any problems.
+run-time error, the program needs revision. Otherwise, the program may
+be usable without any problems.
 
-However, dynamic analysis often fails. Execution can take
+However, dynamic analysis often fails to detect run-time errors. Execution can take
 a long time or run forever. Programmers want to deploy their programs; they
-cannot wait the execution forever to finish. The dynamic analysis must stop at some point.
+cannot wait for the execution forever to finish. The dynamic analysis must stop at some point.
 It makes complete prevention of run-time errors impossible. Even though a
 program runs one hundred hours without any run-time errors, it can incur
 a run-time error after one more hour of execution. Moreover, most
@@ -97,8 +97,8 @@ programs take inputs from users, and there are infinitely many possible inputs.
 Dynamic analysis cannot cover all the cases. Even if a program runs fine for every input
 being tried, the program can result in a run-time error for another input.
 In addition, some programs are nondeterministic. For example, multithreaded
-programs can produce different results among multiple runs because execution of
-threads are interleaved arbitrarily. Even when run-time errors are not found
+programs can produce different results among multiple runs because the execution of
+threads is interleaved arbitrarily. Even when run-time errors are not found
 during a few trials, the absence of run-time errors cannot be guaranteed.
 Dynamic analysis is a simple and popular way to find run-time errors but cannot ensure
 the nonexistence of run-time errors. To rule out run-time errors in programs, we
@@ -122,13 +122,13 @@ More precisly, we want a program $P$ that satisfies the following conditions:
 The first property implies that $P$ always terminates, which is different from
 dynamic analysis.
 The second property is called \textit{completeness},\index{completeness}
-which implies that $P$ never detects run-time errors by mistake, i.e. there is
+which implies that $P$ never detects run-time errors by mistake, i.e., there is
 no false positive---a \textit{false positive}\index{false positive}
 is to incorrectly say $\textsf{OK}$.
 If $P(I)$ is $\textsf{NOT OK}$, $I$ must be able to incur a run-time
 error.\sidenote{It is the contrapositive of the second property.}
 The third property is called \textit{soundness},\index{soundness}
-which implies that $P$ never misses run-time errors, i.e. there is no false
+which implies that $P$ never misses run-time errors, i.e., there is no false
 negative---a \textit{false negative}\index{false negative}
 is to incorrectly say $\textsf{NOT OK}$.
 If $P(I)$ is $\textsf{OK}$, $I$ must be free from run-time
@@ -141,7 +141,7 @@ the programmers should fix the problem.
 Alas, such a program $P$ does not exist. It has not existed so far and will
 not exist in the future as well. In other words, the problem of deciding whether
 a certain program can incur a run-time error is proven to be undecidable. The
-undecidability can be proved in a similar fashion to the Turing's proof of the
+undecidability can be proved in a similar fashion to Turing's proof of the
 undecidability of the halting problem. We do not explain the proof because the proof
 is outside the scope of this book.
 
@@ -193,7 +193,7 @@ get any information. False positives are possible, so $P$ can say $\textsf{NOT
 OK}$ even when a given program never causes a run-time error in fact.
 
 After giving up completness, $P$ should satisfy two more conditions in order to
-be practically useful. First, the number of false positives must be minimized. If not,
+be practically useful. First, the number of false positives must be modest. If not,
 programmers cannot get useful information from $P$. For example, we can design
 $P$ to output $\textsf{NOT OK}$ in any case. Such $P$ surely satisfies the above
 conditions because producing $\textsf{NOT OK}$ is allowed when a given program
@@ -261,10 +261,10 @@ $\cx$ is a free identifier. One may say this error is irrelevant to types. From
 this perspective, such an error is just a free identifier error, not a type
 error. However, another may say the error is relevant to types because
 $\cx$, whose value is unknown, cannot belong to any type and, therefore, is not a
-value of $\tnum$ although subtraction requires both operand to be $\tnum$.
+value of $\tnum$ although subtraction requires both operands to be $\tnum$.
 From this perspective, free identifiers are just a subset of type errors. There is
 no single correct answer; both perspectives make sense. This book follows the
-latter, i.e. that free identifiers are type errors, because it fits the purpose
+latter, i.e., that free identifiers are type errors, because it fits the purpose
 of our discussion better.
 
 Even if we classify free identifier errors as type errors, not all run-time
@@ -273,7 +273,7 @@ values are correct, so they cannot be classified as type errors. We cannot find
 such examples in \plang. Type errors are all of possible run-time errors in
 \plang. However, in many real-world languages, which provide various features
 \plang excludes, we can find run-time errors irrelevant to types. One of the
-most famous examples is the \code{NullPointerException} of Java. In Java,
+most famous examples is \code{NullPointerException} of Java. In Java,
 \code{null} is a value that belongs to any type.\sidenote{In fact, Java
 classifies types into primitive types and reference types, and \code{null} is a
 value of any reference type.} Thus, \code{null} is a value of the \code{String}
@@ -317,7 +317,7 @@ are true:
   \item $e$ does not incur a type error.
   \item $e$ evaluates to a value of $\tau$ or does not terminate.
 \end{itemize}
-where metavariable $\tau$ ranges over types. Then, we can restate the finding of
+where the metavariable $\tau$ ranges over types. Then, we can restate the finding of
 the above paragraph: when the type of $e_1$ is $\tnum$ and the type of $e_2$ is
 $\tnum$, the type of $e_1+e_2$ is $\tnum$.
 
@@ -336,7 +336,7 @@ subexpressions to have $\tnum$ as their types. However, it is clear that functio
 application requires different types. It requires the first subexpression to
 have $\tfun$ as its type because only functions can be applied to values. These
 examples show that a type checker needs a separate rule for each sort of an
-expression to predict the type. We call such rules
+expression to predict the type of the expression. We call such rules
 \textit{typing rules}\index{typing rule}.
 
 There are multiple typing rules in a
@@ -364,12 +364,12 @@ expression and computes its result. Static semantics defines how expressions are
 type-checked. By type checking, the types of expressions are computed. A type
 checker is a program that takes an expresion, predicts its type, and checks
 whether run-time errors are possible. We can consider static semantics as
-overapproximation of dynamic semantics. For example, dynamic semantics let us
-know that $1+2$ results in $3$, while static semantics let us know that $1+2$
+overapproximation of dynamic semantics. For example, dynamic semantics lets us
+know that $1+2$ results in $3$, while static semantics lets us know that $1+2$
 results in an integer without any run-time errors or does not terminate.
 
 As mentioned before, the goal of a type checker, $P$, is soundness. Therefore,
-the most important property of type system is \textit{type soundness}\index{type
+the most important property of type systems is \textit{type soundness}\index{type
 soundness}, or simply, just soundness. If a type checker says $\textsf{OK}$ for
 a given program, then the program must never incur type errors. In this
 case, we say that the program passes type checking or that the type checker accepts
@@ -378,16 +378,16 @@ given program, we cannot conclude anything, but the program might incur a type
 error. In this case, we say that the type checker rejects the program.
 
 It is nontrivial to design a sound type system for a given language. Proving the
-soundness of a type system is more challenging. Proofs of type soundness is
+soundness of a type system is more challenging. Proving type soundness is
 beyond the scope of this book. This book introduces various type systems whose
 type soundness has been proved by researchers already.
 
 Since designing a type system and implementing a type checker are
-difficult tasks, those tasks are the jobs of language designers, not languages
+difficult tasks, those tasks are the jobs of language designers, not language
 users in most cases. Some languages come out with type systems. We call such languages
 \textit{typed languages}\index{typed language} or \textit{statically typed
 languages}\index{statically typed language}. The terms imply that the languages
-has the notion of a type whose correct use is verified statically.
+have the notion of a type whose correct use is verified statically.
 In such languages, only programs
 that pass type checking can be executed. Programs rejected by the type checker
 are disallowed to be exectued because their safety is not ensured. Therefore,
@@ -401,7 +401,7 @@ The term untyped languages implies that they do not have type checking.
 The term dynamically typed languages implies that they have the notion of a type
 only at run time. Note that a type is a natural concept that exists anywhere
 because values can be classified according to their characteristics in any
-languages. However, types exist only during execution since there are no static
+languages. However, in dynamically typed languages, types exist only during execution since there are no static
 type checking. In such languages, programs may incur type errors during execution.
 Python and JavaScript are well-known dynamically typed languages in real world.
 
@@ -409,12 +409,12 @@ Statically typed languages and dynamically typed languages have their own pros
 and cons. Statically typed languages have the following advantages:
 \begin{itemize}
   \item
-Errors can detected early. Programmers can find errors before execution.
+Errors can be detected early. Programmers can find errors before execution.
   \item
     Static type checking
 gives type information to compilers, and the compilers can optimize programs
 with the information. For these reasons, programs in statically typed languages
-usually overperform programs in dynamically typed languages.
+usually outperform programs in dynamically typed languages.
   \item
     Some statically typed languages require programmers to write types explicitly
     on the source code. Such types on the code are called \textit{type
@@ -427,15 +427,15 @@ On the other hand, statically typed languages have the following disadvantages:
   \item
 Statically typed languages attain type soundness by giving up completeness.
 Type checkers may reject programs that never incur type errors.
-Therefore, programmers often waste their time in making type
+Therefore, programmers may waste their time in making type
 checkers agree that given programs do not result in type errors.
   \item
 Type annotations make code unnecessarily verbose despite their usefulness.
 In addition, programmers spend their time on writing correct type annotations.
 \end{itemize}
 
-Due to these characteristics, statically typed languages are attractive when we
-write complex programs whose error detection is difficult. In addition, programs
+Due to these characteristics, statically typed languages are attractive when one
+writes complex programs whose error detection is difficult. In addition, programs
 that have to be highly trustworthy or require high performance are typical use
 cases of statically typed languages. Programs that need long-term maintenance
 also are good clients of statically typed languages.
@@ -448,8 +448,8 @@ Dynamically typed languages liberate programmers from the burden of fighting
 against type checking and allow them to save their time.
 
 Therefore, dynamically-typed languages are ideal for the early stage of
-development. Programmers can easily make a prototype of their program and try
-various changes in the prototype. They do not waste their time to argue with type
+development. Programmers can easily make prototypes of their programs and try
+various changes in the prototypes. They do not waste their time arguing with type
 checkers. Also, programs that are very small and used only a few times are where
 dynamically typed languages should be used. In such applications, the advantages
 of statically typed languages are worthless.
@@ -539,7 +539,7 @@ when closures are constructed.
 
 \subsection{Interpreter}
 
-An interpreter of \plang is similar to that of \plang. Since lambda abstractions
+An interpreter of \lang is similar to that of \plang. Since lambda abstractions
 have type annotations, the \code{Fun} case class needs a change.
 
 \begin{verbatim}
@@ -587,7 +587,7 @@ environment.
 \[ \embox{TEnv} = \embox{Id}\finto\text{T} \]
 \[ \Gamma \in \embox{TEnv} \]
 
-Metavariable $\Gamma$ ranges over type environments.
+The metavariable $\Gamma$ ranges over type environments.
 
 The static semantics defines a relation over type environments, expressions, and types.
 
@@ -792,8 +792,8 @@ to $\clov{\cx}{\cx}{\emptyset}$ without any type error. However, the type system
 rejects the expression. $\efunt{\cx}{\tnum}{\cx}$
 takes an argument of the type $\tnum$. However, $\efunt{\cx}{\tnum}{\cx}$,
 the argument, has the type $\tarrow{\tnum}{\tnum}$,
-which differs from $\tnum$. As a result, the type system incorrectly rejects the
-expression.
+which differs from $\tnum$. As a result, the type system rejects the
+expression even though it evaluates to a value without any type error.
 
 \subsection{Type Checker}
 
@@ -853,9 +853,10 @@ the expression also is \code{NumT}. The \code{Fun} case checks the type of the
 function body under the extended type environment. The type of the function is
 a function type. The parameter type is the same as the type annotation, and the
 return type is the type of the body. The \code{App} case
-checks the types of the function and the argument. The parameter type of the
-function must equal the type of the argument. The type of the application expression
-is the return type of the function.
+checks the types of the function and the argument positions. The parameter type of the
+function position must equal the type of the argument position.
+The type of the application expression
+is the return type of the function position.
 
 % \section{Type Erasure}
 
@@ -997,7 +998,7 @@ Reducing false positives is the most common reason of extending type systems.
 The subsequent four chapters show famous and practically useful type system
 extensions of this kind.
 
-Second, type systems are extended just for convenience of programmers.
+Second, type systems are extended just for the convenience of programmers.
 Extensions of this kind do not reduce the number of false positives. However, by
 adding useful language constructs, programmers become easily able to express
 their high-level ideas in source code. It is the same as extensions of
@@ -1090,7 +1091,7 @@ We add pair types as follows:
 \[ \tau \ ::= \ \cdots\ | \ \tau\times\tau \]
 
 A type $\tau_1\times\tau_2$ is the type of $(v_1,v_2)$ if the type of $v_1$ is
-$\tau_1$, and the type of $v_2$ is $\tau_2$.
+$\tau_1$ and the type of $v_2$ is $\tau_2$.
 The following rules define the static semantics:
 
 \typerule{Typ-Pair}{

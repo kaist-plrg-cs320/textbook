@@ -43,9 +43,9 @@ expression evaluates to a value in a finite time. This is called the
 normalization property of \plang was proved by Tait in
 1967~\cite{tait1967intensional}.\sidenote{Actually, the Tait's proof is about
 the lazy version of \plang, but the same technique can be applied to \plang,
-which is eager, as Pierce metioned~\cite{pierce2002types}.}
+which is eager, as Pierce discussed~\cite{pierce2002types}.}
 
-The chpater defines \lang, which extends \plang with recursive functions. By
+This chpater defines \lang, which extends \plang with recursive functions. By
 adding recursive functions to the language, programmers become able to implement
 recursive functions and nonterminating programs, which are impossible in \plang.
 Thus, while the extension from \textsf{FAE} to \textsf{RFAE} does not increase
@@ -71,7 +71,7 @@ used for type checking, just like type annotations in \plang.
 \section{Dynamic Semantics}
 
 The dynamic semantics of \lang is similar to that of \textsf{RFAE}, but type
-annotations are ignored during closure constructions.
+annotations are ignored during closure construction.
 
 \semanticrule{Rec}{
 If
@@ -111,7 +111,7 @@ case class Rec(
 $\erect{x_1}{x_2}{\tau_1}{\tau_2}{e_1}{e_2}$.
 
 The \code{interp} function is similar to that of \textsf{RFAE}, but type
-annotations are ignored during closure constructions.
+annotations are ignored during closure construction.
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Value = e match {
@@ -126,7 +126,7 @@ def interp(e: Expr, env: Env): Value = e match {
 
 \section{Static Semantics}
 
-We need to define typeing rules for conditional expressions and recursive
+We need to define typing rules for conditional expressions and recursive
 functions. Let us consider conditional expressions first.
 
 \typerule{Typ-If0}{
@@ -192,7 +192,7 @@ allows functions as well. Therefore, from the perspective of reducing false posi
 Rule~\textsc{Typ-If0'} is better than Rule~\textsc{Typ-If0}.
 However, if the type of the condition is a function type, it is highly likely to
 be a mistake of the programmer. When the condition evaluates to a function, the
-conditional expression always evaluates its true branch. The use of a
+conditional expression always evaluates its false branch. The use of a
 conditional expression is totally meaningless. Thus, from the perspective of
 detecting programmers' mistakes, Rule~\textsc{Typ-If0} is better than
 Rule~\textsc{Typ-If0'}.
@@ -362,9 +362,9 @@ well-typed.
 \end{array}
 \]
 
-Metavariable $c$ ranges over commands.
+The metavariable $c$ ranges over commands.
 
-Under given environment $\sigma$, evaluation of an expression yields a value and does not
+Under a given environment $\sigma$, evaluation of an expression yields a value and does not
 change $\sigma$. The following is the operational semantics of the expressions:
     \vspace{-1em}
 \[
@@ -433,7 +433,7 @@ The following is the operational semantics of the commands:
     \setcounter{enumii}{1}
 \item Write the typing rules of the form \fbox{$\typeofd{c}{\Gamma}$}.
 The following command must be well-typed: \verb+x := 1; x := 2+.
-However, the following command must be not well-typed: \verb+x := 1; x := true+.
+However, the following command must be ill-typed: \verb+x := 1; x := true+.
 \end{enumerate}
 
 \end{enumerate}
