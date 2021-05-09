@@ -5,574 +5,747 @@
 \renewcommand{\plang}{\textsf{TFAE}\xspace}
 \renewcommand{\lang}{\textsf{STFAE}\xspace}
 
-This article defines \lang by adding records and subtype polymorphism to \lang.
-It defines the abstract syntax, the dynamic semantics, and the type system of
-\lang.
+This chapter introduces subtype polymorphism. Subtype polymorphism is often
+found in object-oriented languages, but some functional languages also support
+subtype polymorphism these days. For example, OCaml, which stands for Objective
+Caml, is a functional language that provides subtype polymorphism. Understanding
+subtype polymorphism is important in many real-world languages.
 
-\section{Abstract Syntax}
+This chapter
+defines \lang by extending \plang with subtype polymorphism. To illustrate the
+need of subtype polymorphism, we start with adding records to \plang. We can add
+subtype polymorphism to \plang without adding records together, but examples with
+records can clearly show the benefits of subtype polymorphism.
 
-The following shows the abstract syntax of \lang:
+\section{Records}
 
-\[
-\begin{array}{rrcl}
-\text{Label} & l & \in & \mathcal{L} \\
-\text{Expression} & e & ::= & \cdots \\
-&&|& \{l=e,\cdots,l=e\} \\
-&&|& e.l \\
-\text{Value} & v & ::= & \cdots \\
-&&|& \{l=v,\cdots,l=v\} \\
-\text{Type} & \tau & ::= & \cdots \\
-&&|& \{l:\tau,\cdots,l:\tau\} \\
-\end{array}
-\]
+A record is a value that consists of multiple values. Records are similar to tuples,
+but users can designate the names of the elements in a record. When we talk
+about the elements of records, we often use the term
+\textit{fields}\index{field}. From the perspective
+of their expressivity and roles in programming, records are the same as tuples.
+However, records help programmers to express their high-level ideas in the code
+more directly than tuples and, thus, prevent mistakes.
 
-Omitted parts are the same as \lang.
+For example,
+consider a tuple that represents the height, score, and scholarship state of a
+student. The tuple $(180,91,\textsf{true})$ represents a student who is
+180-centimeter-tall, got 91 points from the recent exam, and is currently
+receiving a scholarship. One disadvantage of using tuples is that programmers
+may use wrong elements by mistake. When $\code{st}$ denotes the previously
+mentioned tuple, one should write $\code{st}\textsf{.1}$ to get the height.
+However, there is no reason to assoicate the first element to the height. If he or
+she writes $\code{st}\textsf{.2}$ instead $\code{st}\textsf{.1}$, then the wrong
+conclusion---the student is 91-centimeter-tall---will be obtained.
 
-Metavariable $l$ ranges over labels. Labels are the names of fields in
-records.
+Records
+effectively prevent such mistakes. We can represent the same student with the
+record $\{\code{height}=180,\code{score}=91,\code{scholarship}=\textsf{true}\}$.
+This record has three fields: \code{height}, \code{score}, and
+\code{scholarship}.
+Then, the height can be found by $\code{st}.\code{height}$. In this case, there
+is a logical reason to associate the field whose name is \code{height} with the
+height of the student. It is clear that $\code{st}.\code{score}$ does not denote
+the height of the student.
 
-$\{l_1=e_1,\cdots,l_n=e_n\}$ is an expression that creates a record value. A
-record has zero or more fields. $l$'s are the names of the fields. This
-article assumes that every field in a single record has a distinct name. For
-evaluation of the expression, every $e_i$ needs to be evaluated. The result of
-$e_i$ is the value of the field $l_i$.
+\subsection{Syntax}
 
-$\{l_1=v_1,\cdots,l_n=v_n\}$ is a record value. $l$'s are the names of the
+First, we
+introduce labels, which are the names of fields in records. Let $\mathcal{L}$
+be the set of every label and metavariable $l$ range over labels.
+
+\[ l \in \mathcal{L} \]
+
+Now, we define the syntax of expressions related to records.
+
+\[ e\ ::= \ \cdots \ |\ \{l=e,\cdots,l=e\} \ |\ e.l \]
+
+\begin{itemize}
+  \item
+    $\{l_1=e_1,\cdots,l_n=e_n\}$ is an expression that creates a record. A
+    record has zero or more fields. $l$'s are the names of the fields.
+    We assume that the fields of a single record have distinct names.
+    Since a record can has zero fields, $\{\}$ is an expression.
+  \item
+    $e.l$ is an expression that gives the value of a certain field from a record.
+    It is usually called a
+    \textit{projection}\index{projection}. $e$ determines the record,
+    and $l$ is the name of the field whose value is acquired.
+\end{itemize}
+
+\subsection{Dynamic Semantics}
+
+To make language support records, we should add record values to the
+language.
+
+\[ v \ ::= \ \cdots \ |\ \{l=v,\cdots,l=v\} \]
+
+A value $\{l_1=v_1,\cdots,l_n=v_n\}$ is a record value. $l$'s are the names of the
 fields. $v_i$ is the value of the field $l_i$. For example, the result of
-$\{a=1+2,b=3+4\}$ is $\{a=3,b=7\}$. The record has two fields: $a$ and
-$b$. The value of $a$ is $3$, and the value of $b$ is $7$. $\{\}$
-also is an expression that makes a record value. Its result is $\{\}$, which
-is the empty record.
+$\{\ca=1+2,\cb=3+4\}$ is $\{\ca=3,\cb=7\}$. The record has two fields: $\ca$ and
+$\cb$. The value of $\ca$ is $3$, and the value of $\cb$ is $7$. The result of
+$\{\}$ is $\{\}$, which is the empty record value.
 
-$\{l_1:\tau_1,\cdots,l_n:\tau_n\}$ is a record type. $l$'s are the names of
-the fields. $\tau_i$ is the type of the field $l_i$. Since both $3$ and
-$7$ are integers, the type of $\{a=3,b=7\}$ is \(\{a:\textsf{num},b:\textsf{
-num}\}\). The type of $\{a=1+2,b=3+4\}$ also is \(\{a:\textsf{num},b:\textsf{
-num}\}\). Similarly, the type of the empty record is $\{\}$.
+Now, we add rules to define the dynamic semantics of the added expressions.
 
-$e.l$ is an expression that uses a record value. It is usually called a
-projection. If the result of $e$ is $\{l_1=v_1,\cdots,l_n=v_n\}$, then
-$e.l$ results in $v_i$ where $l_i$ is equal to $l$. The expression
-computes the value of the field $l$ of a given record value. If $e$ does not
-result in a record value, $e.l$ causes a type error at run time. If $e$
-results in a record value that lacks a field named $l$, $e.l$ also causes a
-type error. In the view of a type system, projections use record types. If the
-type of $e$ is $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$, then the type of $e.l$
-is $\tau_i$ where $l_i$ is equal to $l$. For example, since
-$\{a=1+2,b=3+4\}$ results in $\{a=3,b=7\}$, $\{a=1+2,b=3+4\}.a$ results in
-$3$. The type of $\{a=1+2,b=3+4\}$ is $\{a:\textsf{num},b:\textsf{num}\}$, and
-the type of $\{a=1+2,b=3+4\}.a$ is, therefore, $\textsf{num}$. On the other hand,
-$\{a=1+2,b=3+4\}.c$ causes a type error and is an ill-typed expression because
-the record lacks a field named $c$.
+\semanticrule{Record}{
+  If
+    \evaldn{e_1}{v_1},
+    $\cdots$, and
+    \evaldn{e_n}{v_n}, \\
+  then
+    \evaldn{\{l_1=e_1,\cdots,l_n=e_n\}}{\{l_1=v_1,\cdots,l_n=v_n\}}.
+}
 
-\section{Dynamic Semantics}
-
-It is enough to consider only the semantics of records and projections. Other
-expressions have the same semantics as \lang.
+\vspace{-1em}
 
 \[
-\inferrule
-{ \sigma\vdash e_1\Rightarrow v_1 \\ \cdots \\ \sigma\vdash e_n\Rightarrow v_n }
-{ \sigma\vdash \{l_1=e_1,\cdots,l_n=e_n\}\Rightarrow\{l_1=v_1,\cdots,l_n=v_n\} }
+  \inferrule
+  { \evald{e_1}{v_1} \\
+    \cdots \\
+    \evald{e_n}{v_n} }
+  { \evald{\{l_1=e_1,\cdots,l_n=e_n\}}{\{l_1=v_1,\cdots,l_n=v_n\}} }
+  \quad\textsc{[Record]}
 \]
 
-Every $e_i$ has to be evaluated for evaluation of
-$\{l_1=e_1,\cdots,l_n=e_n\}$. If the value of $e_1$ is $v_1$, the value of
+Every $e_i$ has to be evaluated for the evaluation of
+$\{l_1=e_1,\cdots,l_n=e_n\}$. If the value of $e_i$ is $v_i$, the value of
 the field $l_i$ is $v_i$. The result is $\{l_1=v_1,\cdots,l_n=v_n\}$.
 
-\[
-\inferrule
-{ \sigma\vdash e\Rightarrow\{l_1=v_1,\cdots,l=v,\cdots,l_n=v_n\} }
-{ \sigma\vdash e.l\Rightarrow v }
-\]
+\semanticrule{Proj}{
+  If
+    \evaldn{e}{\{\cdots,l=v,\cdots\}}, \\
+  then
+    \evaldn{e.l}{v}.
+}
 
-$e$ has to be evaluated first for evaluation of $e.l$. The result $e$ must
-be a record that contains a field named $l$. The value of $e.l$ is the same
-as the value of the field $l$.
-
-\section{Type System}
-
-\subsection{Typing Rules}
-
-It is enough to consider only the semantics of records and projections. Other
-typing rules are the same as those of \lang.
+\vspace{-1em}
 
 \[
-\inferrule
-{ \Gamma\vdash e_1:\tau_1 \\ \cdots \\ \Gamma\vdash e_n:\tau_n }
-{ \Gamma\vdash
-\{l_1=e_1,\cdots,l_n=e_n\}\Rightarrow\{l_1:\tau_1,\cdots,l_n:\tau_n\} }
+  \inferrule
+  { \evald{e}{\{\cdots,l=v,\cdots\}} }
+  { \evald{e.l}{v} }
+  \quad\textsc{[Proj]}
 \]
 
-The value of $\{l_1=e_1,\cdots,l_n=e_n\}$ is $\{l_1=v_1,\cdots,l_n=v_n\}$.
-Let the type of $v_i$ be $\tau_i$. The type of
-$\{l_1=v_1,\cdots,l_n=v_n\}$ is $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$, and,
-therefore, the type of $\{l_1=e_1,\cdots,l_n=e_n\}$ also is
-$\{l_1:\tau_1,\cdots,l_n:\tau_n\}$. Since the type of $v_i$ is $\tau_i$,
-the type of $e_i$ also is $\tau_i$. Thus, it is enough to compute the type
-of every $e_i$ to type-check $\{l_1=e_1,\cdots,l_n=e_n\}$.
+For the evaluation of $e.l$, $e$ has to be evaluated first.
+If the result of $e$ is a record that contains a field named $l$, then
+$e.l$ results in the value of the field.
+If $e$ evaluates to a nonrecord value or a record value that
+does not contain $l$, $e.l$ incurs a run-time error.
+
+\subsection{Static Semantics}
+
+Since records are a new sort of a value, exsiting types cannot include records.
+We need to add new types that records can belong to.
+
+\[ \tau \ ::= \ \cdots \ |\ \{l:\tau,\cdots,l:\tau\} \]
+
+A type $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$ is a record type that includes
+records whose fields follow the designated names and types. In other words, if a
+record value has fields named $l_1$ from $l_n$ and the value of a field $l_i$ is
+a value of $\tau_i$, then the value belongs to
+$\{l_1:\tau_1,\cdots,l_n:\tau_n\}$. For example, the type of the value $\{\ca=3,\cb=7\}$ is
+$\{\ca:\tnum,b:\tnum\}$. In addition, the type of the expression
+$\{\ca=1+2,\cb=3+4\}$, which evaluates to $\{\ca=3,\cb=7\}$, also is
+$\{\ca:\tnum,b:\tnum\}$. Similarly, the type of the empty record is $\{\}$.
+
+Let us define the typing rules for the added expressions.
+
+\typerule{Typ-Record}{
+  If
+    \typeofdn{e_1}{\tau_1}, $\cdots$,
+    \typeofdn{e_n}{\tau_n}, \\
+  then
+    \typeofdn{\{l_1=e_1,\cdots,l_n=e_n\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \Gamma\vdash e:\{l_1:\tau_1,\cdots,l:\tau,\cdots,l_n:\tau_n\} }
-{ \Gamma\vdash e.l: \tau }
+  \inferrule
+  { \typeofd{e_1}{\tau_1} \\ \cdots \\
+    \typeofd{e_n}{\tau_n} }
+  { \typeofd{\{l_1=e_1,\cdots,l_n=e_n\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}} }
+  \quad\textsc{[Typ-Record]}
 \]
 
-$e.l$ can be evaluated without an error only if $e$ is well-typed and the
-result of $e$ is a record containing a field named $l$. Therefore, the type
+Let the type of $e_i$ be $\tau_i$. Then, $e_i$ evaluates to a value of $\tau_i$.
+Thus, $\{l_1=e_1,\cdots,l_n=e_n\}$ evaluates to a value of
+$\{l_1:\tau_1,\cdots,l_n:\tau_n\}$, and the type of
+$\{l_1=e_1,\cdots,l_n=e_n\}$ is  $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$.
+
+\typerule{Typ-Proj}{
+  If
+    \typeofdn{e}{\{\cdots,l:\tau,\cdots\}}, \\
+  then
+    \typeofdn{e.l}{\tau}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeofd{e}{\{\cdots,l:\tau,\cdots\}} }
+  { \typeofd{e.l}{\tau} }
+  \quad\textsc{[Typ-Proj]}
+\]
+
+$e.l$ can be evaluated without an error only if $e$
+evaluates to a record containing a field named $l$. Therefore, the type
 of $e$ has to be a record type that contains a field $l$. Then, the type of
 $e.l$ is the type of $l$.
 
-\subsection{Subtype Polymorphism}
+For example, the type of $\{\ca=1+2,\cb=3+4\}.\ca$ is $\tnum$ since
+the type of $\{\ca=1+2,\cb=3+4\}$ is $\{\ca:\tnum,\cb:\tnum\}$.
+On the other hand, $\{\ca=1+2,\cb=3+4\}.\code{c}$ is ill-typed because
+$\{\ca:\tnum,\cb:\tnum\}$ lacks a field named $\code{c}$.
+
+\section{Subtype Polymorphism}
 
 The current type system is sound but not expressive enough. It rejects many
-expressions that do not cause an error at run time. Consider the following
+expressions that do not cause any run-time errors. Consider the following
 expression:
 
-\[
-(\lambda x:\{a:\textsf{num}\}.x.a)\ \{a=1,b=2\}
-\]
+$
+  (\efunt{\cx}{\{\ca:\tnum\}}{\cx.\ca})\ \{\ca=1,\cb=2\}
+$
 
-The expression evaluates $\{a=1,b=2\}.a$, which yields $1$ without any
+The expression evaluates $\{\ca=1,\cb=2\}.\ca$, which yields $1$ without any
 error. However, the type system rejects the expression. The type of
-$\{a=1,b=2\}$ is $\{a:\textsf{num},b:\textsf{num}\}$, while the parameter type of
-the function $\lambda x:\{a:\textsf{num}\}.x.a$ is $\{a:\textsf{num}\}$. Since the
-types of the argument and the parameter differ from each other, it is ill-typed.
+$\{\ca=1,\cb=2\}$ is $\{\ca:\tnum,\cb:\tnum\}$, while the parameter type of
+the function is $\{\ca:\tnum\}$. Since the argument type is different
+from the designated parameter type, the application expression is ill-typed.
 
-The type $\{a:\textsf{num}\}$ is the type of a record that has an integer-value
-field $a$. Even though the record has fields other than $a$, it still has
-the field $a$. Therefore, it would be correct to say that $\{a=1,b=2\}$ is a
-value of the type $\{a:\textsf{num}\}$. However, under the current type system,
-the only type of $\{a=1,b=2\}$ is $\{a:\textsf{num},b:\textsf{num}\}$. \(\{a:\textsf{
-num}\}\) is not a type of $\{a=1,b=2\}$.
+Currently, the type $\{\ca:\tnum\}$ denotes the set of every record that has
+only the integer-valued field \code{a}. However, this definition is too
+restrictive. The type implies that its value can be used for any place that
+accesses the field \code{a} and expects the value of the field to be an integer.
+Thus, the type does not need to exclude values that have other fields in
+addition to the field \code{a}.
 
-The type system should be able to consider $\{a=1,b=2\}$ to be a value of not
-only $\{a:\textsf{num},b:\textsf{num}\}$ but also $\{a:\textsf{num}\}$. A language
-feature that allows a single entity to be used as multiple types is called
-polymorphism. The last article dealt with parametric polymorphism. However,
-parametric polymorphism cannot resolve the current issue. A new sort of
-polymorphism is required. It is time to consider subtype polymorphism.
+To resolve the problem, we extend the meaning of $\{\ca:\tnum\}$. Now, the type
+includes any records that have a integer-valued field \code{a}. Records that
+have additional fields also can be values of $\{\ca:\tnum\}$. This change can be
+attained by modifying Rule~\textsc{Typ-Record} like below.
 
-Subtype polymorphism uses a notion of subtyping. Subtyping is a relation between
-two types. $\tau_1<:\tau_2$ denotes that $\tau_1$ is a subtype of
-$\tau_2$. If $\tau_1$ is a subtype of $\tau_2$, then $\tau_2$ is a
-supertype of $\tau_1$, and a value of $\tau_1$ can be used where a value of
-$\tau_2$ is expected. Subtype polymorphism is a concept based on
-substitutability. The previous examples shows that a value of \(\{a:\textsf{
-num},b:\textsf{num}\}\) can appear where a value of $\{a:\textsf{num}\}$ is
-expected. Therefore, $\{a:\textsf{num},b:\textsf{num}\}$ is a subtype of \(\{a:\textsf{
-num}\}\), and $\{a:\textsf{num}\}$ is a supertype of \(\{a:\textsf{num},b:\textsf{
-num}\}\).
+\typerule{Typ-Record'}{
+  If
+    \typeofdn{e_1}{\tau_1}, $\cdots$,
+    \typeofdn{e_n}{\tau_n}, $\cdots$,
+    \typeofdn{e_m}{\tau_m}, \\
+  then
+    \typeofdn{\{l_1=e_1,\cdots,l_n=e_n,\cdots,l_m=e_m\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}.
+}
 
-The type system needs a new typing rule to support subtype polymorphism. The
-subtype relation of the type system will be shown soon. Just assume that the
-relation has been defined already for a while. The following typing rule allows
-a single expression to have multiple types by using the subtype relation:
+\vspace{-1em}
 
 \[
-\inferrule
-{ \Gamma\vdash e:\tau' \\ \tau'<:\tau }
-{ \Gamma\vdash e:\tau }
+  \inferrule
+  { \typeofd{e_1}{\tau_1} \\ \cdots \\
+    \typeofd{e_n}{\tau_n} \\ \cdots \\
+    \typeofd{e_m}{\tau_m} }
+  { \typeofd{\{l_1=e_1,\cdots,l_n=e_n,\cdots,l_m=e_m\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}} }
+  \quad\textsc{[Typ-Record']}
 \]
 
-The rule is usually called a subsumption rule. The rule implies that if
-$\tau'$ is a type of $e$ and $\tau'$ is a subtype of $\tau$, then
-$\tau$ also is a type of $e$. Due to the subtype polymorphism, a single
-expression can have multiple types. It is a big difference between \lang and the
-hitherto languages.
+The rule allows forgetting the types of some fields if they are
+unnecessary. Now, $\{\ca=1,\cb=2\}$ is a value of $\{\ca:\tnum\}$. Thus, the
+previous example, $(\efunt{\cx}{\{\ca:\tnum\}}{\cx.\ca})\ \{\ca=1,\cb=2\}$, is
+well-typed.
 
-\subsection{Subtyping Rules}
+Does this fix solve all the problems? Unfortunately, no.
+Consider the following expression:
 
-It is time to define subtyping rules of the language. As typing rules define the
-types of expressions, subtyping rules define the subtype relation.
+$
+\ebind{\cx}{\{\ca=1,\cb=2\}}{\\
+\ebind{\cy}{(\efunt{\cx}{\{\ca:\tnum\}}{\cx.\ca})\ \cx}{\\
+(\efunt{\cx}{\{\ca:\tnum,\cb:\tnum\}}{\cx.\ca+\cx.\cb})\ \cx
+}}
+$
 
-\subsubsection{Reflexivity}
+This expression is still ill-typed though it does not incur any run-time errors.
+If we say the type of $\cx$ is ${\{\ca:\tnum\}}$, the first function application
+is well-typed. However, the second function application is ill-typed. If we say
+the type of $\cx$ is $\{\ca:\tnum,\cb:\tnum\}$ instead, the second function application
+becomes well-typed. However, the first function becomes ill-typed. There is no
+way to make both application expressions well-typed. We need a way to consider
+$\cx$ as an expression of ${\{\ca:\tnum\}}$ and as an expression of
+$\{\ca:\tnum,\cb:\tnum\}$ at the same time. In other words, we should assign
+multiple types to a single entity, and this is the notion of polymorphism.
 
-The subtype relation is reflexive. A value of $\tau$ can be used where a value
-of $\tau$ is expected. It is trivial. Thus, every type is a subtype of itself.
-The following rule formalizes this fact:
+\textit{Subtype polymorphism}\index{subtype polymorphism} is one way of
+polymorphism, which is based on the notion of subtyping. Recall that a
+type is a set of values. Sometimes, one type is a subset of another type. For
+example, any values that belongs to $\{\ca:\tnum,\cb:\tnum\}$ are values of
+${\{\ca:\tnum\}}$, so $\{\ca:\tnum,\cb:\tnum\}$ is a subset of
+${\{\ca:\tnum\}}$. When $\tau_1$ is a subset of $\tau_2$,
+we say that $\tau_1$ is a \textit{subtype}\index{subtype} of $\tau_2$ and
+$\tau_2$ is a \textit{supertype}\index{supertype} of $\tau_1$.
+For example, $\{\ca:\tnum,\cb:\tnum\}$ is a subtype of ${\{\ca:\tnum\}}$ and
+$\{\ca:\tnum\}$ is a supertype of ${\{\ca:\tnum,\cb:\tnum\}}$.
+This is the notion of subtyping.
 
-\[\tau<:\tau\]
+Roughly speaking, subtyping is an ``A is a B'' relation betwen types. As an example,
+consider \code{Animal} and \code{Cat}, which denote the type of every animal
+and the type of every cat, respectively. We know that a cat is an animal. Then,
+we can say that \code{Cat} is a subtype of \code{Animal}. On the other hand, can
+we say that an animal is a cat? No, because there is an animal that is not a
+cat. For instance, a dog is an animal, but not a cat. Thus, \code{Animal} is not
+a subtype of \code{Cat}. We can do the same thing for record types. A record
+that has fields $\ca$ and $\cb$ is a record that has $\ca$. (For brevity,
+ignore the types of the fields here.) Therefore, $\{\ca:\tnum,\cb:\tnum\}$ is a
+subtype of ${\{\ca:\tnum\}}$. On the other hand, a record that has $\ca$ is not
+a record that has both $\ca$ and $\cb$ since it may lack $\cb$. As a consequence,
+${\{\ca:\tnum\}}$ is not a subtype of $\{\ca:\tnum,\cb:\tnum\}$.
 
-By the rule, $\{a:\textsf{num}\}<:\{a:\textsf{num}\}$ is true.
+Mathematically, subtyping is a relation over types and types.
 
-\subsubsection{Transitivity}
+\[ <:\subseteq T\times T \]
 
-The subtype relation is transitive as well. Let $\tau_1$ be a subtype of
-$\tau_2$ and $\tau_2$ be a subtype of $\tau_3$. A value of $\tau_2$ can
-appear where a value of $\tau_3$ is expected. Also, a value of $\tau_1$ can
-appear where a value of $\tau_2$ is expected. Therefore, a value of $\tau_1$
-can replace a value of $\tau_3$ without causing an error. In conclusion,
-$\tau_1$ is a subtype of $\tau_3$. The following rule formalizes the
-transitivity:
+We write $\subt{\tau_1}{\tau_2}$ to denote that $\tau_1$ is a subtype of
+$\tau_2$. For example, both $\subt{\code{Cat}}{\code{Animal}}$ and
+$\subt{\{\ca:\tnum,\cb:\tnum\}}{\{\ca:\tnum\}}$ are true.
+
+Now, let us see how subtyping induces polymorphsim. The key insight is that
+any expression of $\tau_1$ can be treated as an expression of $\tau_2$ without
+breaking type soundness when $\tau_1$ is a subtype of $\tau_2$. For example,
+suppose that there is an animal hospital that cures any animal. We can consider
+the hospital as a function that takes a value of \code{Animal}. A cat is an
+animal, so any cat can be cured in the hospital. Thus, if an expression
+evaluates to a value of \code{Cat}, then it can be considered as an expression
+that evaluates to a value of \code{Animal} and safely given to the function that
+represents the hospital. On the other hand, the inverse is false. If a hospital
+cures only cats and we know only that someone has an animal, then we cannot say
+to him or her to carry the animal to the hospital. There is no guarantee that
+the hospital will be able to cure the animal. Thus, the fact that $\tau_1$ is a
+subtype of $\tau_2$ does not imply that any expression of $\tau_2$ can be treated
+as an expression of $\tau_1$. In a similar fasion, any expression of
+$\{\ca:\tnum,\cb:\tnum\}$ can be treated as an expression of ${\{\ca:\tnum\}}$,
+but the inverse is false. We can express this idea with the following typing
+rule:
+
+\typerule{Typ-Sub}{
+  If
+  \typeofdn{e}\tau' and \subtn{\tau'}{\tau},\\
+  then
+  \typeofdn{e}\tau.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \tau_1<:\tau_2 \\ \tau_2<:\tau_3 }
-{ \tau_1<:\tau_3 }
+  \inferrule
+  { \typeofd{e}\tau' \\ \subt{\tau'}{\tau} }
+  { \typeofd{e}\tau }
+  \quad\textsc{[Typ-Sub]}
 \]
 
-The above two rules describe important properties of the subtype relation.
-However, they are not enough to prove interesting facts, such as \(\{a:\textsf{
-num},b:\textsf{num}\}<:\{a:\textsf{num}\}\).
+The rule states that if $e$ is an expression of $\tau'$, then it is an
+expression of $\tau$ at the same time when $\tau'$ is a subtype of $\tau$.
 
-\subsubsection{Width Rule}
+Subtyping has two important characteristics. It is reflexive and transitive.
+The reason is clear. Every set is a subset of itself. Thus, every type is a
+subtype of itself. In addition, if $A$ is a subset of $B$ and $B$ is a subset of
+$C$, then $A$ is a subset of $C$. Therefore, if $\tau_1$ is a subtype of
+$\tau_2$ and $\tau_2$ is a subtype of $\tau_3$, then $\tau_1$ is a subtype of
+$\tau_3$. We can formally state these properties with the following
+\textit{subtyping rules}\index{subtyping rule}, which describe when two types
+are in the subtype relation.
+
+\typerule{Sub-Refl}{
+  \subtn{\tau}{\tau}.
+}
+
+\vspace{-1em}
+
+\[
+  \subt{\tau}{\tau}
+  \quad\textsc{[Sub-Refl]}
+\]
+
+\typerule{Sub-Trans}{
+  If
+    \subtn{\tau_1}{\tau_2} and
+    \subtn{\tau_2}{\tau_3}, \\
+  then
+    \subtn{\tau_1}{\tau_3}.
+}
+
+\[
+  \inferrule
+  { \subt{\tau_1}{\tau_2} \\
+    \subt{\tau_2}{\tau_3} }
+  { \subt{\tau_1}{\tau_3} }
+  \quad\textsc{[Sub-Trans]}
+\]
+
+If we have only Rule~\textsc{Sub-Refl} and Rule~\textsc{Sub-Trans}, we cannot
+prove any interesting subtype relationships, e.g.
+$\subt{\{\ca:\tnum,\cb:\tnum\}}{\{\ca:\tnum\}}$, even though both of the rules
+can help us prove interesting subtype relationships by being used with other
+subtyping rules. Thus, we introduce subtyping rules for record types in the
+next section.
+
+\section{Subtyping of Record Types}
 
 Consider the previous example again. The type system should be able to prove
-$\{a:\textsf{num},b:\textsf{num}\}<:\{a:\textsf{num}\}$. The following rule makes the
-type system achieve the goal:
+$\subt{\{\ca:\tnum,\cb:\tnum\}}{\{\ca:\tnum\}}$. To achieve the goal, we define
+the following subtyping rule:
 
-\[
-\{l_1:\tau_1,\cdots,l_n:\tau_n,l:\tau\}<:\{l_1:\tau_1,\cdots,l_n:\tau_n\}
-\]
-
-If a field $l$ is appended to a record type
-$\{l_1:\tau_1,\cdots,l_n:\tau_n\}$, the resulting type is a subtype of the
-original type. It is a valid rule since even after a record value acquires one
-more field, the record value will be able to do everything the original record
-can do. Intuitively, the rule allows considering a record type of "a longer
-width" to be a subtype of a record type of "a shorter width." For this reason,
-the article calls the rule "the width rule." Other authors may not use the same
-name. Now, $\{a:\textsf{num},b:\textsf{num}\}<:\{a:\textsf{num}\}$ is true.
-
-The fact that $\{a:num\}$ is a type of $\{a=1,b=2\}$ can be provable. The
-following proof tree proves the fact:
-
-\[
-\inferrule
-{
-  {\Large\inferrule
-  { \emptyset\vdash1:\textsf{num} \\ \emptyset\vdash2:\textsf{num} }
-  { \emptyset\vdash\{a=1,b=2\}:\{a:\textsf{num},b:\textsf{num}\} }} \\
-  \{a:\textsf{num},b:\textsf{num}\}<:\{a:\textsf{num}\}}
-{ \emptyset\vdash\{a=1,b=2\}:\{a:\textsf{num}\} }
-\]
-
-The following expression is now well-typed:
-
-\[
-(\lambda x:\{a:\textsf{num}\}.x.a)\ \{a=1,b=2\}
-\]
-
-Other interesting subtypes can be also found by the transitivity and the width
-rule. For example, the following proof tree proves that \(\{a:\textsf{num},b:\textsf{
-num},c:\textsf{num}\}<:\{a:\textsf{num}\}\).
-
-\[
-\inferrule
-{
-\{a:\textsf{num},b:\textsf{num},c:\textsf{num}\}<:\{a:\textsf{num},b:\textsf{num}\} \\
-  \{a:\textsf{num},b:\textsf{num}\}<:\{a:\textsf{num}\}
+\typerule{Sub-Width}{
+  \subtn{\{l_1:\tau_1,\cdots,l_n:\tau_n,l:\tau\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}.
 }
-{ \{a:\textsf{num},b:\textsf{num},c:\textsf{num}\}<:\{a:\textsf{num}\} }
+
+\[
+  \subt{\{l_1:\tau_1,\cdots,l_n:\tau_n,l:\tau\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}
+  \quad\textsc{[Sub-Width]}
+\]
+
+Any value of $\{l_1:\tau_1,\cdots,l_n:\tau_n,l:\tau\}$ is a value of
+$\{l_1:\tau_1,\cdots,l_n:\tau_n\}$ because a record that has fields from $l_1$
+to $l_n$ and $l$ additionally is a record that has fields from $l_1$ to $l_n$.
+Therefore, the rule is valid.
+
+Now, $\{\ca:\tnum,\cb:\tnum\}<:\{\ca:\tnum\}$ is true. Using this fact, the following
+proof tree proves that $\{\ca:\tnum\}$ is a type of $\{\ca=1,\cb=2\}$:
+
+\[
+  \small
+  \inferrule
+  {
+    \inferrule
+    { \emptyset\vdash1:\tnum \\ \emptyset\vdash2:\tnum }
+    { \emptyset\vdash\{\ca=1,\cb=2\}:\{\ca:\tnum,\cb:\tnum\} }
+    \\
+    \{\ca:\tnum,\cb:\tnum\}<:\{\ca:\tnum\}
+  }
+  { \emptyset\vdash\{\ca=1,\cb=2\}:\{\ca:\tnum\} }
+\]
+
+In addition, the following expression is now well-typed:
+
+$
+\ebind{\cx}{\{\ca=1,\cb=2\}}{\\
+\ebind{\cy}{(\efunt{\cx}{\{\ca:\tnum\}}{\cx.\ca})\ \cx}{\\
+(\efunt{\cx}{\{\ca:\tnum,\cb:\tnum\}}{\cx.\ca+\cx.\cb})\ \cx
+}}
+$
+
+$\{\ca:\tnum,\cb:\tnum\}$ is a type of $\cx$, so the second function application
+is well-typed. At the same time, by Rule~\textsc{Typ-Sub}, $\{\ca:\tnum\}$ also
+is a type of $\cx$, so the first function application is well-typed as well.
+
+If we use Rule~\textsc{Sub-Width} and Rule~\textsc{Sub-Trans} together,
+other interesting subtype relationships can be proven. For example, the following
+proof tree proves that $\{\ca:\tnum,\cb:\tnum,\code{c}:\tnum\}$ is a subtype of
+$\{\ca:\tnum\}$.
+
+\[
+  \footnotesize
+  \inferrule
+  { \{\ca:\tnum,\cb:\tnum,\code{c}:\tnum\}<:\{\ca:\tnum,\cb:\tnum\} \\
+    \{\ca:\tnum,\cb:\tnum\}<:\{\ca:\tnum\} }
+  { \{\ca:\tnum,\cb:\tnum,\code{c}:\tnum\}<:\{\ca:\tnum\} }
 \]
 
 By the same principle, $\{\}$, which is the empty record type, is a supertype
 of every record type. In other words, every record type is a subtype of
 $\{\}$.
 
-\subsubsection{Permutation Rule}
+Alas, the type system is still restrictive. The following expression is ill-typed but
+does not cause run-time errors:
 
-The type system is still restrictive. The following expression is ill-typed but
-does not cause a run-time error:
+$
+\ebind{\cx}{\{\ca=1,\cb=2\}}{\\
+\ebind{\cy}{(\efunt{\cx}{\{\cb:\tnum,\ca:\tnum\}}{\cx.\ca+\cx.\cb})\ \cx}{\\
+(\efunt{\cx}{\{\ca:\tnum,\cb:\tnum\}}{\cx.\ca+\cx.\cb})\ \cx
+}}
+$
 
-\[
-(\lambda x:\{a:\textsf{num},b:\textsf{num}\}.x.a)\ \{b=2,a=1\}
-\]
+The type of $\cx$ is $\{\ca:\tnum,\cb:\tnum\}$. Therefore, the second function
+application is well-typed, while the first function application is not.
+We need to make $\cx$ be a value of $\{\ca:\tnum,\cb:\tnum\}$ and a value of
+$\{\cb:\tnum,\ca:\tnum\}$ at the same time. Like before, fixing
+Rule~\textsc{Typ-Record} cannot be a proper solution. The correct solution is to
+add a new subtyping rule.
 
-The above expression evaluates $\{b=2,a=1\}.a$, which results in $1$.
-However, it is ill-typed. The type of $\{b=2,a=1\}$ is \(\{b:\textsf{num},a:\textsf{
-num}\}\), while the parameter type of the function \(\lambda x:\{a:\textsf{
-num},b:\textsf{num}\}.x.a\) is $\{a:\textsf{num},b:\textsf{num}\}$.
+The key idea to define a new subtyping rule is that the order between fields
+does not matter at all. For example, a record that has fields $\ca$ and $\cb$ is
+a record that has fields $\cb$ and $\ca$. Thus, it is safe to consider
+$\{\ca:\tnum,\cb:\tnum\}$ as a subtype of $\{\cb:\tnum,\ca:\tnum\}$. By
+generalizing this observation, we define the following subtyping rule:
 
-In fact, the order among the fields of a record does not matter at all. If two
-records have the same fields and each field has the same value in both records,
-their behaviors as records are the same even if the orders are different. On the
-contrary, the orders matter during type checking under the current type system.
-It is sure that a value of $\{a:\textsf{num},b:\textsf{num}\}$ can replace a value
-of $\{b:\textsf{num},a:\textsf{num}\}$ without causing a type error and vice versa.
-Therefore, $\{a:\textsf{num},b:\textsf{num}\}$ should be a subtype of \(\{b:\textsf{
-num},a:\textsf{num}\}\) and vice versa. The following rule solves the problem:
-
-\[
-\inferrule
-{ \{(l_1,\tau_1),\cdots,(l_n,\tau_n)\}=\{(l'_1,\tau'_1),\cdots,(l'_n,\tau'_n)\} }
-{ \{l_1:\tau_1,\cdots,l_n:\tau_n\}<:\{l'_1:\tau'_1,\cdots,l'_n:\tau'_n\} }
-\]
-
-Equality of sets is determined solely by elements in sets. Orders do not matter.
-The rule implies that altering the order among the fields of a record type makes
-a subtype of the record type. The article calls it "the permutation rule." Other
-authors may not use the same term. The following proof trees prove that
-$\{a:\textsf{num},b:\textsf{num}\}<:\{b:\textsf{num},a:\textsf{num}\}$ and \(\{b:\textsf{
-num},a:\textsf{num}\}<:\{a:\textsf{num},b:\textsf{num}\}\).
-
-\[
-\inferrule
-{ \{(a,\textsf{num}),(b,\textsf{num})\}=\{(b,\textsf{num}),(a,\textsf{num})\} }
-{ \{a:\textsf{num},b:\textsf{num}\}<:\{b:\textsf{num},a:\textsf{num}\} }
-\]
-
-\[
-\inferrule
-{ \{(b,\textsf{num}),(a,\textsf{num})\}=\{(a,\textsf{num}),(b,\textsf{num})\} }
-{ \{b:\textsf{num},a:\textsf{num}\}<:\{a:\textsf{num},b:\textsf{num}\} }
-\]
-
-The following expression is now well-typed:
-
-\[
-(\lambda x:\{a:\textsf{num},b:\textsf{num}\}.x.a)\ \{b=2,a=1\}
-\]
-
-Other interesting subtypes can be also found by the width and permutation rules.
-The following proof tree proves that \(\{b:\textsf{num},a:\textsf{num}\}<:\{a:\textsf{
-num}\}\).
-
-\[
-\inferrule
-{{\Large
-  \inferrule
-  { \{(a,\textsf{num}),(b,\textsf{num})\}=\{(b,\textsf{num}),(a,\textsf{num})\} }
-  { \{a:\textsf{num},b:\textsf{num}\}<:\{b:\textsf{num},a:\textsf{num}\} }} \\
-  \{b:\textsf{num},a:\textsf{num}\}<:\{b:\textsf{num}\}
+\typerule{Sub-Perm}{
+  If
+    $(l_1,\tau_1)$, $\cdots$, $(l_n,\tau_n)$
+     is a permutation of
+    $(l'_1,\tau'_1)$, $\cdots$, $(l'_n,\tau'_n)$, \\
+  then
+    \subtn{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}{\{l'_1:\tau'_1,\cdots,l'_n:\tau'_n\}}.
 }
-{ \{a:\textsf{num},b:\textsf{num}\}<:\{b:\textsf{num}\} }
-\]
 
-\subsubsection{Depth Rule}
-
-The type system still can be improved more. Consider the following expression:
+\vspace{-1em}
 
 \[
-(\lambda x:\{a:\{a:\textsf{num},b:\textsf{num}\}\}.(\lambda
-x:\{a:\{a:\textsf{num}\}\}.x.a.a)\ x)\ \{a=\{a=1,b=2\}\}
+  \inferrule
+  { (l_1,\tau_1),\cdots,(l_n,\tau_n)
+    \text{ is a permutation of }
+    (l'_1,\tau'_1),\cdots,(l'_n,\tau'_n) }
+  { \subt{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}{\{l'_1:\tau'_1,\cdots,l'_n:\tau'_n\}} }
+  \quad\textsc{[Sub-Perm]}
 \]
 
-The above expression evaluates $\{a=\{a=1,b=2\}\}.a.a$. Since
-$\{a=\{a=1,b=2\}\}.a$ results in $\{a=1,b=2\}$ and $\{a=1,b=2\}.a$ results
-in $1$, the expression results in $1$ without any error. However, the
-expression is well-typed. The type of $x$ is \(\{a:\{a:\textsf{num},b:\textsf{
-num}\}\}\), while the parameter type of the function \(\lambda x:\{a:\{a:\textsf{
-num}\}\}.x.a.a\) is $\{a:\{a:\textsf{num}\}\}$.
+The rule states that altering the order between the fields of a record type
+results in a subtype of the record type.
 
-The current type system is too strict to the type of a field in a record. For
-example, consider $\{a:\{a:\textsf{num}\}\}$. Any other type of the form
-$\{a:\tau\}$ cannot be a subtype of $\{a:\{a:\textsf{num}\}\}$. However, it
-would be beneficial to allow some other types to be subtypes. Let the type of
-$e$ be $\{a:\{a:\textsf{num}\}\}$. Then, the result of $e.a$ can be used
-where a value of $\{a:\textsf{num}\}$ is expected. Now, let the type of $e'$ be
-$\{a:\{a:\textsf{num},b:\textsf{num}\}\}$. The result of $e.a$ is a value of
-$\{a:\textsf{num},b:\textsf{num}\}$. It is known that \(\{a:\textsf{num},b:\textsf{
-num}\}\) is a subtype of $\{a:\textsf{num}\}$. Therefore, $e'.a$ can replace
-$e.a$ without causing a type error. It implies that $e'$ can be used instead
-of $e$. In other words, $\{a:\{a:\textsf{num},b:\textsf{num}\}\}$ is a subtype of
-$\{a:\{a:\textsf{num}\}\}$. More generally, if $\tau<:\{a:\textsf{num}\}$, then
-$\{a:\tau\}<:\{a:\{a:\textsf{num}\}\}$.
-
-The same logic can be applied to any records regardless of the names and the
-number of fields. It leads to the following rule:
+The following proof tree proves that
+$\{\ca:\tnum,\cb:\tnum\}$ is a subtype of $\{\cb:\tnum,\ca:\tnum\}$:
 
 \[
-\inferrule
-{ \tau_1<:\tau'_1 \\ \cdots \\ \tau_n<:\tau'_n }
-{ \{l_1:\tau_1,\cdots,l_n:\tau_n\}<:\{l_1:\tau'_1,\cdots,l_n:\tau'_n\} }
+  \inferrule
+  { (\ca,\tnum),(\cb,\tnum)\text{ is a permutation of }(\cb,\tnum),(\ca,\tnum) }
+  { \{\ca:\tnum,\cb:\tnum\}<:\{\cb:\tnum,\ca:\tnum\} }
 \]
 
-It makes the subtype relation to consider the types of fields in record types.
-The article calls it "the depth rule" since the rule inspects record types more
-"deeply." Other authors may not use the same term. The following proof tree
-proves that $\{a:\{a:\textsf{num},b:\textsf{num}\}\}<:\{a:\{a:\textsf{num}\}\}$:
+If we use multiple subtyping rules together,
+other interesting subtype relationships can be proven. For example, the following
+proof tree proves that $\{\ca:\tnum,\cb:\tnum\}$ is a subtype of
+$\{\cb:\tnum\}$.
 
 \[
-\inferrule
-{ \{a:\textsf{num},b:\textsf{num}\}<:\{a:\textsf{num}\} }
-{ \{a:\{a:\textsf{num},b:\textsf{num}\}\}<:\{a:\{a:\textsf{num}\}\} }
+  \scriptsize
+  \inferrule
+  {
+    \inferrule
+    { (\ca,\tnum),(\cb,\tnum)\text{ is a permutation of }(\cb,\tnum),(\ca,\tnum) }
+    { \{\ca:\tnum,\cb:\tnum\}<:\{\cb:\tnum,\ca:\tnum\} }
+    \\
+    \{\cb:\tnum,\ca:\tnum\}<:\{\cb:\tnum\}
+  }
+  { \{\ca:\tnum,\cb:\tnum\}<:\{\cb:\tnum\} }
 \]
 
-The following expression is now well-typed:
+Even after the addition of Rule~\textsc{Sub-Width} and Rule~\textsc{Sub-Perm},
+the type system still can be improved more. Consider the following expression:
+
+$
+\ebind{\cx}{\{\ca=\{\ca=1,\cb=2\}\}}{\\
+\ebind{\cy}{(\efunt{\cx}{\{\ca:\{\ca:\tnum\}\}}{\cx.\ca.\ca})\ \cx}{\\
+(\efunt{\cx}{\{\ca:\{\ca:\tnum,\cb:\tnum\}\}}{\cx.\ca.\ca+\cx.\ca.\cb})\ \cx
+}}
+$
+
+The above expression does not incur any run-time errors. However, the first
+function application is ill-typed, while the the second function application is
+well-typed. We need to make $\{\ca=\{\ca=1,\cb=2\}\}$ be a value of
+$\{\ca:\{\ca:\tnum\}\}$ and a value of $\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ at the same time by adding
+a subtyping rule.
+
+The current type system is too strict about the types of fields in records.
+For example, consider $\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ and
+$\{\ca:\{\ca:\tnum\}\}$. A value of $\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ has at
+least one field, whose name is $\ca$. The value of the field is a value of
+$\{\ca:\tnum,\cb:\tnum\}$. We already know that any value of
+$\{\ca:\tnum,\cb:\tnum\}$ is a value of $\{\ca:\tnum\}$. Therefore, we can
+say that a value of $\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ has at least one field,
+whose name is $\ca$ and type is $\{\ca:\tnum\}$. In fact, it is the characteristic of a
+value of $\{\ca:\{\ca:\tnum\}\}$. As a result, any value of
+$\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ is a value of $\{\ca:\{\ca:\tnum\}\}$ at the
+same time, so $\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ must be a subtype of
+$\{\ca:\{\ca:\tnum\}\}$. By
+generalizing this observation, we define the following subtyping rule:
+
+\typerule{Sub-Depth}{
+  If
+    \subtn{\tau_1}{\tau'_1}, $\cdots$,
+    \subtn{\tau_n}{\tau'_n}, \\
+  then
+    \subtn{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}{\{l_1:\tau'_1,\cdots,l_n:\tau'_n\}}.
+}
 
 \[
-(\lambda x:\{a:\{a:\textsf{num},b:\textsf{num}\}\}.(\lambda
-x:\{a:\{a:\textsf{num}\}\}.x.a.a)\ x)\ \{a=\{a=1,b=2\}\}
+  \inferrule
+  { \subt{\tau_1}{\tau'_1} \\ \cdots \\
+    \subt{\tau_n}{\tau'_n} }
+  { \subt{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}{\{l_1:\tau'_1,\cdots,l_n:\tau'_n\}} }
+  \quad\textsc{[Sub-Depth]}
 \]
 
-Finally, the subtype relation is precise enough for record types.
+The rule states that strengthening\sidenote{If we strengthen a type, a subtype
+is obtained in the sense that a subtype imposes a stronger condition on its
+value than the original type.} the type of each field in a record type
+results in a subtype of the record type.
 
-\subsubsection{Subtyping Rule for Function Types}
+By using Rule~\textsc{Sub-Width} and Rule~\textsc{Sub-Depth} together, we can
+prove that $\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ is a subtype of
+$\{\ca:\{\ca:\tnum\}\}$.
+
+\[
+  \inferrule
+  { \{\ca:\tnum,\cb:\tnum\}<:\{\ca:\tnum\} }
+  { \{\ca:\{\ca:\tnum,\cb:\tnum\}\}<:\{\ca:\{\ca:\tnum\}\} }
+\]
+
+\section{Subtyping of Function Types}
 
 It is time to consider a subtyping rule for function types. A function type
-consists of the parameter type and the return type. The article explains about
-the return type first and then the parameter type.
+consists of a parameter type and a return type. Let us discuss
+return types first.
 
-Consider two function types: $\tau_1\rightarrow\tau_2$ and
-$\tau_1\rightarrow\tau_2'$. Assume that $\tau_2$ is a subtype of
-$\tau_2'$.
+Consider two function types: $\tarrow{\tau_1}{\tau_2}$ and
+$\tarrow{\tau_1}{\tau_2'}$. Assume that $\tau_2$ is a subtype of
+$\tau_2'$. A value of $\tarrow{\tau_1}{\tau_2}$ is a function that takes a value
+of $\tau_1$ and returns a value of $\tau_2$. Since $\tau_2$ is a subtype of
+$\tau_2'$, any value of $\tau_2$ is a value of $\tau_2'$.
+Therefore, we can say that a function of $\tarrow{\tau_1}{\tau_2}$ returns a
+value of $\tau_2'$. It implies that the function is a value of
+$\tarrow{\tau_1}{\tau_2'}$ at the same time. Thus, any value of
+$\tarrow{\tau_1}{\tau_2}$ is a value of $\tarrow{\tau_1}{\tau_2'}$, and
+$\tarrow{\tau_1}{\tau_2}$ is a subtype of $\tarrow{\tau_1}{\tau_2'}$.
+The following rule formalizes this fact:
 
-Can $\tau_1\rightarrow\tau_2$ be a subtype of $\tau_1\rightarrow\tau_2'$? If
-so, then a value of $\tau_1\rightarrow\tau_2$ can be used where a value of
-$\tau_1\rightarrow\tau_2'$ is expected. Let the type of $e_1'$ be
-$\tau_1\rightarrow\tau_2'$. Then, $e_1'$ can be appear at the function
-position of a function application. Let $e_2$ be an expression of $\tau_1$.
-$e_1'\ e_2$ is well-typed, and its type is $\tau_2'$. The result of the
-function application can be used anywhere a value of $\tau_2'$ is expected.
-Now, we are going to check whether $e_1$, whose type is
-$\tau_1\rightarrow\tau_2$, can replace $e_1'$. Consider $e_1\ e_2$. Since
-the parameter type of $e_1$ is $\tau_1$, it is well-formed. The result is a
-value of $\tau_2$, which is a subtype of $\tau_2'$. Therefore, the result of
-the function application can be used where a value of $\tau_2'$ is expected.
-It implies that $e_1\ e_2$ can replace $e_1'\ e_2$ without causing a type
-error. Function applications are only use of functions. Thus, $e_1$ can
-replace $e_1'$, and $\tau_1\rightarrow\tau_2$ is a subtype of
-$\tau_1\rightarrow\tau_2'$. The following rule formalizes this fact:
+\typerule{Sub-Ret}{
+  If
+    \subtn{\tau_2}{\tau_2'}, \\
+  then
+    \subtn{\tarrow{\tau_1}{\tau_2}}{\tarrow{\tau_1}{\tau_2'}}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \tau_2<:\tau_2' }
-{ \tau_1\rightarrow\tau_2<:\tau_1\rightarrow\tau_2' }
+  \inferrule
+  { \subt{\tau_2}{\tau_2'} }
+  { \subt{\tarrow{\tau_1}{\tau_2}}{\tarrow{\tau_1}{\tau_2'}} }
+  \quad\textsc{[Sub-Ret]}
 \]
 
-Function types preserves the subtype relation between their return types.
+Function types preserve the subtype relationship between their return types.
 Suppose that there are two function types. If their parameter types are the same
-and the return type of the former is a subtype of that of the latter, then the
-former is a subtype of the latter. For example, \(\textsf{num}\rightarrow\{a:\textsf{
-num},b:\textsf{num}\}\) is a subtype of , $\textsf{num}\rightarrow\{a:\textsf{num}\}$.
+and the return type of the former is a subtype of the return type of the latter, then the
+former is a subtype of the latter.
+For example, $\tarrow{\tnum}{\{\ca:\tnum,\cb:\tnum\}}$
+is a subtype of $\tarrow{\tnum}{\{\ca:\tnum\}}$.
 
+Now, let us discuss parameter types.
 Consider two function types: $\tau_1\rightarrow\tau_2$ and
 $\tau_1'\rightarrow\tau_2$. Assume that $\tau_1'$ is a subtype of
-$\tau_1$.
+$\tau_1$. A value of $\tarrow{\tau_1}{\tau_2}$ is a function that takes a value
+of $\tau_1$ and returns a value of $\tau_2$. Since $\tau_1'$ is a subtype of
+$\tau_1$, any value of $\tau_1'$ is a value of $\tau_1$.
+Therefore, a function of $\tarrow{\tau_1}{\tau_2}$ should work properly
+when a value of $\tau_1'$ is given. We can say that the function takes a value
+of $\tau_1'$ and returns a value of $\tau_2$. It implies that the function is a value of
+$\tarrow{\tau_1'}{\tau_2}$ at the same time. Thus, any value of
+$\tarrow{\tau_1}{\tau_2}$ is a value of $\tarrow{\tau_1'}{\tau_2}$, and
+$\tarrow{\tau_1}{\tau_2}$ is a subtype of $\tarrow{\tau_1'}{\tau_2}$.
+The following rule formalizes this fact:
 
-Can $\tau_1\rightarrow\tau_2$ be a subtype of $\tau_1'\rightarrow\tau_2$?
-Let the type of $e_1$ be $\tau_1\rightarrow\tau_2$ and the type of $e_1'$
-be $\tau_1'\rightarrow\tau_2$. Since their return type are the same, their
-return values can be used at the same place. It is enough to focus on their
-arguments. Let the type of $e_2$ be $\tau_1'$. Then, $e_1'\ e_2$ is
-well-typed since the parameter type of $e_1'$ is equal to the type of $e_2$.
-On the other hand, $e_1$ can take a value of $\tau_1$ as an argument. Every
-expression whose type is $\tau_1$ can be an argument. The type of $e_2$ is
-$\tau_1'$. By the assumption that $\tau_1'$ is a subtype of $\tau_1$,
-$e_2$ can be used where a value of $\tau_1$ is expected. Thus, $e_2$ can
-be an argument for $e_1$. $e_1\ e_2$ is a well-typed expression. In
-conclusion, $e_1$ can replace $e_2$ without causing a type error, and
-$\tau_1\rightarrow\tau_2$ is a subtype of $\tau_1'\rightarrow\tau_2$. The
-following rule formalizes this fact:
+\typerule{Sub-Param}{
+  If
+    \subtn{\tau_1'}{\tau_1}, \\
+  then
+    \subtn{\tarrow{\tau_1}{\tau_2}}{\tarrow{\tau_1'}{\tau_2}}.
+}
+
+\vspace{-1em}
 
 \[
-\inferrule
-{ \tau_1'<:\tau_1 }
-{ \tau_1\rightarrow\tau_2<:\tau_1'\rightarrow\tau_2 }
+  \inferrule
+  { \subt{\tau_1'}{\tau_1} }
+  { \subt{\tarrow{\tau_1}{\tau_2}}{\tarrow{\tau_1'}{\tau_2}} }
+  \quad\textsc{[Sub-Param]}
 \]
 
-Function types reverses the subtype relation between their parameter types.
+Function types reverse the subtype relationship between their parameter types.
 Suppose that there are two function types. If their return types are the same
-and the parameter type of the former is a supertype of that of the latter, then
-the former is a subtype of the latter. For example, , \(\{a:\textsf{
-num}\}\rightarrow\textsf{num}\) is a subtype of \(\{a:\textsf{num},b:\textsf{
-num}\}\rightarrow\textsf{num}\).
+and the parameter type of the former is a supertype of the parameter type of the latter, then
+the former is a subtype of the latter.
+For example, $\tarrow{\{\ca:\tnum\}}{\tnum}$
+is a subtype of $\tarrow{\{\ca:\tnum,\cb:\tnum\}}{\tnum}$.
 
-The above rules can combine to form one rule:
+We can combine Rule~\textsc{Sub-Ret} and Rule~\textsc{Sub-Param} to form a
+single rule.
 
-\[
-\inferrule
-{ \tau_1'<:\tau_1 \\ \tau_2<:\tau_2' }
-{ \tau_1\rightarrow\tau_2<:\tau_1'\rightarrow\tau_2' }
-\]
+\typerule{Sub-ArrowT}{
+  If
+    \subtn{\tau_1'}{\tau_1} and
+    \subtn{\tau_2}{\tau_2'}, \\
+  then
+    \subtn{\tarrow{\tau_1}{\tau_2}}{\tarrow{\tau_1'}{\tau_2'}}.
+}
 
-The above rule is the final version of a subtyping rule for function types.
-
-Below shows all the subtyping rules of \lang:
-
-\[\tau<:\tau\]
-
-\[
-\inferrule
-{ \tau_1<:\tau_2 \\ \tau_2<:\tau_3 }
-{ \tau_1<:\tau_3 }
-\]
+\vspace{-1em}
 
 \[
-\{l_1:\tau_1,\cdots,l_n:\tau_n,l:\tau\}<:\{l_1:\tau_1,\cdots,l_n:\tau_n\}
+  \inferrule
+  { \subt{\tau_1'}{\tau_1} \\
+    \subt{\tau_2}{\tau_2'} }
+  { \subt{\tarrow{\tau_1}{\tau_2}}{\tarrow{\tau_1'}{\tau_2'}} }
+  \quad\textsc{[Sub-ArrowT]}
 \]
+
+\section{Top and Bottom Types}
+
+Now, we add two types to \lang.
+
+\[ \tau \ ::= \ \cdots \ |\ \ttop \ |\ \tbot \]
+
+$\ttop$ is the \textit{top type}.\index{top type} The type denotes the set of
+every value. The set is a superset of any set of values. Thus, the top type is a
+supertype of every type. In other words, every type is a subtype of the top
+type. The following is the subtyping rule for the top type:
+
+\typerule{Sub-TopT}{
+  \subtn{\tau}{\ttop}.
+}
 
 \[
-\inferrule
-{ \{(l_1,\tau_1),\cdots,(l_n,\tau_n)\}=\{(l'_1,\tau'_1),\cdots,(l'_n,\tau'_n)\} }
-{ \{l_1:\tau_1,\cdots,l_n:\tau_n\}<:\{l'_1:\tau'_1,\cdots,l'_n:\tau'_n\} }
+  \subt{\tau}{\ttop}
+  \quad\textsc{[Sub-TopT]}
 \]
-
-\[
-\inferrule
-{ \tau_1<:\tau'_1 \\ \cdots \\ \tau_n<:\tau'_n }
-{ \{l_1:\tau_1,\cdots,l_n:\tau_n\}<:\{l_1:\tau'_1,\cdots,l_n:\tau'_n\} }
-\]
-
-\[
-\inferrule
-{ \tau_1'<:\tau_1 \\ \tau_2<:\tau_2' }
-{ \tau_1\rightarrow\tau_2<:\tau_1'\rightarrow\tau_2' }
-\]
-
-\section{Extending \lang}
-
-\lang can be easily extended with a few types.
-
-\subsection{Top Type}
-
-\[
-\begin{array}{rrcl}
-\text{Type} & \tau & ::= & \cdots \\
-&&|& \top \\
-\end{array}
-\]
-
-$\top$ is the top type. The top type is a supertype of every type, and every
-type is a subtype of the top type. Every value is a value of the top type. The
-following is a subtyping rule for the top type:
-
-\[\tau<:\top\]
 
 The top type can be used to give a single type to two or more completely
 irrelevant expressions. Suppose that the language has conditional expressions.
-Then, the type of the following expression is $\{a:\textsf{num}\}$:
+Then, the type of the following expression is $\{\ca:\tnum\}$:
 
-\[\textsf{if}\ \textsf{true}\ \{a=1\}\ \{a=1,b=2\}\]
+$\eifz{0}{\{\ca=1\}}{\{\ca=1,\cb=2\}}$
 
-However, the following expression is ill-formed in \lang even though it does not
-cause a type error:
+However, the following expression is ill-formed in \lang when the top type does
+not exist:
 
-\[\textsf{if}\ \textsf{true}\ \{a=1\}\ 1\]
+$\eifz{0}{\{\ca=1\}}{1}$
 
 By extending \lang with the top type, the type of the above expression can be
-$\top$.
+$\ttop$.
 
-\subsection{Bottom Type}
-
-\[
-\begin{array}{rrcl}
-\text{Type} & \tau & ::= & \cdots \\
-&&|& \bot \\
-\end{array}
-\]
-
-$\bot$ is the bottom type. The bottom type is a subtype of every type, and
-every type is a supertype of the bottom type. The following is a subtyping rule
+$\tbot$ is the \textit{bottom type}\index{bottom type}, which is the dual of
+the tope type. The bottom type denotes the empty set. Since the empty set is a subset of
+any set, the bottom type is a subtype of every type, and
+every type is a supertype of the bottom type. The following is the subtyping rule
 for the bottom type:
 
-\[\bot<:\tau\]
+\typerule{Sub-BottomT}{
+  \subtn{\tbot}{\tau}.
+}
 
-Types like $\textsf{num}$ and $\textsf{num}\rightarrow\textsf{num}$ do not have any
-common elements. Therefore, if a type is a subtype of every type, no value can
-be a value of the type. The bottom type does not have any elements. Despite
-the fact, the bottom type is useful. The bottom type can be the types of
-expressions throwing exceptions or calling first-class continuations. Those
-expressions do not result in any values. They only change the flow of
-programs. Thus, it is quite natural to say that the type of such an expression
+\[
+  \subt{\tbot}{\tau}
+  \quad\textsc{[Sub-BottomT]}
+\]
+
+Even though no value is a value of the the bottom type,
+the bottom type is useful. It can be the type of
+expressions that throw exceptions or call first-class continuations. Those
+expressions do not evaluate to any values. They just change the control flow.
+Thus, it is quite natural to say that the type of such an expression
 is the bottom type.
 
 \section{Exercises}
 
 \begin{enumerate}
-\item Write whether each expression is well-typed in \lang.
+\item Write whether each expression is well-typed in \lang without the top type,
 If so, draw the type derivation. Otherwise, explain why.
 \begin{enumerate}
 \item
@@ -620,7 +793,7 @@ causes a run-time error.
     Write the typing rule of $(\textsf{vcc}\ x\ \textsf{in}\ e){:}\tau$
     of the form \fbox{$\Gamma\vdash{e}:{\tau}$}.
   \item Draw the type derivation tree of
-    $(\textsf{vcc}\ {\code{x}}\ \textsf{in}\ {\eapp{(\eapp{\code{x}}{1})}{42}}){:}\textsf{num}$.
+    $(\textsf{vcc}\ {\code{x}}\ \textsf{in}\ {\eapp{(\eapp{\code{x}}{1})}{42}}){:}\tnum$.
 \end{enumerate}
 
 \item This exercse extends \textsf{TVFAE} to allow types with any numbers (including zero) of variants.
