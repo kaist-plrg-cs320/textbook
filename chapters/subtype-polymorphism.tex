@@ -24,17 +24,17 @@ but users can designate the names of the elements in a record. When we talk
 about the elements of records, we often use the term
 \textit{fields}\index{field}. From the perspective
 of their expressivity and roles in programming, records are the same as tuples.
-However, records help programmers to express their high-level ideas in the code
-more directly than tuples and, thus, prevent mistakes.
+However, records help programmers express their high-level ideas in the code
+more directly than tuples and prevent mistakes.
 
 For example,
-consider a tuple that represents the height, score, and scholarship state of a
-student. The tuple $(180,91,\textsf{true})$ represents a student who is
+consider a tuple representing the height, score, and scholarship state of a
+student. The tuple $(180,91, \textsf{true})$ represents a student who is
 180-centimeter-tall, got 91 points from the recent exam, and is currently
 receiving a scholarship. One disadvantage of using tuples is that programmers
 may use wrong elements by mistake. When $\code{st}$ denotes the previously
 mentioned tuple, one should write $\code{st}\textsf{.1}$ to get the height.
-However, there is no reason to assoicate the first element to the height. If he or
+However, there is no reason to associate the first element with the height. If he or
 she writes $\code{st}\textsf{.2}$ instead $\code{st}\textsf{.1}$, then the wrong
 conclusion---the student is 91-centimeter-tall---will be obtained.
 
@@ -52,7 +52,7 @@ the height of the student.
 
 First, we
 introduce labels, which are the names of fields in records. Let $\mathcal{L}$
-be the set of every label and metavariable $l$ range over labels.
+be the set of every label and the metavariable $l$ ranges over labels.
 
 \[ l \in \mathcal{L} \]
 
@@ -65,7 +65,7 @@ Now, we define the syntax of expressions related to records.
     $\{l_1=e_1,\cdots,l_n=e_n\}$ is an expression that creates a record. A
     record has zero or more fields. $l$'s are the names of the fields.
     We assume that the fields of a single record have distinct names.
-    Since a record can has zero fields, $\{\}$ is an expression.
+    Since a record can have zero fields, $\{\}$ is an expression.
   \item
     $e.l$ is an expression that gives the value of a certain field from a record.
     It is usually called a
@@ -75,7 +75,7 @@ Now, we define the syntax of expressions related to records.
 
 \subsection{Dynamic Semantics}
 
-To make language support records, we should add record values to the
+To make a language support records, we should add record values to the
 language.
 
 \[ v \ ::= \ \cdots \ |\ \{l=v,\cdots,l=v\} \]
@@ -146,9 +146,9 @@ records whose fields follow the designated names and types. In other words, if a
 record value has fields named $l_1$ from $l_n$ and the value of a field $l_i$ is
 a value of $\tau_i$, then the value belongs to
 $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$. For example, the type of the value $\{\ca=3,\cb=7\}$ is
-$\{\ca:\tnum,b:\tnum\}$. In addition, the type of the expression
+$\{\ca:\tnum,\cb:\tnum\}$. In addition, the type of the expression
 $\{\ca=1+2,\cb=3+4\}$, which evaluates to $\{\ca=3,\cb=7\}$, also is
-$\{\ca:\tnum,b:\tnum\}$. Similarly, the type of the empty record is $\{\}$.
+$\{\ca:\tnum,\cb:\tnum\}$. Similarly, the type of the empty record is $\{\}$.
 
 Let us define the typing rules for the added expressions.
 
@@ -225,7 +225,7 @@ Thus, the type does not need to exclude values that have other fields in
 addition to the field \code{a}.
 
 To resolve the problem, we extend the meaning of $\{\ca:\tnum\}$. Now, the type
-includes any records that have a integer-valued field \code{a}. Records that
+includes any records that have an integer-valued field \code{a}. Records that
 have additional fields also can be values of $\{\ca:\tnum\}$. This change can be
 attained by modifying Rule~\textsc{Typ-Record} like below.
 
@@ -233,9 +233,9 @@ attained by modifying Rule~\textsc{Typ-Record} like below.
   If
     \typeofdn{e_1}{\tau_1}, $\cdots$,
     \typeofdn{e_n}{\tau_n}, $\cdots$,
-    \typeofdn{e_m}{\tau_m}, \\
+    \typeofdn{e_{n+m}}{\tau_{n+m}}, \\
   then
-    \typeofdn{\{l_1=e_1,\cdots,l_n=e_n,\cdots,l_m=e_m\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}.
+    \typeofdn{\{l_1=e_1,\cdots,l_n=e_n,\cdots,l_{n+m}=e_{n+m}\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}}.
 }
 
 \vspace{-1em}
@@ -244,8 +244,8 @@ attained by modifying Rule~\textsc{Typ-Record} like below.
   \inferrule
   { \typeofd{e_1}{\tau_1} \\ \cdots \\
     \typeofd{e_n}{\tau_n} \\ \cdots \\
-    \typeofd{e_m}{\tau_m} }
-  { \typeofd{\{l_1=e_1,\cdots,l_n=e_n,\cdots,l_m=e_m\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}} }
+    \typeofd{e_{n+m}}{\tau_{n+m}} }
+  { \typeofd{\{l_1=e_1,\cdots,l_n=e_n,\cdots,l_{n+m}=e_{n+m}\}}{\{l_1:\tau_1,\cdots,l_n:\tau_n\}} }
   \quad\textsc{[Typ-Record']}
 \]
 
@@ -268,7 +268,7 @@ This expression is still ill-typed though it does not incur any run-time errors.
 If we say the type of $\cx$ is ${\{\ca:\tnum\}}$, the first function application
 is well-typed. However, the second function application is ill-typed. If we say
 the type of $\cx$ is $\{\ca:\tnum,\cb:\tnum\}$ instead, the second function application
-becomes well-typed. However, the first function becomes ill-typed. There is no
+becomes well-typed. However, the first function application becomes ill-typed. There is no
 way to make both application expressions well-typed. We need a way to consider
 $\cx$ as an expression of ${\{\ca:\tnum\}}$ and as an expression of
 $\{\ca:\tnum,\cb:\tnum\}$ at the same time. In other words, we should assign
@@ -277,7 +277,7 @@ multiple types to a single entity, and this is the notion of polymorphism.
 \textit{Subtype polymorphism}\index{subtype polymorphism} is one way of
 polymorphism, which is based on the notion of subtyping. Recall that a
 type is a set of values. Sometimes, one type is a subset of another type. For
-example, any values that belongs to $\{\ca:\tnum,\cb:\tnum\}$ are values of
+example, any values that belong to $\{\ca:\tnum,\cb:\tnum\}$ are values of
 ${\{\ca:\tnum\}}$, so $\{\ca:\tnum,\cb:\tnum\}$ is a subset of
 ${\{\ca:\tnum\}}$. When $\tau_1$ is a subset of $\tau_2$,
 we say that $\tau_1$ is a \textit{subtype}\index{subtype} of $\tau_2$ and
@@ -313,9 +313,9 @@ breaking type soundness when $\tau_1$ is a subtype of $\tau_2$. For example,
 suppose that there is an animal hospital that cures any animal. We can consider
 the hospital as a function that takes a value of \code{Animal}. A cat is an
 animal, so any cat can be cured in the hospital. Thus, if an expression
-evaluates to a value of \code{Cat}, then it can be considered as an expression
-that evaluates to a value of \code{Animal} and safely given to the function that
-represents the hospital. On the other hand, the inverse is false. If a hospital
+evaluates to a value of \code{Cat}, it can be considered as an expression
+that evaluates to a value of \code{Animal} and safely given to the function
+representing the hospital. On the other hand, the inverse is false. If a hospital
 cures only cats and we know only that someone has an animal, then we cannot say
 to him or her to carry the animal to the hospital. There is no guarantee that
 the hospital will be able to cure the animal. Thus, the fact that $\tau_1$ is a
@@ -327,7 +327,7 @@ rule:
 
 \typerule{Typ-Sub}{
   If
-  \typeofdn{e}\tau' and \subtn{\tau'}{\tau},\\
+  \typeofdn{e}{\tau'} and \subtn{\tau'}{\tau},\\
   then
   \typeofdn{e}\tau.
 }
@@ -537,7 +537,7 @@ $
 $
 
 The above expression does not incur any run-time errors. However, the first
-function application is ill-typed, while the the second function application is
+function application is ill-typed, while the second function application is
 well-typed. We need to make $\{\ca=\{\ca=1,\cb=2\}\}$ be a value of
 $\{\ca:\{\ca:\tnum\}\}$ and a value of $\{\ca:\{\ca:\tnum,\cb:\tnum\}\}$ at the same time by adding
 a subtyping rule.
@@ -721,7 +721,7 @@ By extending \lang with the top type, the type of the above expression can be
 $\ttop$.
 
 $\tbot$ is the \textit{bottom type}\index{bottom type}, which is the dual of
-the tope type. The bottom type denotes the empty set. Since the empty set is a subset of
+the top type. The bottom type denotes the empty set. Since the empty set is a subset of
 any set, the bottom type is a subtype of every type, and
 every type is a supertype of the bottom type. The following is the subtyping rule
 for the bottom type:
@@ -738,7 +738,7 @@ for the bottom type:
 Even though no value is a value of the the bottom type,
 the bottom type is useful. It can be the type of
 expressions that throw exceptions or call first-class continuations. Those
-expressions do not evaluate to any values. They just change the control flow.
+expressions do not evaluate to any values. They just change control flows.
 Thus, it is quite natural to say that the type of such an expression
 is the bottom type.
 
@@ -796,7 +796,7 @@ causes a run-time error.
     $(\textsf{vcc}\ {\code{x}}\ \textsf{in}\ {\eapp{(\eapp{\code{x}}{1})}{42}}){:}\tnum$.
 \end{enumerate}
 
-\item This exercse extends \textsf{TVFAE} to allow types with any numbers (including zero) of variants.
+\item This exercse extends \textsf{TVFAE} to allow types with any number (including zero) of variants.
 
 \vspace{0.5em}
 $

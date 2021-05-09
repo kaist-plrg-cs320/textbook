@@ -20,7 +20,7 @@ every type in \textsf{FAE}, while a different identity function is required for
 each type in \plang.
 
 Because of this restrictiveness, programmers have to define more functions in
-\plang than \textsf{FAE} to implement the same program. For example, the
+\plang than in \textsf{FAE} to implement the same program. For example, the
 following \textsf{FAE} expression does not incur run-time errors:\sidenote{Suppose
 that we extends \textsf{FAE} with booleans.}
 
@@ -66,7 +66,7 @@ $\tarrow{\code{bool}}{\code{bool}}$, is applied to a value of $\code{bool}$.
 
 Because of this problem, writing programs in \plang is inconvenient. Programmers
 should define multiple functions of the same functionality to convince the type
-checker that their program does not incur any run-time errors. Such functions of
+checker that their programs do not incur any run-time errors. Such functions of
 an overlapping role lead to duplicated code, which increases the code length and
 harms maintainability. When a program has plenty of functions and types, the
 amount of duplicated code will become huge.
@@ -78,39 +78,39 @@ $\tarrow{\tbool}{\tbool}$. There are three widely-used ways to
 realize polymorphism in a language: parametric polymorphism, subtype
 polymorphism, and ad-hoc polymorphism. The topic of this chapter is parametric
 polymorphism. \refch{subtype-polymorphism} introduces subtype polymorphism, and
-ad-hoc polymorphism is outside the scope of this book.
+ad-hoc polymorphism is beyond the scope of this book.
 
 To introduce parametric polymorphism, we first need to discuss what
-parametrization is. Functions are well-known examples of parametrizing entities.
-Each function parametrizes an expression with a value
+parameterization is. Functions are well-known examples of parameterizing entities.
+Each function parameterizes an expression with a value
 (or an expression in the case of lazy languages). Consider $\efun{\cx}{\cx+\cx}$.
-In this function, $\cx$ is the parameter. The body, $\cx+\cx$ is parametrized by $\cx$.
+In this function, $\cx$ is the parameter. The body, $\cx+\cx$ is parameterized by $\cx$.
 This function is the most general form of adding a value to the same value. By
 applying the function, we can express any expresion that adds a value to the
 same value. For example, $1+1$ is equivalent to $(\efun{\cx}{\cx+\cx})\ 1$, and
 $42+42$ is equivalent to $(\efun{\cx}{\cx+\cx})\ 42$. A function abstracts an
-expression by replacing some portion of the expression with the parameter. By
+expression by replacing some portion of the expression with a parameter. By
 applying a function to values, multiple expressions can be
 expressed without repeating the common constituents. Only different parts should
 be written as an argument in each case.
 
 \textit{Parametric polymorphism}\index{parametric polymorphism}
-allows entities to be parametrized by types. It is a new form of
-parametrization, which functions do not provide. Parametric polymorphism allows
-parametrizing an expression with a type, instead of a value. To distinguish this
-new notion of parametrization from functions, we use the term \textit{type
+allows entities to be parameterized by types. It is a new form of
+parameterization, which functions do not provide. Parametric polymorphism allows
+parameterizing an expression with a type, instead of a value. To distinguish this
+new notion of parameterization from functions, we use the term \textit{type
 abstraction}\index{type abstraction}. While functions are applied to values to
 replace their parameters with real values, type abstractions are applied to
 types to replace their \textit{type parameters}\index{type parameter} with real
 types. To differentiate application of type abstractions from application of
 functions, we use the term \textit{type application}\index{type application}.
-Since type abstractions parametrize expressions, the results of type application
+Since type abstractions parameterize expressions, the results of type application
 are values, just like functions.
 The following table compares functions and type abstractions:
 \begin{center}
 \begin{tabular}{c|c|c}
   & Function & Type abstraction \\\hline
-  What is parametrized? & Expression & Expression \\
+  What is parameterized? & Expression & Expression \\
   With what? & Value & Type \\
   Applied to what? & Value & Type \\
   Result of application & Value & Value \\
@@ -119,7 +119,7 @@ The following table compares functions and type abstractions:
 
 Consider $\efunt{\cx}{\tnum}{\cx}$ and $\efunt{\cx}{\tbool}{\cx}$.
 The only difference is the type annotation: $\tnum$ and $\tbool$.
-We can parametrize both expressions with a type by introducing a type parameter
+We can parameterize both expressions with a type by introducing a type parameter
 $\alpha$. By replacing $\tnum$ with $\alpha$ in $\efunt{\cx}{\tnum}{\cx}$, we
 obtain $\efunt{\cx}{\alpha}{\cx}$. Similarly, by replacing $\tbool$
 with $\alpha$ in $\efunt{\cx}{\tbool}{\cx}$, we obtain
@@ -173,9 +173,9 @@ widely studied even in these days.
 
 \section{Syntax}
 
-First, we introduce type identifiers, like in \textsf{TVFAE}. Type identifiers
+First, we introduce type identifiers like in \textsf{TVFAE}. Type identifiers
 are used as type parameters. Let $\embox{TId}$ be the set of every type identifier.
-Metavariable $\alpha$ ranges over type identifiers.
+The metavariable $\alpha$ ranges over type identifiers.
 
 \[ \alpha \in \embox{TId} \]
 
@@ -187,7 +187,7 @@ We add two sorts of an expression: type abstraction and type application.
   \item $\etfun{\alpha}{e}$ is a type abstraction. $\alpha$ is the type
     parameter, and $e$ is the body. $\alpha$ in $\etfun{\alpha}{e}$
     is a binding occurrence whose scope is $e$.
-  \item $\etapp{e}{\tau}$ is a type application expression. $e$ is denotes the type
+  \item $\etapp{e}{\tau}$ is a type application expression. $e$ denotes the type
     abstraction applied to $\tau$.
 \end{itemize}
 
@@ -424,7 +424,7 @@ $\Gamma[\alpha:\cdot]$.
 
 \subsection{Well-Formed Types}
 
-The well-formedness checking of \lang is similar to \textsf{TVFAE}.
+The well-formedness checking of \lang is similar to that of \textsf{TVFAE}.
 The following three rules are the same as those of \textsf{TVFAE}:
 
 \typerule{Wf-NumT}{
@@ -457,7 +457,7 @@ The following three rules are the same as those of \textsf{TVFAE}:
 \]
 
 \typerule{Wf-IdT}{
-  If $\alpha$ in the domain of $\Gamma$,\\
+  If $\alpha$ is in the domain of $\Gamma$,\\
   then \wftdn{\alpha}.
 }
 
@@ -562,7 +562,7 @@ of the parameter type annotation.
   \quad\textsc{[Typ-Fun]}
 \]
 
-The following proof trees prove that the type of
+The following proof tree proves that the type of
 $\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}\ 1$
 is $\tnum$:
 
@@ -622,7 +622,7 @@ prevent multiple types from being considered as the same type because of their
 names.
 
 De Bruijn indices seem to be the best solution, but, still, other solutions can
-be used. The three solutions described in \refch{algebraic-data-types} can
+be used. The three solutions described in \refch{algebraic-data-types} can be
 applied to \lang in the same manner to resolve the first issue. The second issue
 can be fixed by renaming type parameters before the comparison. For example, simple syntactic
 transformation can transform $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$
@@ -765,7 +765,7 @@ into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
 \section{Exercises}
 
 \begin{enumerate}
-\item Draw the type derivation of each the following expressions:
+\item Draw the type derivation of each of the following expressions:
   \begin{enumerate}
     \item
       $(\efunt{\cf}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{
@@ -780,7 +780,7 @@ into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
       $
   \end{enumerate}
 
-\item Rewrite the following code with type abstractions and type application
+\item Rewrite the following code with type abstractions and type applications
 to replace all the occurrences of $?$ with types
 and to make function calls take explicit type arguments.
 
@@ -892,7 +892,7 @@ $
     \vspace{0.5em}
 
 For each of the following expressions, write whether the expression is
-well-typed. If so, draw the type derivation. Otherwise, explain why.
+well-typed. If so, draw its type derivation. Otherwise, explain why.
 \begin{enumerate}
   \item $(\lambda \code{x}.(\code{x}\ 42))\ \lambda \code{z}.\code{z}$
   \item $(\lambda \code{x}.((\code{x}\ 42); (\code{x}\ \textsf{true})))\ \lambda \code{z}.\code{z}$
@@ -1053,7 +1053,7 @@ Note that \code{foo} appears in the definition of itself, which implies that
   Write the well-formedness rule of the form
     \fbox{$\Gamma\vdash\tau$} of $t[\tau]$.
 \item
-  Write the type of \code{getOrElse} of the above example.
+  Write the type of \code{getOrElse} in the above example.
 \end{enumerate}
 
 \end{enumerate}
