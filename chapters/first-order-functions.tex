@@ -257,7 +257,7 @@ def interp(e: Expr, env: Env, fEnv: FEnv): Int = e match {
     interp(b, env + (x -> interp(i, env, fEnv)), fEnv)
   case Id(x) => env(x)
   case Call(f, a) =>
-    val (x, e) = fEnv(f)
+    val FunDef(_, x, e) = fEnv(f)
     interp(e, Map(x -> interp(a, env, fEnv)), fEnv)
 }
 \end{verbatim}

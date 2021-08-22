@@ -758,9 +758,26 @@ If so, draw the type derivation. Otherwise, explain why.
   \begin{enumerate}
     \item When can $\textsf{list}\ \tau_1$ be a subtype of $\textsf{list}\
       \tau_2$? Write a new subtyping rule for list types.
-    \item Suppose that we extend the language with an expression that mutates an element of
-      a list (e.g. mutating a list containing $1$ and $2$ to contain
-      $\textsf{true}$ and $2$).
+    \item Suppose that we extend the language as follows:
+
+      \vspace{0.5em}
+      $\begin{array}{@{}r@{~}r@{~}l@{}}
+        e & ::= & \cdots\ |\ e[e]:=e \\
+        \tau & ::= & \cdots\ |\ \ttop \\
+      \end{array}$
+      \vspace{0.5em}
+
+      The typing rule for the new expression, which mutates an element of a
+      list, is as follows:
+      \[
+        \inferrule
+        { \typeofd{e_1}{\textsf{list}\ \tau} \\
+          \typeofd{e_2}{\tnum} \\
+          \typeofd{e_3}{\tau}
+        }
+        { \typeofd{e_1[e_2]:=e_3}{\tau} }
+      \]
+
       When can $\textsf{list}\ \tau_1$ be a subtype of $\textsf{list}\
       \tau_2$? Write a new subtyping rule for list types.
   \end{enumerate}

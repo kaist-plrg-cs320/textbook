@@ -557,7 +557,7 @@ next recursive calls or use them as results.
 \begin{verbatim}
 case NewBox(e) =>
   val (v, s) = interp(e, env, sto)
-  val a = sto.keys.maxOption.getOrElse(0) + 1
+  val a = s.keys.maxOption.getOrElse(0) + 1
   (BoxV(a), s + (a -> v))
 \end{verbatim}
 

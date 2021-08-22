@@ -453,7 +453,10 @@ intended.
 This exercise extends \lang with pointers.
 Consider the following language:
 \[
-  e\ ::=\ \cdots\ |\ \ast e \ |\ \& x\ |\ \ast\eset{e}{e} \\
+  \begin{array}{@{}r@{~}r@{~}l@{}}
+    e & ::= & \cdots\ |\ \ast e \ |\ \& x\ |\ \ast\eset{e}{e} \\
+    v & ::= & \cdots\ |\ a \\
+  \end{array}
 \]
 The semantics of some constructs are as follows:
 \begin{itemize}

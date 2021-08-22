@@ -543,7 +543,7 @@ Write the operational semantics of the form \fbox{$\evald{e}{v}$} for the expres
 \[
   \begin{array}{l}
   \erec{\cf}{\cx}{\eifz{\cx}{\cx}{(\eadd{1}{(\eapp{\cf}{(\esub{\cx}{1})})})}}{\\
-  \ebind{\cf}{\eadd{42}{(\eapp{\cf}{\cx})}}{\\
+  \ebind{\cf}{\efun{\cx}{\eadd{42}{(\eapp{\cf}{\cx})}}}{\\
   \eapp{\cf}{7}
   }
   }
