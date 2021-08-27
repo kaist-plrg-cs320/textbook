@@ -104,18 +104,22 @@ important to learn languages. Becoming familiar with the
 new syntax is all they need to use a new language fluently.
 
 This book explains the semantics of principal concepts in programming languages.
-\refch{introduction-to-scala}, \refch{immutability},
-\refch{functions}, and \refch{pattern-matching}
-introduce the Scala programming language. This book
-uses Scala to implement interpreters of languages introduced in the book.
-\refch{syntax-and-semantics} explains syntax and
-semantics. Then, the book finally introduces various features of programming languages.
+Chapters \chnum{introduction-to-scala}, \chnum{immutability}, \chnum{functions},
+and \chnum{pattern-matching} introduce the Scala programming language. This book
+uses Scala to implement interpreters and type checkers of languages introduced
+in the book.  \refch{syntax-and-semantics} explains syntax and semantics. Then,
+the book finally introduces various features of programming languages.
 \begin{itemize}
     \item \refch{identifiers} introduces identifiers.
-    \item \refch{first-order-functions}, \refch{first-class-functions}, and \refch{recursion}
-      introduce functions.
-    \item \refch{boxes} and \refch{mutable-variables} introduce mutation.
+    \item \refchss{first-order-functions}{first-class-functions}{recursion} introduce functions.
+    \item \refchs{boxes}{mutable-variables} introduce mutation.
     \item \refch{lazy-evaluation} introduces lazy evaluation.
+    \item \refchss{continuations}{first-class-continuations}{first-order-representation-of-continuations} introduce continuations.
+    \item \refch{nameless-representation-of-expressions} introduces De Bruijn indices.
+    \item \refchs{type-systems}{typing-recursive-functions} introduce basic type systems.
+    \item \refch{algebraic-data-types} introduces algebraic data types.
+    \item \refch{parametric-polymorphism} introduces parametric polymorphism.
+    \item \refch{subtype-polymorphism} introduces subtype polymorphism.
 \end{itemize}
 Each chapter explains a feature by defining a small language providing the
 feature. Those languages may seem inconvenient in practice because they are too small.
