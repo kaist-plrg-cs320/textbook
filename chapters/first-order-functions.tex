@@ -87,7 +87,7 @@ $\embox{FEnv}$, $E$, and $\mathbb{Z}$.
 
 \[\Rightarrow\subseteq\embox{Env}\times\embox{FEnv}\times E\times\mathbb{Z}\]
 
-$(\sigma,\Lambda,e,n)\in\Rightarrow$ is true if and only if $e$ evalautes to $n$
+$(\sigma,\Lambda,e,n)\in\Rightarrow$ is true if and only if $e$ evaluates to $n$
 under $\sigma$ and $\Lambda$. We write $\eval{\sigma,\Lambda}{e}{n}$
 instead of $(\sigma,\Lambda,e,n)\in\Rightarrow$.
 
@@ -105,7 +105,7 @@ The following rule describes the semantics of function calls:
 \end{tabular}
 }
 
-To evaluate $\eappfo{x}{e}$, we need to evalaute $e$ first to decide the value
+To evaluate $\eappfo{x}{e}$, we need to evaluate $e$ first to decide the value
 of the argument. Then, we search for a function from the function environment
 with a given function name, $x$. $x$ must be in the domain of the function
 environment. Otherwise, $x$ is a free identifier, and a run-time error happens.
@@ -341,7 +341,7 @@ The interpreter can be fixed like below.
 
 \begin{verbatim}
 case Call(f, a) =>
-  val (x, e) = fEnv(f)
+  val FunDef(_, x, e) = fEnv(f)
   interp(e, env + (x -> interp(a, env, fEnv)), fEnv)
 \end{verbatim}
 

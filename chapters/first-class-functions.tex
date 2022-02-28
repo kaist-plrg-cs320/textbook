@@ -29,7 +29,7 @@ Consider an anonymous function in Scala:
 If we ignore its type annotation, it consists of two parts: \code{x} and \code{x
 + x}. \code{x} is the parameter of the function; \code{x + x} is the body of the
 function. This observation lets us know that an anonymous function consists of
-its name and parameter.
+its parameter and body.
 
 In \textsf{F1VAE}, the sytnax of a function call is $\eappfo{x}{e}$. To call a
 function, the name of the function should be given. However, it is not true in
@@ -154,7 +154,7 @@ An environment is a finite partial function from identifiers to values.
 
 \[ \embox{Env}=\embox{Id}\finto V \]
 
-The semantics of \lang is a ternay relation over $\embox{Env}$, $E$, and $V$.
+The semantics of \lang is a ternary relation over $\embox{Env}$, $E$, and $V$.
 
 \[\Rightarrow\subseteq\embox{Env}\times E\times V\]
 
@@ -227,7 +227,7 @@ then
 
 The rule assumes the results of $e_1$ and $e_2$ to be integers. If the
 assumption is violated, a run-time error happens. For example,
-$\eadd{(\efun{\cx}{\cx})}{1}$ incurs a run-time error becuase the left operand
+$\eadd{(\efun{\cx}{\cx})}{1}$ incurs a run-time error because the left operand
 is a closure, not an integer.
 
 We need to revise Rule \textsc{Val} of \plang a bit.
@@ -446,7 +446,7 @@ subtraction can be desugared into the lambda calculus.
     }
 }
 \]
-Describe a trace of the evalaution in terms of arguments to the \code{interp}
+Describe a trace of the evaluation in terms of arguments to the \code{interp}
 function for every call. (There will be 16 calls.) The \code{interp} function
 takes two arguments---an expression and an environment---so show both for each call.
 For \code{Num}, \code{Id}, and \code{Fun} expressions, show their result values, which

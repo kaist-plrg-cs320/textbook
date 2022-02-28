@@ -1092,7 +1092,7 @@ Then, we find which inference rule can be applied. In this case, we can use Rule
   { (3-1)+2\Rightarrow{\color{white}4} }
 \]
 
-We need to evalaute $3-1$ and $2$ respectively. Let us focus on $3-1$ first.
+We need to evaluate $3-1$ and $2$ respectively. Let us focus on $3-1$ first.
 Since $3-1$ is subtraction, we use Rule \textsc{Sub}.
 
 \[
@@ -1217,7 +1217,7 @@ to add integer negation.
 
 \begin{verbatim}
 <expr> ::= <number> | <expr> "+" <expr>
-         | <expr> "-" <expr> | "-" "(" expr ")"
+         | <expr> "-" <expr> | "-" "(" <expr> ")"
 \end{verbatim}
 
 Similarly, we fix the abstract syntax, too.
@@ -1283,6 +1283,8 @@ as user-defined syntactic sugar.
 \end{verbatim}
 
 Describe whether each of the following is \code{expr} and why.
+\code{<id>} consists of one or more latin alphabets (\code{a-z}, \code{A-Z}), and
+\code{<num>} consists of one or more digits (\code{0-9}).
 Assume that it is allowed to add whitespaces among terminals freely.
 
 \begin{enumerate}

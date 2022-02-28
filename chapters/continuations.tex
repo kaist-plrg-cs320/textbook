@@ -155,10 +155,10 @@ order of evaluation does not matter. Each expression only produces a result;
 there is no other \textit{side effect}.\index{side effect}
 On the other hand, in impure languages, the order
 of evaluation matters. Expressions can perform side effects, including mutation
-and control flow changes. Evaluting a certain expression can change the result
+and control flow changes. Evaluating a certain expression can change the result
 of other expressions or make other expressions not evaluated. Therefore,
 programs written in impure languages require global reasoning, while programs
-wirtten in pure languages require local, modular reasoning.
+written in pure languages require local, modular reasoning.
 Mutation and control diverters make the reasoning of programs difficult despite
 their usefulness. Control diverters must be used with extra care of programmers.
 
@@ -947,12 +947,12 @@ $1+2$ under the empty environment. The evaluation consists of three steps:
     value $3$.
 \end{enumerate}
 Steps 1 and 2 can be represented by $\emptyset\vdash1$ and $\emptyset\vdash2$,
-repectively. $\emptyset\vdash1$ evalutes $1$ to get $1$ and pushes $1$ onto the
+respectively. $\emptyset\vdash1$ evaluates $1$ to get $1$ and pushes $1$ onto the
 value stack for the continuation. Similarly, $\emptyset\vdash2$ evaluates $2$ to
 get $2$ and pushes $2$ onto the value stack for the continuation. Finally,
 step 3, which can be represented by $(+)$, pops both values and computes the sum.
 The sum, $3$, is pushed onto the value stack and becomes the result of the
-execution. Therefore, the evalution of $1+2$ can be decomposed into three steps
+execution. Therefore, the evaluation of $1+2$ can be decomposed into three steps
 in the computation stack:
 $\evalk{\emptyset}{1} \evalk{\emptyset}{2} \addk \mtk$.
 
@@ -1044,7 +1044,7 @@ value, we can reach the same conclusion using the big-step semantics.
 Recall that $\sigma\vdash e\Rightarrow v$ implies that $e$ evaluates to $v$
 under $\sigma$. In small-step semantics, evaluation of $e$ under $\sigma$ starts
 with $\evalk{\sigma}{e}\mtk\ ||\ \mts$. The redex and the continuation of the
-state are $e$ and the identity function, repectively, so the state does evaluate
+state are $e$ and the identity function, respectively, so the state does evaluate
 $e$. If the evaluation results in $v$, the final state is
 $\mtk\ ||\ \conss{v}\mts$. The computation stack is empty, and the value stack
 contains only $v$, which is the result. Thus, the following proposition is true.
@@ -1096,7 +1096,7 @@ case Fun(x, b) => k(CloV(x, b, env))
 \]
 
 \[
-  \evalkd{\efun{x}{e}}k ||\ s\rightarrow k\ ||\ \conss{\clov{x}{e}{\sigma}}s
+  \evalkd{\efun{x}{e}}k\ ||\ s\rightarrow k\ ||\ \conss{\clov{x}{e}{\sigma}}s
   \quad\textsc{[Red-Fun]}
 \]
 
@@ -1161,7 +1161,7 @@ We can define the rules for the \code{Sub} case in a similar way:
 \]
 
 \[
-  \addk k\ ||\ \conss{n_2}\conss{n_1}s\rightarrow k\ ||\ \conss{n_1-n_2}s
+  \subk k\ ||\ \conss{n_2}\conss{n_1}s\rightarrow k\ ||\ \conss{n_1-n_2}s
   \quad\textsc{[Red-Sub2]}
 \]
 

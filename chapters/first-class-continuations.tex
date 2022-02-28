@@ -109,7 +109,7 @@ expression is $1+(\evcc{\cz}{\eapp{\cy}{\cz}})$, and $1$ evaluates to $1$.
 Then, $\evcc{\cz}{\eapp{\cy}{\cz}}$ becomes the redex, and the continuation is
 $(\cx\ (1+\square))\ 3$. Therefore, $\cz$ denotes $(\cx\ (1+\square))\ 3$.
 When $\cy$ is applied to $\cz$, the original continuation is ignored, and $\cz$ fills
-the hole in the continuation denoted by \cy. Now, the remainig computation
+the hole in the continuation denoted by \cy. Now, the remaining computation
 is $\cz\ 3$, which is obtained by filling the hole of $\square\ 3$ with $\cz$.
 Applying $\cz$ to $3$ ignores the continuation again, and $(\cx\ (1+3))\
 3$ is obtained by filling the hole of $(\cx\ (1+\square))\ 3$ with $3$.
@@ -354,7 +354,7 @@ first-class continuations surpasses that of other control diverters.
 Although first-class continuations are much more powerful than other control
 diverters, it is difficult to utilize first-class continuations to correctly
 implement desired control flow changes. To resolve the difficulty, language
-designers can provide other control diverters as syntacic sugar. By doing so,
+designers can provide other control diverters as syntactic sugar. By doing so,
 the designers can make their language convenient for programmers while
 preventing the language from being complicated.
 
@@ -396,7 +396,7 @@ $((\lambda \cx.\evcc{\code{r}}{(\code{r}\ 1)+\cx})\ 2)+3$
 
 While evaluating $(\lambda \cx.\evcc{\code{r}}{(\code{r}\ 1)+\cx})\ 2$,
 $\code{r}$ denotes $\square+3$. When $\code{r}$ is applied to $1$,
-the original continuation disappears, and the only remainig computation is
+the original continuation disappears, and the only remaining computation is
 $1+3$. Therefore, the final result is $4$. The result matches the expected
 semantics of \code{return}.
 

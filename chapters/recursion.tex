@@ -48,7 +48,7 @@ we can easily add them to \plang.}
 However, it is wrong since the scope of \code{sum} includes $\eapp{\code{sum}}{10}$ but excludes
 $\efun{\cx}{\eifz{\cx}{0}{(\eadd{\cx}{\eapp{\code{sum}}{(\esub{\cx}{1})}})}}$.
 \code{sum} in the body of the function is a free identifier. Evaluation of the
-expression termiantes with a run-time error. It is nontrival to define recursive
+expression termiantes with a run-time error. It is nontrivial to define recursive
 functions in \plang.
 
 \section{Syntax}
@@ -385,7 +385,7 @@ By expanding $e_f$, we get
 \[
   \eapp{(\efun{\code{f}}{\efun{\cv}{\sumbodyfv}})}{(\efun{\cv}{\eapp{\eapp{F}{F}}{\cv}})}
 \]
-which evalutes to
+which evaluates to
 \[
   \efun{\cv}{{\eifz{\cv}{0}{(\eadd{\cv}{\eapp{(\efun{\cv}{\eapp{\eapp{F}{F}}{\cv}})}{(\esub{\cv}{1})}})}}}
 \]
@@ -395,7 +395,7 @@ $0$, the result is $0$. If we apply $g$ to a positive integer $n$, the result is
 \[
   \eadd{n}{\eapp{(\efun{\cv}{\eapp{\eapp{F}{F}}{\cv}})}{(\esub{n}{1})}}
 \]
-which evalutes to
+which evaluates to
 \[
   \eadd{n}{\eapp{\eapp{F}{F}}{(\esub{n}{1})}}
 \]

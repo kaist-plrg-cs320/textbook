@@ -17,13 +17,13 @@ evaluated when the argument is used in the function body, not before the
 evaluation of the function body starts. Another example is a variable
 definition. The initialization of variable happens when the variable is
 used for the first time, not when it is defined. Actually, as you have seen
-already, local variables can be consdiered as syntactic sugar of function
+already, local variables can be considered as syntactic sugar of function
 parameters, it is enough to focus on laziness in function applications.
 Therefore, this book considers lazy evaluation only on arguments of function
 applications.
 
 All the previously defined languages in the book are eager languages. They use
-the CBV semantics for function applications. CBV can be consdiered equivalent to
+the CBV semantics for function applications. CBV can be considered equivalent to
 eager evaluation. CBV means that every argument is passed as a value. The value
 of an argument can be acquired only by evaluating the argument expression. It
 implies that every argument is evaluated before the evaluation of the function
@@ -42,8 +42,8 @@ This chapter mainly discusses \textit{call-by-name}\index{call-by-name}
 (\acrshort{cbnLabel}) semantics, which is one form of lazy evaluation.
 In the CBN semantics, each argument is passed as its name, i.e. the expression
 itself, rather than the value denoted by the expression. Since it is passed as an
-expression, there is no need to evaluate the expression to obatin its value. The
-expression will be evalauted when the value is required by the function body.
+expression, there is no need to evaluate the expression to obtain its value. The
+expression will be evaluated when the value is required by the function body.
 As you can see, CBN delays the computation of arguments by passing them as
 expressions and can be considered as lazy evaluation. We will define \lang, which
 is a lazy version of \plang, in this chapter. \lang adopts the CBN semantics. In
@@ -309,7 +309,7 @@ possible only by using integers, not expression-values.
 
 The semantics is a correct instance of CBN but has a flaw from a practical
 perspective. Consider $\eapp{(\efun{\cx}{\cx})}{(\eadd{1}{1})}$. It results in
-$\exprv{\eadd{1}{1}}{\emptyset}$, not $2$. Most programmers are likely to perfer
+$\exprv{\eadd{1}{1}}{\emptyset}$, not $2$. Most programmers are likely to prefer
 $2$ as a result. We need to apply one last strict evaluation at the end of the
 evaluation to resolve the problem. It is to say that ``the result of a program
 $e$ is $v$ when $\evale{e}{v'}$ and $\stricte{v'}{v}$.'' Note that it is
@@ -354,7 +354,7 @@ case class ExprV(e: Expr, env: Env) extends Value
 
 \code{ExprV($e$, $\sigma$)} represents $\exprv{e}{\sigma}$.
 
-The following function implements strict evlauation:
+The following function implements strict evaluation:
 
 \begin{verbatim}
 def strict(v: Value): Value = v match {

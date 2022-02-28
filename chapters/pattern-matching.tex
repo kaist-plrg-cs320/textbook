@@ -158,7 +158,7 @@ val e1: Add = Add(n, m)
 val e2: Sub = Sub(e1, Num(3))
 \end{verbatim}
 
-In addition, becuase of the \code{extends} keyword, \code{Num}, \code{Add}, and
+In addition, because of the \code{extends} keyword, \code{Num}, \code{Add}, and
 \code{Sub} are subtypes of \code{AE}. It means that any value of the types
 \code{Num}, \code{Add}, or \code{Sub} is also a value of the type \code{AE}.
 
@@ -730,8 +730,8 @@ def remove(t: Tree, n: Int): Tree = {
 }
 \end{verbatim}
 
-\code{Node(`n`, t0, Empty)} can replace
-\code{case None(m, t0, Empty) if n == m}. The pattern \code{Node(n, t0, Empty)} defines
+\verb!Node(`n`, t0, Empty)! can replace
+\code{case Node(m, t0, Empty) if n == m}. The pattern \code{Node(n, t0, Empty)} defines
 a new variable \code{n} and makes \code{n} refer to the
 root element; it does not check whether the root element equals \code{n}.
 However, backticks prohibit defining a new variable and allow to compare the root
@@ -860,7 +860,7 @@ def get(l: List[Int], n: Int): Int =
   }
 \end{verbatim}
 
-Throwing an excpeion is a simple and effective solution. However, exceptions
+Throwing an exception is a simple and effective solution. However, exceptions
 have two problems. First, exceptions should be handled by exception handlers.
 
 \begin{verbatim}

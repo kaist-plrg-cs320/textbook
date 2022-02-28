@@ -205,7 +205,7 @@ $((\code{i}-1)!=\code{res})\land(\code{i}\le\code{n}+1)$.
 By using this invariant, we can conclude that $\code{i}=\code{n}+1$ and,
 therefore, $\code{res}=(\code{i}-1)!=\code{n}!$ at the last line of the
 function, which implies that it correctly implements factorial.
-It is nontrival to find a proper loop invariant and show that the loop invariant
+It is nontrivial to find a proper loop invariant and show that the loop invariant
 holds at the beginning of each iteration.
 
 On the other hand,
@@ -410,7 +410,7 @@ The function uses a tail call. More precisely, the function is
 tail-recursive. Its last action is calling itself. Unlike most functional
 languages, Scala cannot optimize general tail calls. Scala optimizes only
 tail-recursive calls.
-The Scala compiler generates Java bytecode, which is excuted by the JVM. The JVM does not
+The Scala compiler generates Java bytecode, which is executed by the JVM. The JVM does not
 allow bytecode to jump to the beginning of another function. In the JVM, functions can
 only either return or call functions. Therefore, the Scala compiler cannot generate
 optimized code by removing the stack frame of a caller. Instead, they transform

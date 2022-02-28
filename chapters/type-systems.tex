@@ -19,7 +19,7 @@ for brevity, this section uses \plang.
 
 The first group includes every expression that evaluates to a value. For example,
 $(1+2)-3$ and $(\lambda \cx.\lambda \cy.\cx+\cy)\ 1\ 2$ belong to the first
-group because $(1+2)-3$ evalutes to $0$, and $(\lambda \cx.\lambda \cy.\cx+\cy)\
+group because $(1+2)-3$ evaluates to $0$, and $(\lambda \cx.\lambda \cy.\cx+\cy)\
 1\ 2$ evaluates to $3$. Expressions in this group correspond to programs that
 terminate without any problem. When we write a program, the program
 usually belongs to the first group.
@@ -124,13 +124,13 @@ dynamic analysis.
 The second property is called \textit{completeness},\index{completeness}
 which implies that $P$ never detects run-time errors by mistake, i.e., there is
 no false positive---a \textit{false positive}\index{false positive}
-is to incorrectly say $\textsf{OK}$.
+is to incorrectly say that there is a run-time error ($\textsf{NOT OK}$).
 If $P(I)$ is $\textsf{NOT OK}$, $I$ must be able to incur a run-time
 error.\sidenote{It is the contrapositive of the second property.}
 The third property is called \textit{soundness},\index{soundness}
 which implies that $P$ never misses run-time errors, i.e., there is no false
 negative---a \textit{false negative}\index{false negative}
-is to incorrectly say $\textsf{NOT OK}$.
+is to incorrectly say that there is no run-time error ($\textsf{OK}$).
 If $P(I)$ is $\textsf{OK}$, $I$ must be free from run-time
 errors.\sidenote{It is the contrapositive of the third property.}
 $P$ can liberate programmers from the burden of detecting run-time errors.
@@ -251,7 +251,7 @@ operands to be $\tnum$. Since a value of $\tfun$ appears where a value of
 $\tnum$ is expected, evaluation of the expression incurs a type error.
 As another example, consider $1\ 0$. The first operand belongs to $\tnum$.
 However, function application expects the first operand to be $\tfun$. A type
-error happens during the evalutaion because a value of $\tnum$ appears where a
+error happens during the evaluation because a value of $\tnum$ appears where a
 value of $\tfun$ is expected.
 
 Sometimes, it is unclear to determine whether a certain run-time error is a type error

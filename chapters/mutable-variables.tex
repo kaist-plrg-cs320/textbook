@@ -96,7 +96,7 @@ relation over $\embox{Env}$, $\embox{Sto}$, $E$, $V$, and $\embox{Sto}$.
 
 Like \plang, a value of \lang is either an integer or a closure. It is different
 from \bfae, which allows addresses to be values. \bfae treats addresses as
-values becuase expressions creating boxes evaluate to addresses. However, there
+values because expressions creating boxes evaluate to addresses. However, there
 are mutable variables instead of boxes in \lang. \lang has addresses to support
 mutation, but they are used only for tracking the value of each variable. Addresses
 are not exposed to programmers as values.
@@ -193,7 +193,7 @@ Let us see the semantics of function applications.
   \quad\textsc{[App]}
 \]
 
-The evalution of the subexpressions is the same as \bfae. However, the remaining
+The evaluation of the subexpressions is the same as \bfae. However, the remaining
 procedure is different. We cannot store the value of the argument in the
 environment. It should go into the store. To put the value into the store, we
 need a fresh address. The name of the parameter becomes associated with the

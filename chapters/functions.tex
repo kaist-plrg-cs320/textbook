@@ -568,7 +568,7 @@ def sum(l: List[Int]): Int = {
   aux(l, 0)
 }
 
-def product(l: List[Int]): Int = l match {
+def product(l: List[Int]): Int = {
   def aux(l: List[Int], inter: Int): Int = l match {
     case Nil => inter
     case h :: t => aux(t, inter * h)
@@ -712,7 +712,7 @@ lists.\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/imm
 \section{For Loops}
 
 Scala has for loops.
-In Scala, a for loop is an expression, which evalautes to a value.
+In Scala, a for loop is an expression, which evaluates to a value.
 For expressions are highly expressive.
 Unlike \code{while}, which work with mutable variables or objects,
 \code{for} of Scala helps programmers to write code in a functional and readable way.
