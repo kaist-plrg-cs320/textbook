@@ -57,8 +57,13 @@
 \usepackage{xspace}
 \usepackage{tikz}
 \usepackage{fancyvrb}
-\usepackage{bussproofs,proof}
+\usepackage{bussproofs}
+\usepackage{proof}
 \usepackage{upquote}
+\usepackage{arydshln}
+\usepackage{graphicx}
+
+\graphicspath{ {./images/} }
 
 \usetikzlibrary{arrows}
 \tikzset{
@@ -80,6 +85,7 @@
 \newcommand{\cv}{\code{v}}
 \newcommand{\ca}{\code{a}}
 \newcommand{\cb}{\code{b}}
+\newcommand{\inred}{\color{red}}
 
 \newcommand{\chnum}[1]{\hyperref[ch:#1]{\ref{ch:#1}}}
 \newcommand{\refchs}[2]{Chapters \chnum{#1} and \chnum{#2}}
@@ -343,10 +349,10 @@
 \input{chapters/identifiers.tex}
 \input{chapters/first-order-functions.tex}
 \input{chapters/first-class-functions.tex}
-% \input{chapters/lambda-calculus.tex}
 \input{chapters/recursion.tex}
 \input{chapters/mutable-boxes.tex}
 \input{chapters/mutable-variables.tex}
+\input{chapters/garbage-collection.tex}
 \input{chapters/lazy-evaluation.tex}
 \input{chapters/continuations.tex}
 \input{chapters/first-class-continuations.tex}
@@ -453,6 +459,9 @@
 \newacronym[longplural={call-by-reference}]{cbrLabel}{CBR}{call-by-reference}
 \newacronym[longplural={call-by-name}]{cbnLabel}{CBN}{call-by-name}
 \newacronym[longplural={continuation-passing style}]{cpsLabel}{CPS}{continuation-passing style}
+\newacronym[longplural={garbage collection}]{gcLabel}{GC}{garbage collection}
+\newacronym[longplural={last in, first out}]{lifoLabel}{LIFO}{last in, first out}
+\newacronym[longplural={use-after-free}]{uafLabel}{UAF}{use-after-free}
 
 \setglossarystyle{listgroup} % Set the style of the glossary (see https://en.wikibooks.org/wiki/LaTeX/Glossary for a reference)
 \printglossary[title=Special Terms, toctitle=List of Terms] % Output the glossary, 'title' is the chapter heading for the glossary, toctitle is the table of contents heading
