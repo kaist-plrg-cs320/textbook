@@ -1,0 +1,1171 @@
+\setchapterpreamble[u]{\margintoc}
+\chapter{Type Inference}
+\labch{type-inference}
+
+\renewcommand{\plang}{\textsf{TFAE}\xspace}
+\renewcommand{\lang}{\textsf{TIFAE}\xspace}
+
+While type checking helps programmers by preventing run-time errors, it gives
+programmers the burden of attaching type annotations to function parameters.
+Compare the following code snippets:
+
+\begin{verbatim}
+def f(x: Int): Int =
+  x + 1
+\end{verbatim}
+
+\begin{verbatim}
+def f(x):
+  return x + 1
+\end{verbatim}
+
+They are written in Scala and Python, respectively. While Scala, a statically
+typed language, requires type annotations, Python, a dynamically typed language,
+does not. Writing correct type annotations requires programmers' time and
+effort. Besides, type annotations make code verbose. The necessity of type
+annotations is a crucial downside of statically typed languages.
+
+For this reason, many languages provide \textit{type inference}\index{type
+inference}, which recovers omitted type annotations. Under the presence of type
+inference, programmers can selectively write type annotations. When a particular
+type annotation is beneficial for documentation purpose, they can leave it in
+the code. Otherwise, they can omit the type annotation and save their time.
+Then, the type checker will infer correct types for missing type annotations.
+
+Each real-world languages has a different capability of type inference. For
+example, Scala's type checker can infer the parameter types of anonymous
+functions used as arguments. The following code passes type checking:
+
+\begin{verbatim}
+def f(g: Int => Int): Int = g(0)
+f(x => x + 1)
+\end{verbatim}
+
+The type checker infers the type of \code{x} to \code{Int}. However, parameter
+types cannot be inferred in other cases. Both lines of the following code do
+not pass type checking:
+
+\begin{verbatim}
+def f(x) = x + 1
+(x => x + 1)(0)
+\end{verbatim}
+
+As these examples show, Scala's type inference is quite limited. On the other
+hand, OCaml and Haskell's type inference is much more powerful. They allow
+programmers to omit all the parameter type and return type annotations. For
+example, the following code snippets pass type checking:
+
+\begin{itemize}
+  \item OCaml:
+    \begin{verbatim}
+let f x = x + 1
+    \end{verbatim}
+  \item Haskell:
+    \begin{verbatim}
+f x = x + 1
+    \end{verbatim}
+\end{itemize}
+
+This chapter introduces a basic implementation of type inference by implementing a
+type checker of \lang, which extends \plang with type inference.
+
+\section{Syntax}
+
+The syntax of \lang is as follows:
+
+\[
+e\ ::=\ n
+\ |\ \eadd{e}{e}
+\ |\ x
+\ |\ \efun{x}{e}
+\ |\ \eapp{e}{e}
+\]
+
+The only difference from \plang is the absence of type annotations. \lang allows
+omission of every type annotation, just like OCaml and Haskell, so the syntax
+does not require type annotations.
+
+\section{Type Inference as Decision Problem}
+
+The usual type checking problem is formulated as the following decision problem
+on an expression $e$:
+
+\begin{quote}
+  Is $e$ well-typed?
+\end{quote}
+
+A type checking algorithm is an algorithm solving this decision problem. Our
+\code{typeCheck} function, which is an implementation of a type checking
+algorithm, terminates without an exception if the answer is ``yes'' and throws
+an exception if the answer is ``no.''
+
+This section formuates the type inference problem as a decision problem in two
+different ways. While they reflect two different perspectives on type
+inference, they define the same problem.
+
+\subsection{Type Recovery}
+
+\newcommand{\ersr}[1]{\embox{erase}(#1)}
+
+We first define the \textit{type erasure}\index{type erasure} of \plang. Type
+erasure removes type annotations from expressions. The type erasure of \plang is
+defined as the following function $\embox{erase}$:
+
+\[
+  \begin{array}{r@{~}c@{~}l}
+    \ersr{n} &=& n \\
+    \ersr{\eadd{e_1}{e_2}} &=& \eadd{\ersr{e_1}}{\ersr{e_2}} \\
+    \ersr{x} &=& x \\
+    \ersr{\efunt{x}{\tau}{e}} &=& \efun{x}{\ersr{e}} \\
+    \ersr{\eapp{e_1}{e_2}} &=& \eapp{\ersr{e_1}}{\ersr{e_2}} \\
+  \end{array}
+\]
+
+It takes a \plang expression as an input and outputs a \lang expression.
+For example, $\ersr{\efunt{\cx}{\tnum}{\eadd{\cx}{\cx}}}$ is
+$\efun{\cx}{\eadd{\cx}{\cx}}$.
+
+The type inference problem of \lang is the following decision problem on a \lang
+expression $e$:
+
+\begin{quote}
+  \hspace{-1em}Is there a well-typed \plang expression $e'$ such that $\ersr{e'}=e$?
+\end{quote}
+
+For example, when $\efun{\cx}{\eadd{\cx}{\cx}}$ is given, the answer is ``yes''
+because $\efunt{\cx}{\tnum}{\eadd{\cx}{\cx}}$ is such a \plang expression. On
+the other hand, when $\efun{\cx}{\eapp{\cx}{\cx}}$ is given, the answer is
+``no'' because there is no such expression. An algorithm solving this decision
+problem is the type inference algorithm of \lang.
+
+From this perspective, type inference is to figure out whether there are type
+annotations that can make a given expression become a well-typed, fully
+type-annotated expression. If such type annotations exist, the expression passes
+type checking. Otherwise, it is rejected by the type checker. This formulation
+fits our intuitive understanding of type inference.
+
+\subsection{Non-Algorithmic Type System}
+
+Consider the following static semantics of \lang:
+
+\typerule{Typ-Num}{
+  \typeofdnc{n}{\tnum}.
+}
+
+\vspace{-1em}
+
+\[
+  \typeofd{n}{\tnum}
+  \quad\textsc{[Typ-Num]}
+\]
+
+\typerule{Typ-Add}{
+  If
+  \typeofdn{e_1}{\tnum} and \typeofdn{e_2}{\tnum},\\
+  then
+  \typeofdn{e_1+e_2}{\tnum}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeofd{e_1}{\tnum} \\ \typeofd{e_2}{\tnum} }
+  { \typeofd{e_1+e_2}{\tnum} }
+  \quad\textsc{[Typ-Add]}
+\]
+
+\typerule{Typ-Id}{
+  If $x$ is in the domain of $\Gamma$, \\
+  then \typeofdn{x}{\Gamma(x)}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { x\in\dom{\Gamma} }
+  { \typeofd{x}{\Gamma(x)} }
+  \quad\textsc{[Typ-Id]}
+\]
+
+\typerule{Typ-Fun}{
+  If
+  \typeofn{\Gamma[x:\tau_1]}{e}{\tau_2} for some $\tau_1$,\\
+  then
+  \typeofdn{\efunt{x}{e}}{\tarrow{\tau_1}{\tau_2}}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeof{\Gamma[x:\tau_1]}{e}{\tau_2} }
+  { \typeofd{\efun{x}{e}}{\tarrow{\tau_1}{\tau_2}} }
+  \quad\textsc{[Typ-Fun]}
+\]
+
+\typerule{Typ-App}{
+  If
+  \typeofdn{e_1}{\tarrow{\tau_1}{\tau_2}} and
+  \typeofdn{e_2}{\tau_1}, \\
+  then
+  \typeofdn{e_1\ e_2}{\tau_2}.
+}
+
+\vspace{-1em}
+
+\[
+  \inferrule
+  { \typeofd{e_1}{\tarrow{\tau_1}{\tau_2}} \\
+    \typeofd{e_2}{\tau_1} }
+  { \typeofd{e_1\ e_2}{\tau_2} }
+  \quad\textsc{[Typ-App]}
+\]
+
+It is mostly the same as the type system of \plang. The only difference is in Rule
+\textsc{Typ-Fun}. While the expression does not have $\tau_1$, it is used in the
+premise. $\tau_1$ just comes out of thin air. How can it be possible?
+
+A type system does not necessarily let us know how to implement a type checker.
+Its goal is to declare whether a certain expression is well-typed or not.
+Therefore, $\tau_1$ coming out of thin air cannot be any problem. This type
+system still tells us the well-typedness of each \lang expression. For example,
+we can prove that $\efun{\cx}{\eadd{\cx}{\cx}}$ is well-typed with the type
+system:
+
+\[
+  \inferrule
+  {
+    \inferrule
+    {
+      \inferrule
+      { \cx\in\dom{[\cx:\tnum]} }
+      { \typeof{[\cx:\tnum]}{\cx}{\tnum} } \\
+      \inferrule
+      { \cx\in\dom{[\cx:\tnum]} }
+      { \typeof{[\cx:\tnum]}{\cx}{\tnum} }
+    }
+    { \typeof{[\cx:\tnum]}{\eadd{\cx}{\cx}}{\tnum} }
+  }
+  { \typeofe{\efun{\cx}{\eadd{\cx}{\cx}}}{\tarrow{\tnum}{\tnum}} }
+\]
+
+Why have we chosen $\tnum$ as $\tau_1$? So far, it is just our intuition. The
+type system does not let us know how we can choose a type for $\tau_1$, and we
+do not have any systematic explanation. However, if we choose $\tnum$ somehow,
+we can prove that the type of $\efun{\cx}{\eadd{\cx}{\cx}}$ is
+$\tarrow{\tnum}{\tnum}$. In addition, if we try to prove that the type of
+$\efun{\cx}{\eapp{\cx}{\cx}}$ is $\tau$ for some $\tau$, we will conclude that
+it is impossible after a few attempts. As these examples show, the type system
+allows us to determine the well-typedness of each expression, while it does not
+tell us how.
+
+We say that this type system is \textit{non-algorithmic}\index{non-algorithmic
+type system}, or \textit{declarative}\index{declarative type system}, because it
+only declares well-typed expressions but does not directly give us an algorithm
+to check the well-typedness of each expression. It is different from most of the
+type systems we saw before this chapter. Except the type system of
+\textsf{STFAE}, which also is non-algorithmic, all the other type systems are
+\textit{algorithmic}\index{algorithmic type system}, or
+\textit{syntax-directed}\index{syntax-directed type system}. They let us know
+how to implement type checking algorithms in a syntax-directed fashion, i.e., by
+giving an exact type-checking procedure for each syntactic form of an
+expression.
+
+The type inference problem of \lang is the following decision problem on a \lang
+expression $e$:
+
+\begin{quote}
+  Is $e$ well-typed under this non-algorithmic type system?
+\end{quote}
+
+Like before, the answer to $\efun{\cx}{\eadd{\cx}{\cx}}$ is ``yes,'' and the
+answer to $\efun{\cx}{\eapp{\cx}{\cx}}$ is ``no.'' The type inference algorithm
+of \lang is the same as the type checking algorithm of this non-algorithmic type
+system.
+
+From this perspective, the type inference problem asks us to design a type
+checking algorithm of a non-algorithmic type system. Since a non-algorithmic
+type system is literally non-algorithmic, finding a type checking algorithm is
+a nontrivial problem.
+
+\section{Type Variables and Constraints}
+
+Now, our goal is to design and implement a type inference algorithm of
+\lang. We mostly focus on the first perspective on type inference. Therefore,
+the decision problem we want to solve is as follows:
+
+\begin{quote}
+  \hspace{-1em}Is there a well-typed \plang expression $e'$ such that $\ersr{e'}=e$?
+\end{quote}
+
+Our type checker must terminates without an exception if the answer is ``yes''
+and throws an exception if the answer is ``no.'' Before going into the detailed
+implementation, this section gives you the high-level idea of type inference.
+
+The goal of type inference is to find proper types for missing type annotations
+in a given expression. If such types exist, the type checker accepts the
+expression. Otherwise, it rejects the expression.  For this purpose, the type
+checker attaches a type variable to each function parameter before starting type
+inference. For example, $\efun{\cx}{\eadd{\cx}{\cx}}$ becomes
+$\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$ where $\cX$ is a type variable. Similarly,
+$\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}}$ becomes
+$\efunt{\cx}{\cX}{\efunt{\cy}{\cY}{\eadd{\cx}{\cy}}}$, and
+$\eadd{(\eapp{(\efun{\cx}{\cx})}{1})}{(\eapp{(\efun{\cx}{\cx})}{2})}$ becomes
+$\eadd{(\eapp{(\efunt{\cx}{\cX}{\cx})}{1})}{(\eapp{(\efunt{\cx}{\cY}{\cx})}{2})}$.
+During type inference, each type variable functions as a type, just like
+ordinary types such as $\tnum$ and $\tarrow{\tnum}{\tnum}$. Now, the goal of the
+type inference is to find a correct type for each type variable.
+
+Note that type variables are different from program variables and type
+parameters. They are similar to variables in mathematical equations. Consider
+the following system of equations:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  x + y = 3 \\
+  2x + 3y = 7
+\end{array}
+\]
+
+By solving this system, we get $x=2$ and $y=1$ as the solution. Similarly, the
+type checker creates a system of equations for type variables. The following
+system of equations is an example:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tnum \\
+  \tarrow{\cX}{\tnum} &=& \tarrow{\cY}{\tnum}
+\end{array}
+\]
+
+By solving the system, the type checker gets $\cX=\tnum$ and $\cY=\tnum$.
+In the context of type inference, each equation consisting a system is called
+a constraint.
+
+How does the type checker construct such a system of equations? It collects
+constraints by checking how each subexpression is used in a given expression.
+Let us consider various examples.
+
+\paragraph{Single Solution: Number}
+
+Consider $\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$. This expression uses $\cx$ for
+addition. Addition is possible for only integers. Thus, the type of $\cx$ must
+be $\tnum$. Since the type of $\cx$ is $\cX$, the type checker concludes that
+$\cX=\tnum$. This is the only constraint that can be found.  Therefore, the type
+checker gets the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tnum \\
+\end{array}
+\]
+
+The solution to this system is $\cX=\tnum$. By applying this solution to the
+original expression, we get $\efunt{\cx}{\tnum}{\eadd{\cx}{\cx}}$, which is a
+well-typed \plang expression.
+
+\paragraph{Single Solution: Function}
+
+Consider $\efunt{\cx}{\cX}{\eadd{(\eapp{\cx}{0})}{1}}$. The expression applies
+$\cx$ to $0$. The type of $\cx$ must be a function type. In addition, the
+parameter type of $\cx$ must be $\tnum$ because the type of its argument, $0$,
+is $\tnum$. On the other hand, there is no information to decide the return type
+of $\cx$ yet. Thus, the type checker introduces a new type variable $\cY$ and
+uses it as the return type. This results in the constraint
+$\cX=\tarrow{\tnum}{\cY}$. In addition, the type of $\eapp{\cx}{0}$ is $\cY$.
+The return value, whose type is $\cY$, is used for addition. Therefore, The type
+checker gets one more constraint, $\cY=\tnum$, and completes the following
+system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\tnum}{\cY} \\
+  \cY &=& \tnum \\
+\end{array}
+\]
+
+The solution to this system is $\cX=\tarrow{\tnum}{\tnum}$ and $\cY=\tnum$. By
+applying this solution to the original expression, we get
+$\efunt{\cx}{\tarrow{\tnum}{\tnum}}{\eadd{(\eapp{\cx}{0})}{1}}$, which is a
+well-typed \plang expression.
+
+\paragraph{Multiple Solutions}
+
+In mathematics, there is a system of equations with multiple solutions. The
+following system is such an example:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  x - 2y &=& 0 \\
+  3x - 6y &=& 0 \\
+\end{array}
+\]
+
+$x=2$ and $y=1$ are one possible solution. $x=4$ and $y=2$ are also a solution.
+Any $x$ and $y$ satisfying $x=2y$ are a solution to this system.
+
+Similarly, there is an expression generating a system with multiple solutions.
+Consider $\efunt{\cx}{\cX}{\efunt{\cy}{\cY}{\eapp{\cx}{\cy}}}$. This
+expression applies $\cx$ to $\cy$, whose type is $\cY$. Therefore, the type
+of $\cx$ is $\tarrow{\cY}{\cZ}$, where $\cZ$ is a new type variable. This gives
+$\cX=\tarrow{\cY}{\cZ}$, which is the only constraint. Thus, the type checker
+gets the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\cY}{\cZ} \\
+\end{array}
+\]
+
+This system has multiple solutions. One solution is $\cX=\tnum\rightarrow\tnum$,
+$\cY=\tnum$, and $\cZ=\tnum$. It is easy to find more solutions. The existence
+of multiple solutions is not a problem at all. If at least one solution exists,
+we have type annotations making a given expression well-typed. Therefore,
+expressions with multiple solutions also pass type checking.
+
+\paragraph{No Solution: Conflicting Requirements}
+
+In mathematics, there is a system of equations without any solutions. One
+example is below.
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  x - 2y &=& 1 \\
+  3x - 6y &=& 0 \\
+\end{array}
+\]
+
+Similarly, there is an expression generating a system with no solutions.
+Consider $\efunt{\cx}{\cX}{\eadd{(\eapp{\cx}{0})}{\cx}}$. Because of
+$\eapp{\cx}{0}$, the type checker gets $\cX=\tarrow{\tnum}{\cY}$, where $\cY$
+is a new type variable. At the same time, using $\eapp{\cx}{0}$ and $\cx$ for
+addition gives $\cY=\tnum$ and $\cX=\tnum$. The resulting system is as follows:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\tnum}{\cY} \\
+  \cY &=& \tnum \\
+  \cX &=& \tnum \\
+\end{array}
+\]
+
+By inlining the second constraint in the first constraint, we can simplify the
+system as follows:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\tnum}{\tnum} \\
+  \cX &=& \tnum \\
+\end{array}
+\]
+
+To satisfy both constraints, $\cX$ must be $\tarrow{\tnum}{\tnum}$ and $\tnum$
+at the same time. Such conflicting requirements cannot be satisfied. It is
+impossible to annotate the original expression to make a well-typed \plang
+expression. Thus, the type checker rejects the expression.
+
+\paragraph{No Solution: Cyclic Constraint}
+
+Consider $\efunt{\cx}{\cX}{\eapp{\cx}{\cx}}$. The only constraint is
+$\cX=\tarrow{\cX}{\cY}$, obtained from \eapp{\cx}{\cx}. Therefore, the type
+checker constructs the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\cX}{\cY} \\
+\end{array}
+\]
+
+This system does not have any solutions either. The reason is that $\cX$ occurs
+in $\tarrow{\cX}{\cY}$. If a type occurs in another type, the two types cannot
+be the same.
+
+\section{Type Checker}
+
+This section implements a type checker of \lang.
+
+To allow attaching type variables, we implement the abstract syntax as follows:
+
+\begin{verbatim}
+sealed trait Expr
+...
+case class Fun(x: String, t: Type, b: Expr) extends Expr
+
+sealed trait Type
+...
+case class VarT(x: String) extends Type
+\end{verbatim}
+
+For example, \code{Fun("x", VarT("X"), Add(Id("x"), Id("x")))} corresponds to
+$\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$.
+
+Following the high-level idea illustrated in the previous section, the type
+checker consists of two steps: collecting constraints and solving them.
+
+\subsection{Collecting Constraints}
+
+The constraints-collecting procedure is similar to the usual type checking
+procedure. The type of each subexpression in a given expression is computed.
+However, while the usual procedure immediately checks whether the type of each
+subexpression fits the required type, the new procedure adds constraints to a
+global constraint list in order to solve them later.
+
+For this purpose, we define the global constraint list as follows:
+
+\begin{verbatim}
+import scala.collection.mutable.ListBuffer
+val constraints: ListBuffer[(Type, Type)] = ListBuffer()
+\end{verbatim}
+
+A \code{ListBuffer} is a mutable list. While we can avoid mutation by using a
+strategy similar to store-passing style, we simply use mutable collections
+because the main focus of this chapter is type inference, not mutation. Adding
+\code{($\tau_1$, $\tau_2$)} to the list corresponds to adding the constraint
+$\tau_1=\tau_2$.
+
+We implement the \code{typeCheck} function, which collects the constraints
+from a given expression, as follows:
+
+\begin{verbatim}
+def typeCheck(e: Expr, env: TEnv): Type = e match {
+  case Num(_) => NumT
+  case Add(l, r) =>
+    val lt = typeCheck(l, tenv)
+    val rt = typeCheck(r, tenv)
+    constraints.append((lt, NumT))
+    constraints.append((rt, NumT))
+    NumT
+  case Id(x) => tenv(x)
+  case Fun(x, t, b) =>
+    ArrowT(t, typeCheck(b, tenv + (x -> t)))
+  case App(f, a) =>
+    val ft = typeCheck(f, tenv)
+    val at = typeCheck(a, tenv)
+    val rt = VarT(fresh())
+    constraints.append((ft, ArrowT(at, rt)))
+    rt
+}
+
+def fresh(): String = ...
+\end{verbatim}
+
+The \code{Num}, \code{Id}, and \code{Fun} cases are the same as before. They do
+not add any constraints. On the other hand, the types of both operands for
+addition must be $\tnum$, so the \code{Add} case adds two constraints. In a
+similar manner, the \code{App} case also adds a constraint. The \code{fresh}
+function returns a new type variable.
+
+Let us run \code{typeCheck} with the examples in the previous section.
+
+\begin{itemize}
+\item $\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$
+
+\begin{verbatim}
+typeCheck(
+  Fun("x", VarT("X"), Add(Id("x"), Id("x"))),
+  Map()
+)
+println(constraints)
+\end{verbatim}
+
+It prints
+
+\begin{verbatim}
+ListBuffer(
+  (VarT(X), NumT),
+  (VarT(X), NumT)
+)
+\end{verbatim}
+
+which is equivalent to the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tnum \\
+  \cX &=& \tnum \\
+\end{array}
+\]
+
+\item $\efunt{\cx}{\cX}{\eadd{(\eapp{\cx}{0})}{1}}$
+
+\begin{verbatim}
+typeCheck(
+  Fun("x", VarT("X"), Add(App(Id("x"), Num(0)), Num(1))),
+  Map()
+)
+println(constraints)
+\end{verbatim}
+
+It prints
+
+\begin{verbatim}
+ListBuffer(
+  (VarT(X), ArrowT(NumT, VarT(Y))),
+  (VarT(Y), NumT),
+  (NumT, NumT)
+)
+\end{verbatim}
+
+which is equivalent to the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\tnum}{\cY} \\
+  \cY &=& \tnum \\
+  \tnum &=& \tnum \\
+\end{array}
+\]
+
+\item $\efunt{\cx}{\cX}{\efunt{\cy}{\cY}{\eapp{\cx}{\cy}}}$
+
+\begin{verbatim}
+typeCheck(
+  Fun("x", VarT("X"), Fun("y", VarT("Y"), App(Id("x"), Id("y")))),
+  Map()
+)
+println(constraints)
+\end{verbatim}
+
+It prints
+
+\begin{verbatim}
+ListBuffer((VarT(X), ArrowT(VarT(Y), VarT(Z))))
+\end{verbatim}
+
+which is equivalent to the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\cY}{\cZ} \\
+\end{array}
+\]
+
+\item $\efunt{\cx}{\cX}{\eadd{(\eapp{\cx}{0})}{\cx}}$
+
+\begin{verbatim}
+typeCheck(
+  Fun("x", VarT("X"), Add(App(Id("x"), Num(0)), Id("x"))),
+  Map()
+)
+println(constraints)
+\end{verbatim}
+
+It prints
+
+\begin{verbatim}
+ListBuffer(
+  (VarT(X), ArrowT(NumT, VarT(Y))),
+  (VarT(Y), NumT),
+  (VarT(X), NumT)
+)
+\end{verbatim}
+
+which is equivalent to the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\tnum}{\cY} \\
+  \cY &=& \tnum \\
+  \cX &=& \tnum \\
+\end{array}
+\]
+
+\item $\efunt{\cx}{\cX}{\eapp{\cx}{\cx}}$
+
+\begin{verbatim}
+typeCheck(
+  Fun("x", VarT("X"), App(Id("x"), Id("x"))),
+  Map()
+)
+println(constraints)
+\end{verbatim}
+
+It prints
+
+\begin{verbatim}
+ListBuffer((VarT(X), ArrowT(VarT(X), VarT(Y))))
+\end{verbatim}
+
+which is equivalent to the following system:
+
+\[
+\begin{array}{r@{~}c@{~}l}
+  \cX &=& \tarrow{\cX}{\cY} \\
+\end{array}
+\]
+\end{itemize}
+
+As these example shows, constraints collected by the procedure are the same as
+our expectations, only except that there additionally are redundant or
+trivially satisfied constraints.
+
+\subsection{Solving Constraints}
+
+Let us see how to solve a system of equations for type variables. We use a
+mutable map to denote a solution. Like before, we use mutation to focus only on
+type inference although we can avoid mutation.
+
+\begin{verbatim}
+import scala.collection.mutable.Map
+val solution: Map[String, Type] = Map()
+\end{verbatim}
+
+By importing \code{scala.collection.mutable.Map}, we can use mutable maps.  When
+\code{solution} contains \code{$X$ -> $\tau$}, the solution to a type variable
+$X$ is a type $\tau$. For example, \code{"X" -> NumT} means that the solution to
+$\cX$ is $\tnum$. On the other hand, if map does not contain $X$ as a key, then
+$X$ can be any type. Initially, the map is empty since we have not solved the
+system and each type variable can be any type. During the solving procedure,
+the type checker adds entries to the map by considering each constraint.
+
+The main function of the solving procedure is the following \code{solve}
+function:
+
+\begin{verbatim}
+def solve() =
+  for ((t1, t2) <- constraints)
+    unify(t1, t2)
+\end{verbatim}
+
+It iterates over the \code{constraints} list and possibly updates the
+\code{solution} map at each iteration. The \code{unify} function updates the
+map. It takes two types as arguments and updates the map by using the fact that
+the two types are equal.
+
+\begin{verbatim}
+def unify(t1: Type, t2: Type): Unit =
+  (t1, t2) match {
+    ...
+  }
+\end{verbatim}
+
+Its behavior depends on what given types are. The simplest case is
+when both are $\tnum$.
+
+\begin{verbatim}
+case (NumT, NumT) =>
+\end{verbatim}
+
+Since they are already equal, there is nothing to do. The function immediately
+returns.
+
+On the other hand, if they are different, it throws an exception.
+
+\begin{verbatim}
+case (NumT, ArrowT(_, _)) | (ArrowT(_, _), NumT) => error()
+\end{verbatim}
+
+When both types are function types, their parameter types and return types are
+unifed, respectively.
+
+\begin{verbatim}
+case (ArrowT(pt1, rt1), ArrowT(pt2, rt2)) =>
+  unify(pt1, pt2)
+  unify(rt1, rt2)
+\end{verbatim}
+
+It follows the fact that if $\tarrow{\tau_1}{\tau_1'}=\tarrow{\tau_2}{\tau_2'}$,
+then $\tau_1=\tau_2$ and $\tau_1'=\tau_2'$.
+
+When at least one of given types is a type variable, it becomes a little more
+complicated. Suppose that \code{t1} is a type variable.
+
+\begin{verbatim}
+case (t1 @ VarT(x), t2) =>
+  if (t1 == t2)
+    ()
+  else
+    solution(x) = t2
+\end{verbatim}
+
+If \code{t2} is the same type variable, they are already equal, so there is
+nothing to do, just like the \code{(NumT, NumT)} case. Otherwise, to make the
+two types equal, the type checker sets \code{t2} as the solution to \code{t1} by
+updating the \code{solution} map.
+
+However, the above code is not quite right for two reasons. First, there can be
+a solution to \code{t1} already. Suppose that \code{t1} is \code{VarT("X")} and
+\code{solution} has \code{"X" -> NumT}. If \code{t2} is \code{ArrowT(NumT,
+NumT)}, the type variable $\cX$ should be $\tnum$ and $\tarrow{\tnum}{\tnum}$ at
+the same time, which is impossible. In this case, the type checker must throw
+an exception.
+
+One may think considering the value of \code{solution.get(t1)} is enough to
+solve this problem. Unfortunately, it is wrong. The reason is that a solution to
+a type variable can be another type variable. For example, the map can contain
+\code{"X" -> VarT("Y")} and \code{"Y" -> NumT}. In this case, the type denoted
+by $\cX$ is $\tnum$, not $\cY$. Therefore, we define a recursive function to
+find the type denoted by each type variable.
+
+\begin{verbatim}
+def resolve(ty: Type): Type = ty match {
+  case VarT(x) => solution.get(x) match {
+    case None => ty
+    case Some(t) => resolve(t)
+  }
+  case _ => ty
+}
+\end{verbatim}
+
+The \code{resolve} function computes the type denoted by a given type, which can
+be a type variable. If the given type is not a type variable, it returns the
+type per se. If the type is a type variable, it checks the \code{solution} map.
+If the map does not contain the type variable, the type variable can be any
+type, so it just returns the type variable as it is. If the map has a solution
+type to the type variable, it makes a recursive call on the type to handle cases
+that the type is another type variable.
+
+The results of \code{resolve(VarT("X"))} under various conditions are as follows:
+
+\begin{itemize}
+  \item When \code{solution} is \code{Map()}: \code{VarT("X")}
+  \item When \code{solution} is \code{Map("X" -> NumT)}: \code{NumT}
+  \item When \code{solution} is \code{Map("X" -> VarT("Y"))}: \code{VarT("Y")}
+  \item When \code{solution} is \code{Map("X" -> VarT("Y"), "Y" -> NumT)}: \code{NumT}
+\end{itemize}
+
+Now, we resolve types before unifying them.
+
+\begin{verbatim}
+def unify(t1: Type, t2: Type): Unit =
+  (resolve(t1), resolve(t2)) match {
+    ...
+  }
+\end{verbatim}
+
+It prevents a type variable from having a solution in the map already. If the
+resolved type is a type variable, the type variable is guaranteed not to have a
+solution. It allows the type checker to set \code{t2} as the solution to
+\code{t1} without worrying any conflicts.
+
+Another problem is that \code{t1} can occur in \code{t2}. For example, \code{t2}
+can be \code{ArrowT(VarT("X"), NumT)}, where \code{t1} is \code{VarT("X")}. As
+mentioned already, there are no solutions in such cases. Thus, the type checker
+must throw an exception. To detect such cases, it must check whether \code{t1}
+occurs in \code{t2}. For this purpose, we define the following \code{occurs}
+function:
+
+\begin{verbatim}
+def occurs(t1: VarT, t2: Type): Boolean =
+  resolve(t2) match {
+    case NumT => false
+    case ArrowT(l, r) => occurs(t1, l) || occurs(t1, r)
+    case t2 @ VarT(_) => t1 == t2
+  }
+\end{verbatim}
+
+The function checks whether a type variable \code{t1} occurs in a type
+\code{t2}.  When \code{t2} is \code{NumT}, \code{t1} does not occur in
+\code{t2}. On the other hand, when \code{t2} is a function type, we can say that
+\code{t1} occurs in \code{t2} if \code{t1} occurs in either parameter type or
+return type. When \code{t2} is a type variable, \code{t1} occurs in \code{t2} if
+they are the same.
+
+Now, we fix \code{unify} to call \code{occurs}.
+
+\begin{verbatim}
+case (t1 @ VarT(x), t2) =>
+  if (t1 == t2)
+    ()
+  else if (occurs(t1, t2))
+    error()
+  else
+    solution(x) = t2
+\end{verbatim}
+
+Like before, if \code{t1} and \code{t2} are the same type variable, there is
+nothing to do. If \code{t1} occurs in \code{t2}, it throws an exception.
+Otherwise, \code{t2} becomes the solution to \code{t1}.
+
+The only remaining case is when \code{t2} is a type variable. As we already have
+implemented the case when \code{t1} is a type variable, it is enough to call
+\code{unify} again with \code{t1} and \code{t2} swapped.
+
+\begin{verbatim}
+case (t1, t2 @ VarT(_)) => unify(t2, t1)
+\end{verbatim}
+
+By combining all the cases, we complete \code{unify} as below.
+
+\begin{verbatim}
+def unify(t1: Type, t2: Type): Unit =
+  (resolve(t1), resolve(t2)) match {
+    case (t1 @ VarT(x), t2) =>
+      if (t1 == t2)
+        ()
+      else if (occurs(t1, t2))
+        error()
+      else
+        solution(x) = t2
+    case (t1, t2 @ VarT(_)) => unify(t2, t1)
+    case (NumT, NumT) =>
+    case (ArrowT(t3, t4), ArrowT(t5, t6)) =>
+      unify(t3, t5)
+      unify(t4, t6)
+    case (NumT, ArrowT(_, _)) |
+         (ArrowT(_, _), NumT) => error()
+  }
+\end{verbatim}
+
+Let us run \code{solve} with some of the examples in the previous section.
+
+\begin{itemize}
+\item $\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$
+
+The \code{constraints} list is as follows:
+
+\begin{verbatim}
+ListBuffer(
+  (VarT(X), NumT),
+  (VarT(X), NumT)
+)
+\end{verbatim}
+
+    In the first iteration, \code{VarT("X")} and \code{NumT} are unified.
+    \code{unify} adds \code{"X" -> NumT} to \code{solution}. In the second
+    iteration, \code{VarT("X")} and \code{NumT} are unified again. Since
+    resolving \code{VarT("X")} gives \code{NumT}, it goes to the \code{(NumT,
+    NumT)} case, which does nothing. Therefore, \code{solution} becomes
+    \code{Map("X" -> NumT)} after running \code{solve}.
+
+\item $\efunt{\cx}{\cX}{\eadd{(\eapp{\cx}{0})}{\cx}}$
+
+The \code{constraints} list is as follows:
+
+\begin{verbatim}
+ListBuffer(
+  (VarT(X), ArrowT(NumT, VarT(Y))),
+  (VarT(Y), NumT),
+  (VarT(X), NumT)
+)
+\end{verbatim}
+
+    After the first two iterations, \code{solution} has \code{"X" ->
+    ArrowT(NumT, VarT(Y))} and \code{"Y" -> NumT}. In the third iteration,
+    \code{VarT("X")} and \code{NumT} are unified. Since resolving
+    \code{VarT("X")} gives \code{ArrowT(NumT, VarT(Y))}, it goes to the
+    \verb!(ArrowT(_, _), NumT)! case, which throws an exception.
+
+\item $\efunt{\cx}{\cX}{\eapp{\cx}{\cx}}$
+
+The \code{constraints} list is as follows:
+
+\begin{verbatim}
+ListBuffer((VarT(X), ArrowT(VarT(X), VarT(Y))))
+\end{verbatim}
+
+    Since \code{occurs(VarT("X"), ArrowT(VarT("X"), VarT("Y")))} is
+    \code{true}, \code{unify} throws an exception.
+
+\end{itemize}
+
+\section{Improving Type Checker}
+
+\subsection{Solving while Collecting}
+
+While the current type checker starts solving after collecting all the
+constraints, we can implement a type checker that gradually improves the
+solution each time it collects a new constraint. Since the type checker
+immediately reflects each constraint in the solution, there is no need to store
+constraints in the global list. Therefore, we do not use the \code{collections}
+list anymore. In addition, \code{solve} is not required either because there is
+no separate solving step. After removing \code{collections} and \code{solve},
+the only remaining change is to fix \code{typeCheck} to immediately call
+\code{unify} for each constraint instead of storing the constraint in
+\code{collections}.
+
+\begin{verbatim}
+def typeCheck(e: Expr, env: TEnv): Type = e match {
+  ...
+  case Add(l, r) =>
+    val lt = typeCheck(l, tenv)
+    val rt = typeCheck(r, tenv)
+    unify(lt, NumT)
+    unify(rt, NumT)
+    NumT
+  case App(f, a) =>
+    val ft = typeCheck(f, tenv)
+    val at = typeCheck(a, tenv)
+    val rt = VarT(fresh())
+    unify(ft, ArrowT(at, rt))
+    rt
+}
+\end{verbatim}
+
+All the other functions remain the same.
+
+\subsection{Removing Names of Type Variables}
+
+Instead of giving a name to each type variable and storing their types in the
+\code{solution} map, we can store a type in each nameless type variable and
+avoid using the map. As the first step, we changes the definition of \code{VarT}
+as follows:
+
+\begin{verbatim}
+case class VarT(var ty: Option[Type]) extends Type
+\end{verbatim}
+
+When a \code{VarT} has \code{None}, the type variable can be any type. It
+corresponds to \code{solution} not having a certain type variable as a key.
+When a \code{VarT} has \code{Some($\tau$)}, the solution to the type variable is
+$\tau$. To make such updates possible, \code{ty} is defined as a mutable field.
+
+Note that updating one type variable does not affect other type variables.
+Consider the following code:
+
+\begin{verbatim}
+val tvx = VarT(None)
+val tvy = VarT(None)
+
+tvx.ty = Some(NumT)
+\end{verbatim}
+
+After running this code, \code{tvx.ty} becomes \code{Some(NumT)}, but
+\code{tvy.ty} remains the same as \code{None}.
+
+Due to this change, each expression initially has type variables containing
+\code{None}, instead of their names. Containing only \code{None}, not
+\code{Some}, corresponds to \code{solution} being empty in the beginning. Some
+examples of expressions are below.
+
+\begin{itemize}
+\item $\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$
+\begin{verbatim}
+Fun("x", VarT(None), Add(Id("x"), Id("x")))
+\end{verbatim}
+\item $\efunt{\cx}{\cX}{\efunt{\cy}{\cY}{\eapp{\cx}{\cy}}}$
+\begin{verbatim}
+Fun("x", VarT(None),
+  Fun("y", VarT(None), App(Id("x"), Id("y"))))
+\end{verbatim}
+\end{itemize}
+
+In addition, we need to modify the \code{App} case of \code{typeCheck} as
+follows:
+
+\begin{verbatim}
+case App(f, a) =>
+  val ft = typeCheck(f, tenv)
+  val at = typeCheck(a, tenv)
+  val rt = VarT(None)
+  unify(ft, ArrowT(at, rt))
+  rt
+\end{verbatim}
+
+Thus, \code{fresh} is no longer required.
+
+Now, we need to fix \code{unify}, \code{occurs}, and \code{resolve}. Let us
+start with \code{unify}. The first case of \code{unify} requires changes.
+
+\begin{verbatim}
+case (t1 @ VarT(_), t2) =>
+  if (t1 eq t2)
+    ()
+  else if (occurs(t1, t2))
+    error()
+  else
+    t1.ty = Some(t2)
+\end{verbatim}
+
+There are two changes. One is \code{t1 == t2} being \code{t1 eq t2}. In Scala,
+\code{==} compares values structurally, but \code{eq} compares values
+physically. Consider the following code:
+
+\begin{verbatim}
+val tvx = VarT(None)
+val tvy = VarT(None)
+
+println(tvx == tvy)
+println(tvx eq tvy)
+\end{verbatim}
+
+It prints \code{true} and \code{false}. Since both have \code{None}, they are
+structurally equal. However, they are two distinct \code{VarT} objects stored in
+different memory locations, so they are physically different. We want to check
+whether two type variables are the same type variable, not whether they have the
+same solution. Thus, we should use \code{eq} instead of \code{==}.
+
+Another change is \code{solution(x) = t2} being \code{t1.ty = Some(t2)}. This is
+because that we now store the solution to each type variable in the type
+variable itself, not the \code{solution} map.
+
+We need a similar change in \code{occurs} as well.
+
+\begin{verbatim}
+def occurs(t1: VarT, t2: Type): Boolean =
+  resolve(t2) match {
+    ...
+    case t2 @ VarT(_) => t1 eq t2
+  }
+\end{verbatim}
+
+For the same reason, \code{==} becomes \code{eq}.
+
+Lastly, we fix \code{resolve}.
+
+\begin{verbatim}
+def resolve(ty: Type): Type = ty match {
+  case VarT(Some(t)) => resolve(t)
+  case _ => ty
+}
+\end{verbatim}
+
+Instead of looking up \code{solution}, it simply checks the optional type in a
+\code{VarT}.
+
+Combining all, our type checker implementation is as follows:
+
+\begin{verbatim}
+def typeCheck(e: Expr, env: TEnv): Type = e match {
+  case Num(_) => NumT
+  case Add(l, r) =>
+    val lt = typeCheck(l, tenv)
+    val rt = typeCheck(r, tenv)
+    unify(lt, NumT)
+    unify(rt, NumT)
+    NumT
+  case Id(x) => tenv(x)
+  case Fun(x, t, b) =>
+    ArrowT(t, typeCheck(b, tenv + (x -> t)))
+  case App(f, a) =>
+    val ft = typeCheck(f, tenv)
+    val at = typeCheck(a, tenv)
+    val rt = VarT(None)
+    unify(ft, ArrowT(at, rt))
+    rt
+}
+
+def unify(t1: Type, t2: Type): Unit =
+  (resolve(t1), resolve(t2)) match {
+    case (t1 @ VarT(x), t2) =>
+      if (t1 eq t2)
+        ()
+      else if (occurs(t1, t2))
+        error()
+      else
+        t1.ty = Some(t2)
+    case (t1, t2 @ VarT(_)) => unify(t2, t1)
+    case (NumT, NumT) =>
+    case (ArrowT(t3, t4), ArrowT(t5, t6)) =>
+      unify(t3, t5)
+      unify(t4, t6)
+    case (NumT, ArrowT(_, _)) |
+         (ArrowT(_, _), NumT) => error()
+  }
+
+def occurs(t1: VarT, t2: Type): Boolean =
+  resolve(t2) match {
+    case NumT => false
+    case ArrowT(l, r) => occurs(t1, l) || occurs(t1, r)
+    case t2 @ VarT(_) => t1 eq t2
+  }
+
+def resolve(ty: Type): Type = ty match {
+  case VarT(Some(t)) => resolve(t)
+  case _ => ty
+}
+\end{verbatim}
+
+Note that we do not need any global variables now.
