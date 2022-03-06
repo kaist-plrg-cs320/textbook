@@ -1543,315 +1543,65 @@ objects, copying will take a long time and increase the duration of the pause.
 
 \begin{enumerate}
 \item
- When a program runs out of memory,
-    \ansbox{a} finds inaccessible inaccessible objects and deallocates
-    them to make free space. There are three well-known strategies to
-    implement \ansbox{a}.
-\begin{itemize}
-\item \ansbox{b} divides memory into two regions: to-space and
-  from-space. New allocations happen in to-space. When to-space
-  becomes full, to-space and from-space are swapped first, and then
-  live objects are copied from from-space to to-space.
-\item \ansbox{c} marks all the reachable objects from root
-  objects. After the traversal, every un- marked object is freed.
-\item \ansbox{d} tracks how many objects point to a certain
-  object. When an object is not referred by anything, the object is freed.
-\end{itemize}
-
-Fill from (a) to (d) with the following terms.
-
-\begin{center}
-\begin{tabular}{|c|}
-  \hline
-  reference counting \qquad mark and sweep \\[6pt]
-  garbage collection \qquad copying \\ \hline
-\end{tabular}
-\end{center}
-
-\item
- The Swift programming language uses the reference counting garbage collection algorithm.
-
-\begin{enumerate}
-  \item
-What is the correct order?
-
-\begin{enumerate}
-\item When a count is decremented to 0, decrement counts for other records referenced by the record, then free it
-\item When replacing a pointer to a record, decrement its count
-\item Attatch a count to every record, starting at 0
-\item When installing a pointer to a record, increment its count
-\end{enumerate}
-
-  \item Provide an example that shows why the order matters.
-
-\end{enumerate}
-
-\item Suppose a garbage-collected interepreter uses the following five kinds of records:
+Suppose a program uses the following four kinds of an object:
 
   \begin{itemize}
-  \item Tag \textbf{1}: a record containing two pointers
-  \item Tag \textbf{2}: a record containing one pointer and one integer
-  \item Tag \textbf{3}: a record containing one integer
-  \item Tag \textbf{4}: a record containing one integer and one pointer
-  \item Tag \textbf{99}: forwarding pointer (to to-space)
+  \item Type tag \code{1}: an object containing one integer
+  \item Type tag \code{2}: an object containing one integer and one pointer
+  \item Type tag \code{3}: an object containing one pointer and one integer
+  \item Type tag \code{4}: an object containing two pointers
   \end{itemize}
 
- The interpreter has one register, which always contains a pointer,
- and a memory pool of size 26. The allocator/collector is a two-space
- copying collector, so each space is of size 13. Records are allocated
- consecutively in to-space, starting from the first memory location,
- 0.
-
- The following is a snapshot of memory just before a collection where
- all memory has been allocated:
+The heap is of size 26B. The memory manager uses copying GC, so each space is of
+size 13B. The following is the memory just before GC, where all the memory
+has been allocated:
 
  \begin{itemize}
- \item Register: 8
- \item From space: 1 3 8 3 0 4 7 3 2 0 8 3 42
- \end{itemize}
-
-What are the values in the register, the from-space, and the to-space after collection?
-Assume that unallocated memory in to-space contains 0.
-
- \begin{itemize}
- \item Register:
-
- \item From space:
-
- \item To space:
- \end{itemize}
-
-\item
-Suppose a garbage-collected interepreter uses the following five kinds of records:
-
-  \begin{itemize}
-  \item Tag \textbf{1}: a record containing one integer
-  \item Tag \textbf{2}: a record containing one integer and one pointer
-  \item Tag \textbf{3}: a record containing one pointer and one integer
-  \item Tag \textbf{4}: a record containing two pointers
-  \item Tag \textbf{99}: forwarding pointer (to to-space)
-  \end{itemize}
-
- The interpreter has one register, which always contains a pointer,
- and a memory pool of size 26. The allocator/collector is a two-space
- copying collector, so each space is of size 13. Records are allocated
- consecutively in to-space, starting from the first memory location,
- 0.
-
- The following is a snapshot of memory just before a collection where
- all memory has been allocated:
-
- \begin{itemize}
- \item Register: 8
+   \item Stack: \code{10}
  \item From space:
  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
   \hline
-  4&3&8&1&5&2&7&0&3&0&2&1&42\\
+  \code{1}&\code{2}&\code{2}&\code{3}&\code{7}&\code{1}&\code{4}&\code{4}&\code{5}&\code{10}&\code{3}&\code{7}&\code{5}\\
   \hline \multicolumn{1}{c}{}\\[-16pt]
-  \multicolumn{1}{c}{\tiny 0}&
-  \multicolumn{1}{c}{\tiny 1}&
-  \multicolumn{1}{c}{\tiny 2}&
-  \multicolumn{1}{c}{\tiny 3}&
-  \multicolumn{1}{c}{\tiny 4}&
-  \multicolumn{1}{c}{\tiny 5}&
-  \multicolumn{1}{c}{\tiny 6}&
-  \multicolumn{1}{c}{\tiny 7}&
-  \multicolumn{1}{c}{\tiny 8}&
-  \multicolumn{1}{c}{\tiny 9}&
-  \multicolumn{1}{c}{\tiny 10}&
-  \multicolumn{1}{c}{\tiny 11}&
-  \multicolumn{1}{c}{\tiny 12}
-  \\
- \end{tabular}
- \end{itemize}
-
-What are the values in the register, the from-space, and the to-space after collection?
-Assume that unallocated memory in the to-space contains 0, the from-space uses
-addresses from 0 to 12, and the to-space uses addresses from 13 to 25.
-
- \begin{itemize}
- \item Register: \\[10pt]
- {\Huge
- \begin{tabular}{|c|}
-  \hline~~~\\ \hline
- \end{tabular}
- }
-
- \item From space: \\[10pt]
- {\Huge
- \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|}
-  \hline~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~\\
-  \hline \multicolumn{1}{c}{}\\[-46pt]
-  \multicolumn{1}{c}{\tiny 0}&
-  \multicolumn{1}{c}{\tiny 1}&
-  \multicolumn{1}{c}{\tiny 2}&
-  \multicolumn{1}{c}{\tiny 3}&
-  \multicolumn{1}{c}{\tiny 4}&
-  \multicolumn{1}{c}{\tiny 5}&
-  \multicolumn{1}{c}{\tiny 6}&
-  \multicolumn{1}{c}{\tiny 7}&
-  \multicolumn{1}{c}{\tiny 8}&
-  \multicolumn{1}{c}{\tiny 9}&
-  \multicolumn{1}{c}{\tiny 10}&
-  \multicolumn{1}{c}{\tiny 11}&
-  \multicolumn{1}{c}{\tiny 12}
-  \\
- \end{tabular}
- }
- \item To space: \\[10pt]
- {\Huge
- \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|}
-  \hline~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~&~~~\\
-  \hline \multicolumn{1}{c}{}\\[-46pt]
-  \multicolumn{1}{c}{\tiny 13}&
-  \multicolumn{1}{c}{\tiny 14}&
-  \multicolumn{1}{c}{\tiny 15}&
-  \multicolumn{1}{c}{\tiny 16}&
-  \multicolumn{1}{c}{\tiny 17}&
-  \multicolumn{1}{c}{\tiny 18}&
-  \multicolumn{1}{c}{\tiny 19}&
-  \multicolumn{1}{c}{\tiny 20}&
-  \multicolumn{1}{c}{\tiny 21}&
-  \multicolumn{1}{c}{\tiny 22}&
-  \multicolumn{1}{c}{\tiny 23}&
-  \multicolumn{1}{c}{\tiny 24}&
-  \multicolumn{1}{c}{\tiny 25}
- \end{tabular}
- }
- \end{itemize}
-
-\item
-Suppose a garbage-collected interepreter uses the following five kinds of records:
-
-  \begin{itemize}
-  \item Tag \textbf{1}: a record containing one integer
-  \item Tag \textbf{2}: a record containing one integer and one pointer
-  \item Tag \textbf{3}: a record containing one pointer and one integer
-  \item Tag \textbf{4}: a record containing two pointers
-  \item Tag \textbf{99}: forwarding pointer (to to-space)
-  \end{itemize}
-
- The interpreter has one register, which always contains a pointer,
- and a memory pool of size 26. The allocator/collector is a two-space
- copying collector, so each space is of size 13. Records are allocated
- consecutively in to-space, starting from the first memory location,
- 0.
-
- The following is the snapshot of the memory just before garbage collection,
- where all the memory has been allocated:
-
- \begin{itemize}
- \item Register: 8
- \item From space:
- \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
-  \hline
-  4&3&8&1&9&2&8&0&3&0&0&1&6\\
-  \hline \multicolumn{1}{c}{}\\[-16pt]
-  \multicolumn{1}{c}{\tiny 0}&
-  \multicolumn{1}{c}{\tiny 1}&
-  \multicolumn{1}{c}{\tiny 2}&
-  \multicolumn{1}{c}{\tiny 3}&
-  \multicolumn{1}{c}{\tiny 4}&
-  \multicolumn{1}{c}{\tiny 5}&
-  \multicolumn{1}{c}{\tiny 6}&
-  \multicolumn{1}{c}{\tiny 7}&
-  \multicolumn{1}{c}{\tiny 8}&
-  \multicolumn{1}{c}{\tiny 9}&
-  \multicolumn{1}{c}{\tiny 10}&
-  \multicolumn{1}{c}{\tiny 11}&
-  \multicolumn{1}{c}{\tiny 12}
+   \multicolumn{1}{c}{\tiny \code{0}}&
+   \multicolumn{1}{c}{\tiny \code{1}}&
+   \multicolumn{1}{c}{\tiny \code{2}}&
+   \multicolumn{1}{c}{\tiny \code{3}}&
+   \multicolumn{1}{c}{\tiny \code{4}}&
+   \multicolumn{1}{c}{\tiny \code{5}}&
+   \multicolumn{1}{c}{\tiny \code{6}}&
+   \multicolumn{1}{c}{\tiny \code{7}}&
+   \multicolumn{1}{c}{\tiny \code{8}}&
+   \multicolumn{1}{c}{\tiny \code{9}}&
+   \multicolumn{1}{c}{\tiny \code{10}}&
+   \multicolumn{1}{c}{\tiny \code{11}}&
+   \multicolumn{1}{c}{\tiny \code{12}}
   \\
  \end{tabular}
  \item To space:
  \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
   \hline
-  0&0&0&0&0&0&0&0&0&0&0&0&0\\
+   \code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}\\
   \hline \multicolumn{1}{c}{}\\[-16pt]
-  \multicolumn{1}{c}{\tiny 13}&
-  \multicolumn{1}{c}{\tiny 14}&
-  \multicolumn{1}{c}{\tiny 15}&
-  \multicolumn{1}{c}{\tiny 16}&
-  \multicolumn{1}{c}{\tiny 17}&
-  \multicolumn{1}{c}{\tiny 18}&
-  \multicolumn{1}{c}{\tiny 19}&
-  \multicolumn{1}{c}{\tiny 20}&
-  \multicolumn{1}{c}{\tiny 21}&
-  \multicolumn{1}{c}{\tiny 22}&
-  \multicolumn{1}{c}{\tiny 23}&
-  \multicolumn{1}{c}{\tiny 24}&
-  \multicolumn{1}{c}{\tiny 25}
+   \multicolumn{1}{c}{\tiny \code{13}}&
+   \multicolumn{1}{c}{\tiny \code{14}}&
+   \multicolumn{1}{c}{\tiny \code{15}}&
+   \multicolumn{1}{c}{\tiny \code{16}}&
+   \multicolumn{1}{c}{\tiny \code{17}}&
+   \multicolumn{1}{c}{\tiny \code{18}}&
+   \multicolumn{1}{c}{\tiny \code{19}}&
+   \multicolumn{1}{c}{\tiny \code{20}}&
+   \multicolumn{1}{c}{\tiny \code{21}}&
+   \multicolumn{1}{c}{\tiny \code{22}}&
+   \multicolumn{1}{c}{\tiny \code{23}}&
+   \multicolumn{1}{c}{\tiny \code{24}}&
+   \multicolumn{1}{c}{\tiny \code{25}}
   \\
  \end{tabular}
  \end{itemize}
 
-What are the values in the register, the from-space, and the to-space after
-garbage collection? Draw your answer just like the above figure.
-
-\item
-Suppose a garbage-collected interepreter uses the following five kinds of records:
-
-  \begin{itemize}
-  \item Tag \textbf{1}: a record containing one integer
-  \item Tag \textbf{2}: a record containing one integer and one pointer
-  \item Tag \textbf{3}: a record containing one pointer and one integer
-  \item Tag \textbf{4}: a record containing two pointers
-  \item Tag \textbf{99}: forwarding pointer (to to-space)
-  \end{itemize}
-
- The interpreter has one register, which always contains a pointer,
- and a memory pool of size 26. The allocator/collector is a two-space
- copying collector, so each space is of size 13. Records are allocated
- consecutively in to-space, starting from the first memory location,
- 0.
-
- The following is the snapshot of the memory just before garbage collection,
- where all the memory has been allocated:
-
- \begin{itemize}
- \item Register: 10
- \item From space:
- \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
-  \hline
-  1&2&2&3&7&1&4&4&5&10&3&7&5\\
-  \hline \multicolumn{1}{c}{}\\[-16pt]
-  \multicolumn{1}{c}{\tiny 0}&
-  \multicolumn{1}{c}{\tiny 1}&
-  \multicolumn{1}{c}{\tiny 2}&
-  \multicolumn{1}{c}{\tiny 3}&
-  \multicolumn{1}{c}{\tiny 4}&
-  \multicolumn{1}{c}{\tiny 5}&
-  \multicolumn{1}{c}{\tiny 6}&
-  \multicolumn{1}{c}{\tiny 7}&
-  \multicolumn{1}{c}{\tiny 8}&
-  \multicolumn{1}{c}{\tiny 9}&
-  \multicolumn{1}{c}{\tiny 10}&
-  \multicolumn{1}{c}{\tiny 11}&
-  \multicolumn{1}{c}{\tiny 12}
-  \\
- \end{tabular}
- \item To space:
- \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
-  \hline
-  0&0&0&0&0&0&0&0&0&0&0&0&0\\
-  \hline \multicolumn{1}{c}{}\\[-16pt]
-  \multicolumn{1}{c}{\tiny 13}&
-  \multicolumn{1}{c}{\tiny 14}&
-  \multicolumn{1}{c}{\tiny 15}&
-  \multicolumn{1}{c}{\tiny 16}&
-  \multicolumn{1}{c}{\tiny 17}&
-  \multicolumn{1}{c}{\tiny 18}&
-  \multicolumn{1}{c}{\tiny 19}&
-  \multicolumn{1}{c}{\tiny 20}&
-  \multicolumn{1}{c}{\tiny 21}&
-  \multicolumn{1}{c}{\tiny 22}&
-  \multicolumn{1}{c}{\tiny 23}&
-  \multicolumn{1}{c}{\tiny 24}&
-  \multicolumn{1}{c}{\tiny 25}
-  \\
- \end{tabular}
- \end{itemize}
-
-What are the values in the register, the from-space, and the to-space after
-garbage collection? Draw your answer just like the above figure.
+What are the values in the stack, the from-space, and the to-space after
+GC? Suppose that \code{10} in the stack is a pointer and copied objects have
+\code{99} as type tags.
 
 \end{enumerate}
