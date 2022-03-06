@@ -480,3 +480,12 @@ def interp(e: Expr, env: Env): Value = e match {
 The \code{App} case is the only interesting case. The others are the same as
 before. Since a closure lacks its parameter name and an environment does not need
 the name, it is enough to prepend the value of the argument in front of the list.
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Write the nameless representation of the following expression:
+  \[
+    \eapp{\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\efun{\cz}{\eadd{(\esub{\cz}{\cx})}{\cy}}}})}{42}}{0}}{10}
+  \]
+\end{enumerate}
