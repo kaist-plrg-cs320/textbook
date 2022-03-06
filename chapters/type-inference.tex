@@ -32,7 +32,7 @@ type annotation is beneficial for documentation purpose, they can leave it in
 the code. Otherwise, they can omit the type annotation and save their time.
 Then, the type checker will infer correct types for missing type annotations.
 
-Each real-world languages has a different capability of type inference. For
+Each real-world language has a different capability of type inference. For
 example, Scala's type checker can infer the parameter types of anonymous
 functions used as arguments. The following code passes type checking:
 
@@ -300,9 +300,9 @@ the decision problem we want to solve is as follows:
   \hspace{-1em}Is there a well-typed \plang expression $e'$ such that $\ersr{e'}=e$?
 \end{quote}
 
-Our type checker must terminates without an exception if the answer is ``yes''
-and throws an exception if the answer is ``no.'' Before going into the detailed
-implementation, this section gives you the high-level idea of type inference.
+Our type checker must terminate without an exception if the answer is ``yes''
+and throw an exception if the answer is ``no.'' Before going into the detailed
+implementation, this section gives you a high-level idea of type inference.
 
 The goal of type inference is to find proper types for missing type annotations
 in a given expression. If such types exist, the type checker accepts the
@@ -314,7 +314,7 @@ $\efun{\cx}{\efun{\cy}{\eadd{\cx}{\cy}}}$ becomes
 $\efunt{\cx}{\cX}{\efunt{\cy}{\cY}{\eadd{\cx}{\cy}}}$, and
 $\eadd{(\eapp{(\efun{\cx}{\cx})}{1})}{(\eapp{(\efun{\cx}{\cx})}{2})}$ becomes
 $\eadd{(\eapp{(\efunt{\cx}{\cX}{\cx})}{1})}{(\eapp{(\efunt{\cx}{\cY}{\cx})}{2})}$.
-During type inference, each type variable functions as a type, just like
+During type inference, each type variable acts as a type, just like
 ordinary types such as $\tnum$ and $\tarrow{\tnum}{\tnum}$. Now, the goal of the
 type inference is to find a correct type for each type variable.
 
@@ -697,15 +697,15 @@ which is equivalent to the following system:
 \]
 \end{itemize}
 
-As these example shows, constraints collected by the procedure are the same as
-our expectations, only except that there additionally are redundant or
+As these examples show, the constraints collected by the procedure are the same as
+our expectation, only except that there additionally are redundant or
 trivially satisfied constraints.
 
 \subsection{Solving Constraints}
 
 Let us see how to solve a system of equations for type variables. We use a
 mutable map to denote a solution. Like before, we use mutation to focus only on
-type inference although we can avoid mutation.
+type inference, although we can avoid mutation.
 
 \begin{verbatim}
 import scala.collection.mutable.Map
@@ -1000,7 +1000,7 @@ All the other functions remain the same.
 
 Instead of giving a name to each type variable and storing their types in the
 \code{solution} map, we can store a type in each nameless type variable and
-avoid using the map. As the first step, we changes the definition of \code{VarT}
+avoid using the map. As the first step, we change the definition of \code{VarT}
 as follows:
 
 \begin{verbatim}
@@ -1169,3 +1169,301 @@ def resolve(ty: Type): Type = ty match {
 \end{verbatim}
 
 Note that we do not need any global variables now.
+
+\newcommand{\Dom}[1]{\mbox{Domain}(#1)}
+\newcommand{\rulesep}{\quad}
+\newcommand{\C}[1]{\texttt{#1}}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item
+\C{TIPFAE} is \C{TIFAE} with pairs. The following Scala
+code is a type checker of \C{TIPFAE}.
+\begin{verbatim}
+sealed trait Expr
+case class Num(n: Int) extends Expr
+case class Add(l: Expr, r: Expr) extends Expr
+case class Id(x: String) extends Expr
+case class Fun(x: String, t: Type, b: Expr) extends Expr
+case class App(f: Expr, a: Expr) extends Expr
+case class Pair(l: Expr, r: Expr) extends Expr
+case class Fst(e: Expr) extends Expr
+case class Snd(e: Expr) extends Expr
+
+sealed trait Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+case class PairT(l: Type, r: Type) extends Type
+case class VarT(var ty: Option[Type]) extends Type
+
+def resolve(ty: Type): Type = ty match {
+  case VarT(None) => ty
+  case VarT(Some(t)) => resolve(t)
+  case _ => ty
+}
+def unify(t1: Type, t2: Type): Unit = (resolve(t1), resolve(t2)) match {
+  case (t1 @ VarT(_), t2) =>
+    if (t1 eq t2) () else if (occurs(t1, t2)) error() else t1.ty = Some(t2)
+  case (t1, t2 @ VarT(_)) => unify(t2, t1)
+  case (NumT, NumT) =>
+  case (ArrowT(t3, t4), ArrowT(t5, t6)) => unify(t3, t5); unify(t4, t6)
+  case (PairT(t3, t4), PairT(t5, t6)) => ???  // (a)
+  case _ => error()
+}
+def occurs(t1: VarT, t2: Type): Boolean = resolve(t2) match {
+  case NumT => false
+  case ArrowT(l, r) => occurs(t1, l) || occurs(t1, r)
+  case PairT(l, r) => ???  // (b)
+  case VarT(_) => t1 eq t2
+}
+def typeCheck(e: Expr, tenv: Map[String, Type]): Type = e match {
+  case Id(x) => tenv(x)
+  case Fun(x, t, b) => ArrowT(t, typeCheck(b, tenv + (x -> t)))
+  case App(f, a) =>
+    val rt = VarT(None)
+    unify(ArrowT(typeCheck(a, tenv), rt), typeCheck(f, tenv))
+    rt
+  case Num(_) => NumT
+  case Add(l, r) =>
+    unify(NumT, typeCheck(l, tenv)); unify(NumT, typeCheck(r, tenv)); NumT
+  case Pair(l, r) => ???  // (c)
+  case Fst(e) => ???  // (d)
+  case Snd(e) => ???
+}
+\end{verbatim}
+Except the existence of pairs, it is the same as the type checker of \C{TIFAE}.
+Fill every \C{???} except the last one (\C{???} of the \C{Snd} case in the
+\C{typeCheck} function) to complete the type checker. Each \C{???} consists
+of one or more lines of Scala code. You may refer to the following typing rules
+of \C{TPFAE} (\C{TFAE} with pairs), where $(e_1,e_2)$ is \C{Pair($e_1$,$e_2$)},
+$e\textsf{.1}$ is \C{Fst($e$)}, and $\tau_1\times\tau_2$ is
+\C{PairT($\tau_1$,$\tau_2$)}:
+
+\[
+\inferrule
+{ \typeofd{e_1}{\tau_1} \\ \typeofd{e_2}{\tau_2} }
+{ \typeofd{(e_1,e_2)}{\tau_1\times\tau_2} }
+\qquad\qquad\qquad
+\inferrule
+{ \typeofd{e}{\tau_1\times\tau_2} }
+{ \typeofd{e\textsf{.1}}{\tau_1} }
+\]
+
+\begin{enumerate}
+  \item[a)]
+    Fill \C{???} of \C{case (PairT(t3, t4), PairT(t5, t6)) => ???} in \C{unify}
+  \item[b)]
+    Fill \C{???} of \C{case PairT(l, r) => ???} in \C{occurs}
+  \item[c)]
+    Fill \C{???} of \C{case Pair(l, r) => ???} in \C{typeCheck}
+  \item[d)]
+    Fill \C{???} of \C{case Fst(e) => ???} in \C{typeCheck}
+  \item[e)]
+    Write the result of \C{typeCheck($e$, Map())}, where $e$ denotes
+    the following expression:
+
+\smallskip
+    $\efun{\C{x}{:}\textsf{?}}{(\eadd{(\C{x}\textsf{.1})}{42})}$.
+\smallskip
+
+    This expression can be written with the Scala syntax as follows:
+
+\smallskip
+    \verb+Fun("x", VarT(None), Add(Fst(Id("x")), Num(42)))+
+\smallskip
+
+    Write your answer with the Scala syntax.
+\end{enumerate}
+
+\item
+\C{TIBFAE} is \C{TIFAE} with boxes. The following Scala
+code implements a type checker of \C{TIBFAE}.
+\begin{verbatim}
+sealed trait Expr
+case class Num(n: Int) extends Expr
+case class Add(l: Expr, r: Expr) extends Expr
+case class Id(x: String) extends Expr
+case class Fun(x: String, t: Type, b: Expr) extends Expr
+case class App(f: Expr, a: Expr) extends Expr
+case class NewBox(e: Expr) extends Expr
+case class OpenBox(b: Expr) extends Expr
+case class SetBox(b: Expr, e: Expr) extends Expr
+sealed trait Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+case class BoxT(t: Type) extends Type
+case class VarT(var ty: Option[Type]) extends Type
+
+def resolve(ty: Type): Type = ty match {
+  case VarT(None) => ty
+  case VarT(Some(t)) => resolve(t)
+  case _ => ty
+}
+def unify(t1: Type, t2: Type): Unit = (resolve(t1), resolve(t2)) match {
+  case (t1 @ VarT(_), t2) =>
+    if (t1 eq t2) () else if (occurs(t1, t2)) error() else t1.ty = Some(t2)
+  case (t1, t2 @ VarT(_)) => unify(t2, t1)
+  case (NumT, NumT) =>
+  case (ArrowT(t3, t4), ArrowT(t5, t6)) => unify(t3, t5); unify(t4, t6)
+  case (BoxT(t3), BoxT(t4)) => ??? // (A)
+  case _ => error()
+}
+def occurs(t1: VarT, t2: Type): Boolean = resolve(t2) match {
+  case NumT => false
+  case ArrowT(l, r) => occurs(t1, l) || occurs(t1, r)
+  case BoxT(t) => ??? // (B)
+  case VarT(_) => t1 eq t2
+}
+def typeCheck(e: Expr, tenv: Map[String, Type]): Type = e match {
+  case Num(_) => NumT
+  case Add(l, r) =>
+    unify(NumT, typeCheck(l, tenv)); unify(NumT, typeCheck(r, tenv)); NumT
+  case Id(x) => tenv(x)
+  case Fun(x, t, b) => ArrowT(t, typeCheck(b, tenv + (x -> t)))
+  case App(f, a) =>
+    val rt = VarT(None)
+    unify(ArrowT(typeCheck(a, tenv), rt), typeCheck(f, tenv)); rt
+  case NewBox(e) => ??? // (C)
+  case OpenBox(b) => ??? // (D)
+  case SetBox(b, e) => ??? // (E)
+}
+\end{verbatim}
+
+You may refer to the following typing rules:
+
+$
+  \begin{array}{ccc}
+    \inferrule
+    { \Gamma\vdash e:\tau }
+    { \Gamma\vdash \textsf{ref}\ e:\textsf{ref}\ \tau }
+    &
+    \inferrule
+    { \Gamma\vdash e:\textsf{ref}\ \tau }
+    { \Gamma\vdash !e:\tau }
+    &
+    \inferrule
+    { \Gamma\vdash e_1:\textsf{ref}\ \tau \\
+      \Gamma\vdash e_2:\tau }
+    { \Gamma\vdash e_1:=e_2:\tau }
+  \end{array}
+$
+
+where
+\begin{itemize}
+\item $\textsf{ref}\ e$ denotes \texttt{NewBox(}$e$\texttt{)}.
+\item $!e$ denotes \texttt{OpenBox(}$e$\texttt{)}.
+\item $e_1:=e_2$ denotes \texttt{SetBox(}$e_1$\texttt{,}$e_2$\texttt{)}.
+\item $\textsf{ref}\ \tau$ denotes \texttt{BoxT(}$\tau$\texttt{)},
+which is the type of a box containing a value of $\tau$.
+\end{itemize}
+Fill \texttt{???} from (A) to (E) to complete the implementation.
+
+\item
+Consider the following language, \texttt{TpolyFAE}:
+\begin{itemize}
+  \item[]\textbf{Abstract syntax}
+\[
+\begin{array}{r@{\hskip6pt}r@{\hskip6pt}l
+  r@{\hskip6pt}l@{\hskip20pt}
+  r@{\hskip6pt}l@{\hskip20pt}
+  r@{\hskip4pt}c@{\hskip4pt}l@{\hskip20pt}
+  r@{\hskip4pt}c@{\hskip4pt}l}
+  e &::= & n &|& e\ e & \tau::= & \textsf{num} & n &\in& \mathbb{Z}& e &\in& \emph{Expr} \\
+  &|& x &|& \Lambda\alpha.e &|&\tau\rightarrow\tau & x &\in& \emph{Id}& \tau &\in& \emph{Type} \\
+  &|& \lambda x{:}\tau.e &|& e[\tau] &|&\alpha & \alpha &\in& \emph{TV}&
+  \Gamma &\in& (\emph{Id}\cup\emph{TV})\rightarrow(\emph{Type}\cup\{\cdot\}) \\
+  &&&&&|&\forall\alpha.\tau \\
+\end{array}
+\]
+  \item[]\textbf{Typing rules}
+\[
+\begin{array}{c@{\hskip20pt}c@{\hskip20pt}c}
+\Gamma\vdash n:\textsf{num}
+  &
+  \inferrule
+  { x\in\Dom{\Gamma} }
+  { \Gamma\vdash x:\Gamma(x) }
+  &
+  \inferrule
+  { \Gamma[x:\tau]\vdash e:\tau' \rulesep \Gamma\vdash\tau }
+  { \Gamma\vdash \lambda x{:}\tau.e:\tau\rightarrow\tau' }
+  \\[20pt]
+  \inferrule
+  { \Gamma\vdash e_1:\tau\rightarrow\tau' \rulesep
+    \Gamma\vdash e_2:\tau }
+  { \Gamma\vdash e_1\ e_2:\tau' }
+  &
+  \inferrule
+  {
+    \alpha\not\in\Dom{\Gamma} \rulesep
+    \Gamma[\alpha]\vdash e:\tau
+  }
+  { \Gamma\vdash \Lambda\alpha.e:\forall\alpha.\tau }
+  &
+  \inferrule
+  {
+    \Gamma\vdash e:\forall\alpha.\tau_1 \rulesep
+    \Gamma\vdash\tau_0
+  }
+  { \Gamma\vdash e[\tau_0]:\tau_1[\alpha\leftarrow\tau_0] }
+\end{array}
+\]
+  \item[]\textbf{Well-formedness rules}
+\[
+\begin{array}{c@{\hskip40pt}c@{\hskip40pt}c@{\hskip40pt}c}
+  \Gamma\vdash\textsf{num}
+  &
+  \inferrule
+  { \Gamma\vdash\tau \rulesep \Gamma\vdash\tau' }
+  { \Gamma\vdash\tau\rightarrow\tau' }
+  &
+  \inferrule
+  { \alpha\in\Dom{\Gamma} }
+  { \Gamma\vdash\alpha }
+  &
+  \inferrule
+  { \Gamma[\alpha]\vdash\tau }
+  { \Gamma\vdash\forall\alpha.\tau }
+\end{array}
+\]
+\end{itemize}
+
+Type annotations do not take any roles during evaluation.
+Therefore, we define type-erasure semantics, which removes
+type annotations from an expression.
+Erasing types from a \texttt{TpolyFAE} expression results
+in an \texttt{FAE} expression. The following is the abstract syntax of \texttt{FAE}:
+\[
+  E::= n \ |\ x\ |\ \lambda x.E\ |\ E\ E \\
+\]
+
+\begin{itemize}
+\item[a)]
+  Define type erasure of the form \framebox{$\emph{erase}(e)=E$} for \texttt{TpolyFAE}.
+\end{itemize}
+
+\begin{itemize}
+\item[b)]
+  Write \texttt{FAE} expressions that are obtained by erasing types from the
+    following expressions.
+    \begin{itemize}
+      \item[$\circ$] $(\Lambda\alpha.\lambda \C{x}{:}\alpha.\C{x})\ [\textsf{num}]\ 1$
+      \item[$\circ$]
+        $(\Lambda\alpha.\Lambda\beta.\lambda\C{x}{:}\alpha.\lambda\C{y}{:}\beta.\C{y})
+        \ [\textsf{num}]\ [\textsf{num}]\ 1\ 2$
+    \end{itemize}
+\end{itemize}
+
+\begin{itemize}
+\item[c)]
+  Write well-typed \texttt{TpolyFAE} expressions that produce
+    the following \texttt{FAE} expressions after the type erasure.
+    \begin{itemize}
+      \item[$\circ$] $(\lambda \C{x}.\lambda \C{y}.((\C{x}\ \C{x})\ \C{y}))\
+        (\lambda \C{x}.\C{x})\ 1$
+      \item[$\circ$] $\lambda \C{x}.((\C{x}\ \lambda \C{x}.\C{x})\ (\C{x}\ 1))$
+    \end{itemize}
+\end{itemize}
+
+\end{enumerate}
