@@ -1356,4 +1356,134 @@ def erase(e: Expr): Erased.Expr = e match {
     with your intution.
 
 \end{enumerate}
+
+\item Consider the following language:
+
+\vspace{-1em}
+
+\[
+\begin{array}{rrlrlrrlrrl}
+  e &::=& n &|& \efun{x}{e} & b &::=& \true & \tau &::=& \tnum \\
+  &|& b &|& \eapp{e}{e} & &|& \false &&|& \tbool \\
+  &|& x &|& \ebind{x}{e}{e} &&&&&|& \tarrow{\tau}{\tau} \\
+  &|& \eseq{e}{e} &&&&&&&|& \alpha \\
+\end{array}
+\]
+
+A type scheme $\sigma$ is a possibly polymorphic type,
+and a type environment contains type schemes instead of types:
+
+\vspace{-1em}
+
+\[ \sigma\ ::=\ \tau\ |\ \tforall{\alpha}{\sigma} \]
+\[ \Gamma \in \embox{Id}\finto\text{TypeScheme} \]
+
+Consider the following non-algorithmic type system:
+
+\vspace{-1em}
+
+\[
+\begin{array}{@{}c@{}}
+  \inferrule
+  {}
+  { \typeofd{n}{\tnum} }
+  \qquad
+  \qquad
+  \qquad
+  \inferrule
+  {}
+  { \typeofd{b}{\tbool} }
+  \\[2em]
+  \inferrule
+  {
+    x\in\dom{\Gamma} \\
+    \Gamma(x) \succ \tau
+  }
+  { \typeofd{x}{\tau} }
+  \qquad
+  \inferrule
+  {
+    \typeofd{e_1}{\tau_1} \\
+    \typeofd{e_2}{\tau_2}
+  }
+  { \typeofd{\eseq{e_1}{e_2}}{\tau_2} }
+  \\[2em]
+  \inferrule
+  { \typeof{\Gamma[x:\tau]}{e}{\tau'} }
+  { \typeofd{\efun{x}{e}}{\tarrow{\tau}{\tau'}} }
+  \qquad
+  \inferrule
+  {
+    \typeofd{e_1}{\tarrow{\tau}{\tau'}} \\
+    \typeofd{e_2}{\tau}
+  }
+  { \typeofd{\eapp{e_1}{e_2}}{\tau'} }
+  \\[2em]
+  \inferrule
+  {
+    \typeofd{e_1}{\tau} \\
+    \tau\prec_\Gamma\sigma \\
+    \typeof{\Gamma[x:\sigma]}{e_2}{\tau'}
+  }
+  { \typeof{\ebind{x}{e_1}{e_2}}{\tau'} }
+\end{array}
+\]
+
+where
+
+\vspace{-1em}
+
+\[
+\begin{array}{@{}r@{\hskip4pt}c@{\hskip4pt}l@{}}
+  \begin{array}{c}
+    \fbox{$\sigma\succ\tau$} \\[0.5em]
+    \ \\[1em]
+  \end{array}
+  &&
+  \begin{array}{r@{\hskip4pt}c@{\hskip4pt}l}
+    \tau&\succ&\tau \\[0.5em]
+    \tforall{\alpha_1}{\cdots\tforall{\alpha_n}{\tau}}&\succ&
+    \tau[\alpha_1\leftarrow\tau_1,\ldots,\alpha_n\leftarrow\tau_n]\\[1em]
+  \end{array}
+  \\[2em]
+  \fbox{$\tau\prec_\Gamma\sigma$}
+  &&
+  \inferrule
+  { \mathit{FTV}(\tau)\setminus\mathit{FTV}(\Gamma)=\{\alpha_1,\ldots,\alpha_n\} }
+  { \tau\prec_\Gamma\tforall{\alpha_1}{\cdots\tforall{\alpha_n}{\tau}} }
+  \\[2em]
+\mathit{FTV}(\tnum) &=& \emptyset
+\\
+\mathit{FTV}(\tbool) &=& \emptyset
+\\
+\mathit{FTV}(\tarrow{\tau_1}{\tau_2}) &=& \mathit{FTV}(\tau_1) \cup \mathit{FTV}(\tau_2)
+\\
+\mathit{FTV}(\alpha) &=& \{\alpha\}
+\\
+  \mathit{FTV}(\tforall{\alpha}{\sigma}) &=& \mathit{FTV}(\sigma) \setminus \{\alpha\}
+\\
+\mathit{FTV}(\Gamma) &=& \bigcup_{x\in\dom{\Gamma}}\mathit{FTV}(\Gamma(x))
+\\
+\end{array}
+\]
+
+($\succ$ denotes specialization of a type scheme to a type. $\prec$ denotes
+generalization of a type to a type scheme. $\mathit{FTV}$ denotes free type
+variables in a type or a type environment.)
+
+Is each of the following expressions well-typed? If so, draw a type derivation
+tree. Otherwise, explain why.
+
+\begin{enumerate}
+  \item $\eapp{(\efun{\cx}{\eapp{\cx}{42}})}{\efun{\cy}{\cy}}$
+  \item $\eapp{(\efun{\cx}{\eseq{\eapp{\cx}{42}}{\eapp{\cx}{\true}}})}{\efun{\cy}{\cy}}$
+  \item $\ebind{\cx}{\efun{\cy}{\cy}}{\eseq{\eapp{\cx}{42}}{\eapp{\cx}{\true}}}$
+\end{enumerate}
+
+Note that this type system is called a \textit{Hindley-Milner type
+system}\index{Hindley-Milner type system}, named after two independent inventors
+of the type system, Hindley~\cite{hindley1969principal} and
+Milner~\cite{milner1978theory}. OCaml and Haskell are well-known for the use of
+this type system.
+
 \end{enumerate}

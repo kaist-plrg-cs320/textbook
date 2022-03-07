@@ -558,4 +558,52 @@ Map("f" -> CloV("x", Add(Num(13), Id("x")), Map()))
   \item Dynamic scope
   \item Static scope
 \end{enumerate}
+
+\item The following sentences are a simplified version of the Racket programming
+  language reference about
+  conditionals.\sidenote{\url{https://docs.racket-lang.org/reference/if.html}}
+
+\newcommand{\eand}[2]{\textsf{and}\ #1\ #2}
+\newcommand{\eor}[2]{\textsf{or}\ #1\ #2}
+
+\begin{itemize}
+  \item Booleans
+
+    True and false booleans are represented by the values $\true$ and
+    $\false$, respectively.
+
+  \item $\eif{e_1}{e_2}{e_3}$
+
+    Evaluates $e_1$. If it produces any value other than $\false$, then $e_2$ is
+    evaluated, and its result is the result for the \textsf{if} expression.
+    Otherwise, $e_3$ is evaluated, and its result is the result for the
+    \textsf{if} expression.
+
+  \item $\eand{e_1}{e_2}$
+
+    $e_1$ is evaluated. If it produces $\false$, the result of the \textsf{and}
+    expression is $\false$. Otherwise, the result is the same as the result of
+    $e_2$.
+
+  \item $\eor{e_1}{e_2}$
+
+    $e_1$ is evaluated. If it produces a value other than $\false$, that result
+    is the result of the \textsf{or} expression. Otherwise, the result is the
+    same as the result of $e_2$.
+
+\end{itemize}
+
+Now, we extend \lang with Racket-like booleans.
+
+\begin{enumerate}
+  \item
+    Write the operational semantics
+    $\eif{e_1}{e_2}{e_3}$, $\eand{e_1}{e_2}$, and $\eor{e_1}{e_2}$
+    of the form \fbox{$\evald{e}{v}$}.
+  \item
+    Draw the evaluation derivation of
+    $\eif{(\eor{\false}{2})}{(\eand{\false}{2})}{1}$
+    under the empty environment.
+\end{enumerate}
+
 \end{enumerate}

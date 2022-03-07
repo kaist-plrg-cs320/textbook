@@ -862,4 +862,78 @@ where \fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$} denotes
 \fbox{$(\sigma, v)\vdash p \Rightarrow \sigma$} or
 \fbox{$(\sigma, v)\vdash p \Rightarrow \uparrow$}.
 Remember that the operational semantics do not specify run-time errors.
+
+\item Suppose that we say that an expression $e$ terminates properly if and only
+  if $\evale{e}{v}$ for some $v$. Write an \lang expression $e$ such
+  that only one of $e$ and $\efun{\cx}{\eapp{e}{\cx}}$ terminates properly.
+
+\item This exercise extends \lang with JavaScript-like records, field accesses,
+  and method calls:
+
+\[
+\begin{array}{rcl}
+  e & ::= & \cdots\ |\ \{l:e,\ldots,l:e\}\ |\ e.l\ |\ e.l(e)\ |\ v \\
+  v & ::= & \cdots\ |\ \langle l:v,\ldots,l:v\rangle \ |\ \textsf{undefined} \\
+\end{array}
+\]
+
+$l$ ranges over labels, which are the names of fields in records.
+Let $\embox{Label}$ be the set of every label.
+Note that $\code{this}\in\embox{Id}$ and $\code{proto}\in\embox{Label}$.
+
+For ease of formalizing operational semantics, we treat a value $v$ as one sort
+of an expression. For example, for a value $v$ and a label $l$, both $v$ and
+$v.l$ are expressions.
+The operational semantics of $v$ is as follows: $\evald{v}{v}$
+
+\begin{enumerate}
+  \item
+    The following sentences describe the operational semantics:
+    \begin{itemize}
+      \item $\{l_1:e_1,\ldots,l_n:e_n\}$
+
+        Let $v_1$, \ldots, $v_n$ be the results of $e_1$, \ldots, $e_n$.
+        The result is $\langle l_1:v_1,\ldots,l_n:v_n\rangle$.
+
+      \item $e.l$
+
+        Let $v$ be the result of $e$. The value $v$ must be a record value.
+        \begin{itemize}
+          \item If $v$ contains a field named $l$, the result is the value of the
+            field.
+          \item If $v$ does not contain a field named $l$ but does contain a field
+            named $\code{proto}$,
+            the result is the result of $v_\code{proto}.l$, where
+            $v_\code{proto}$ is the value of the field named \code{proto}.
+          \item
+            If $v$ does not contain a field named either $l$ or $\code{proto}$,
+            the result is $\textsf{undefined}$.
+        \end{itemize}
+
+      \item $e_1.l(e_2)$
+
+        Let $v_1$ be the result of $e_1$.  The result of $v_1.l$ must be a
+        closure. Let $\clov{x}{e}{\sigma}$ be the result of $v_1.l$.  Let $v_2$
+        be the result of $e_2$.  Let $\sigma'$ be the new environment made by
+        adding a mapping from \code{this} to $v_1$ and a mapping from $x$ to
+        $v_2$ to $\sigma$.  Let $v$ be the result of $e$ under $\sigma'$.  The
+        result is $v$.
+
+    \end{itemize}
+    Write the operational semantics of $\{l_1:e_1,\ldots,l_n:e_n\}$, $e.l$, and
+    $e_1.l(e_2)$ of the form \fbox{$\evald{e}{v}$}.
+
+  \item Draw the evaluation derivation of $\{\code{proto}:\{\cx:1\}\}.\cx$ under
+    the empty environment.
+
+  \item
+    When $\{ \ca:0, \cb:e \}.\cb(1)$ evaluates to a value without a run-time
+    error, does the function
+    application $(\eapp{e}{1})$ always yield the same result? If so, explain why. Otherwise,
+    write a counterexample, i.e. write $e$ such that
+    $\{ \ca:0, \cb:e \}.\cb(1)$ evaluates to a value $v$, while
+    $(\eapp{e}{1})$ does not evaluate to that $v$.
+
+\end{enumerate}
+
 \end{enumerate}

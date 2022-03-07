@@ -505,5 +505,66 @@ Consider the following expression in \lang:
 \item Show the environment and store just before evaluating addition in the CBR semantics.
 \end{enumerate}
 
+\item Consider the following language:
+
+\vspace{-1em}
+
+\[
+\begin{array}{rcl}
+  e & ::= & n\ |\ x\ |\ \eadd{e}{e} \\
+  c & ::= & \eskip\ |\ \eset{x}{e}\ |\ \eifz{e}{c}{c}
+  \ |\ \ewhilez{e}{c}\ |\ \eseq{c}{c} \\
+  v & ::= & n \\
+\end{array}
+\]
+
+where $c$ ranges over commands.
+
+Under a given environment, $e$ evaluates to a value without modifying the
+environment:
+
+\[
+  \inferrule
+  {}
+  { \evald{n}{n} }
+  \quad
+  \inferrule
+  { x\in\dom{\sigma} }
+  { \evald{x}{\sigma(x)} }
+  \quad
+  \inferrule
+  { \evald{e_1}{n_1} \\ \evald{e_2}{n_2} }
+  { \evald{\eadd{e_1}{e_2}}{n_1+n_2} }
+\]
+
+\begin{enumerate}
+  \item
+    A command takes an environment as input and produces a new environment as
+    output. We write $\evald{c}{\sigma'}$ if $c$ produces $\sigma'$ when
+    $\sigma$ is given.
+    The following sentences describe the semantics of commands:
+    \begin{itemize}
+      \item $\eskip$ does not change a given environment.
+      \item $\eset{x}{e}$ evaluates $e$ to get a value $v$ and
+        updates the value of $x$ to $v$. $x$ does not need to be in a given
+        environment.
+      \item $\eifz{e}{c_1}{c_2}$ evaluates $e$ to get a value $v$.
+        If $v$ is $0$, $c_1$ is evaluated. Otherwise, $c_2$ is evaluated.
+      \item $\ewhilez{e}{c}$ evaluates $e$ to get a value $v$.
+        If $v$ is not $0$, the command terminates without changing a given
+        environment. Otherwise, it evaluates $c$ and then checks the result of $e$ again
+        under the new environment.
+        This process repeats until the result of $e$ becomes nonzero.
+      \item $\eseq{c_1}{c_2}$ evaluates $c_1$ first to get a new environment.
+        Then, it evaluates $c_2$ under the new environment.
+    \end{itemize}
+    Write the operational semantics of commands of the form
+    \fbox{$\evald{c}{\sigma}$}.
+
+  \item
+    Draw the evaluation derivation of
+    $\eseq{\eset{\cx}{0}}{\eifz{\cx}{\eskip}{\eset{\cx}{1}}}$
+    under the empty environment.
+\end{enumerate}
 
 \end{enumerate}
