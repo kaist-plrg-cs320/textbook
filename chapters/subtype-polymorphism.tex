@@ -879,184 +879,168 @@ to the language. Assume that the following rules already exist:
   { \typeofd{e}{\tau} }
 \]
 
-% \item Consider the following language:\\
+\item Consider a language with exceptions. Its syntax and semantics are as
+  follows:
+\[
+  \begin{array}{rrl}
+    e & ::= & n\ |\ \eadd{e}{e}\ |\ x\ |\ \efunt{x}{\tau}{e}\ |\
+    \eapp{e}{e}\ |\ \textsf{throw}\ e\ |\ \textsf{try}\ e\ \textsf{catch}\ e \\
+    v & ::= & n\ |\ \clov{x}{e}{\sigma} \\
+    r & ::= & v\ |\ \uparrow v \\
+    \tau & ::= & \tnum\ |\ \tarrow{\tau}{\tau/\uparrow\tau} \ |\ \ttop\ |\ \tbot
+  \end{array}
+\]
+\[
+\begin{array}{@{}c}
+  \inferrule
+  {}
+  { \evald{n}{n} }
+  \quad
+  \inferrule
+  { \evald{e_1}{\uparrow v} }
+  { \evald{\eadd{e_1}{e_2}}{\uparrow v} }
+  \quad
+  \inferrule
+  { \evald{e_1}{v_1} \\
+    \evald{e_2}{\uparrow v_2} }
+  { \evald{\eadd{e_1}{e_2}}{\uparrow v_2} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{n_1} \\
+    \evald{e_2}{n_2} }
+  { \evald{\eadd{e_1}{e_2}}{n_1+n_2} }
+  \quad
+  \inferrule
+  { x\in\dom{\sigma} }
+  { \evald{x}{\sigma(x)} }
+  \\[2em]
+  \inferrule
+  {}
+  { \evald{\efunt{x}{\tau}{e}}{\clov{x}{e}{\sigma}} }
+  \quad
+  \inferrule
+  { \evald{e_1}{\uparrow v} }
+  { \evald{\eapp{e_1}{e_2}}{\uparrow v} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{v_1} \\
+    \evald{e_2}{\uparrow v_2} }
+  { \evald{\eapp{e_1}{e_2}}{\uparrow v_2} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{\clov{x}{e}{\sigma'}} \\
+    \evald{e_2}{v_2} \\
+    \eval{\sigma'[x\mapsto v_2]}{e}{r} }
+  { \evald{\eapp{e_1}{e_2}}{r} }
+\end{array}
+\]
+\[
+\begin{array}{@{}c}
+  \inferrule
+  { \evald{e}{\uparrow v} }
+  { \evald{\textsf{throw}\ e}{\uparrow v} }
+  \quad
+  \inferrule
+  { \evald{e}{v} }
+  { \evald{\textsf{throw}\ e}{\uparrow v} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{\uparrow v_1} \\ \evald{e_2}{\uparrow v_2} }
+  { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{\uparrow v_2} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{\uparrow v_1} \\
+    \evald{e_2}{\clov{x}{e}{\sigma'}} \\
+    \eval{\sigma'[x\mapsto v_1]}{e}{r} }
+  { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{r} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{v} }
+  { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{v} }
+\end{array}
+\]
 
-% \begin{tabular}{rr@{~}c@{~}ll}
-% \mbox{class declaration} &
-% $d$ &$::=$& class $C$ extends $C$ \verb+{+ $g^*\ k\ m^*$ \verb+}+\\
-% \mbox{field declaration} &
-% $g$ &$::=$&$x$:$C$;\\
-% \mbox{constructor declaration} &
-% $k$ &$::=$& $C$($(x\mtt{:} C)^*$) \verb+{+ super($x^*$); $(\mtt{this.}x \mtt{ = } x\mtt{;})^*$ \verb+}+\\
-% \mbox{method declaration} &
-% $m$ &$::=$& $f$($(x\mtt{:} C)^*$):$C$ \verb+{+ return $e$; \verb+}+\\
-% \mbox{expression} &
-% $e$ &$::=$& $x~\mid~e$.$x~\mid~e$.$f$($e^*$)$~\mid~$new $C$($e^*$)
-% \end{tabular}
+where
+\begin{itemize}
+  \item $\evald{e}{v}$ implies that $e$ evaluates to $v$ under $\sigma$, and
+  \item $\evald{e}{\uparrow v}$ implies that $e$ throws an exception carrying $v$ under
+$\sigma$.
+\end{itemize}
+Note that each exception carries a single value, which can be used by
+exception handlers.
 
-% where metavariables $C$, $D$, and $E$ range over class names,
-% $x$ ranges over field names, and
-% $f$ ranges over method names.
-% We assume that the set of variables includes the special variable \mtt{this},
-% which cannot be used as the name of an argument to a method.
-% Instead, it is implicitly bound in every method declaration.
-% The evaluation rule for method invocation will substitute an appropriate object
-% for \mtt{this}, in addition to substituting the argument values for the parameters.
+A type $\tarrow{\tau_1}{\tau_2/\uparrow\tau_3}$ is a type of a function that takes a
+value of $\tau_1$ as an argument and either returns a value of $\tau_2$ or
+throws an exception carrying a value of $\tau_3$.
+The following subtyping rules are given:
+\[
+\begin{array}{@{}c}
+  \subt{\tau}{\tau}
+  \quad
+  \inferrule
+  { \subt{\tau_1}{\tau_2} \\ \subt{\tau_2}{\tau_3} }
+  { \subt{\tau_1}{\tau_3} }
+  \quad
+  \inferrule
+  { \subt{\tau_1'}{\tau_1} \\ \subt{\tau_2}{\tau_2'} \\ \subt{\tau_3}{\tau_3'} }
+  { \subt{\tarrow{\tau_1}{\tau_2/\uparrow\tau_3}}{\tarrow{\tau_1'}{\tau_2'/\uparrow\tau_3'}} }
+  \\[2em]
+  \subt{\tau}{\ttop}
+  \qquad
+  \subt{\tbot}{\tau}
+\end{array}
+\]
+$\typeofd{e}{\tau_1\uparrow\tau_2}$ implies that $e$ either evaluates to
+a value of $\tau_1$ or throws an exception carrying a value of $\tau_2$.
+Write the typing rules of this language, where one typing rule is
+given as follows:
+\[
+  \inferrule
+  {
+    \typeofd{e}{\tau_1'\uparrow\tau_2'} \\
+    \subt{\tau_1'}{\tau_1} \\
+    \subt{\tau_2'}{\tau_2} \\
+  }
+  { \typeofd{e}{\tau_1\uparrow\tau_2} }
+\]
 
-% With the following subtyping rules:
+\item Consider the following implementation of an \lang subtype checker:
 
-% \[
-% \begin{array}{ccc}
-% C~<:~C
-% &\qquad
-% \newinfrule{
-% C~<:~D \qquad D~<:~E
-% }
-% {C~<:~E}
-% &\qquad
-% \newinfrule{
-% \mtt{class}\ C\ \mtt{extends}\ D\ \{ \cdots \}
-% }
-% {C~<:~D}
-% \end{array}
-% \]
-% and the following helper functions:
+\begin{verbatim}
+sealed trait Type
+case object TopT extends Type
+case object BottomT extends Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+case class RecordT(fs: Map[String, Type]) extends Type
 
-% \begin{tabular}{ll}
-% $\embox{fields}(C) = x_1:C_1 \cdots x_n:C_n$
-% & the fields of class $C$ are $x_1$ to $x_n$ of types $C_1$ to $C_n$, respectively
-% \\[.5em]
-% $\embox{mtype}(C, f) = C_1 \cdots C_n \rightarrow C_{n+1}$
-% & the type of method $f$ defined in class $C$ is $C_1 \cdots C_n \rightarrow C_{n+1}$
-% \\[.5em]
-% $\embox{ctype}(C) = C_1 \cdots C_n \rightarrow C$
-% & the type of the constructor of class $C$ is $C_1 \cdots C_n \rightarrow C$
-% \end{tabular}
+def subtype(t1: Type, t2: Type): Boolean = (t1, t2) match {
+  case ??? => true
+  case ??? => true
+  case ??? => true
+  case (ArrowT(p1, r1), ArrowT(p2, r2)) => ???
+  case (RecordT(fs1), RecordT(fs2)) => ???
+  case _ => false
+}
+\end{verbatim}
 
-% \begin{itemize}
-%   \item[a)] Write the typing rules of the form \fbox{$\Gamma\vdash e : C$} for the expressions.
-% The typing rules for constructors and method invocations check that
-% each actual argument has a type that is a subtype of the corresponding formal parameter type.
-% The casting ``($C$)$e$'' is well typed only when the type of $e$ is a subtype of $C$.
+where \code{RecordT(Map($l_1$ -> $\tau_1$, $\cdots$, $l_n$ -> $\tau_n$))}
+denotes $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$.
 
-%   \item[b)] The following judgment states that:
+The specification of \code{subtype} is as follows:
+\begin{itemize}
+  \item \code{subtype($\tau_1$, $\tau_2$)} is \code{true} when $\subt{\tau_1}{\tau_2}$
+    is true.
+  \item \code{subtype($\tau_1$, $\tau_2$)} is \code{false} when $\subt{\tau_1}{\tau_2}$
+    is false.
+  \item \code{subtype($\tau_1$, $\tau_2$)} always terminates and never throws an
+    exception.
+\end{itemize}
 
-% \begin{center}
-% \code{$C\ \vdash\ f$($x_1\mtt{:} C_1,\ \cdots\ x_n\mtt{:} C_n$):$C_{n+1}$ \{ return $e$; \}}
-% \end{center}
-
-% the method declaration defined in $C$ is well typed.
-% Write its typing rule which checks the following:
-% \begin{itemize}
-% \item The type of $f$'s body expression $e$ should be a subtype of the annotated return type $C_{n+1}$.
-% \item When class $C$ explicitly extends $D$
-% (\verb!class! $C$ \verb!extends! $D$ \verb+{+ $\cdots$ \verb+}+),
-% if $D$ defines any method of name $f$,
-% the type of $f$ in $D$ should be the same with the type of $f$ in $C$.
-% \end{itemize}
-% \end{itemize}
-
-% \item When a programming language provides overloading,
-% multiple function declarations may have the same name.  Consider the following example:
-% \begin{verbatim}
-% 1 toString(x: Int): String = "line 1"
-% 2 toString(x: Bool): String = "line 2"
-% 3 toString(false)
-% \end{verbatim}
-% Even though two function declarations on lines 1 and 2 have the same name,
-% it is clear that the one on line 2 is called on line 3 because of the different parameter types of the functions.
-
-% When multiple function declarations may be called for a given function call like the following example:
-% \begin{verbatim}
-% 4 toString(x: Int): String = "line 4"
-% 5 toString(x: Number): String = "line 5"
-% 6 toString(42)
-% \end{verbatim}
-% the function declaration that is \emph{more specific than} all the other function declarations
-% that may be called for the given function call is called.
-% We say that a function declaration $f(x_1:A_1, \cdots, x_n:A_n)$ is more specific than $f(x_1:B_1, \cdots, x_n:B_n)$,
-% if $A_i$ is a subtype of $B_i$ ($A_i <: B_i$) for $1 \le i \le n$.
-% We assume that \verb!Int! is a subtype of \verb!Number!.
-% When no single function declaration is more specific than all the other function declarations
-% that may be called for a given function call,
-% the function call shows an \emph{ambiguous call error}.
-
-% \begin{itemize}
-% \item[(a)] Explain why the following example shows an ambiguous call error:
-% \begin{verbatim}
-% 7 toString(x: Int, y: Number): String = "line 7"
-% 8 toString(x: Number, y: Int): String = "line 8"
-% 9 toString(42, 8)
-% \end{verbatim}
-% where both \verb!42! and \verb!8! have type \verb!Int!.
-
-% Add one function declaration to remove the ambiguous call error.
-
-% \item[(b)] For simplicity, we assume the following:
-% \begin{itemize}
-% \item Every function has exactly two parameters.
-% \item The subtype relation is a parital order:
-
-% \begin{tabular}{ll}
-% reflexive &($T<:T$),\\
-% antisymmetric &($T<:S$ and $S<:T$ implies $T=S$), and\\
-% transitive &($T<:S$ and $S<:R$ implies $T<:R$).
-% \end{tabular}
-% \item If a type has two types as its supertypes, then the two supertypes also are in the subtype relation: if $T<:S$ and $T<:R$, then $S<:R$ or $R<:S$.
-% \end{itemize}
-
-% Now, we will create rules for a set of all the function declarations with the same name in a given program,
-% which can ensure that there is no ambiguous function call if the rules are satisfied.
-% Precisely, we want to make the following statement hold:
-% \begin{quote}
-% If a set of all the function declarations with the same name in a given program satisfies the rules,
-% $\{m(x_{11}:T_{11},x_{12}:T_{12}): S_1=e_1,\ \cdots\ ,m(x_{n1}:T_{n1},x_{n2}:T_{n2}): S_n=e_n\}~\textsf{safe}$,\\
-% then evaluation of the following program does not result in an ambiguous call error:
-% \[
-% \begin{array}{l}
-% m(x_{11}:T_{11},x_{12}:T_{12}): S_1=e_1 \\
-% \cdots \\
-% m(x_{n1}:T_{n1},x_{n2}:T_{n2}): S_n=e_n \\
-% m(e, e')
-% \end{array}
-% \]
-% \end{quote}
-
-% We formalize the \textsf{safe} rule as follows:\\[-2em]
-
-% \[
-% \inferrule
-% {
-%   \forall (i,j)\in\{(i,j):1\le i<j\le n\}.\ T_{i1}\neq T_{j1}\lor T_{i2}\neq T_{j2} \\
-%   \forall (i,j)\in\{(i,j):1\le i<j\le n\}.\ (T_{i1},T_{i2})~\textsf{meet}~(T_{j1},T_{j2})~\textsf{wrt}~\{(T_{11},T_{12}),\ \cdots\ ,(T_{n1},T_{n2})\}
-% }
-% { \{m(x_{11}:T_{11},x_{12}:T_{12}): S_1=e_1,\ \cdots\ ,m(x_{n1}:T_{n1},x_{n2}:T_{n2}): S_n=e_n\}~\textsf{safe} }
-% \]
-
-% The first premise prevents functions with the same parameter types.
-% The second premise prevents ambiguous call errors for functions with different parameter types,
-% and it has three subcases:
-
-% \[
-% \begin{array}{ll}
-% (1) &
-% \inferrule
-% { T_{i1}<:T_{j1} \quad T_{i2}<:T_{j2} }
-% { (T_{i1},T_{i2})~\textsf{meet}~(T_{j1},T_{j2})~\textsf{wrt}~\{(T_{11},T_{12}),...,(T_{n1},T_{n2})\} }
-% \\
-% (2) &
-% \inferrule
-% { T_{j1}<:T_{i1} \quad T_{j2}<:T_{i2} }
-% { (T_{i1},T_{i2})~\textsf{meet}~(T_{j1},T_{j2})~\textsf{wrt}~\{(T_{11},T_{12}),...,(T_{n1},T_{n2})\} }
-% \end{array}
-% \]
-
-% \textbf{Write the 3rd subcase} possibly using the following paritial function:
-
-% \[\textsf{glb}(T,S)=\begin{cases}T&\text{if}~T<:S\\S&\text{if}~S<:T\end{cases}\]
-
-% (\textit{Hint: consider the functions and your answer of (a).})
-
-% \end{itemize}
+Fill every \code{???} to complete the implementation.  You may use the
+\code{get}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#get(key:K):Option[V]}}
+and
+\code{forall}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#forall(p:A=\%3EBoolean):Boolean}}
+methods of \code{Map}:
 
 \end{enumerate}

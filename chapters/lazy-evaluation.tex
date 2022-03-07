@@ -584,4 +584,75 @@ Explain the result of evaluating it under the following semantics:
   \item
     $\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{3}{\cx}})}{\cy})}}{5}$
 \end{enumerate}
+
+\item This exercise extends \lang with \textsf{val} and \textsf{if0}.  Consider
+  the following interpreter implementation:
+
+\begin{verbatim}
+sealed trait Expr
+...
+case class Val(x: String, e: Expr, b: Expr) extends Expr
+case class If0(c: Expr, t: Expr, f: Expr) extends Expr
+
+def strict(v: Value): Value = ...
+
+def interp(e: Expr, env: Env): Value = e match {
+  ...
+  case Val(x, e, b) => ???
+  case If0(c, t, f) => ???
+}
+\end{verbatim}
+
+Like in \plang, the semantics of $\ebind{x}{e_1}{e_2}$ must be the same as
+$\eapp{(\efun{x}{e_2})}{e_1}$.  Like in \textsf{RFAE}, $\eifz{e_1}{e_2}{e_3}$
+evaluates $e_2$ when $e_1$ evaluates to $0$ and evaluates $e_3$ when $e_1$
+evaluates to a nonzero integer or a closure.
+
+Fill every \code{???} to complete the interpreter.
+
+\item This exercise extends \lang with pairs. Consider the following interpreter
+  implementation:
+
+\begin{verbatim}
+sealed trait Expr
+...
+case class Pair(f: Expr, s: Expr) extends Expr
+case class Fst(e: Expr) extends Expr
+case class Snd(e: Expr) extends Expr
+
+sealed trait Value
+...
+case class PairV(???) extends Value
+
+def strict(v: Value): Value = ...
+
+def interp(e: Expr, env: Env): Value = e match {
+  ...
+  case Pair(f, s) => ???
+  case Fst(e) => ???
+  case Snd(e) => ???
+}
+\end{verbatim}
+
+The semantics of pairs is as follows:
+\begin{itemize}
+  \item \code{Pair($e_1$, $e_2$)} corresponds to $(e_1, e_2)$, which is an
+    expression that creates a new pair.
+  \item \code{Fst($e$)} corresponds to $e\textsf{.1}$, which is an expression
+    that gives the first value of a given pair.
+  \item \code{Snd($e$)} corresponds to $e\textsf{.2}$, which is an expression
+    that gives the second value of a given pair.
+\end{itemize}
+
+Pairs in this language are lazy, which means that $e_1$ and $e_2$ in
+$(e_1, e_2)$ are not evaluated when the pair is created.
+Each of them is evaluated only when its value is needed. For example,
+\begin{itemize}
+  \item $(3, \eadd{(\efun{\cx}{\cx})}{4})$ does not incur a run-time error.
+  \item $\eadd{(3, \eadd{(\efun{\cx}{\cx})}{4})\textsf{.1}}{5}$ does not incur a run-time error.
+  \item $\eadd{(3, \eadd{(\efun{\cx}{\cx})}{4})\textsf{.2}}{5}$ incurs a run-time error.
+\end{itemize}
+
+Fill every \code{???} to complete the interpreter.
+
 \end{enumerate}

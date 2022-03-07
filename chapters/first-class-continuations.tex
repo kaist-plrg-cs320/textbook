@@ -475,9 +475,16 @@ make the result of the loop $0$.
 \section{Exercises}
 
 \begin{enumerate}
-  \item What is the result of the following expression?
+  \item What is the result of each of the following expressions?
 
-    $\evcc{\cx}{(\evcc{\cy}{\cx\ (2+(\evcc{\cz}{\cy\ \cz}))})\ 8}$
+\begin{enumerate}
+  \item $\evcc{\cx}{(\evcc{\cy}{\cx\ (2+(\evcc{\cz}{\cy\ \cz}))})\ 8}$
+  \item $\evcc{\cx}{(\eadd{(\eapp{\cx}{3})}{4})}$
+  \item $\eapp{(\evcc{\cx}{(2+(\eapp{\cx}{(\efun{\cy}{(\cy+\cy)})}))})}{3}$
+  \item $\eapp{\eapp{(\evcc{\cx}{\cx})}{5}}$
+  \item $\eapp{\eapp{(\evcc{\cx}{\cx})}{(\efun{\cy}{\cy})}}{5}$
+  \item $\eapp{\eapp{(\evcc{\cx}{\cx})}{(\efun{\cy}{(\eapp{\cy}{\cy})})}}{5}$
+\end{enumerate}
 
   \item Write the reduction steps of the following expression:
 

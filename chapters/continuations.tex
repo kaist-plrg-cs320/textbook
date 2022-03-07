@@ -1273,3 +1273,29 @@ $
   \sigma_2&=&[\cx\mapsto1,\cy\mapsto2]\\
 \end{array}
 $
+
+\section{Exercises}
+
+\begin{enumerate}
+
+\item Complete the following \textsf{LFAE} interpreter in CPS by filling every
+  \code{???}:
+
+\begin{verbatim}
+def strict(v: Value, k: Cont): Value = v match {
+  case ExprV(e, env) => ???
+  case _ => k(v)
+}
+
+def interp(e: Expr, env: Env, k: Cont): Value = e match {
+  case Num(n) => k(NumV(n))
+  case Id(x) => k(env(x))
+  case Fun(x, b) => k(CloV(x, b, env))
+  case Add(l, r) => ???
+  case App(f, a) => ???
+}
+\end{verbatim}
+
+If $\evald{e}{v}$, then \code{interp($e$, $\sigma$, $f$)} must evaluate to $f(v)$.
+
+\end{enumerate}

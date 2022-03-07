@@ -682,9 +682,28 @@ In this implementation, a value is either an integer or a lambda abstraction:
 \item What is the result of evaluating the expression under the empty
   environment in environment-based \lang?
 \item Why are the results different?
-  \sidenote{We can make the semantics of substitution-based \lang equivalent to
-    environment-based \lang by modifying \code{subst} function.}
 \end{enumerate}
+
+  \item Fix the \code{Fun} case of the funtion \code{subst} in the
+    implementation to make substitution-based \lang equivalent to
+    environment-based \lang.  You may use the following helper functions
+    without defining them:
+
+\begin{verbatim}
+// returns the set of every binding identifier in e
+def binding(e: Expr): Set[String]
+
+// returns the set of every free identifier in e
+def free(e: Expr): Set[String]
+
+// returns a new identifier that does not belong to xs
+def fresh(xs: Set[String]): String
+\end{verbatim}
+
+    Also, \code{xs1 ++ xs2} is the union of \code{xs1} and \code{xs2} where both
+    \code{xs1} and \code{xs2} are sets, and \code{Set(x)} is a set whose only
+    element is \code{x}.
+
 \end{enumerate}
 
 \item Consider the following language:
@@ -934,6 +953,93 @@ The operational semantics of $v$ is as follows: $\evald{v}{v}$
     $\{ \ca:0, \cb:e \}.\cb(1)$ evaluates to a value $v$, while
     $(\eapp{e}{1})$ does not evaluate to that $v$.
 
+\end{enumerate}
+
+\item Consider the following semantics without closures:
+
+\[
+\begin{array}{c}
+  v\ ::=\ n\ |\ \efun{x}{e} \qquad\qquad
+  \evald{\efun{x}{e}}{\efun{x}{e}}
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{\efun{x}{e}} \\
+    \evald{e_2}{v_2} \\
+    \eval{[x\mapsto v_2]}{e}{v} }
+  { \evald{\eapp{e_1}{e_2}}{v} }
+\end{array}
+\]
+
+\begin{enumerate}
+  \item
+    Explain why the above semantics, which lacks closures, is problematic.
+  \item
+    Write an \lang expression such that
+    \begin{itemize}
+        \item the evaluation in the original semantics with closures results
+          in an integer, but
+        \item the evaluation in the above semantics without closures incurs
+          a run-time error.
+    \end{itemize}
+\end{enumerate}
+
+\item This exercise extends \lang with exceptions.
+
+$
+  \begin{array}{lrrl}
+    \text{Expression} & e & ::= & \cdots\ |\ \textsf{throw}\ |\ \textsf{try}\ e\ \textsf{catch}\ e \\
+    \text{Result} & r & ::= & v\ |\ \textsf{exc} \\
+  \end{array}
+$
+
+Due to the presence of exceptions, an expression can throw an exception
+instead of evaluating to a value. $\evald{e}{v}$ denotes that $e$
+evaluates to $v$ under $\sigma$, and $\evald{e}\textsf{exc}$ denotes that $e$
+throws an exception under $\sigma$.
+
+Note that errors are
+different from exceptions. Errors are unintended failures of evaluation, which
+cannot be handled. For example, adding an interger to a closure causes an error
+and terminates the execution immediately.
+However, exceptions are thrown by \textsf{throw} written by programmers and
+can be handled by \textsf{try-catch}. Therefore, exceptions are thrown and handled
+according to the intention of programmers.
+
+The semantics of the language is as follows:
+
+\begin{itemize}
+  \item \textsf{throw} throws an exception.
+  \item Any expressions except \textsf{try-catch} propagate exceptions, i.e. if a
+    subexpression of $e$ that is not \textsf{try-catch} throws an exception, then
+    $e$ also throws an exception without evaluating the remaining subexpressions.
+    This language uses the left-to-right order for evaluating subexpressions.
+  \item During the evaluation of each expression,
+    dynamic type checking of the values of the subexpressions happens only after
+    evaluating all the subexpressions. For example, in $e_1+e_2$, when $e_1$
+    evaluates to $v_1$, it is checked whether $v_1$ is an integer or not after
+    the evaluation of $e_2$.
+  \item $\textsf{try}\ e_1\ \textsf{catch}\ e_2$ handles an exception. If $e_1$ throws
+    an exception, $\textsf{try}\ e_1\ \textsf{catch}\ e_2$ evaluates $e_2$ and uses the
+    result of $e_2$ as its result. If $e_1$ does not throw an exception, the
+    result of $e_1$ is used as the result without evaluating $e_2$.
+\end{itemize}
+
+Below are some examples:
+
+\begin{itemize}
+  \item $\evale{\textsf{throw}}{\textsf{exc}}$
+  \item $\evale{\textsf{throw}+1}{\textsf{exc}}$
+  \item $\evale{(\efun{\cx}{\cx})+\textsf{throw}}{\textsf{exc}}$
+  \item $\evale{\textsf{throw}+(\eapp{(\efun{\cx}{(\eapp{\cx}{\cx})})}{(\efun{\cx}{(\eapp{\cx}{\cx})})})}{\textsf{exc}}$
+  \item $(\eapp{(\efun{\cx}{(\eapp{\cx}{\cx})})}{(\efun{\cx}{(\eapp{\cx}{\cx})})})+\textsf{throw}$ does not terminate.
+  \item $\evale{\textsf{try}\ 1\ \textsf{catch}\ 2}{1}$
+  \item $\evale{\textsf{try}\ \textsf{throw}\ \textsf{catch}\ 2}{2}$
+\end{itemize}
+
+\begin{enumerate}
+    \item Write the operational semantics of the form
+    \fbox{$\evald{e}{r}$}.
+    \item Draw the evaluation derivation of $\textsf{try}\ (1 + \textsf{throw})\ \textsf{catch}\ (\textsf{throw} + 2)$.
 \end{enumerate}
 
 \end{enumerate}

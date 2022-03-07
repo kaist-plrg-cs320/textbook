@@ -1349,6 +1349,8 @@ def erase(e: Expr): Erased.Expr = e match {
         $\efun{\cx}{\eapp{(\eapp{\cx}{(\efun{\cx}{\cx})}}{(\cx\ 1))}}$
       \item
         $\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\eapp{\eapp{\cx}{\cx}}{\cy}}})}{(\efun{\cx}{\cx})}}{1}$
+      \item
+        $\eapp{(\efun{\cx}{\eapp{\eapp{\cx}{\cx}}{1}})}{\efun{\cy}{\cy}}$
     \end{enumerate}
 
     Although Wells proved that the type inference problem of \textsf{PTFAE} is

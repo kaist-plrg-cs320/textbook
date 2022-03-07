@@ -606,4 +606,21 @@ Now, we extend \lang with Racket-like booleans.
     under the empty environment.
 \end{enumerate}
 
+\item Consider the following expression:
+
+$
+\begin{array}{@{}l@{}}
+  \ebind{\cf}{\efun{\cx}{\eifz{\cx}{0}{(\eapp{\cf}{(\esub{\cx}{1})})}}}{ \\
+  \erec{\cf}{\cx}{\eifz{\cx}{0}{(\eapp{\cf}{(\esub{\cx}{1})})}}{ \\
+  \eapp{\cf}{\cy}
+  }
+  }
+\end{array}
+$
+
+\begin{enumerate}
+  \item Draw arrows from each bound occurrence to its binding occurrence.
+  \item Circle each free identifier.
+\end{enumerate}
+
 \end{enumerate}

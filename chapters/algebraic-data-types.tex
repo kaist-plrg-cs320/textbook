@@ -1182,8 +1182,35 @@ Otherwise, revise the typing rules to make it \code{Fruit}.
   { \typeofd{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
 \]
 It lacks the well-formedness check of $\tau_1$.
-Write a well-typed expression whose evaluation results in a run-time error.
-Your expression cannot define multiple types of the same name whose scopes are
-overlapping.
+Write a \lang expression that
+\begin{itemize}
+  \item is rejected by the original type system, but
+  \item is accepted by the new type system, and
+  \item results in a run-time error when evaluated.
+\end{itemize}
+
+\item Suppose that Rule~\textsc{Typ-TypeDef} has been changed as the following:
+\[
+  \inferrule
+  {
+    \Gamma'=\Gamma[t=x_1@\tau_1+x_2@\tau_2,x_1:\tarrow{\tau_1}{t},x_2:\tarrow{\tau_2}{t}] \\
+    \wft{\Gamma}{\tau_1} \\
+    \wft{\Gamma}{\tau_2} \\
+    \typeof{\Gamma'}{e}{\tau} }
+  { \typeofd{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
+\]
+It checks the well-formedness of $\tau_1$ and $\tau_2$ under $\Gamma$, instead of
+$\Gamma'$.
+
+\begin{enumerate}
+  \item
+    Explain why the new typing rule is problematic.
+  \item
+    Write a \lang expression that
+    \begin{itemize}
+      \item is accepted by the original type system, but
+      \item is rejected by the new type system.
+    \end{itemize}
+\end{enumerate}
 
 \end{enumerate}
