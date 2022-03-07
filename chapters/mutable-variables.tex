@@ -567,4 +567,85 @@ environment:
     under the empty environment.
 \end{enumerate}
 
+\item This question extends \lang with mutable records as follows:
+
+\[
+\begin{array}{@{}rrl@{}}
+  e & ::= & \cdots\ |\ \{f{:}e,\cdots,f{:}e\}\ |\ e.f \\
+  v & ::= & \cdots\ |\ \{f{:}a,\cdots,f{:}a\}
+\end{array}
+\]
+
+\[
+\begin{array}{@{}c@{}}
+\inferrule
+{
+  \seval{\sigma}{M_0}{e_1}{v_1}{M_1'} \quad\cdots\quad
+  \seval{\sigma}{M_{n-1}}{e_n}{v_n}{M_n'} \\
+  a_1\not\in\dom{M_1'} \quad\cdots\quad
+  a_n\not\in\dom{M_n'} \\
+  M_1=M_1'[a_1\mapsto v_1] \quad\cdots\quad
+  M_n=M_n'[a_n\mapsto v_n]
+}
+{ \sevald{0}{\{f_1{:}e_1,\cdots,f_n{:}e_n\}}{\{f_1{:}a_1,\cdots,f_n{:}a_n\}}{n} }
+  \\[2em]
+\inferrule
+{ \sevald{}{e}{\{\cdots,f{:}a,\cdots\}}{1} \\ a\in\dom{M_1} }
+{ \sevald{}{e.f}{M_1(a)}{1} }
+\end{array}
+\]
+
+Consider the following interpreter implementation of the language:
+\begin{verbatim}
+case class Get(r: Expr, f: String) extends Expr
+case class RecV(fs: Map[String, Addr]) extends Value
+
+def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) = e match {
+  ...
+  case App(f, a) =>
+    val (fv, fs) = interp(f, env, sto)
+    fv match {
+      case CloV(x, b, fenv) =>
+        a match {
+          case Get(r, f) => ???
+          case _ =>
+            val (av, as) = interp(a, env, fs)
+            val addr = malloc(as)
+            interp(b, fenv + (x -> addr), as + (addr -> av))
+        }
+      case _ => error()
+    }
+}
+\end{verbatim}
+Note that
+\code{Get($e$, $f$)} is $e.f$ and \code{RecV(Map($f_1$ -> $a_1$, $\cdots$, $f_n$
+-> $a_n$))} is $\{f_1{:}a_1,\cdots,f_n{:}a_n\}$.
+
+\begin{enumerate}
+  \item Fill \code{???} to complete the implementation. The
+  language uses CBR when a record field is an argument of a
+  function call.
+\end{enumerate}
+
+Consider the following expression:
+
+$
+\begin{array}{@{}l@{}}
+  \ebind{\cx}{\{\cz{:}1\}}{ \\
+  \ebind{\cf}{\efun{\cy}{\eset{\cy}{2}}}{ \\
+  \eseq{\eapp{\cf}{\cx.\cz}}{ \\
+  \cx.\cz}}}
+\end{array}
+$
+
+\begin{enumerate}
+  \setcounter{enumii}{1}
+  \item Write the result and the store at the end of the evaluation of
+  the above expression.
+  \item Write the result and the store at the end of the evaluation of
+  the above expression
+  if the language uses CBV when a record field is an argument
+  of a function call.
+\end{enumerate}
+
 \end{enumerate}

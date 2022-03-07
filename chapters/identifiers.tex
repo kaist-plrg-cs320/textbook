@@ -477,4 +477,37 @@ terminates without producing any results.
   \item Draw arrows from each bound occurrence to its binding occurrence.
   \item Draw dotted arrows from each shadowing variable to its shadowed variable.
 \end{enumerate}
+
+\item This exercise asks you to implement the \code{shadowing} function, which
+takes a \lang expression as an argument and returns the set of every
+identifier that becomes shadowed at least once in the expression. For
+example, \code{shadowing($e$)} equals \code{Set("x")} where $e$ denotes
+$\ebind{\cx}{\cy}{\ebind{\cx}{1}{\cz}}$.  The \code{shadowing} function
+calls the \code{helper} function, which tracks the set of every identifier
+defined already to detect shadowing.
+
+\begin{verbatim}
+def shadowing(e: Expr): Set[String] = helper(e, Set())
+
+def helper(e: Expr, env: Set[String]): Set[String] =
+  e match {
+    case Num(n) => ???
+    case Add(l, r) => ???
+    case Id(x) => ???
+    case Val(x, e, b) => ???
+  }
+\end{verbatim}
+
+    Fill every \code{???} to complete the implementation. You may refer to the following
+to deal with sets:
+\begin{itemize}
+  \item \code{Set()} is the empty set.
+  \item \code{Set(v)} is the set consisting of a single element \code{v}.
+  \item Where \code{s} is a set, \code{s(v)} is \code{true} if \code{v} is an
+    element of \code{s} and \code{false} otherwise.
+  \item Where \code{s} is a set, \code{s + v} is the union of \code{s} and $\{\code{v}\}$.
+  \item Where \code{s1} and \code{s2} are sets, \code{s1 ++ s2} is the union of \code{s1}
+    and \code{s2}.
+\end{itemize}
+
 \end{enumerate}

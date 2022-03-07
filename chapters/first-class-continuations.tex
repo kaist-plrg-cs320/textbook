@@ -489,4 +489,19 @@ make the result of the loop $0$.
   \item Write the reduction steps of the following expression:
 
     $(\evcc{\cx}{42+(\cx\ 2)})+8$
+
+\item The following is an \code{interp} for \lang that prints a given
+expression each time it is called:
+
+\begin{verbatim}
+def interp(e: Expr, env: Env, k: Cont): Value = {
+  println(e)
+  e match { ... }
+}
+\end{verbatim}
+
+Let $e$ be an expression $\eapp{(\evcc{\cx}{\cx})}{\efun{\cy}{\cy}}$, which is
+\code{App(Vcc("x", Id("x")), Fun("y", Id("y")))}. What does \code{interp($e$,
+Map(), x => x)} print?
+
 \end{enumerate}

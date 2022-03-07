@@ -634,4 +634,31 @@ sto: {}
 res: NumV(4) {}
 \end{verbatim}
 
+\item This exercise asks you to implement the \code{desugar} function, which
+  takes a \lang expression as an argument and returns an expression of the same
+  behavior without \textsf{;} (sequencing).
+
+\begin{verbatim}
+def desugar(e: Expr): Expr = e match {
+  ...
+  case Seq(l, r) => ???
+}
+\end{verbatim}
+
+Fill \code{???} to complete the implementation.
+You may use the following helper functions without defining them:
+\begin{verbatim}
+// returns the set of every binding identifier in e
+def binding(e: Expr): Set[String]
+
+// returns the set of every bound identifier in e
+def bound(e: Expr): Set[String]
+
+// returns the set of every free identifier in e
+def free(e: Expr): Set[String]
+
+// returns a new identifier that does not belong to xs
+def fresh(xs: Set[String]): String
+\end{verbatim}
+
 \end{enumerate}

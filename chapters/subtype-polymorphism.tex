@@ -1043,4 +1043,71 @@ and
 \code{forall}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#forall(p:A=\%3EBoolean):Boolean}}
 methods of \code{Map}:
 
+\item Many real-world languages, such as Scala and TypeScript, provide
+intersection types. The intersection type of two types is a type containing values that
+belong to both of the types. In other words, $v$ is an element of
+$\tau_1\land\tau_2$, the intersection type of $\tau_1$ and $\tau_2$, if and only
+if $v$ is an element of both $\tau_1$ and $\tau_2$.
+
+\begin{enumerate}
+  \item Write one or more subtyping rules each of which has
+    $\subt{\tau_1\land\tau_2}{\tau_3}$ as a conclusion.
+  \item Write one or more subtyping rules each of which has
+    $\subt{\tau_3}{\tau_1\land\tau_2}$ as a conclusion.
+  \item Draw a subtype derivation tree proving that
+    $\subt{\tau_1\land\tau_2}{\tau_2\land\tau_1}$.
+\end{enumerate}
+
+\item The following code implements a type checker for a variant of \lang:
+
+\begin{verbatim}
+sealed trait Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+case object TopT extends Type
+case object BottomT extends Type
+
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
+  case Num(n) => NumT
+  case Add(l, r) =>
+    val lt = typeCheck(l, tenv)
+    val rt = typeCheck(r, tenv)
+    ???
+  case Id(x) => tenv(x)
+  case Fun(x, t, b) =>
+    ArrowT(t, typeCheck(b, tenv + (x -> t)))
+  case App(f, a) =>
+    val ft = typeCheck(f, tenv)
+    val at = typeCheck(a, tenv)
+    ft match {
+      case NumT => ???
+      case ArrowT(pt, rt) => ???
+      case TopT => ???
+      case BottomT => ???
+    }
+  case Throw => BottomT
+}
+\end{verbatim}
+
+We say that $\tau$ is the minimal type of $e$ under $\Gamma$ if and only if
+the following conditions are satisfied:
+
+\begin{itemize}
+  \item $\typeofd{e}{\tau}$
+  \item for every $\tau'$ satisfying $\typeofd{e}{\tau'}$, $\subt{\tau}{\tau'}$
+\end{itemize}
+
+If $\tau$ is the minimal type of $e$ under $\Gamma$, \code{typeCheck($e$,
+$\Gamma$)} returns $\tau$. If there is no $\tau$ satisfying $\typeofd{e}{\tau}$,
+\code{typeCheck($e$, $\Gamma$)} throws an exception.
+
+Fill every \code{???} to complete the implementation. You may use the
+following helper function without defining it:
+
+\begin{verbatim}
+// returns true if t1 is a subtype of t2
+// returns false otherwise
+def subtype(t1: Type, t2: Type): Boolean
+\end{verbatim}
+
 \end{enumerate}

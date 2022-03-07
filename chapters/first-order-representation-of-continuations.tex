@@ -573,3 +573,50 @@ $v_2\mapsto\kappa_1\Downarrow v$ denotes that the result of
 The conclusion, $v\mapsto[\square]\Downarrow v$, denotes that the result of
 \code{continue(MtK, $v$)} is $v$. The result of \code{continue(MtK, $v$)} is
 actually $v$.
+
+\section{Exercises}
+
+\begin{enumerate}
+
+\item This exercise asks you to implement an interpreter of \textsf{FAE}
+    with pairs in CPS without first-class functions.
+
+\begin{verbatim}
+sealed trait Expr
+...
+case class Pair(f: Expr, s: Expr) extends Expr
+case class Fst(p: Expr) extends Expr
+case class Snd(p: Expr) extends Expr
+
+sealed trait Value
+...
+case class PairV(f: Value, s: Value) extends Value
+
+sealed trait Cont
+...
+case class PairSecondK(???) extends Cont
+case class DoPairK(???) extends Cont
+case class DoFstK(???) extends Cont
+case class DoSndK(???) extends Cont
+
+def continue(k: Cont, v: Value): Value = k match {
+  ...
+  case PairSecondK(???) => ???
+  case DoPairK(???) => ???
+  case DoFstK(???) => ???
+  case DoSndK(???) => ???
+}
+
+def interp(e: Expr, env: Env, k: Cont): Value = e match {
+  ...
+  case Pair(f, s) => ???
+  case Fst(p) => ???
+  case Snd(p) => ???
+}
+\end{verbatim}
+
+\code{Pair(e1, e2)} creates a new pair; \code{Fst(e)} gives the first value of a
+pair; \code{Snd(e)} gives the second value of a pair.  Fill every \code{???}
+to complete the implementation.
+
+\end{enumerate}

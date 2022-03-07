@@ -655,4 +655,56 @@ Each of them is evaluated only when its value is needed. For example,
 
 Fill every \code{???} to complete the interpreter.
 
+\item This exercise extends \lang with lists. Consider the following interpreter
+  implementation:
+
+\begin{verbatim}
+sealed trait Expr
+...
+case object Nil extends Expr
+case class Cons(h: Expr, t: Expr) extends Expr
+case class Head(e: Expr) extends Expr
+case class Tail(e: Expr) extends Expr
+
+sealed trait Value
+...
+case object NilV extends Value
+case class ConsV(???) extends Value
+
+def strict(v: Value): Value = ...
+
+def interp(e: Expr, env: Env): Value = e match {
+  ...
+  case Nil => ???
+  case Cons(h, t) => ???
+  case Head(e) => ???
+  case Tail(e) => ???
+}
+\end{verbatim}
+
+The semantics of lists is as follows:
+\begin{itemize}
+  \item \code{Nil} creates the empty list.
+  \item \code{Cons($e_1$, $e_2$)} corresponds to $e_1::e_2$, which is an
+    expression that creates a nonempty list. Since lists are lazy, $e_1$ and $e_2$ in
+    $e_1::e_2$ are not evaluated when the list is created. Each of
+    them is evaluated only when its value is needed.
+  \item \code{Head($e$)} corresponds to $e\textsf{.head}$, which is an expression
+    that gives the head of a list.
+  \item \code{Tail($e$)} corresponds to $e\textsf{.tail}$, which is an expression
+    that gives the tail of a list. The tail must be a list.
+\end{itemize}
+For example,
+\begin{itemize}
+  \item $((\eadd{0}{\textsf{Nil}})::(2::\textsf{Nil}))\textsf{.tail.head}$ does not incur a run-time error.
+  \item $((\eadd{0}{\textsf{Nil}})::(2::\textsf{Nil}))\textsf{.head}$ incurs a run-time error.
+  \item $(0::1)\textsf{.head}$ does not incur a run-time error.
+  \item $(0::1)\textsf{.tail}$ incurs a run-time error.
+\end{itemize}
+
+Fill every \code{???} to complete the interpreter.  You may use the helper
+function \verb!def isList(v: Value): Boolean!, which returns \code{true} if a
+given value is \code{ConsV} or \code{NilV} and \code{false} otherwise, without
+defining it.
+
 \end{enumerate}

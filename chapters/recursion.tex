@@ -623,4 +623,77 @@ $
   \item Circle each free identifier.
 \end{enumerate}
 
+\item Consider the new semantics of \textsf{if0} as follows:
+\[
+  \begin{array}{c}
+  \inferrule
+  { \evald{e_1}{0} \\ \evald{e_2}{v_2} \\ \evald{e_3}{v_3} }
+  { \evald{\eifz{e_1}{e_2}{e_3}}{v_2} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{v_1} \\ v_1\not=0 \\ \evald{e_2}{v_2} \\ \evald{e_3}{v_3} }
+  { \evald{\eifz{e_1}{e_2}{e_3}}{v_3} }
+  \end{array}
+\]
+
+\begin{enumerate}
+  \item Explain how the new semantics is different from the original semantics.
+  \item Write an \lang expression such that
+  \begin{itemize}
+    \item the evaluation with the original semantics results in an integer, but
+    \item the evaluation with the above semantics incurs a run-time error.
+  \end{itemize}
+\end{enumerate}
+
+\item Explain what is wrong with the following expression and describe how
+  to fix it.
+
+$\begin{array}{l}
+  \ebind{\cz}{(\efun{\cf}{\\
+  \ \ \ \ \ebind{\cx}{(\efun{\cy}{\\
+  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\efun{\cx}{\eapp{\eapp{\cy}{\cy}}{\cx}}}{\\
+  \ \ \ \ \ \ \ \ \eapp{\cf}{\code{g}}}}\\
+  \ \ \ \ )}{\\
+  \ \ \ \ \eapp{\cx}{\cx}}}\\
+  )}{\\
+  \ebind{\cf}{\eapp{\cz}{({\efun{\cv}{\sumbodyfv}})}}{\\
+  \eapp{\cf}{10}
+  }
+}
+\end{array}$
+
+\item Mutually recursive functions are functions that call each
+other. For example, the following Scala code defines two mutually
+recursive functions \code{even} and \code{odd}:
+
+\begin{verbatim}
+def even(n: Int): Boolean = if (n == 0) true else odd(n - 1)
+def odd(n: Int): Boolean = if (n == 0) false else even(n - 1)
+\end{verbatim}
+
+We can implement mutually recursive functions also in \plang. For this purpose,
+we add pairs to \plang: $(e_1, e_2)$ creates a new pair; $e\textsf{.1}$ gives
+the first value of a pair; $e\textsf{.2}$ gives the second value of a pair.
+Also, in order to implement \code{even} and \code{odd}, we add booleans to
+\code{FAE}: $\true$ and $\false$.
+
+The following expression implements \code{even} and \code{odd} in \plang:
+\vspace{1em}
+
+$\begin{array}{@{}l@{}}
+  \ebind{\cz}{(\efun{\cb}{\\
+  \ \ \ \ \ebind{\code{fx}}{(\efun{\code{fy}}{\\
+  \ \ \ \ \ \ \ \ \ebind{\cf}{\code{???}}{\\
+  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\code{???}}{\\
+  \ \ \ \ \ \ \ \ \code{???}}}}\\\ \ \ \ )}{\\
+  \ \ \ \ \eapp{\code{fx}}{\code{fx}}}}\\)}{\\
+  \ebind{\cf}{\eapp{\cz}{\efun{\cf}{\code{???}}}}{\\
+  \ebind{\code{even}}{\cf\textsf{.1}}{\\
+  \ebind{\code{odd}}{\cf\textsf{.2}}{\\
+  (\eapp{\code{even}}{10}, \eapp{\code{odd}}{10})}}}}
+\end{array}$
+\vspace{1em}
+
+Fill every \code{???} to complete the expression.
+
 \end{enumerate}

@@ -1042,4 +1042,20 @@ Below are some examples:
     \item Draw the evaluation derivation of $\textsf{try}\ (1 + \textsf{throw})\ \textsf{catch}\ (\textsf{throw} + 2)$.
 \end{enumerate}
 
+\item This exercise asks you to implement the \code{desugar} function, which
+  takes an \lang expression as an argument and returns an \textsf{FAE} by
+  desugaring \textsf{val}.
+
+\begin{verbatim}
+def desugar(e: Expr): Expr = e match {
+  case Num(n) => ???
+  case Id(x) => ???
+  case Val(x, e, b) => ???
+  case Fun(x, b) => ???
+  case App(f, a) => ???
+}
+\end{verbatim}
+
+Fill every \code{???} to complete the implementation.
+
 \end{enumerate}

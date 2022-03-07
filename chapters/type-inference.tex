@@ -1192,7 +1192,6 @@ def unify(t1: Type, t2: Type): Unit =
   (resolve(t1), resolve(t2)) match {
     ...
     case (PairT(l1, r1), PairT(l2, r2)) => ???
-    case _ => error()
   }
 
 def occurs(t1: VarT, t2: Type): Boolean =
@@ -1261,7 +1260,6 @@ def unify(t1: Type, t2: Type): Unit =
   (resolve(t1), resolve(t2)) match {
     ...
     case (BoxT(t3), BoxT(t4)) => ???
-    case _ => error()
   }
 
 def occurs(t1: VarT, t2: Type): Boolean =
@@ -1487,5 +1485,74 @@ system}\index{Hindley-Milner type system}, named after two independent inventors
 of the type system, Hindley~\cite{hindley1969principal} and
 Milner~\cite{milner1978theory}. OCaml and Haskell are well-known for the use of
 this type system.
+
+\item The following code extends \lang with lists:
+\begin{verbatim}
+sealed trait Expr
+...
+case object Nil extends Expr
+case class Cons(h: Expr, t: Expr) extends Expr
+case class Head(e: Expr) extends Expr
+case class Tail(e: Expr) extends Expr
+
+sealed trait Type
+...
+case class ListT(t: Type) extends Type
+
+def resolve(ty: Type): Type = ...
+
+def unify(t1: Type, t2: Type): Unit =
+  (resolve(t1), resolve(t2)) match {
+    ...
+    case (ListT(t3), ListT(t4)) => ???
+  }
+
+def occurs(t1: VarT, t2: Type): Boolean =
+  resolve(t2) match {
+    ...
+    case ListT(t) => ???
+  }
+
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
+  ...
+  case Nil => ???
+  case Cons(h, t) => ???
+  case Head(e) => ???
+  case Tail(e) => ???
+}
+\end{verbatim}
+
+Fill every \code{???} to complete the type checker.
+You may refer to the following typing rules:
+
+\[
+\begin{array}{c}
+  \inferrule
+  {}
+  { \typeofd{\textsf{nil}}{\textsf{list}\ \tau} }
+  \qquad\qquad
+  \inferrule
+  { \typeofd{e_1}{\tau} \\ \typeofd{e_2}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{cons}\ e_1\ e_2}{\textsf{list}\ \tau} }
+  \\[2em]
+  \inferrule
+  { \typeofd{e}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{head}\ e}{\tau} }
+  \qquad\qquad
+  \inferrule
+  { \typeofd{e}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{tail}\ e}{\textsf{list}\ \tau} }
+\end{array}
+\]
+
+where
+
+\begin{itemize}
+  \item $\textsf{nil}$ denotes \code{Nil}.
+  \item $\textsf{cons}\ e_1\ e_2$ denotes \code{Cons($e_1$, $e_2$)}.
+  \item $\textsf{head}\ e$ denotes \code{Head($e$)}.
+  \item $\textsf{tail}\ e$ denotes \code{Tail($e$)}.
+  \item $\textsf{list}\ \tau$ denotes \code{ListT($\tau$)}.
+\end{itemize}
 
 \end{enumerate}
