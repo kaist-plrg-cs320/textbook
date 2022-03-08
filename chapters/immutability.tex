@@ -560,48 +560,63 @@ def product(l: List[Int]): Int = l match {
 
 \section{Exercises}
 
-\begin{enumerate}
-  \item Consider the following definition of \code{Student}:
+\begin{exercise}
+\labex{immutability-student}
 
-    \code{case class Student(name: String, height: Int)}
+Consider the following definition of \code{Student}:
+\begin{verbatim}
+case class Student(name: String, height: Int)
+\end{verbatim}
+Implement a function \code{names}:
+\begin{verbatim}
+def names(l: List[Student]): List[String] = ???
+\end{verbatim}
+that takes a list of students as an argument
+and returns a list containing the names of the students.
 
-    Implement a function \code{names}:
+\end{exercise}
 
-    \code{def names(l: List[Student]): List[String] = ???}
+\begin{exercise}
+\labex{immutability-tall}
 
-    that takes a list of students as an argument
-    and returns a list containing the names of the students.
+Consider the same definition of \code{Student}.
+Implement a function \code{tall}:
+\begin{verbatim}
+def tall(l: List[Student]): List[Student] = ???
+\end{verbatim}
+that takes a list of students as an argument
+and returns a list of students whose heights are greater than 170.
 
-  \item Consider the same definition of \code{Student}.
-    Implement a function \code{tall}:
+\end{exercise}
 
-    \code{def tall(l: List[Student]): List[Student] = ???}
+\begin{exercise}
+\labex{immutability-length}
 
-    that takes a list of students as an argument
-    and returns a list of students whose heights are greater than 170.
+Implement a function \code{length}:
+\begin{verbatim}
+def length(l: List[Int]): Int = ???
+\end{verbatim}
+that takes a list of integers as an argument
+and returns the length of the list.
 
-  \item
-    Implement a function \code{length}:
+Remark that there is a built-in method \code{l.length}, but try to implement
+yourself using recursive function.
 
-    \code{def length(l: List[Int]): Int = ???}
+\end{exercise}
 
-    that takes a list of integers as an argument
-    and returns the length of the list.
+\begin{exercise}
+\labex{immutability-append}
 
-    Remark that there is a built-in method \code{l.length}, but try to implement
-    yourself using recursive function.
+Implement a function \code{append}:
+\begin{verbatim}
+def append(l: List[Int], n: Int): List[Int] = ???
+\end{verbatim}
+that takes a list of integers and an integer as arguments
+and returns a list obtained by appending the integer at the end of the list.
+Then, compare the time complexity of appending a new element to that of
+prepending a new element by \code{::}, which is $O(1)$.
 
-  \item
-    Implement a function \code{append}:
+Remark that there is a built-in method \code{l.appended(n)}, but try to implement
+yourself using recursive function.
 
-    \code{def append(l: List[Int], n: Int): List[Int] = ???}
-
-    that takes a list of integers and an integer as arguments
-    and returns a list obtained by appending the integer at the end of the list.
-    Then, compare the time complexity of appending a new element to that of
-    prepending a new element by \code{::}, which is $O(1)$.
-
-    Remark that there is a built-in method \code{l.appended(n)}, but try to implement
-    yourself using recursive function.
-
-\end{enumerate}
+\end{exercise}

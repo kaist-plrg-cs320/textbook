@@ -1271,8 +1271,9 @@ as user-defined syntactic sugar.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Consider the following concrete syntax:
+\begin{exercise}
+
+Consider the following concrete syntax:
 
 \begin{verbatim}
 <expr> ::= <num>
@@ -1295,7 +1296,40 @@ Assume that it is allowed to add whitespaces among terminals freely.
   \item \verb!{let {x y} {+ 8 {* x 2}}}!
 \end{enumerate}
 
-\item Consider the following concrete syntax:
+\end{exercise}
+
+\begin{exercise}
+
+Consider the following concrete syntax:
+
+\begin{verbatim}
+<ice-cream> ::= "sprinkles" "on" <ice-cream>
+              | "cherry" "on" <ice-cream>
+              | "scoop" "of" <flavor> "on" <ice-cream>
+              | "sugar-cone"
+              | "waffle-cone"
+<flavor>    ::= "vanilla"
+              | "lettuce"
+\end{verbatim}
+
+Assume that it is allowed to add whitespaces among terminals freely.
+Describe whether each of the following is \code{<ice-cream>} and why.
+
+\begin{enumerate}
+  \item \code{sprinkles}
+  \item \code{sugar-cone}
+  \item \code{vanilla}
+  \item \code{scoop of vanilla on waffle-cone}
+  \item \code{sprinkles on lettuce on waffle-cone}
+  \item \code{scoop of vanilla on sprinkles on waffle-cone}
+  \item \code{cherry on scoop of lettuce on scoop of vanilla on sugar-cone}
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+
+Consider the following concrete syntax:
 
 \newcommand{\BNF}[1]{\code{<#1>}}
 \newcommand{\coffee}{\mbox{\BNF{coffee}}}
@@ -1333,47 +1367,15 @@ Assume that it is allowed to add whitespaces among terminals freely.
 \]
 
 Assume that it is allowed to add whitespaces among terminals freely.
+Describe whether each of the following is \code{<coffee>} and why.
 
 \begin{enumerate}
-  \item Which of the following are elements of \BNF{coffee}?
-  \begin{enumerate}
-    \item \code{caramel latte macchiato}
-    \item \code{espresso}
-    \item \code{steamed-milk on caramel on milk-foam on espresso}
-    \item \code{chocolate-syrup on cocoa-powder on cinnamon on milk-foam on steamed-milk on espresso}
-    \item \code{steamed-milk on espresso on chocolate-syrup}
-  \end{enumerate}
-  \item Explain whether the following is \code{<coffee>} or not:
-
-  \code{cocoa-powder on milk-foam on steamed-milk on espresso}
+  \item \code{caramel latte macchiato}
+  \item \code{espresso}
+  \item \code{steamed-milk on caramel on milk-foam on espresso}
+  \item \code{chocolate-syrup on cocoa-powder on cinnamon on milk-foam on steamed-milk on espresso}
+  \item \code{steamed-milk on espresso on chocolate-syrup}
+  \item \code{cocoa-powder on milk-foam on steamed-milk on espresso}
 \end{enumerate}
 
-\item Consider the following concrete syntax:
-
-\begin{verbatim}
-<ice-cream> ::= "sprinkles" "on" <ice-cream>
-              | "cherry" "on" <ice-cream>
-              | "scoop" "of" <flavor> "on" <ice-cream>
-              | "sugar-cone"
-              | "waffle-cone"
-<flavor>    ::= "vanilla"
-              | "lettuce"
-\end{verbatim}
-
-Assume that it is allowed to add whitespaces among terminals freely.
-
-\begin{enumerate}
-  \item Which of the following are elements of \code{<ice-cream>}?
-  \begin{enumerate}
-    \item \code{sprinkles}
-    \item \code{sugar-cone}
-    \item \code{vanilla}
-    \item \code{scoop of vanilla on waffle-cone}
-    \item \code{sprinkles on lettuce on waffle-cone}
-    \item \code{scoop of vanilla on sprinkles on waffle-cone}
-  \end{enumerate}
-  \item Explain why the following is an element of \code{<ice-cream>}:
-
-  \code{cherry on scoop of lettuce on scoop of vanilla on sugar-cone}
-\end{enumerate}
-\end{enumerate}
+\end{exercise}

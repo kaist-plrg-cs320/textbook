@@ -786,40 +786,54 @@ def tall(l: List[Student]): List[String] =
 
 \section{Exercises}
 
-\begin{enumerate}
-  \item
-    Implement a function \code{incBy}:
+\begin{exercise}
+\labex{functions-incby}
 
-    \code{def incBy(l: List[Int], n: Int): List[Int] = ???}
+Implement a function \code{incBy}:
+\begin{verbatim}
+def incBy(l: List[Int], n: Int): List[Int] = ???
+\end{verbatim}
+that takes a list of integers and an integer as
+arguments and increases every element of the list by the given integer. Use
+the \code{map} method.
 
-    that takes a list of integers and an integer as
-    arguments and increases every element of the list by the given integer. Use
-    the \code{map} method.
+\end{exercise}
 
-  \item
-    Implement a function \code{gt}:
+\begin{exercise}
+\labex{functions-gt}
 
-    \code{def gt(l: List[Int], n: Int): List[Int] = ???}
+Implement a function \code{gt}:
+\begin{verbatim}
+def gt(l: List[Int], n: Int): List[Int] = ???
+\end{verbatim}
+that takes a list of integers and an integer as arguments
+and filters elements less than or equal to the given integer out from the list.
+Use the \code{filter} method.
 
-    that takes a list of integers and an integer as arguments
-    and filters elements less than or equal to the given integer out from the list.
-    Use the \code{filter} method.
+\end{exercise}
 
-  \item
-    Implement a function \code{append}:
+\begin{exercise}
+\labex{functions-append}
 
-    \code{def append(l: List[Int], n: Int]): List[Int] = ???}
+Implement a function \code{append}:
+\begin{verbatim}
+def append(l: List[Int], n: Int]): List[Int] = ???
+\end{verbatim}
+that takes a list of integers and an integer as arguments
+and returns a list obtained by appending the integer at the end of the list.
+Use the \code{foldRight} method.
 
-    that takes a list of integers and an integer as arguments
-    and returns a list obtained by appending the integer at the end of the list.
-    Use the \code{foldRight} method.
+\end{exercise}
 
-  \item
-      Implement a function \code{reverse}:
+\begin{exercise}
+\labex{functions-reverse}
 
-    \code{def reverse(l: List[Int]): List[Int] = ???}
+Implement a function \code{reverse}:
+\begin{verbatim}
+def reverse(l: List[Int]): List[Int] = ???
+\end{verbatim}
+that takes a list of integers
+and returns a list obtained by reversing the order between the elements.
+Use the \code{foldLeft} method.
 
-    that takes a list of integers
-    and returns a list obtained by reversing the order between the elements.
-    Use the \code{foldLeft} method.
-\end{enumerate}
+\end{exercise}

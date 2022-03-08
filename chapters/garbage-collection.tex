@@ -1541,67 +1541,68 @@ objects, copying will take a long time and increase the duration of the pause.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item
+\begin{exercise}
+\labex{garbage-collection-copying}
+
 Suppose a program uses the following four kinds of an object:
 
-  \begin{itemize}
-  \item Type tag \code{1}: an object containing one integer
-  \item Type tag \code{2}: an object containing one integer and one pointer
-  \item Type tag \code{3}: an object containing one pointer and one integer
-  \item Type tag \code{4}: an object containing two pointers
-  \end{itemize}
+\begin{itemize}
+\item Type tag \code{1}: an object containing one integer
+\item Type tag \code{2}: an object containing one integer and one pointer
+\item Type tag \code{3}: an object containing one pointer and one integer
+\item Type tag \code{4}: an object containing two pointers
+\end{itemize}
 
 The heap is of size 26B. The memory manager uses copying GC, so each space is of
 size 13B. The following is the memory just before GC, where all the memory
 has been allocated:
 
- \begin{itemize}
-   \item Stack: \code{10}
- \item From space:
- \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
-  \hline
-  \code{1}&\code{2}&\code{2}&\code{3}&\code{7}&\code{1}&\code{4}&\code{4}&\code{5}&\code{10}&\code{3}&\code{7}&\code{5}\\
-  \hline \multicolumn{1}{c}{}\\[-16pt]
-   \multicolumn{1}{c}{\tiny \code{0}}&
-   \multicolumn{1}{c}{\tiny \code{1}}&
-   \multicolumn{1}{c}{\tiny \code{2}}&
-   \multicolumn{1}{c}{\tiny \code{3}}&
-   \multicolumn{1}{c}{\tiny \code{4}}&
-   \multicolumn{1}{c}{\tiny \code{5}}&
-   \multicolumn{1}{c}{\tiny \code{6}}&
-   \multicolumn{1}{c}{\tiny \code{7}}&
-   \multicolumn{1}{c}{\tiny \code{8}}&
-   \multicolumn{1}{c}{\tiny \code{9}}&
-   \multicolumn{1}{c}{\tiny \code{10}}&
-   \multicolumn{1}{c}{\tiny \code{11}}&
-   \multicolumn{1}{c}{\tiny \code{12}}
-  \\
- \end{tabular}
- \item To space:
- \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
-  \hline
-   \code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}\\
-  \hline \multicolumn{1}{c}{}\\[-16pt]
-   \multicolumn{1}{c}{\tiny \code{13}}&
-   \multicolumn{1}{c}{\tiny \code{14}}&
-   \multicolumn{1}{c}{\tiny \code{15}}&
-   \multicolumn{1}{c}{\tiny \code{16}}&
-   \multicolumn{1}{c}{\tiny \code{17}}&
-   \multicolumn{1}{c}{\tiny \code{18}}&
-   \multicolumn{1}{c}{\tiny \code{19}}&
-   \multicolumn{1}{c}{\tiny \code{20}}&
-   \multicolumn{1}{c}{\tiny \code{21}}&
-   \multicolumn{1}{c}{\tiny \code{22}}&
-   \multicolumn{1}{c}{\tiny \code{23}}&
-   \multicolumn{1}{c}{\tiny \code{24}}&
-   \multicolumn{1}{c}{\tiny \code{25}}
-  \\
- \end{tabular}
- \end{itemize}
+\begin{itemize}
+  \item Stack: \code{10}
+\item From space:
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
+ \hline
+ \code{1}&\code{2}&\code{2}&\code{3}&\code{7}&\code{1}&\code{4}&\code{4}&\code{5}&\code{10}&\code{3}&\code{7}&\code{5}\\
+ \hline \multicolumn{1}{c}{}\\[-16pt]
+  \multicolumn{1}{c}{\tiny \code{0}}&
+  \multicolumn{1}{c}{\tiny \code{1}}&
+  \multicolumn{1}{c}{\tiny \code{2}}&
+  \multicolumn{1}{c}{\tiny \code{3}}&
+  \multicolumn{1}{c}{\tiny \code{4}}&
+  \multicolumn{1}{c}{\tiny \code{5}}&
+  \multicolumn{1}{c}{\tiny \code{6}}&
+  \multicolumn{1}{c}{\tiny \code{7}}&
+  \multicolumn{1}{c}{\tiny \code{8}}&
+  \multicolumn{1}{c}{\tiny \code{9}}&
+  \multicolumn{1}{c}{\tiny \code{10}}&
+  \multicolumn{1}{c}{\tiny \code{11}}&
+  \multicolumn{1}{c}{\tiny \code{12}}
+ \\
+\end{tabular}
+\item To space:
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
+ \hline
+  \code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}&\code{0}\\
+ \hline \multicolumn{1}{c}{}\\[-16pt]
+  \multicolumn{1}{c}{\tiny \code{13}}&
+  \multicolumn{1}{c}{\tiny \code{14}}&
+  \multicolumn{1}{c}{\tiny \code{15}}&
+  \multicolumn{1}{c}{\tiny \code{16}}&
+  \multicolumn{1}{c}{\tiny \code{17}}&
+  \multicolumn{1}{c}{\tiny \code{18}}&
+  \multicolumn{1}{c}{\tiny \code{19}}&
+  \multicolumn{1}{c}{\tiny \code{20}}&
+  \multicolumn{1}{c}{\tiny \code{21}}&
+  \multicolumn{1}{c}{\tiny \code{22}}&
+  \multicolumn{1}{c}{\tiny \code{23}}&
+  \multicolumn{1}{c}{\tiny \code{24}}&
+  \multicolumn{1}{c}{\tiny \code{25}}
+ \\
+\end{tabular}
+\end{itemize}
 
 What are the values in the stack, the from-space, and the to-space after
 GC? Suppose that \code{10} in the stack is a pointer and copied objects have
 \code{99} as type tags.
 
-\end{enumerate}
+\end{exercise}

@@ -62,6 +62,9 @@
 \usepackage{upquote}
 \usepackage{arydshln}
 \usepackage{graphicx}
+\usepackage{amsthm}
+
+\newtheorem{exercise}{Exercise}[chapter]
 
 \graphicspath{ {./images/} }
 
@@ -93,6 +96,8 @@
 \newcommand{\chnum}[1]{\hyperref[ch:#1]{\ref{ch:#1}}}
 \newcommand{\refchs}[2]{Chapters \chnum{#1} and \chnum{#2}}
 \newcommand{\refchss}[3]{Chapters \chnum{#1}, \chnum{#2}, and \chnum{#3}}
+\newcommand{\refex}[1]{Exercise \hyperref[thm:#1]{\ref{thm:#1}}}
+\newcommand{\labex}[1]{\labthm{#1}}
 \newcommand{\pto}{\mathrel{\ooalign{\hfil$\mapstochar$\hfil\cr$\to$\cr}}}
 \newcommand{\finto}{\stackrel{\mbox{\tiny fin}}{\pto}}
 \newcommand{\embox}[1]{\mbox{\emph{#1}}}
@@ -260,7 +265,7 @@
 
 \lowertitleback{
   % \textbf{License}\\
-	\copyright2021 Jaemin Hong and Sukyoung Ryu
+	\copyright2022 Jaemin Hong and Sukyoung Ryu
 
   \medskip
 

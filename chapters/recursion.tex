@@ -460,86 +460,31 @@ have the same semantics, and the desugaring is correct.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Explain why the following expression does not terminate and describe how
-  to fix it.
+\begin{exercise}
 
-$\begin{array}{l}
-  \ebind{\cz}{(\efun{\cf}{\\
-  \ \ \ \ \ebind{\cx}{(\efun{\cy}{\\
-  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\eapp{\cy}{\cy}}{\\
-  \ \ \ \ \ \ \ \ \eapp{\cf}{\code{g}}}}\\
-  \ \ \ \ )}{\\
-  \ \ \ \ \eapp{\cx}{\cx}}}\\
-  )}{\\
-  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
-  \eapp{\cf}{10}
+  Consider the following expression:
+
+$
+\begin{array}{@{}l@{}}
+  \ebind{\cf}{\efun{\cx}{\eifz{\cx}{0}{(\eapp{\cf}{(\esub{\cx}{1})})}}}{ \\
+  \erec{\cf}{\cx}{\eifz{\cx}{0}{(\eapp{\cf}{(\esub{\cx}{1})})}}{ \\
+  \eapp{\cf}{\cy}
   }
-}
-\end{array}$
-
-\item Consider the following definition of $\cz$ and its use to define the recursive
-function $\cf$.
-
-$\begin{array}{l}
-  \ebind{\cz}{(\efun{\cf}{\\
-  \ \ \ \ \ebind{\cx}{(\efun{\cy}{\\
-  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\efun{\code{a}}{\eapp{\eapp{\cy}{\cy}}{\code{a}}}}{\\
-  \ \ \ \ \ \ \ \ \eapp{\cf}{\code{g}}}}\\
-  \ \ \ \ )}{\\
-  \ \ \ \ \eapp{\cx}{\cx}}}\\
-  )}{\\
-  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
-  \eapp{\cf}{10}
   }
-}
-\end{array}$
-
-Describe conditions that an argument given to $\cz$ must satisfy so that $\cz$
-    can make its recursive version.
-
-\item Consider the following expression:
-
-$\begin{array}{l}
-  \ebind{\cf}{(\\
-  \ \ \ \ \ebind{\cx}{\efun{\cy}{(\\
-  \ \ \ \ \ \ \ \ \ebind{\cf}{\efun{\cv}{\eapp{\eapp{\cy}{\cy}}{\cv}}}{\\
-  \ \ \ \ \ \ \ \ \efun{\cv}{\sumbodyfv}}\\
-  \ \ \ \ )}}{\\
-  \ \ \ \ \eapp{\cx}{\cx}\\
-  )}}{\\
-  \eapp{\cf}{10}
-  }
-\end{array}$
+\end{array}
+$
 
 \begin{enumerate}
-\item Draw arrows on the above expression from each bound variable to its binding occurrence.
-\item Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
-\item Write the value of $\cf$ at the last line by using the following Scala types:
-\begin{verbatim}
-trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-type Env = Map[String, Value]
-\end{verbatim}
+  \item Draw arrows from each bound occurrence to its binding occurrence.
+  \item Circle each free identifier.
 \end{enumerate}
 
-\item Consider the following language:
-\[
-\begin{array}{lrrl}
-  \text{Expression} & e & ::= & n\ |\ \esub{e}{e}\ |\ b\ |\ e\wedge e\ |\ \neg
-  e\ |\ \textsf{if}\ e\ e\ e\ |\ x \\
-  &&|& \efun{x\cdots x}{e}\ |\ \eappfo{e}{e,\cdots,e}\ |\
-  \erec{x}{x,\cdots,x}{e}{e} \\
-  \text{Value} & v & ::= & n\ |\ b\ |\ \clov{x\cdots x}{e}{\sigma} \\
-\end{array}
-\]
-Note that $b$ ranges over boolean values. The language does not support the short-circuiting
-semantics, i.e. $e_2$ must be evaluated in expression $e_1\wedge e_2$ whenever $e_1$
-evaluates to true or not.
-Write the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
+\end{exercise}
 
-\item What are the results of the following expression:
+\begin{exercise}
+\labex{recursion-scope}
+
+What are the results of the following expression:
 \[
   \begin{array}{l}
   \erec{\cf}{\cx}{\eifz{\cx}{\cx}{(\eadd{1}{(\eapp{\cf}{(\esub{\cx}{1})})})}}{\\
@@ -559,7 +504,39 @@ Map("f" -> CloV("x", Add(Num(13), Id("x")), Map()))
   \item Static scope
 \end{enumerate}
 
-\item The following sentences are a simplified version of the Racket programming
+\end{exercise}
+
+\begin{exercise}
+\labex{recursion-eager-if}
+
+  Consider the new semantics of \textsf{if0} as follows:
+\[
+  \begin{array}{c}
+  \inferrule
+  { \evald{e_1}{0} \\ \evald{e_2}{v_2} \\ \evald{e_3}{v_3} }
+  { \evald{\eifz{e_1}{e_2}{e_3}}{v_2} }
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{v_1} \\ v_1\not=0 \\ \evald{e_2}{v_2} \\ \evald{e_3}{v_3} }
+  { \evald{\eifz{e_1}{e_2}{e_3}}{v_3} }
+  \end{array}
+\]
+
+\begin{enumerate}
+  \item Explain how the new semantics is different from the original semantics.
+  \item Write an \lang expression such that
+  \begin{itemize}
+    \item the evaluation with the original semantics results in an integer, but
+    \item the evaluation with the above semantics incurs a run-time error.
+  \end{itemize}
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{recursion-racket-if}
+
+  The following sentences are a simplified version of the Racket programming
   language reference about
   conditionals.\sidenote{\url{https://docs.racket-lang.org/reference/if.html}}
 
@@ -606,46 +583,53 @@ Now, we extend \lang with Racket-like booleans.
     under the empty environment.
 \end{enumerate}
 
-\item Consider the following expression:
+\end{exercise}
 
-$
-\begin{array}{@{}l@{}}
-  \ebind{\cf}{\efun{\cx}{\eifz{\cx}{0}{(\eapp{\cf}{(\esub{\cx}{1})})}}}{ \\
-  \erec{\cf}{\cx}{\eifz{\cx}{0}{(\eapp{\cf}{(\esub{\cx}{1})})}}{ \\
-  \eapp{\cf}{\cy}
-  }
-  }
-\end{array}
-$
+\begin{exercise}
 
-\begin{enumerate}
-  \item Draw arrows from each bound occurrence to its binding occurrence.
-  \item Circle each free identifier.
-\end{enumerate}
-
-\item Consider the new semantics of \textsf{if0} as follows:
+Consider the following language:
 \[
-  \begin{array}{c}
-  \inferrule
-  { \evald{e_1}{0} \\ \evald{e_2}{v_2} \\ \evald{e_3}{v_3} }
-  { \evald{\eifz{e_1}{e_2}{e_3}}{v_2} }
-  \\[2em]
-  \inferrule
-  { \evald{e_1}{v_1} \\ v_1\not=0 \\ \evald{e_2}{v_2} \\ \evald{e_3}{v_3} }
-  { \evald{\eifz{e_1}{e_2}{e_3}}{v_3} }
-  \end{array}
+\begin{array}{lrrl}
+  \text{Expression} & e & ::= & n\ |\ \esub{e}{e}\ |\ b\ |\ e\wedge e\ |\ \neg
+  e\ |\ \textsf{if}\ e\ e\ e\ |\ x \\
+  &&|& \efun{x\cdots x}{e}\ |\ \eappfo{e}{e,\cdots,e}\ |\
+  \erec{x}{x,\cdots,x}{e}{e} \\
+  \text{Value} & v & ::= & n\ |\ b\ |\ \clov{x\cdots x}{e}{\sigma} \\
+\end{array}
 \]
+Note that $b$ ranges over boolean values. The language does not support the short-circuiting
+semantics, i.e. $e_2$ must be evaluated in expression $e_1\wedge e_2$ whenever $e_1$
+evaluates to true or not.
+Write the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
 
-\begin{enumerate}
-  \item Explain how the new semantics is different from the original semantics.
-  \item Write an \lang expression such that
-  \begin{itemize}
-    \item the evaluation with the original semantics results in an integer, but
-    \item the evaluation with the above semantics incurs a run-time error.
-  \end{itemize}
-\end{enumerate}
+\end{exercise}
 
-\item Explain what is wrong with the following expression and describe how
+\begin{exercise}
+\labex{recursion-fix-nont}
+
+Explain why the following expression does not terminate and describe how
+  to fix it.
+
+$\begin{array}{l}
+  \ebind{\cz}{(\efun{\cf}{\\
+  \ \ \ \ \ebind{\cx}{(\efun{\cy}{\\
+  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\eapp{\cy}{\cy}}{\\
+  \ \ \ \ \ \ \ \ \eapp{\cf}{\code{g}}}}\\
+  \ \ \ \ )}{\\
+  \ \ \ \ \eapp{\cx}{\cx}}}\\
+  )}{\\
+  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
+  \eapp{\cf}{10}
+  }
+}
+\end{array}$
+
+\end{exercise}
+
+\begin{exercise}
+\labex{recursion-fix-free}
+
+  Explain what is wrong with the following expression and describe how
   to fix it.
 
 $\begin{array}{l}
@@ -662,7 +646,66 @@ $\begin{array}{l}
 }
 \end{array}$
 
-\item Mutually recursive functions are functions that call each
+\end{exercise}
+
+\begin{exercise}
+
+Consider the following expression:
+
+$\begin{array}{l}
+  \ebind{\cf}{(\\
+  \ \ \ \ \ebind{\cx}{\efun{\cy}{(\\
+  \ \ \ \ \ \ \ \ \ebind{\cf}{\efun{\cv}{\eapp{\eapp{\cy}{\cy}}{\cv}}}{\\
+  \ \ \ \ \ \ \ \ \efun{\cv}{\sumbodyfv}}\\
+  \ \ \ \ )}}{\\
+  \ \ \ \ \eapp{\cx}{\cx}\\
+  )}}{\\
+  \eapp{\cf}{10}
+  }
+\end{array}$
+
+\begin{enumerate}
+\item Draw arrows on the above expression from each bound variable to its binding occurrence.
+\item Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
+\item Write the value of $\cf$ at the last line by using the following Scala types:
+\begin{verbatim}
+trait Value
+case class NumV(n: Int) extends Value
+case class CloV(p: String, b: Expr, e: Env) extends Value
+type Env = Map[String, Value]
+\end{verbatim}
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+
+Consider the following definition of $\cz$ and its use to define the recursive
+function $\cf$.
+
+$\begin{array}{l}
+  \ebind{\cz}{(\efun{\cf}{\\
+  \ \ \ \ \ebind{\cx}{(\efun{\cy}{\\
+  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\efun{\code{a}}{\eapp{\eapp{\cy}{\cy}}{\code{a}}}}{\\
+  \ \ \ \ \ \ \ \ \eapp{\cf}{\code{g}}}}\\
+  \ \ \ \ )}{\\
+  \ \ \ \ \eapp{\cx}{\cx}}}\\
+  )}{\\
+  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
+  \eapp{\cf}{10}
+  }
+}
+\end{array}$
+
+Describe conditions that an argument given to $\cz$ must satisfy so that $\cz$
+    can make its recursive version.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{recursion-mutual}
+
+Mutually recursive functions are functions that call each
 other. For example, the following Scala code defines two mutually
 recursive functions \code{even} and \code{odd}:
 
@@ -696,4 +739,4 @@ $\begin{array}{@{}l@{}}
 
 Fill every \code{???} to complete the expression.
 
-\end{enumerate}
+\end{exercise}

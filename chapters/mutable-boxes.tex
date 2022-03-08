@@ -595,48 +595,26 @@ The \code{SetBox} case evaluates both subexpressions and modifies the store.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Consider the following expression:
+\begin{exercise}
+
+Consider the following expression:
 
 \[
   \eapp{(\efun{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}})}{\eref{7}}
 \]
 
-Write out the arguments to and results of \code{interp} each time it is called during
-the evaluation of the expression. Write them out in the order in which the calls to \code{interp}
-occur during evaluation.
+Write out the arguments to and results of \code{interp} each time it is called
+during the evaluation of the expression. Write them out in the order in
+which the calls to \code{interp} occur during evaluation.
 
-Write down the environments and stores using the \verb+{}+ notation.
-Also, use the arrow notation for both stores and environments.
+\end{exercise}
 
-For example, the solution to the following \code{interp} call is like below.
+\begin{exercise}
+\labex{mutable-boxes-desugar}
 
-\begin{verbatim}
-interp(Add(Id("x"), Id("y")),
-       Map("x" -> NumV(3), "y" -> NumV(4)),
-       Map.empty)
-\end{verbatim}
-
-\begin{verbatim}
-exp: x + y
-env: {x -> NumV(3), y -> NumV(4)}
-sto: {}
-res: NumV(7) {}
-
-exp: x
-env: {x -> NumV(3), y -> NumV(4)}
-sto: {}
-res: NumV(3) {}
-
-exp: y
-env: {x -> NumV(3), y -> NumV(4)}
-sto: {}
-res: NumV(4) {}
-\end{verbatim}
-
-\item This exercise asks you to implement the \code{desugar} function, which
-  takes a \lang expression as an argument and returns an expression of the same
-  behavior without \textsf{;} (sequencing).
+This exercise asks you to implement the \code{desugar} function, which
+takes a \lang expression as an argument and returns an expression of the same
+behavior without \textsf{;} (sequencing).
 
 \begin{verbatim}
 def desugar(e: Expr): Expr = e match {
@@ -661,4 +639,4 @@ def free(e: Expr): Set[String]
 def fresh(xs: Set[String]): String
 \end{verbatim}
 
-\end{enumerate}
+\end{exercise}

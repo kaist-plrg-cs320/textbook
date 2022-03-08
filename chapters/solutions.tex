@@ -2,16 +2,20 @@
 \chapter{Solutions to Selected Exercises}
 \labch{solutions}
 
-\textbf{\refch{immutability}}
-\begin{enumerate}
-\item[1.]
+Many exercises are meant to have multiple solutions. Each provided solution may
+not be the only solution.
+
+\textbf{\refex{immutability-student}}
+\vspace{-1em}
 \begin{verbatim}
 def names(l: List[Student]): List[String] = l match {
   case Nil => Nil
   case h :: t => h.name :: names(t)
 }
 \end{verbatim}
-\item[2.]
+
+\textbf{\refex{immutability-tall}}
+\vspace{-1em}
 \begin{verbatim}
 def tall(l: List[Student]): List[Student] = l match {
   case Nil => Nil
@@ -22,42 +26,573 @@ def tall(l: List[Student]): List[Student] = l match {
       tall(t)
 }
 \end{verbatim}
-\item[3.]
+
+\textbf{\refex{immutability-length}}
+\vspace{-1em}
 \begin{verbatim}
 def length(l: List[Int]): Int = l match {
   case Nil => 0
   case h :: t => 1 + length(t)
 }
 \end{verbatim}
-\item[4.]
+
+\textbf{\refex{immutability-append}}
+\vspace{-1em}
 \begin{verbatim}
 def append(l: List[Int], n: Int): List[Int] = l match {
   case Nil => n :: Nil
   case h :: t => h :: append(t, n)
 }
 \end{verbatim}
+\vspace{-1em}
 $O(n)$
-\end{enumerate}
 
-\textbf{\refch{functions}}
-
-\begin{enumerate}
-\item[1.]
+\textbf{\refex{functions-incby}}
+\vspace{-1em}
 \begin{verbatim}
 def incBy(l: List[Int], n: Int): List[Int] = l.map(_ + n)
 \end{verbatim}
-\item[2.]
+
+\textbf{\refex{functions-gt}}
+\vspace{-1em}
 \begin{verbatim}
 def gt(l: List[Int], n: Int): List[Int] = l.filter(_ > n)
 \end{verbatim}
-\item[3.]
+
+\textbf{\refex{functions-append}}
+\vspace{-1em}
 \begin{verbatim}
 def append(l: List[Int], n: Int): List[Int] =
   l.foldRight(n :: Nil)(_ :: _)
 \end{verbatim}
-\item[4.]
+
+\textbf{\refex{functions-reverse}}
+\vspace{-1em}
 \begin{verbatim}
 def reverse(l: List[Int]): List[Int] =
   l.foldLeft(Nil: List[Int])((l, e) => e :: l)
 \end{verbatim}
+
+\textbf{\refex{identifiers-shadowing-impl}}
+\vspace{-1em}
+\begin{verbatim}
+case Num(n) => Set()
+case Add(l, r) => helper(l, env) ++ helper(r, env)
+case Id(x) => Set()
+case Val(x, e, b) =>
+  val s = if (env(x)) Set(x) else Set()
+  s ++ helper(e, env) ++ helper(b, env + x)
+\end{verbatim}
+
+\textbf{\refex{first-class-functions-rewrite}}
+
+$\eapp{(\efun{\cx}{\efun{\cy}\eapp{\eapp{\cx}{(\esub{10}{\cy})}}})}{\efun{\cy}{\eadd{8}{\cy}}}$
+\\
+
+\textbf{\refex{first-class-functions-rewrite-impl}}
+\vspace{-1em}
+\begin{verbatim}
+case Num(n) => Num(n)
+case Id(x) => Id(x)
+case Val(x, e, b) => App(Fun(x, desugar(b)), desugar(e))
+case Fun(x, b) => Fun(x, desugar(b))
+case App(f, a) => App(desugar(f), desugar(a))
+\end{verbatim}
+
+\textbf{\refex{first-class-functions-closure}}
+
+$\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\cx}})}{0}}{0}$
+\\
+
+\textbf{\refex{first-class-functions-terminate}}
+
+$\eapp{1}{1}$
+\\
+
+\textbf{\refex{first-class-functions-subst}}
+\newcommand{\evals}[2]{#1\Rightarrow#2}
+\begin{enumerate}
+  \item
+      \[
+        \evals{n}{n}
+        \qquad
+        \inferrule
+        { \evals{e_1}{n_1} \\ \evals{e_2}{n_2} }
+        { \evals{\eadd{e_1}{e_2}}{\eadd{n_1}{n_2}} }
+      \]
+
+      \[
+        \evals{\efun{x}{e}}{\efun{x}{e}}
+        \qquad
+        \inferrule
+        { \evals{e_1}{\efun{x}{e}} \\
+          \evals{e_2}{v_2} \\
+          \evals{e[x/v_2]}{v} }
+        { \evals{\eapp{e_1}{e_2}}{v} }
+      \]
+  \item
+      \[
+        \begin{array}{rcl}
+          n[x/v] &=& n \\
+          (\eadd{e_1}{e_2})[x/v] &=& \eadd{e_1[x/v]}{e_2[x/v]} \\
+          x'[x/v] &=& v \quad \text{if}\ x=x' \\
+          x'[x/v] &=& x' \quad \text{if}\ x\not=x' \\
+          (\efun{x'}{e})[x/v] &=& \efun{x'}{e} \quad \text{if}\ x=x' \\
+          (\efun{x'}{e})[x/v] &=& \efun{x'}{e[x/v]} \quad \text{if}\ x\not=x' \\
+          (\eapp{e_1}{e_2})[x/v] &=& \eapp{e_1[x/v]}{e_2[x/v]} \\
+        \end{array}
+      \]
+  \item
+    \begin{enumerate}
+        \item 22
+        \item Error
+    \end{enumerate}
+  \item
+\begin{verbatim}
+case Fun(y, b) =>
+  if (y == x)
+    Fun(y, b)
+  else {
+    val ny = fresh(binding(b) ++ free(b) ++ free(e) ++ Set(x))
+    Fun(ny, subst(subst(b, y, Id(ny)), x, e))
+  }
+\end{verbatim}
 \end{enumerate}
+
+\textbf{\refex{first-class-functions-js-record}}
+\begin{enumerate}
+  \item
+      \[
+        \inferrule
+        { \evald{e_1}{v_1} \\\cdots\\ \evald{e_n}{v_n} }
+        { \evald{\{l_1:e_1,\ldots,l_n:e_n\}}{\langle l_1:v_1,\ldots,l_n:v_n\rangle} }
+      \]
+
+      \[
+        \inferrule
+        { \evald{e}{\langle\ldots,l:v,\ldots\rangle} }
+        { \evald{e.l}{v} }
+      \]
+
+      \[
+        \inferrule
+        {
+          \evald{e}{\langle l_1:v_1,\ldots,l_n:v_n\rangle} \\
+          l\not\in\{l_1,\ldots,l_n\} \\
+          l_i=\code{proto} \\
+          \evald{v_i.l}{v}
+        }
+        { \evald{e.l}{v} }
+      \]
+
+      \[
+        \inferrule
+        {
+          \evald{e}{\langle l_1:v_1,\ldots,l_n:v_n\rangle} \\
+          l\not\in\{l_1,\ldots,l_n\} \\
+          \code{proto}\not\in\{l_1,\ldots,l_n\}
+        }
+        { \evald{e.l}{\textsf{undefined}} }
+      \]
+
+      \[
+        \inferrule
+        {
+          \evald{e_1}{v_1} \\
+          \evald{v_1.l}{\clov{x}{e}{\sigma'}} \\
+          \evald{e_2}{v_2} \\
+          \eval{\sigma'[\code{this}\mapsto v_1,x\mapsto v_2]}{e}{v}
+        }
+        { \evald{e_1.l(e_2)}{v} }
+      \]
+  \item
+    {\small
+      \[
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            { \eval{\emptyset}{1}{1} }
+            { \eval{\emptyset}{\{\code{x}:1\}}{\langle\code{x}:1\rangle} }
+          }
+          { \eval
+            {\emptyset}
+            {\{\code{proto}:\{\code{x}:1\}\}}
+            {\langle\code{proto}:\langle\code{x}:1\rangle\rangle}
+          } \\
+          \code{x}\not\in\{\code{proto}\} \\
+          \code{proto}=\code{proto} \\
+          \inferrule
+          { \evald{\langle\code{x}:1\rangle}{\langle\code{x}:1\rangle} }
+          { \evald{\langle\code{x}:1\rangle.\code{x}}{1} }
+        }
+        { \eval{\emptyset}{\{\code{proto}:\{\code{x}:1\}\}.\code{x}}{1} }
+      \]
+    }
+  \item
+    $\efun{\code{x}}{\code{this}.\code{a}}$
+\end{enumerate}
+
+\textbf{\refex{first-class-functions-exc}}
+\begin{enumerate}
+    \item
+    \[
+      \begin{array}{c}
+        \evald{n}{n}
+        \qquad
+        \inferrule
+        { x\in\dom{\sigma} }
+        { \evald{x}{\sigma(x)} }
+        \qquad
+        \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}}
+        \\[2em]
+        \inferrule
+        { \evald{e_1}{\textsf{exc}} }
+        { \evald{e_1+e_2}{\textsf{exc}} }
+        \qquad
+        \inferrule
+        { \evald{e_1}{v} \\
+          \evald{e_2}{\textsf{exc}} }
+        { \evald{e_1+e_2}{\textsf{exc}} }
+        \qquad
+        \inferrule
+        { \evald{e_1}{n_1} \\
+          \evald{e_2}{n_2} }
+        { \evald{e_1+e_2}{n_1+n_2} }
+        \\[2em]
+        \inferrule
+        { \evald{e_1}{\textsf{exc}} }
+        { \evald{e_1\ e_2}{\textsf{exc}} }
+        \qquad
+        \inferrule
+        { \evald{e_1}{v} \\
+          \evald{e_2}{\textsf{exc}} }
+        { \evald{e_1\ e_2}{\textsf{exc}} }
+        \\[2em]
+        \inferrule
+        { \evald{e_1}{\clov{x}{e}{\sigma'}} \\
+          \evald{e_2}{v_2} \\
+          \eval{\sigma'[x\mapsto v_2]}{e}{r}
+        }
+        { \evald{\eapp{e_1}{e_2}}{r} }
+        \\[2em]
+        \evald{\textsf{throw}}{\textsf{exc}}
+        \qquad
+        \inferrule
+        { \evald{e_1}{v} }
+        { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{v} }
+        \qquad
+        \inferrule
+        { \evald{e_1}{\textsf{exc}} \\ \evald{e_2}{r} }
+        { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{r} }
+      \end{array}
+    \]
+    \item
+  \[
+    \inferrule
+    {
+      \inferrule
+      {
+        \evale{1}{1} \\
+        \evale{\textsf{throw}}{\textsf{exc}}
+      }
+      { \evale{1 + \textsf{throw}}{\textsf{exc}} } \\
+      \inferrule
+      { \evale{\textsf{throw}}{\textsf{exc}} }
+      { \evale{\textsf{throw} + 2}{\textsf{exc}} } \\
+    }
+    { \evale{\textsf{try}\ (1 + \textsf{throw})\ \textsf{catch}\ (\textsf{throw} + 2)}{\textsf{exc}} }
+  \]
+\end{enumerate}
+
+\textbf{\refex{recursion-scope}}
+\begin{enumerate}
+    \item Does not terminate
+    \item 49
+\end{enumerate}
+
+\textbf{\refex{recursion-eager-if}}
+
+$\eifz{0}{0}{(\eapp{0}{0})}$
+\\
+
+\textbf{\refex{recursion-racket-if}}
+\newcommand{\eand}[2]{\textsf{and}\ #1\ #2}
+\newcommand{\eor}[2]{\textsf{or}\ #1\ #2}
+\begin{enumerate}
+  \item
+    \[
+      \evald{b}{b}
+      \qquad
+      \inferrule
+      { \evald{e_1}{v_1} \\ v_1\not={\false} \\ \evald{e_2}{v_2} }
+      { \evald{\eif{e_1}{e_2}{e_3}}{v_2} }
+      \qquad
+      \inferrule
+      { \evald{e_1}{\false} \\ \evald{e_3}{v_3} }
+      { \evald{\eif{e_1}{e_2}{e_3}}{v_3} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{\false} }
+      { \evald{\eand{e_1}{e_2}}{\false} }
+      \qquad
+      \inferrule
+      { \evald{e_1}{v_1} \\ v_1\not={\false} \\ \evald{e_2}{v_2} }
+      { \evald{\eand{e_1}{e_2}}{v_2} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{v_1} \\ v_1\not={\false} }
+      { \evald{\eor{e_1}{e_2}}{v_1} }
+      \qquad
+      \inferrule
+      { \evald{e_1}{\false} \\ \evald{e_2}{v_2}}
+      { \evald{\eor{e_1}{e_2}}{v_2} }
+    \]
+  \item
+    \[
+      \inferrule
+      {
+        \inferrule
+        {
+          \eval{\emptyset}{\false}{\false} \\
+          \eval{\emptyset}{2}{2}
+        }
+        { \eval{\emptyset}{\eor{\false}{2}}{2} } \\
+        2\not={\false} \\
+        \inferrule
+        { \eval{\emptyset}{\false}{\false} }
+        { \eval{\emptyset}{\eand{\false}{2}}{\false} } \\
+      }
+      { \eval{\emptyset}{\eif{(\eor{\false}{2})}{(\eand{\false}{2})}{1}}{\false} }
+    \]
+\end{enumerate}
+
+\textbf{\refex{recursion-fix-nont}}
+
+Change $\ebind{\code{g}}{\eapp{\cy}{\cy}}{}$to
+$\ebind{\code{g}}{\efun{\cx}{\eapp{\eapp{\cy}{\cy}}{\cx}}}{}$\!.
+\\
+
+\textbf{\refex{recursion-fix-free}}
+
+Change $\ebind{\cf}{\eapp{\cz}{({\efun{\cv}{\sumbodyfv}})}}{}$to
+$\ebind{\cf}{\eapp{\cz}{({\efun{\cf}{\efun{\cv}{\sumbodyfv}}})}}{}$\!.
+\\
+
+\textbf{\refex{recursion-mutual}}
+
+$\begin{array}{@{}l@{}}
+  \ebind{\cz}{(\efun{\cb}{\\
+  \ \ \ \ \ebind{\code{fx}}{(\efun{\code{fy}}{\\
+  \ \ \ \ \ \ \ \ \ebind{\cf}{\efun{\cx}{(\eapp{\code{fy}}{\code{fy}})\textsf{.1}\ \cx}}{\\
+  \ \ \ \ \ \ \ \ \ebind{\code{g}}{\efun{\cx}{(\eapp{\code{fy}}{\code{fy}})\textsf{.2}\ \cx}}{\\
+  \ \ \ \ \ \ \ \ \eapp{\cb}{(\cf,\code{g})}}}}\\\ \ \ \ )}{\\
+  \ \ \ \ \eapp{\code{fx}}{\code{fx}}}}\\)}{\\
+  \ebind{\cf}{\eapp{\cz}{\efun{\cf}{(
+    \efun{\code{n}}{\eifz{\code{n}}{\true}{(\eapp{\cf\textsf{.2}}{(\esub{\code{n}}{1})})}},
+    \efun{\code{n}}{\eifz{\code{n}}{\false}{(\eapp{\cf\textsf{.1}}{(\esub{\code{n}}{1})})}}
+  )}}}{\\
+  \ebind{\code{even}}{\cf\textsf{.1}}{\\
+  \ebind{\code{odd}}{\cf\textsf{.2}}{\\
+  (\eapp{\code{even}}{10}, \eapp{\code{odd}}{10})}}}}
+\end{array}$
+\\
+
+\textbf{\refex{mutable-boxes-desugar}}
+\vspace{-1em}
+\begin{verbatim}
+App(Fun(fresh(free(r)), desugar(r)), desugar(l))
+\end{verbatim}
+
+\textbf{\refex{mutable-variables-cbr}}
+\begin{enumerate}
+  \item CBR
+  \item
+    $[\code{n} \mapsto a_1, \cf \mapsto a_2, \cx \mapsto a_4]$,\\
+$[
+    a_1 \mapsto 42,
+    a_2 \mapsto \clov{\code{n}}{\eapp{\code{g}}{\code{n}}}{[\code{n} \mapsto a_1]},
+    a_3 \mapsto \clov{\cx}{\eadd{\cx}{8}}{[\code{n} \mapsto a_1, \code{f} \mapsto a_2]},
+    a_4 \mapsto 42
+]$
+  \item
+    $[\code{n} \mapsto a_1, \cf \mapsto a_2, \cx \mapsto a_1]$,\\
+$[
+    a_1 \mapsto 42,
+    a_2 \mapsto \clov{\code{n}}{\eapp{\code{g}}{\code{n}}}{[\code{n} \mapsto a_1]},
+    a_3 \mapsto \clov{\cx}{\eadd{\cx}{8}}{[\code{n} \mapsto a_1, \code{f} \mapsto a_2]}
+]$
+\end{enumerate}
+
+\textbf{\refex{mutable-variables-record}}
+\begin{enumerate}
+  \item
+\begin{verbatim}
+val (RecV(fields), rs) = interp(r, env, fs)
+interp(b, fenv + (x -> fields(f)), rs)
+\end{verbatim}
+  \item 2,
+    $[a_1 \mapsto 2, a_2 \mapsto \{\cz{:}a_1\}, a_3 \mapsto \clov{\cy}{\eset{\cy}{2}}{[\cx \mapsto a_2]}]$
+  \item 1,
+    $[a_1 \mapsto 1, a_2 \mapsto \{\cz{:}a_1\}, a_3 \mapsto \clov{\cy}{\eset{\cy}{2}}{[\cx \mapsto a_2]}, a_4 \mapsto 2]$
+\end{enumerate}
+
+\textbf{\refex{mutable-variables-imp}}
+\begin{enumerate}
+  \item
+      \[
+        \evald{\eskip}{\sigma}
+        \qquad
+        \inferrule
+        { \evald{e}{v} }
+        { \evald{\eset{x}{e}}{\sigma[x\mapsto v]} }
+      \]
+
+      \[
+        \inferrule
+        { \evald{e}{0} \\ \evald{c_1}{\sigma_1} }
+        { \evald{\eifz{e}{c_1}{c_2}}{\sigma_1} }
+        \qquad
+        \inferrule
+        { \evald{e}{v} \\ v\not=0 \\ \evald{c_2}{\sigma_2} }
+        { \evald{\eifz{e}{c_1}{c_2}}{\sigma_2} }
+      \]
+
+      \[
+        \inferrule
+        { \evald{e}{0} \\ \evald{c}{\sigma_1} \\ \eval{\sigma_1}{\ewhile{e}{c}}{\sigma_2} }
+        { \evald{\ewhile{e}{c}}{\sigma_2} }
+        \qquad
+        \inferrule
+        { \evald{e}{v} \\ v\not=0 }
+        { \evald{\ewhile{e}{c}}{\sigma} }
+      \]
+
+      \[
+        \inferrule
+        { \evald{c_1}{\sigma_1} \\ \eval{\sigma_1}{c_2}{\sigma_2} }
+        { \evald{\eseq{c_1}{c_2}}{\sigma_2} }
+      \]
+  \item
+    \[
+      \inferrule
+      {
+        \inferrule
+        { \eval{\emptyset}{0}{0} }
+        { \eval{\emptyset}{\eset{{\cx}}{0}}{[{\cx}\mapsto0]} }
+        \\
+        \inferrule
+        {
+          \inferrule
+          { {\cx}\in\dom{[{\cx}\mapsto0]} }
+          { \eval{[{\cx}\mapsto0]}{{\cx}}{0} }
+          \quad
+          \inferrule
+          {}
+          { \eval{[{\cx}\mapsto0]}{{\eskip}}{[{\cx}\mapsto0]} }
+        }
+        { \eval{[{\cx}\mapsto0]}
+          {\eseq{\eifz{{\cx}}{{\eskip}}{\eset{{\cx}}{1}}}}
+          {[{\cx}\mapsto0]} }
+      }
+      { \eval{\emptyset}
+        {\eseq{\eset{{\cx}}{0}}{\eifz{{\cx}}{{\eskip}}{\eset{{\cx}}{1}}}}
+        {[{\cx}\mapsto0]}
+      }
+    \]
+\end{enumerate}
+
+\textbf{\refex{garbage-collection-copying}}
+
+\begin{itemize}
+  \item Stack: \code{13}
+\item From space:
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
+ \hline
+ {1}&{2}&{2}&{3}&{7}&{99}&{19}&{99}&{16}&{10}&{99}&{13}&{5}\\
+ \hline \multicolumn{1}{c}{}\\[-16pt]
+  \multicolumn{1}{c}{\tiny \code{0}}&
+  \multicolumn{1}{c}{\tiny \code{1}}&
+  \multicolumn{1}{c}{\tiny \code{2}}&
+  \multicolumn{1}{c}{\tiny \code{3}}&
+  \multicolumn{1}{c}{\tiny \code{4}}&
+  \multicolumn{1}{c}{\tiny \code{5}}&
+  \multicolumn{1}{c}{\tiny \code{6}}&
+  \multicolumn{1}{c}{\tiny \code{7}}&
+  \multicolumn{1}{c}{\tiny \code{8}}&
+  \multicolumn{1}{c}{\tiny \code{9}}&
+  \multicolumn{1}{c}{\tiny \code{10}}&
+  \multicolumn{1}{c}{\tiny \code{11}}&
+  \multicolumn{1}{c}{\tiny \code{12}}
+ \\
+\end{tabular}
+\item To space:
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|@{\hskip0pt}c@{\hskip0pt}|}
+ \hline
+ {3}&{16}&{5}&{4}&{19}&{13}&{1}&{4}&{0}&{0}&{0}&{0}&{0}\\
+ \hline \multicolumn{1}{c}{}\\[-16pt]
+  \multicolumn{1}{c}{\tiny \code{13}}&
+  \multicolumn{1}{c}{\tiny \code{14}}&
+  \multicolumn{1}{c}{\tiny \code{15}}&
+  \multicolumn{1}{c}{\tiny \code{16}}&
+  \multicolumn{1}{c}{\tiny \code{17}}&
+  \multicolumn{1}{c}{\tiny \code{18}}&
+  \multicolumn{1}{c}{\tiny \code{19}}&
+  \multicolumn{1}{c}{\tiny \code{20}}&
+  \multicolumn{1}{c}{\tiny \code{21}}&
+  \multicolumn{1}{c}{\tiny \code{22}}&
+  \multicolumn{1}{c}{\tiny \code{23}}&
+  \multicolumn{1}{c}{\tiny \code{24}}&
+  \multicolumn{1}{c}{\tiny \code{25}}
+ \\
+\end{tabular}
+\end{itemize}
+
+\textbf{\refex{lazy-evaluation-strict}}
+
+$\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{\cx}{0}})}{\cy}})}{0}$
+\\
+
+\textbf{\refex{lazy-evaluation-val}}
+\vspace{-1em}
+\begin{verbatim}
+case Val(x, e, b) =>
+  interp(b, env + (x -> ExprV(e, env)))
+case If0(c, t, f) =>
+  interp(if (strict(interp(c, env)) == NumV(0)) t else f, env)
+\end{verbatim}
+
+\textbf{\refex{lazy-evaluation-pair}}
+\vspace{-1em}
+\begin{verbatim}
+case class PairV(f: Value, s: Value) extends Value
+
+case Pair(f, s) => PairV(ExprV(f, env), ExprV(s, env))
+case Fst(e) =>
+  val Pair(v, _) = strict(interp(e, env))
+  v
+case Snd(e) =>
+  val Pair(_, v) = strict(interp(e, env))
+  v
+\end{verbatim}
+
+\textbf{\refex{lazy-evaluation-list}}
+\vspace{-1em}
+\begin{verbatim}
+case class ConsV(h: Value, t: Value) extends Value
+
+case Nil => NilV
+case Cons(h, t) => ConsV(ExprV(h, env), ExprV(t, env))
+case Head(e) =>
+  val ConsV(h, _) = strict(interp(e, env))
+  strict(h)
+case Tail(e) =>
+  val ConsV(_, t) = strict(interp(e, env))
+  val v = strict(t)
+  if (isList(v)) v else error()
+\end{verbatim}

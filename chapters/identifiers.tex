@@ -459,15 +459,9 @@ terminates without producing any results.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Which of the following are examples of shadowing?
-\begin{enumerate}
-  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{\cx}})}{\eadd{1}{\cx}}$
-  \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
-  \item $\ebind{\cx}{3}{\ebind{\cx}{5}{\eadd{1}{\cx}}}$
-\end{enumerate}
+\begin{exercise}
 
-\item For each of the following expression:
+For each of the following expression:
 \begin{itemize}
   \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{\cx}})}{\eadd{1}{\cx}}$
   \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
@@ -478,7 +472,23 @@ terminates without producing any results.
   \item Draw dotted arrows from each shadowing variable to its shadowed variable.
 \end{enumerate}
 
-\item This exercise asks you to implement the \code{shadowing} function, which
+\end{exercise}
+
+\begin{exercise}
+
+Explain whether each of the following expressions is an example of shadowing:
+\begin{enumerate}
+  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{\cx}})}{\eadd{1}{\cx}}$
+  \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
+  \item $\ebind{\cx}{3}{\ebind{\cx}{5}{\eadd{1}{\cx}}}$
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{identifiers-shadowing-impl}
+
+This exercise asks you to implement the \code{shadowing} function, which
 takes a \lang expression as an argument and returns the set of every
 identifier that becomes shadowed at least once in the expression. For
 example, \code{shadowing($e$)} equals \code{Set("x")} where $e$ denotes
@@ -498,7 +508,7 @@ def helper(e: Expr, env: Set[String]): Set[String] =
   }
 \end{verbatim}
 
-    Fill every \code{???} to complete the implementation. You may refer to the following
+Fill every \code{???} to complete the implementation. You may refer to the following
 to deal with sets:
 \begin{itemize}
   \item \code{Set()} is the empty set.
@@ -510,4 +520,4 @@ to deal with sets:
     and \code{s2}.
 \end{itemize}
 
-\end{enumerate}
+\end{exercise}

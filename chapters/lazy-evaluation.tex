@@ -511,12 +511,9 @@ not evaluated at all.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Which of the following produce different results in a
- CBV language and a CBN language? Both produce the
- same result if they both produce the same number or they both produce
- closures (even if they do not behave exactly the same
- when applied).
+\begin{exercise}
+
+Write the results of each expression under CBV and CBN.
 
 \begin{enumerate}
   \item $\eapp{(\efun{\cy}{\eapp{\cy}{3}})}{(\efun{\cx}{\eapp{1}{2}})}$
@@ -528,11 +525,6 @@ not evaluated at all.
     $\eapp{(\efun{\cy}{\cy})}{(\eadd{1}{\efun{\cx}{\cx}})}$
   \item
     $\eapp{(\efun{\cy}{\eadd{1}{2}})}{(\eadd{1}{\efun{\cx}{\cx}})}$
-\end{enumerate}
-
-\item Show the results of each expression in a CBV language and a CBN language.
-
-\begin{enumerate}
   \item $\eadd{(\efun{\cx}{8})}{10}$
   \item $\eapp{(\efun{\cx}{8})}{(\eapp{1}{2})}$
   \item $\efun{\cx}{(\eapp{(\efun{\cy}{42})}{(\eapp{9}{2})})}$
@@ -542,7 +534,48 @@ not evaluated at all.
     $\eadd{1}{(\eapp{(\efun{\cx}{\eadd{1}{13}})}{(\eadd{1}{\efun{\cy}{7}})})}$
 \end{enumerate}
 
-\item Note that there is a recursive call in the following function:
+\end{exercise}
+
+\begin{exercise}
+
+Consider the following expression:
+\[
+\begin{array}{l}
+  \ebind{\cf}{\efun{\cx}{\eadd{\cy}{7}}}{\\
+  \ebind{\cy}{5}{\\
+  \eapp{\cf}{(\eadd{42}{\efun{\cy}{3}})}
+  }
+  }
+\end{array}
+\]
+
+Explain the result of evaluating it under the following semantics:
+\begin{enumerate}
+  \item CBN with static scoping
+  \item CBN with dynamic scoping
+  \item CBV with static scoping
+  \item CBV with dynamic scoping
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+
+For each of the following \lang expressions, show how it is evaluated and its result.
+
+\begin{enumerate}
+  \item
+    $\eapp{(\efun{\cx}{\eapp{\cx}{8}})}{(\eadd{\eapp{42}}{\efun{\cy}{\esub{\cy}{\cx}}})}$
+  \item
+    $\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{3}{\cx}})}{\cy})}}{5}$
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{lazy-evaluation-strict}
+
+There is a recursive call in \code{strict}:
 
 \begin{verbatim}
 def strict(v: Value): Value = v match {
@@ -557,36 +590,13 @@ def strict(v: Value): Value = v match {
 
 Write an example \lang expression showing the need for the recursive \code{strict} call.
 
-\item Consider the following expression:
-\[
-\begin{array}{l}
-  \ebind{\cf}{\efun{\cx}{\eadd{\cy}{7}}}{\\
-  \ebind{\cy}{5}{\\
-  \eapp{\cf}{(\eadd{42}{\efun{\cy}{3}})}
-  }
-  }
-\end{array}
-\]
+\end{exercise}
 
-Explain the result of evaluating it under the following semantics:
-\begin{enumerate}
-  \item Lazy evaluation with static scope
-  \item Lazy evaluation with dynamic scope
-  \item Eager evaluation with static scope
-  \item Eager evaluation with dynamic scope
-\end{enumerate}
+\begin{exercise}
+\labex{lazy-evaluation-val}
 
-\item For each of the following \lang expressions, show how it is evaluated and its result.
-
-\begin{enumerate}
-  \item
-    $\eapp{(\efun{\cx}{\eapp{\cx}{8}})}{(\eadd{\eapp{42}}{\efun{\cy}{\esub{\cy}{\cx}}})}$
-  \item
-    $\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{3}{\cx}})}{\cy})}}{5}$
-\end{enumerate}
-
-\item This exercise extends \lang with \textsf{val} and \textsf{if0}.  Consider
-  the following interpreter implementation:
+This exercise extends \lang with \textsf{val} and \textsf{if0}.  Consider
+the following interpreter implementation:
 
 \begin{verbatim}
 sealed trait Expr
@@ -610,8 +620,13 @@ evaluates to a nonzero integer or a closure.
 
 Fill every \code{???} to complete the interpreter.
 
-\item This exercise extends \lang with pairs. Consider the following interpreter
-  implementation:
+\end{exercise}
+
+\begin{exercise}
+\labex{lazy-evaluation-pair}
+
+This exercise extends \lang with pairs. Consider the following interpreter
+implementation:
 
 \begin{verbatim}
 sealed trait Expr
@@ -655,8 +670,13 @@ Each of them is evaluated only when its value is needed. For example,
 
 Fill every \code{???} to complete the interpreter.
 
-\item This exercise extends \lang with lists. Consider the following interpreter
-  implementation:
+\end{exercise}
+
+\begin{exercise}
+\labex{lazy-evaluation-list}
+
+This exercise extends \lang with lists. Consider the following interpreter
+implementation:
 
 \begin{verbatim}
 sealed trait Expr
@@ -707,4 +727,4 @@ function \verb!def isList(v: Value): Boolean!, which returns \code{true} if a
 given value is \code{ConsV} or \code{NilV} and \code{false} otherwise, without
 defining it.
 
-\end{enumerate}
+\end{exercise}

@@ -435,64 +435,150 @@ subtraction can be desugared into the lambda calculus.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Consider the following expression:
+\begin{exercise}
 
-\[
-\ebind{\cx}{5}{
-    \ebind{\code{f}}{\efun{\cy}{\eadd{\cy}{\cx}}}{
+Consider the following expression:
+
+$\begin{array}{@{}l}
+\ebind{\cx}{5}{\\
+    \ebind{\code{f}}{\efun{\cy}{\eadd{\cy}{\cx}}}{\\
         \eapp{(\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}})}
         {(\efun{\cx}{\cx})}
     }
 }
-\]
+\end{array}$
+
 Describe a trace of the evaluation in terms of arguments to the \code{interp}
-function for every call. (There will be 16 calls.) The \code{interp} function
-takes two arguments---an expression and an environment---so show both for each call.
-For \code{Num}, \code{Id}, and \code{Fun} expressions, show their result values, which
-are immediate. You can use the following abbreviations and possibly more abbreviations:
+function for every call. The \code{interp} function takes two arguments---an
+expression and an environment---so show both for each call.  For \code{Num},
+\code{Id}, and \code{Fun} expressions, show their result values, which are
+immediate.
 
-\begin{center}
-\begin{tabular}{lcl}
-$E_0$ & = & the whole expression \\
-$E_1$ & = & $\efun{\cy}{\eadd{\cy}{\cx}}$ \\
-$E_2$ & = & $\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}}$ \\
-$E_3$ & = & $\efun{\cx}{\cx}$ \\
-$E_4$ & = & $\ebind{\code{f}}{E_1}{\eapp{E_2}{E_3}}$
-\end{tabular}
-\end{center}
+\end{exercise}
 
-\item This exercise examines differences between semantics by changing scope.
-The following code is an implementation of an interpreter:
+\begin{exercise}
+
+This exercise examines differences between semantics by changing scope.
+Consider the following code:
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Value = e match {
-  case Num(n) => NumV(n)
-  case Add(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n + m)
-  case Sub(l, r) =>
-    val NumV(n) = interp(l, env)
-    val NumV(m) = interp(r, env)
-    NumV(n - m)
-  case Id(x) => lookup(x, env)
-  case Fun(x, b) => CloV(x, b, env)
+  ...
   case App(f, a) =>
     val CloV(x, b, fEnv) = interp(f, env)
-    interp(b, __________ + (x -> interp(a, env)))
+    interp(b, ??? + (x -> interp(a, env)))
 }
 \end{verbatim}
 
 Describe the semantics of the \code{App} case in prose
-when we use each of the following for the blank above:
-\begin{itemize}
+when we use each of the following for \code{???}.
+\begin{enumerate}
   \item \code{env}
   \item \code{Map()}
   \item \code{fEnv}
-\end{itemize}
+\end{enumerate}
 
-\item This exercise extends \lang to support multiple parameters.
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-rewrite}
+
+Rewrite the following \lang expression to an \textsf{FAE} expression by
+desugaring \textsf{val}:
+
+\[
+  \ebind{\cx}{\efun{\cy}{\eadd{8}{\cy}}}{\efun{\cy}\eapp{\eapp{\cx}{(\esub{10}{\cy})}}}
+\]
+
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-rewrite-impl}
+
+This exercise asks you to implement the \code{desugar} function, which
+  takes an \lang expression as an argument and returns an \textsf{FAE} by
+  desugaring \textsf{val}.
+
+\begin{verbatim}
+def desugar(e: Expr): Expr = e match {
+  case Num(n) => ???
+  case Id(x) => ???
+  case Val(x, e, b) => ???
+  case Fun(x, b) => ???
+  case App(f, a) => ???
+}
+\end{verbatim}
+
+Fill every \code{???} to complete the implementation.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-closure}
+
+Consider the following semantics without closures:
+
+\[
+\begin{array}{c}
+  v\ ::=\ n\ |\ \efun{x}{e} \qquad\qquad
+  \evald{\efun{x}{e}}{\efun{x}{e}}
+  \\[2em]
+  \inferrule
+  { \evald{e_1}{\efun{x}{e}} \\
+    \evald{e_2}{v_2} \\
+    \eval{[x\mapsto v_2]}{e}{v} }
+  { \evald{\eapp{e_1}{e_2}}{v} }
+\end{array}
+\]
+
+\begin{enumerate}
+  \item
+    Explain why the above semantics, which lacks closures, is problematic.
+  \item
+    Write an \lang expression such that
+    \begin{itemize}
+        \item the evaluation in the original semantics with closures results
+          in an integer, but
+        \item the evaluation in the above semantics without closures incurs
+          a run-time error.
+    \end{itemize}
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-terminate}
+
+Suppose that we say that an expression $e$ terminates properly if and only
+if $\evale{e}{v}$ for some $v$. Write an \lang expression $e$ such
+that only one of $e$ and $\efun{\cx}{\eapp{e}{\cx}}$ terminates properly.
+
+\end{exercise}
+
+\begin{exercise}
+
+This exercise modifies \lang to check body expressions when evaluating
+function expressions.
+Consider we extend the value of \lang to include a special value $\uparrow$
+to represent an error during function body checking.
+Write the operational semantics of the form
+\fbox{$\evald{e}{v}$} for a function expression
+$\efun{x}{e}$, when its semantics  changes as follows:
+\begin{itemize}
+\item If every free identifier of $e$ is in the domain of $\sigma$ or is $x$,
+  then evaluation of $\efun{x}{e}$ under $\sigma$ yields a closure
+  containing the function expression and the environment.
+\item Otherwise, evaluation of $\efun{x}{e}$ under $\sigma$ yields $\uparrow$.
+\end{itemize}
+You may use the semantic function \embox{fv}, which takes an
+expression and returns the set of every free identifier in the expression.
+For example, $\embox{fv}(\efun{\cx}{\eapp{\cy}{\cx}}) = \{ \cy \}$.
+
+\end{exercise}
+
+\begin{exercise}
+
+This exercise extends \lang to support multiple parameters.
 Consider the following language:
 \[
 \begin{array}{lrrl}
@@ -519,91 +605,69 @@ The semantics of some constructs are as follows:
 
 \begin{enumerate}
   \item Write the operational semantics of the form \fbox{$\sigma\vdash e \Rightarrow v$} for the expressions.
-  \item Write the evaluation derivation of the following expression:
-\[
-\inferrule
-{ \hspace*{0.8\textwidth} }
-{
-  \eval{\emptyset}{
-    \eappfo{(\efun{\code{f}\
-    \code{m}}{\eappfo{\code{f}}{\code{m}}})}{\efun{\cx}{\cx},8}
-  }{~~~~~~~~~~}
-}
-\]
+  \item Write the evaluation derivation of
+    $\eappfo{(\efun{\code{f}\
+    \code{m}}{\eappfo{\code{f}}{\code{m}}})}{\efun{\cx}{\cx},8}$.
 \end{enumerate}
 
-\item Rewrite the following \lang expression to an \textsf{FAE} expression.
-  You should not ``evaluate'' it. Consider the approach of \refsec{fae}.
+\end{exercise}
 
+\begin{exercise}
+
+Consider the following language:
 \[
-  \ebind{\cx}{\efun{\cy}{\eadd{8}{\cy}}}{\efun{\cy}\eapp{\eapp{\cx}{(\esub{10}{\cy})}}}
+  \begin{array}{lrrl}
+  \text{Expression}& e & ::= & n\ |\ x\ |\ \efun{x\cdots x}{e}\ |\
+  \eappfo{e}{e,\cdots,e}\ |\ \textsf{get}\ e \\
+  \text{Value}& v & ::= & n\ |\ \textsf{undefined}\ |\ \clov{x\cdots x}{e}{\sigma} \\
+  \end{array}
 \]
-
-\item This exercise modifies \lang to check body expressions when evaluating
-  function expressions.
-Consider we extend the value of \lang to include a special value $\uparrow$
-to represent an error during function body checking.
-Write the operational semantics of the form
-\fbox{$\evald{e}{v}$} for a function expression
-$\efun{x}{e}$, when its semantics  changes as follows:
-\begin{itemize}
-\item If every free identifier of $e$ is in the domain of $\sigma$ or is $x$,
-  then evaluation of $\efun{x}{e}$ under $\sigma$ yields a closure
-  containing the function expression and the environment.
-\item Otherwise, evaluation of $\efun{x}{e}$ under $\sigma$ yields $\uparrow$.
-\end{itemize}
-You may use the semantic function \embox{fv}, which takes an
-expression and returns the set of every free identifier in the expression.
-For example, $\embox{fv}(\efun{\cx}{\eapp{\cy}{\cx}}) = \{ \cy \}$.
-
-\item This exercise extends \lang with records.
-  Consider the following language:
-\[
-\begin{array}{lrrl}
-  \text{Field} & f & \in & \textit{Field} \\
-  \text{Record} & \rho & \in & \embox{Record} = \embox{Field} \finto \embox{Value} \\
-  \text{Expression}& e & ::= & \cdots\ |\ \{f\ e,\ \ldots,\ f\ e\}\ |\ e.f\ |\
-  e;e \\
-  \text{Value} & v & ::= & \cdots\ |\ \rho \\
-\end{array}
-\]
-
 The semantics of some constructs are as follows:
 \begin{itemize}
-  \item The evaluation of $\{f_1\ e_1,\ \cdots,\ f_k\ e_k\}$
-    under $\sigma$ yields a finite map $\rho$,
-which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
-to the value $v_i$ which is evaluated from the expression $e_i$ under $\sigma$.
-  \item The evaluation of $e.f$ under $\sigma$ yields the value of the field $f$ in the record $\rho$,
-      where evaluation $e$ under $\sigma$ yields $\rho$.
-  \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation
-    of $e_2$ yields $v$ under $\sigma$,
-      then evaluation of $e_1; e_2$ yields $v$ under $\sigma$.
+  \item The value of a function expression $\efun{x_1\cdots x_n}{e}$
+    at an environment $\sigma$ is a closure $\clov{x_1\cdots x_n}{e}{\sigma}$.
+  \item A function application $\eappfo{e_0}{e_1,\cdots,e_n}$ is evaluated as follows:
+    \begin{itemize}
+      \item Evaluate the subexpressions in order.
+        The value of $e_0$ should be a closure
+        $\clov{x_1\cdots x_m}{e}{\sigma}$
+        that has $m$ parameters.
+      \item Create an array $\alpha$ of size $n$ and
+        initialize the $i$-th value of the array with the value of $e_{i+1}$
+        where $0 \le i \le n-1$.
+      \item Evaluate the closure body $e$ under the environment $\sigma$
+        extended as follows:
+        \begin{itemize}
+          \item The value of the $i$-th parameter is the value of $e_i$
+            where $1 \le i \le \min{(m,n)}$.
+          \item The value of the $j$-th parameter is the \textsf{undefined}
+            value where $n < j \le m$.
+        \end{itemize}
+        and the array $\alpha$.
+    \end{itemize}
+  \item The value of $\textsf{get}\ e$ is the $n$-th value of the array $\alpha$
+    where $n$ is the value of $e$ and the array indices start from $0$.
 \end{itemize}
 
-Write the operational semantics of the form
-$\boxed{\sigma \vdash e \Rightarrow v}$
-
-\item This exercise extends \lang with pairs. Consider the following language:
-\[
-\begin{array}{lrrl}
-  \text{Expression}& e & ::= & \cdots\ |\ (e,e)\ |\ e\textsf{.1}\ |\ e\textsf{.2} \\
-  \text{Value} & v & ::= & \cdots\ |\ \fbox{ (a) }
-\end{array}
-\]
+For example,
+$\eappfo{(\efun{\cx\cy}{\cy})}{4}$
+evaluates to \textsf{undefined}, and
+$\eappfo{(\efun{\cx}{\textsf{get}\ 0})}{5}$
+evaluate to $5$.
 
 \begin{enumerate}
-  \item Write the syntax of a pair value in \fbox{ (a) } and
-    the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
-  \item Write the evaluation derivation of the following expression:
-    \[
-      \inferrule
-      {\hspace*{0.8\textwidth}}
-      { \eval{\emptyset}{(8,(320,42)\textsf{.1})\textsf{.2}}{~~~~~} }
-    \]
+  \item Write the operational semantics of the form
+    \fbox{$\eval{\sigma,\alpha}{e}{v}$}.
+  \item Write the evaluation derivation of
+    $\eappfo{(\efun{\cx\ \cy}{\textsf{get}\ x})}{2,19,141}$.
 \end{enumerate}
 
-\item This exercise replaces the environment-based semantics of \lang with
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-subst}
+
+This exercise replaces the environment-based semantics of \lang with
 substitution-based semantics.
 Consider the following implementation:
 \begin{verbatim}
@@ -706,59 +770,11 @@ def fresh(xs: Set[String]): String
 
 \end{enumerate}
 
-\item Consider the following language:
-\[
-  \begin{array}{lrrl}
-  \text{Expression}& e & ::= & n\ |\ x\ |\ \efun{x\cdots x}{e}\ |\
-  \eappfo{e}{e,\cdots,e}\ |\ \textsf{get}\ e \\
-  \text{Value}& v & ::= & n\ |\ \textsf{undefined}\ |\ \clov{x\cdots x}{e}{\sigma} \\
-  \end{array}
-\]
-The semantics of some constructs are as follows:
-\begin{itemize}
-  \item The value of a function expression $\efun{x_1\cdots x_n}{e}$
-    at an environment $\sigma$ is a closure $\clov{x_1\cdots x_n}{e}{\sigma}$.
-  \item A function application $\eappfo{e_0}{e_1,\cdots,e_n}$ is evaluated as follows:
-    \begin{itemize}
-      \item Evaluate the subexpressions in order.
-        The value of $e_0$ should be a closure
-        $\clov{x_1\cdots x_m}{e}{\sigma}$
-        that has $m$ parameters.
-      \item Create an array $\alpha$ of size $n$ and
-        initialize the $i$-th value of the array with the value of $e_{i+1}$
-        where $0 \le i \le n-1$.
-      \item Evaluate the closure body $e$ under the environment $\sigma$
-        extended as follows:
-        \begin{itemize}
-          \item The value of the $i$-th parameter is the value of $e_i$
-            where $1 \le i \le \min{(m,n)}$.
-          \item The value of the $j$-th parameter is the \textsf{undefined}
-            value where $n < j \le m$.
-        \end{itemize}
-        and the array $\alpha$.
-    \end{itemize}
-  \item The value of $\textsf{get}\ e$ is the $n$-th value of the array $\alpha$
-    where $n$ is the value of $e$ and the array indices start from $0$.
-\end{itemize}
+\end{exercise}
 
-For example,
-$\eappfo{(\efun{\cx\cy}{\cy})}{4}$
-evaluates to \textsf{undefined}, and
-$\eappfo{(\efun{\cx}{\textsf{get}\ 0})}{5}$
-evaluate to $5$.
+\begin{exercise}
 
-\begin{enumerate}
-  \item Write the operational semantics of the form
-    \fbox{$\eval{\sigma,\alpha}{e}{v}$}.
-  \item Write the evaluation derivation of the following expression:
-  \[
-    \inferrule
-    {\hspace*{0.8\textwidth}}
-    {\eval{\emptyset,\emptyset}{\eappfo{(\efun{\cx\ \cy}{\textsf{get}\ x})}{2,19,141}}{~~~~~}}
-  \]
-\end{enumerate}
-
-\item The following quote describes the JavaScript sequencing semantics:
+The following quote describes the JavaScript sequencing semantics:
 \sidenote{\url{https://tc39.es/ecma262/\#sec-block-runtime-semantics-evaluation}}
 
 \begin{quote}
@@ -786,7 +802,136 @@ the value of the sequence expression is $\textsf{()}$.
 Write the operational semantics of each expression of the form
 \fbox{$\evald{e}{v}$}.
 
-\item Consider the following language:
+\end{exercise}
+
+\begin{exercise}
+
+This exercise extends \lang with pairs. Consider the following language:
+\[
+\begin{array}{lrrl}
+  \text{Expression}& e & ::= & \cdots\ |\ (e,e)\ |\ e\textsf{.1}\ |\ e\textsf{.2} \\
+  \text{Value} & v & ::= & \cdots\ |\ \fbox{ (a) }
+\end{array}
+\]
+
+\begin{enumerate}
+  \item Write the syntax of a pair value in \fbox{ (a) } and
+    the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
+  \item Write the evaluation derivation of
+      $(8,(320,42)\textsf{.1})\textsf{.2}$.
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+
+This exercise extends \lang with records.
+  Consider the following language:
+\[
+\begin{array}{lrrl}
+  \text{Field} & f & \in & \textit{Field} \\
+  \text{Record} & \rho & \in & \embox{Record} = \embox{Field} \finto \embox{Value} \\
+  \text{Expression}& e & ::= & \cdots\ |\ \{f\ e,\ \ldots,\ f\ e\}\ |\ e.f\ |\
+  e;e \\
+  \text{Value} & v & ::= & \cdots\ |\ \rho \\
+\end{array}
+\]
+
+The semantics of some constructs are as follows:
+\begin{itemize}
+  \item The evaluation of $\{f_1\ e_1,\ \cdots,\ f_k\ e_k\}$
+    under $\sigma$ yields a finite map $\rho$,
+which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
+to the value $v_i$ which is evaluated from the expression $e_i$ under $\sigma$.
+  \item The evaluation of $e.f$ under $\sigma$ yields the value of the field $f$ in the record $\rho$,
+      where evaluation $e$ under $\sigma$ yields $\rho$.
+  \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation
+    of $e_2$ yields $v$ under $\sigma$,
+      then evaluation of $e_1; e_2$ yields $v$ under $\sigma$.
+\end{itemize}
+
+Write the operational semantics of the form
+$\boxed{\sigma \vdash e \Rightarrow v}$
+
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-js-record}
+
+This exercise extends \lang with JavaScript-like records, field accesses,
+  and method calls:
+
+\[
+\begin{array}{rcl}
+  e & ::= & \cdots\ |\ \{l:e,\ldots,l:e\}\ |\ e.l\ |\ e.l(e)\ |\ v \\
+  v & ::= & \cdots\ |\ \langle l:v,\ldots,l:v\rangle \ |\ \textsf{undefined} \\
+\end{array}
+\]
+
+$l$ ranges over labels, which are the names of fields in records.
+Let $\embox{Label}$ be the set of every label.
+Note that $\code{this}\in\embox{Id}$ and $\code{proto}\in\embox{Label}$.
+
+For ease of formalizing operational semantics, we treat a value $v$ as one sort
+of an expression. For example, for a value $v$ and a label $l$, both $v$ and
+$v.l$ are expressions.
+The operational semantics of $v$ is as follows: $\evald{v}{v}$
+
+\begin{enumerate}
+  \item
+    The following sentences describe the operational semantics:
+    \begin{itemize}
+      \item $\{l_1:e_1,\ldots,l_n:e_n\}$
+
+        Let $v_1$, \ldots, $v_n$ be the results of $e_1$, \ldots, $e_n$.
+        The result is $\langle l_1:v_1,\ldots,l_n:v_n\rangle$.
+
+      \item $e.l$
+
+        Let $v$ be the result of $e$. The value $v$ must be a record value.
+        \begin{itemize}
+          \item If $v$ contains a field named $l$, the result is the value of the
+            field.
+          \item If $v$ does not contain a field named $l$ but does contain a field
+            named $\code{proto}$,
+            the result is the result of $v_\code{proto}.l$, where
+            $v_\code{proto}$ is the value of the field named \code{proto}.
+          \item
+            If $v$ does not contain a field named either $l$ or $\code{proto}$,
+            the result is $\textsf{undefined}$.
+        \end{itemize}
+
+      \item $e_1.l(e_2)$
+
+        Let $v_1$ be the result of $e_1$.  The result of $v_1.l$ must be a
+        closure. Let $\clov{x}{e}{\sigma}$ be the result of $v_1.l$.  Let $v_2$
+        be the result of $e_2$.  Let $\sigma'$ be the new environment made by
+        adding a mapping from \code{this} to $v_1$ and a mapping from $x$ to
+        $v_2$ to $\sigma$.  Let $v$ be the result of $e$ under $\sigma'$.  The
+        result is $v$.
+
+    \end{itemize}
+    Write the operational semantics of $\{l_1:e_1,\ldots,l_n:e_n\}$, $e.l$, and
+    $e_1.l(e_2)$ of the form \fbox{$\evald{e}{v}$}.
+
+  \item Draw the evaluation derivation of $\{\code{proto}:\{\cx:1\}\}.\cx$ under
+    the empty environment.
+
+  \item
+    When $\{ \ca:0, \cb:e \}.\cb(1)$ evaluates to a value without a run-time
+    error, does the function
+    application $(\eapp{e}{1})$ always yield the same result? If so, explain why. Otherwise,
+    write a counterexample, i.e. write $e$ such that
+    $\{ \ca:0, \cb:e \}.\cb(1)$ evaluates to a value $v$, while
+    $(\eapp{e}{1})$ does not evaluate to that $v$.
+
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+
+Consider the following language:
 \[
 \begin{array}{rll}
 e ::= & a& \text{atomic expression}\\
@@ -882,108 +1027,12 @@ where \fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$} denotes
 \fbox{$(\sigma, v)\vdash p \Rightarrow \uparrow$}.
 Remember that the operational semantics do not specify run-time errors.
 
-\item Suppose that we say that an expression $e$ terminates properly if and only
-  if $\evale{e}{v}$ for some $v$. Write an \lang expression $e$ such
-  that only one of $e$ and $\efun{\cx}{\eapp{e}{\cx}}$ terminates properly.
+\end{exercise}
 
-\item This exercise extends \lang with JavaScript-like records, field accesses,
-  and method calls:
+\begin{exercise}
+\labex{first-class-functions-exc}
 
-\[
-\begin{array}{rcl}
-  e & ::= & \cdots\ |\ \{l:e,\ldots,l:e\}\ |\ e.l\ |\ e.l(e)\ |\ v \\
-  v & ::= & \cdots\ |\ \langle l:v,\ldots,l:v\rangle \ |\ \textsf{undefined} \\
-\end{array}
-\]
-
-$l$ ranges over labels, which are the names of fields in records.
-Let $\embox{Label}$ be the set of every label.
-Note that $\code{this}\in\embox{Id}$ and $\code{proto}\in\embox{Label}$.
-
-For ease of formalizing operational semantics, we treat a value $v$ as one sort
-of an expression. For example, for a value $v$ and a label $l$, both $v$ and
-$v.l$ are expressions.
-The operational semantics of $v$ is as follows: $\evald{v}{v}$
-
-\begin{enumerate}
-  \item
-    The following sentences describe the operational semantics:
-    \begin{itemize}
-      \item $\{l_1:e_1,\ldots,l_n:e_n\}$
-
-        Let $v_1$, \ldots, $v_n$ be the results of $e_1$, \ldots, $e_n$.
-        The result is $\langle l_1:v_1,\ldots,l_n:v_n\rangle$.
-
-      \item $e.l$
-
-        Let $v$ be the result of $e$. The value $v$ must be a record value.
-        \begin{itemize}
-          \item If $v$ contains a field named $l$, the result is the value of the
-            field.
-          \item If $v$ does not contain a field named $l$ but does contain a field
-            named $\code{proto}$,
-            the result is the result of $v_\code{proto}.l$, where
-            $v_\code{proto}$ is the value of the field named \code{proto}.
-          \item
-            If $v$ does not contain a field named either $l$ or $\code{proto}$,
-            the result is $\textsf{undefined}$.
-        \end{itemize}
-
-      \item $e_1.l(e_2)$
-
-        Let $v_1$ be the result of $e_1$.  The result of $v_1.l$ must be a
-        closure. Let $\clov{x}{e}{\sigma}$ be the result of $v_1.l$.  Let $v_2$
-        be the result of $e_2$.  Let $\sigma'$ be the new environment made by
-        adding a mapping from \code{this} to $v_1$ and a mapping from $x$ to
-        $v_2$ to $\sigma$.  Let $v$ be the result of $e$ under $\sigma'$.  The
-        result is $v$.
-
-    \end{itemize}
-    Write the operational semantics of $\{l_1:e_1,\ldots,l_n:e_n\}$, $e.l$, and
-    $e_1.l(e_2)$ of the form \fbox{$\evald{e}{v}$}.
-
-  \item Draw the evaluation derivation of $\{\code{proto}:\{\cx:1\}\}.\cx$ under
-    the empty environment.
-
-  \item
-    When $\{ \ca:0, \cb:e \}.\cb(1)$ evaluates to a value without a run-time
-    error, does the function
-    application $(\eapp{e}{1})$ always yield the same result? If so, explain why. Otherwise,
-    write a counterexample, i.e. write $e$ such that
-    $\{ \ca:0, \cb:e \}.\cb(1)$ evaluates to a value $v$, while
-    $(\eapp{e}{1})$ does not evaluate to that $v$.
-
-\end{enumerate}
-
-\item Consider the following semantics without closures:
-
-\[
-\begin{array}{c}
-  v\ ::=\ n\ |\ \efun{x}{e} \qquad\qquad
-  \evald{\efun{x}{e}}{\efun{x}{e}}
-  \\[2em]
-  \inferrule
-  { \evald{e_1}{\efun{x}{e}} \\
-    \evald{e_2}{v_2} \\
-    \eval{[x\mapsto v_2]}{e}{v} }
-  { \evald{\eapp{e_1}{e_2}}{v} }
-\end{array}
-\]
-
-\begin{enumerate}
-  \item
-    Explain why the above semantics, which lacks closures, is problematic.
-  \item
-    Write an \lang expression such that
-    \begin{itemize}
-        \item the evaluation in the original semantics with closures results
-          in an integer, but
-        \item the evaluation in the above semantics without closures incurs
-          a run-time error.
-    \end{itemize}
-\end{enumerate}
-
-\item This exercise extends \lang with exceptions.
+This exercise extends \lang with exceptions.
 
 $
   \begin{array}{lrrl}
@@ -1042,20 +1091,4 @@ Below are some examples:
     \item Draw the evaluation derivation of $\textsf{try}\ (1 + \textsf{throw})\ \textsf{catch}\ (\textsf{throw} + 2)$.
 \end{enumerate}
 
-\item This exercise asks you to implement the \code{desugar} function, which
-  takes an \lang expression as an argument and returns an \textsf{FAE} by
-  desugaring \textsf{val}.
-
-\begin{verbatim}
-def desugar(e: Expr): Expr = e match {
-  case Num(n) => ???
-  case Id(x) => ???
-  case Val(x, e, b) => ???
-  case Fun(x, b) => ???
-  case App(f, a) => ???
-}
-\end{verbatim}
-
-Fill every \code{???} to complete the implementation.
-
-\end{enumerate}
+\end{exercise}
