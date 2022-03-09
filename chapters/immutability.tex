@@ -549,7 +549,7 @@ def sum(l: List[Int]): Int = {
 Similarly, \code{product} can be implemented in a tail-recursive way.
 
 \begin{verbatim}
-def product(l: List[Int]): Int = l match {
+def product(l: List[Int]): Int = {
   @tailrec def aux(l: List[Int], inter: Int): Int = l match {
     case Nil => inter
     case h :: t => aux(t, inter * h)

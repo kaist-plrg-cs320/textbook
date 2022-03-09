@@ -347,10 +347,10 @@ define but uses \code{x}. However, the code is correct.
 
 \begin{verbatim}
 val add1 = makeAdder(1)
-assert(add1(2), 3)
+assert(add1(2) == 3)
 
 val add2 = makeAdder(2)
-assert(add2(2), 4)
+assert(add2(2) == 4)
 \end{verbatim}
 
 \code{add1} and \code{add2} refer to the same \code{adder} function, but the
@@ -817,7 +817,7 @@ Use the \code{filter} method.
 
 Implement a function \code{append}:
 \begin{verbatim}
-def append(l: List[Int], n: Int]): List[Int] = ???
+def append(l: List[Int], n: Int): List[Int] = ???
 \end{verbatim}
 that takes a list of integers and an integer as arguments
 and returns a list obtained by appending the integer at the end of the list.

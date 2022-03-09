@@ -795,7 +795,7 @@ def toSum(l: List[(Int, Int)]): List[Int] =
   })
 
 val l = List((0, 1), (2, 3), (3, 4))
-assert(toSum(l), List(1, 5, 7))
+assert(toSum(l) == List(1, 5, 7))
 \end{verbatim}
 
 The anonymous function directly uses parameter \code{p} as the target of the
@@ -1098,7 +1098,7 @@ the first step can fail.
 the computation consists of two steps, and both steps can fail.
 \code{flatMap} takes a single argument, which must be a function that returns an option.
 \code{opt.flatMap(f)} results in \code{None} when \code{opt} is
-\code{None}. If \code{opt} is \code{Some(v)}, then \code{opt.map(f)} evaluates
+\code{None}. If \code{opt} is \code{Some(v)}, then \code{opt.flatMap(f)} evaluates
 to \code{f(v)}.
 
 Let us consider a list of names and a map like before.
