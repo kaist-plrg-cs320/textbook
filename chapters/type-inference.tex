@@ -1172,7 +1172,9 @@ Note that we do not need any global variables now.
 
 \section{Exercises}
 
-\begin{enumerate}
+\begin{exercise}
+\labex{type-inference-pair}
+
 \item The following code extends \lang with pairs:
 
 \begin{verbatim}
@@ -1242,6 +1244,11 @@ where
     $\efunt{\cx}{\cX}{(\eadd{(\cx\textsf{.1})}{42})}$.
 \end{enumerate}
 
+\end{exercise}
+
+\begin{exercise}
+\labex{type-inference-box}
+
 \item The following code extends \lang with boxes:
 \begin{verbatim}
 sealed trait Expr
@@ -1303,6 +1310,85 @@ where
   \item $\eref{\tau}$ denotes \code{BoxT($\tau$)}.
 \end{itemize}
 
+\end{exercise}
+
+\begin{exercise}
+\labex{type-inference-list}
+
+\item The following code extends \lang with lists:
+\begin{verbatim}
+sealed trait Expr
+...
+case object Nil extends Expr
+case class Cons(h: Expr, t: Expr) extends Expr
+case class Head(e: Expr) extends Expr
+case class Tail(e: Expr) extends Expr
+
+sealed trait Type
+...
+case class ListT(t: Type) extends Type
+
+def resolve(ty: Type): Type = ...
+
+def unify(t1: Type, t2: Type): Unit =
+  (resolve(t1), resolve(t2)) match {
+    ...
+    case (ListT(t3), ListT(t4)) => ???
+  }
+
+def occurs(t1: VarT, t2: Type): Boolean =
+  resolve(t2) match {
+    ...
+    case ListT(t) => ???
+  }
+
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
+  ...
+  case Nil => ???
+  case Cons(h, t) => ???
+  case Head(e) => ???
+  case Tail(e) => ???
+}
+\end{verbatim}
+
+Fill every \code{???} to complete the type checker.
+You may refer to the following typing rules:
+
+\[
+\begin{array}{c}
+  \inferrule
+  {}
+  { \typeofd{\textsf{nil}}{\textsf{list}\ \tau} }
+  \qquad\qquad
+  \inferrule
+  { \typeofd{e_1}{\tau} \\ \typeofd{e_2}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{cons}\ e_1\ e_2}{\textsf{list}\ \tau} }
+  \\[2em]
+  \inferrule
+  { \typeofd{e}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{head}\ e}{\tau} }
+  \qquad\qquad
+  \inferrule
+  { \typeofd{e}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{tail}\ e}{\textsf{list}\ \tau} }
+\end{array}
+\]
+
+where
+
+\begin{itemize}
+  \item $\textsf{nil}$ denotes \code{Nil}.
+  \item $\textsf{cons}\ e_1\ e_2$ denotes \code{Cons($e_1$, $e_2$)}.
+  \item $\textsf{head}\ e$ denotes \code{Head($e$)}.
+  \item $\textsf{tail}\ e$ denotes \code{Tail($e$)}.
+  \item $\textsf{list}\ \tau$ denotes \code{ListT($\tau$)}.
+\end{itemize}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{type-inference-sysf}
+
 \item The following code implements type erasure of \textsf{PTFAE}:
 
 \begin{verbatim}
@@ -1356,6 +1442,11 @@ def erase(e: Expr): Erased.Expr = e match {
     with your intution.
 
 \end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{type-inference-hm}
 
 \item Consider the following language:
 
@@ -1449,26 +1540,26 @@ where
   \fbox{$\tau\prec_\Gamma\sigma$}
   &&
   \inferrule
-  { \mathit{FTV}(\tau)\setminus\mathit{FTV}(\Gamma)=\{\alpha_1,\ldots,\alpha_n\} }
+  { \embox{FTV}(\tau)\setminus\embox{FTV}(\Gamma)=\{\alpha_1,\ldots,\alpha_n\} }
   { \tau\prec_\Gamma\tforall{\alpha_1}{\cdots\tforall{\alpha_n}{\tau}} }
   \\[2em]
-\mathit{FTV}(\tnum) &=& \emptyset
+\embox{FTV}(\tnum) &=& \emptyset
 \\
-\mathit{FTV}(\tbool) &=& \emptyset
+\embox{FTV}(\tbool) &=& \emptyset
 \\
-\mathit{FTV}(\tarrow{\tau_1}{\tau_2}) &=& \mathit{FTV}(\tau_1) \cup \mathit{FTV}(\tau_2)
+\embox{FTV}(\tarrow{\tau_1}{\tau_2}) &=& \embox{FTV}(\tau_1) \cup \embox{FTV}(\tau_2)
 \\
-\mathit{FTV}(\alpha) &=& \{\alpha\}
+\embox{FTV}(\alpha) &=& \{\alpha\}
 \\
-  \mathit{FTV}(\tforall{\alpha}{\sigma}) &=& \mathit{FTV}(\sigma) \setminus \{\alpha\}
+  \embox{FTV}(\tforall{\alpha}{\sigma}) &=& \embox{FTV}(\sigma) \setminus \{\alpha\}
 \\
-\mathit{FTV}(\Gamma) &=& \bigcup_{x\in\dom{\Gamma}}\mathit{FTV}(\Gamma(x))
+\embox{FTV}(\Gamma) &=& \bigcup_{x\in\dom{\Gamma}}\embox{FTV}(\Gamma(x))
 \\
 \end{array}
 \]
 
 ($\succ$ denotes specialization of a type scheme to a type. $\prec$ denotes
-generalization of a type to a type scheme. $\mathit{FTV}$ denotes free type
+generalization of a type to a type scheme. $\embox{FTV}$ denotes free type
 variables in a type or a type environment.)
 
 Is each of the following expressions well-typed? If so, draw a type derivation
@@ -1486,73 +1577,4 @@ of the type system, Hindley~\cite{hindley1969principal} and
 Milner~\cite{milner1978theory}. OCaml and Haskell are well-known for the use of
 this type system.
 
-\item The following code extends \lang with lists:
-\begin{verbatim}
-sealed trait Expr
-...
-case object Nil extends Expr
-case class Cons(h: Expr, t: Expr) extends Expr
-case class Head(e: Expr) extends Expr
-case class Tail(e: Expr) extends Expr
-
-sealed trait Type
-...
-case class ListT(t: Type) extends Type
-
-def resolve(ty: Type): Type = ...
-
-def unify(t1: Type, t2: Type): Unit =
-  (resolve(t1), resolve(t2)) match {
-    ...
-    case (ListT(t3), ListT(t4)) => ???
-  }
-
-def occurs(t1: VarT, t2: Type): Boolean =
-  resolve(t2) match {
-    ...
-    case ListT(t) => ???
-  }
-
-def typeCheck(e: Expr, tenv: TEnv): Type = e match {
-  ...
-  case Nil => ???
-  case Cons(h, t) => ???
-  case Head(e) => ???
-  case Tail(e) => ???
-}
-\end{verbatim}
-
-Fill every \code{???} to complete the type checker.
-You may refer to the following typing rules:
-
-\[
-\begin{array}{c}
-  \inferrule
-  {}
-  { \typeofd{\textsf{nil}}{\textsf{list}\ \tau} }
-  \qquad\qquad
-  \inferrule
-  { \typeofd{e_1}{\tau} \\ \typeofd{e_2}{\textsf{list}\ \tau} }
-  { \typeofd{\textsf{cons}\ e_1\ e_2}{\textsf{list}\ \tau} }
-  \\[2em]
-  \inferrule
-  { \typeofd{e}{\textsf{list}\ \tau} }
-  { \typeofd{\textsf{head}\ e}{\tau} }
-  \qquad\qquad
-  \inferrule
-  { \typeofd{e}{\textsf{list}\ \tau} }
-  { \typeofd{\textsf{tail}\ e}{\textsf{list}\ \tau} }
-\end{array}
-\]
-
-where
-
-\begin{itemize}
-  \item $\textsf{nil}$ denotes \code{Nil}.
-  \item $\textsf{cons}\ e_1\ e_2$ denotes \code{Cons($e_1$, $e_2$)}.
-  \item $\textsf{head}\ e$ denotes \code{Head($e$)}.
-  \item $\textsf{tail}\ e$ denotes \code{Tail($e$)}.
-  \item $\textsf{list}\ \tau$ denotes \code{ListT($\tau$)}.
-\end{itemize}
-
-\end{enumerate}
+\end{exercise}

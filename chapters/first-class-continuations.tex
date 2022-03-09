@@ -474,11 +474,12 @@ make the result of the loop $0$.
 
 \section{Exercises}
 
-\begin{enumerate}
-  \item What is the result of each of the following expressions?
+\begin{exercise}
+\labex{first-class-continuations-result}
+
+What is the result of each of the following expressions?
 
 \begin{enumerate}
-  \item $\evcc{\cx}{(\evcc{\cy}{\cx\ (2+(\evcc{\cz}{\cy\ \cz}))})\ 8}$
   \item $\evcc{\cx}{(\eadd{(\eapp{\cx}{3})}{4})}$
   \item $\eapp{(\evcc{\cx}{(2+(\eapp{\cx}{(\efun{\cy}{(\cy+\cy)})}))})}{3}$
   \item $\eapp{\eapp{(\evcc{\cx}{\cx})}{5}}$
@@ -486,11 +487,12 @@ make the result of the loop $0$.
   \item $\eapp{\eapp{(\evcc{\cx}{\cx})}{(\efun{\cy}{(\eapp{\cy}{\cy})})}}{5}$
 \end{enumerate}
 
-  \item Write the reduction steps of the following expression:
+\end{exercise}
 
-    $(\evcc{\cx}{42+(\cx\ 2)})+8$
+\begin{exercise}
+\labex{first-class-continuations-print}
 
-\item The following is an \code{interp} for \lang that prints a given
+The following is an \code{interp} for \lang that prints a given
 expression each time it is called:
 
 \begin{verbatim}
@@ -504,4 +506,10 @@ Let $e$ be an expression $\eapp{(\evcc{\cx}{\cx})}{\efun{\cy}{\cy}}$, which is
 \code{App(Vcc("x", Id("x")), Fun("y", Id("y")))}. What does \code{interp($e$,
 Map(), x => x)} print?
 
-\end{enumerate}
+\end{exercise}
+
+\begin{exercise}
+
+Write the reduction steps of $(\evcc{\cx}{42+(\cx\ 2)})+8$.
+
+\end{exercise}

@@ -1276,9 +1276,10 @@ $
 
 \section{Exercises}
 
-\begin{enumerate}
+\begin{exercise}
+\labex{continuations-lfae}
 
-\item Complete the following \textsf{LFAE} interpreter in CPS by filling every
+Complete the following \textsf{LFAE} interpreter in CPS by filling every
   \code{???}:
 
 \begin{verbatim}
@@ -1298,4 +1299,4 @@ def interp(e: Expr, env: Env, k: Cont): Value = e match {
 
 If $\evald{e}{v}$, then \code{interp($e$, $\sigma$, $f$)} must evaluate to $f(v)$.
 
-\end{enumerate}
+\end{exercise}

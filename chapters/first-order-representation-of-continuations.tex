@@ -576,10 +576,11 @@ actually $v$.
 
 \section{Exercises}
 
-\begin{enumerate}
+\begin{exercise}
+\labex{first-order-representation-of-continuations-pair}
 
-\item This exercise asks you to implement an interpreter of \textsf{FAE}
-    with pairs in CPS without first-class functions.
+This exercise asks you to implement an interpreter of \textsf{FAE}
+with pairs in CPS without first-class functions.
 
 \begin{verbatim}
 sealed trait Expr
@@ -619,4 +620,4 @@ def interp(e: Expr, env: Env, k: Cont): Value = e match {
 pair; \code{Snd(e)} gives the second value of a pair.  Fill every \code{???}
 to complete the implementation.
 
-\end{enumerate}
+\end{exercise}

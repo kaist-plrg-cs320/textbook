@@ -472,6 +472,7 @@ def interp(e:Expr, env:Env, sto:Sto): (Value, Sto) =
 
 \begin{enumerate}
   \item What is this semantics? CBV or CBR?
+\end{enumerate}
 
 Consider the following expression:
 
@@ -481,6 +482,8 @@ $\begin{array}{@{}l}
   \eapp{\code{f}}{(\efun{\cx}{\eadd{\cx}{8}})}}}
 \end{array}$
 
+\begin{enumerate}
+\setcounter{enumi}{1}
 \item Show the environment and store just before evaluating addition in the CBV semantics.
 \item Show the environment and store just before evaluating addition in the CBR semantics.
 \end{enumerate}
@@ -562,7 +565,7 @@ $
 $
 
 \begin{enumerate}
-  \setcounter{enumii}{1}
+  \setcounter{enumi}{1}
   \item Write the result and the store at the end of the evaluation of
   the above expression.
   \item Write the result and the store at the end of the evaluation of
@@ -574,6 +577,7 @@ $
 \end{exercise}
 
 \begin{exercise}
+\labex{mutable-variables-ptr}
 
 This exercise extends \lang with pointers.
 Consider the following language:

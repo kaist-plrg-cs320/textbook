@@ -265,7 +265,7 @@ To evaluate a type application expression, its only subexpression is evaluated.
 The result must be a type abstraction value. $e'[\alpha\leftarrow\tau]$ denotes
 an expression obtained by substituting every free occurrence of $\alpha$ with $\tau$
 in $e'$.\sidenote{We do not discuss substitution in detail here. Interested readers can
-refer to Exercise~8 of \refch{first-class-functions}, which introduces
+refer to \refex{first-class-functions-subst}, which introduces
 substition of an identifier with a value in an expression. The same principle
 applies to substition of a type identifier with a type in an expression.}
 Thus, the rule states that every occurrence of the type parameter is replaced with
@@ -764,144 +764,70 @@ into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
 
 \section{Exercises}
 
+\begin{exercise}
+
+Draw the type derivation of each of the following expressions:
+
 \begin{enumerate}
-\item Draw the type derivation of each of the following expressions:
-  \begin{enumerate}
-    \item
-      $(\efunt{\cf}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{
-        \etapp{\cf}{\tnum}\ 10})\ (\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})$
-    \item
-      $
-        \etapp{\etapp{(\etfun{\alpha}{\etfun{\beta}{
-          \efunt{\cf}{\tarrow{\alpha}{\beta}}{
-            \efunt{\cx}{\alpha}{\cf\ \cx}
-          }
-        }})}{\tnum}}{\tnum}\ (\efunt{\cy}{\tnum}{17-\cy})\ 9
-      $
-  \end{enumerate}
-
-\item Rewrite the following code with type abstractions and type applications
-to replace all the occurrences of $?$ with types
-and to make function calls take explicit type arguments.
-
-$
-\ebind{\cf}{\efunt{\code{g}}{?}{\efunt{\cx}{?}{\code{g}\ \cx}}}{\\
-\ebind{\code{g}}{\efunt{\cx}{?}{\cx}}{\\
-\cf\ \code{g}\ 10}}
-$
-
-\item Consider the following language:
-
-\textbf{Syntax}
-    \vspace{0.5em}
-
-$
-  \small
-\begin{array}{@{}r@{\hskip2pt}r@{\hskip2pt}l
-  r@{\hskip2pt}l@{\hskip0pt}
-  r@{\hskip2pt}r@{\hskip2pt}l@{\hskip10pt}
-  r@{\hskip2pt}r@{\hskip2pt}l@{\hskip10pt}
-  r@{\hskip2pt}c@{\hskip2pt}l}
-  e &::= & n &|& \lambda x.e & \tau &::= & \textsf{num} & \sigma &::=& \tau &
-  \sigma&\in&\embox{TScheme}\\[-3pt]
-  &|& b &|& e\ e &&|& \tbool &&|& \forall\alpha.\sigma &
-  \Gamma&\in&\embox{Id}\finto\embox{TScheme}\\
-  &|& x &|& \textsf{val}\ x=e\ \textsf{in}\ e &&|& \tau\rightarrow\tau
-  &b&::=&\textsf{true} \\
-  &|& e;e &&&&|& \alpha &&|&\textsf{false} \\
-\end{array}
-$
-
-    \vspace{0.5em}
-\textbf{Typing rules}
-    \vspace{0.5em}
-
-$
-  \small
-\begin{array}{@{}c}
-  \Gamma\vdash n:\textsf{num}
-  \quad
-  \Gamma\vdash b:\tbool
-  \quad
-  \inferrule
-  {
-    x\in\dom{\Gamma} \\
-    \Gamma(x) \succ \tau
-  }
-  { \Gamma\vdash x:\tau}
-  \\[20pt]
-  \inferrule
-  {
-    \Gamma\vdash e_1:\tau_1 \\
-    \Gamma\vdash e_2:\tau_2
-  }
-  { \Gamma\vdash e_1;e_2:\tau_2 }
-  \quad
-  \inferrule
-  { \Gamma[x : \tau]\vdash e : \tau' }
-  {\Gamma\vdash \lambda x.e : \tau\rightarrow\tau'}
-  \\[20pt]
-  \inferrule
-  {
-    \Gamma\vdash e_1 : \tau\rightarrow\tau' \\
-    \Gamma\vdash e_2 : \tau
-  }
-  { \Gamma\vdash e_1\ e_2 : \tau' }
-  \quad
-  \inferrule
-  {
-    \Gamma\vdash e_1 : \tau \\
-    \tau\prec_\Gamma\sigma \\
-    \Gamma[x:\sigma]\vdash e_2 : \tau'
-  }
-  {\Gamma\vdash \textsf{val}\ x=e_1\ \textsf{in}\ e_2 : \tau'}
-\end{array}
-$
-
-    \vspace{0.5em}
-\textbf{Miscellaneous definitions}
-    \vspace{0.5em}
-
-$
-  \small
-\begin{array}{@{}r@{\hskip4pt}c@{\hskip4pt}l}
-  \fbox{$\sigma\succ\tau$}
-  &&
-  \forall\alpha_1.\cdots\forall\alpha_n.\tau\succ\tau[\alpha_1\leftarrow\tau_1,\ldots,\alpha_n\leftarrow\tau_n]
-  \\[1em]
-  \fbox{$\tau\prec_\Gamma\sigma$}
-  &&
-  \inferrule
-  { \textit{ FTV}(\tau)\setminus\textit{ FTV}(\Gamma)=\{\alpha_1,\ldots,\alpha_n\} }
-  { \tau\prec_\Gamma\forall\alpha_1.\cdots\forall\alpha_n.\tau }
-  \\[2em]
-\embox{FTV}(\tnum) &=& \emptyset
-\\
-\embox{FTV}(\tbool) &=& \emptyset
-\\
-\embox{FTV}(\tau_1\rightarrow\tau_2) &=& \embox{FTV}(\tau_1) \cup \embox{FTV}(\tau_2)
-\\
-\embox{FTV}(\alpha) &=& \{\alpha\}
-\\
-\embox{FTV}(\forall\alpha.\sigma) &=& \embox{FTV}(\sigma) \setminus \{\alpha\}
-\\
-\embox{FTV}(\Gamma) &=& \bigcup_{x\in\dom{\Gamma}}\embox{FTV}(\Gamma(x))
-\\
-\end{array}
-$
-    \vspace{0.5em}
-
-For each of the following expressions, write whether the expression is
-well-typed. If so, draw its type derivation. Otherwise, explain why.
-\begin{enumerate}
-  \item $(\lambda \code{x}.(\code{x}\ 42))\ \lambda \code{z}.\code{z}$
-  \item $(\lambda \code{x}.((\code{x}\ 42); (\code{x}\ \textsf{true})))\ \lambda \code{z}.\code{z}$
-  \item $\textsf{val}\ \code{x}=\lambda \code{z}.\code{z}\ \textsf{in}\ ((\code{x}\ 42); (\code{x}\ \textsf{true}))$
+  \item
+    $(\efunt{\cf}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{
+      \etapp{\cf}{\tnum}\ 10})\ (\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})$
+  \item
+    $
+      \etapp{\etapp{(\etfun{\alpha}{\etfun{\beta}{
+        \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+          \efunt{\cx}{\alpha}{\cf\ \cx}
+        }
+      }})}{\tnum}}{\tnum}\ (\efunt{\cy}{\tnum}{17-\cy})\ 9
+    $
 \end{enumerate}
 
-\item The following language adds
-polymorphic non-recursive type definitions to \texttt{\lang}
-(the omitted parts are the same as \texttt{\lang}):
+\end{exercise}
+
+\begin{exercise}
+\labex{parametric-polymorphism-nameless}
+
+In \lang, types have type variables.
+\refch{nameless-representation-of-expressions} shows how we can replace
+symbols in expressions with numbers. Similarly, we can replace symbols in
+types with numbers.  For example, \code{ForallT("a", ArrowT(VarT("a"),
+VarT("a")))}, which is $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$, becomes
+\code{ForallT( ArrowT(VarT(0), VarT(0)))}.
+
+\begin{verbatim}
+sealed trait Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+case class ForallT(a: String, t: Type) extends Type
+case class VarT(a: String) extends Type
+
+object Nameless {
+  sealed trait MType
+  case object NumT extends Type
+  case class ArrowT(???) extends Type
+  case class ForallT(???) extends Type
+  case class VarT(???) extends Type
+}
+
+type Ctx = List[String]
+
+def transform(t: Type, ctx: Ctx): Nameless.Type =
+  t match {
+    case NumT => ???
+    case ArrowT(p, r) => ???
+    case ForallT(a, t) => ???
+    case VarT(a) => ???
+  }
+\end{verbatim}
+
+Fill every \code{???} to complete the implementation.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{parametric-polymorphism-adt}
+
+This exercise extends \lang with polymorphic recursive type definitions.
 
 \vspace{1em}
 $
@@ -943,7 +869,7 @@ $
 \vspace{0.5em}
 
 For example, programmers can write the following code, which defines a polymorphic
-option type, in this language:
+option type:
 
 \vspace{0.5em}
 $
@@ -960,27 +886,12 @@ $
 $
 \vspace{0.5em}
 
-On the other hand, the following code is not well-typed
-since types are not recursive in this language:
-
-\vspace{0.5em}
-$
-  \begin{array}{l}
-    \textsf{type}\ \code{foo}[\alpha]=\code{bar}@\tnum+\code{baz}@\code{foo}[\alpha];\\
-    \ldots
-  \end{array}
-$
-\vspace{0.5em}
-
-Note that \code{foo} appears in the definition of itself, which implies that
-\code{foo} is a recursive type.
-
 \begin{enumerate}
 \item
   Write the typing rules of the form
     \fbox{$\typeofd{e}{\tau}$} of
-    $\textsf{type}\ t[\alpha]=x_1@\tau_1+x_2@\tau_2;\ e$ and
-    $e\ \textsf{match}\ x_1(x_3)\rightarrow e_1,\ x_2(x_4)\rightarrow e_2$.
+    $\etdef{t[\alpha]}{x_1}{\tau_1}{x_2}{\tau_2}{e}$ and
+    $\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}$.
 \item
   Write the well-formedness rule of the form
     \fbox{$\Gamma\vdash\tau$} of $t[\tau]$.
@@ -988,39 +899,4 @@ Note that \code{foo} appears in the definition of itself, which implies that
   Write the type of \code{getOrElse} in the above example.
 \end{enumerate}
 
-\item In \lang, types have type variables.
-  \refch{nameless-representation-of-expressions} shows how we can replace
-  symbols in expressions with numbers. Similarly, we can replace symbols in
-  types with numbers.  For example, \code{ForallT("a", ArrowT(VarT("a"),
-  VarT("a")))}, which is $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$, becomes
-  \code{ForallT(ArrowT(VarT(0), VarT(0)))}.
-
-\begin{verbatim}
-sealed trait Type
-case object NumT extends Type
-case class ArrowT(p: Type, r: Type) extends Type
-case class ForallT(a: String, t: Type) extends Type
-case class VarT(a: String) extends Type
-
-object Nameless {
-  sealed trait MType
-  case object NumT extends Type
-  case class ArrowT(???) extends Type
-  case class ForallT(???) extends Type
-  case class VarT(???) extends Type
-}
-
-type Ctx = List[String]
-
-def transform(t: Type, ctx: Ctx): Nameless.Type =
-  t match {
-    case NumT => ???
-    case ArrowT(p, r) => ???
-    case ForallT(a, t) => ???
-    case VarT(a) => ???
-  }
-\end{verbatim}
-
-Fill every \code{???} to complete the implementation.
-
-\end{enumerate}
+\end{exercise}

@@ -25,8 +25,7 @@ substitutions is as follows: evaluating $(\lambda \cx.\cx + \cx)\ 1$
 is the same as evaluating $1+1$, which is obtained by substituting $\cx$ with
 $1$ in the function body $\cx+\cx$.\sidenote{Since the main purpose of mentioning
 substitutions is explaining the problem of naming, we do not formally
-define substitutions. To find more about substitution, see Exercise 8 of
-\refch{first-class-functions}.}
+define substitutions. To find more about substitution, see \refex{first-class-functions-subst}.}
 In fact, it is difficult to define the semantics correctly
 with substitutions. Consider the expression $(\lambda \cf.\lambda \cx.\cf)\ \lambda \cy.\cx$.
 By applying the same principle, evaluating
@@ -329,7 +328,7 @@ accordingly.
 
 \begin{verbatim}
 def transform(e: Expr, ctx: Ctx): Nameless.Expr = e match {
-  case Id(x) => Nameless.Id(ctx.indexOf(x))
+  case Id(x) => Nameless.Id(locate(x, ctx))
   case Fun(x, e) => Nameless.Fun(transform(e, x :: ctx))
   case App(f, a) =>
     Nameless.App(transform(f, ctx), transform(a, ctx))
@@ -337,11 +336,16 @@ def transform(e: Expr, ctx: Ctx): Nameless.Expr = e match {
   case Add(l, r) =>
     Nameless.Add(transform(l, ctx), transform(r, ctx))
 }
+
+def locate(x: String, ctx: Ctx): Int = ctx match {
+  case Nil => error()
+  case h :: t => if (h == x) 0 else 1 + locate(x, t)
+}
 \end{verbatim}
 
-The \code{Id} case needs to calculate the location of a given variable in a given
-context. It is enough to use \code{indexOf}. In the \code{Fun} case, \code{x ::
-ctx} is everything we need to add \code{x} to \code{ctx}.
+The \code{Id} case needs to calculate the location of a given variable in a
+given context. For this purpose, we define \code{locate}. In the \code{Fun}
+case, \code{x :: ctx} is everything we need to add \code{x} to \code{ctx}.
 
 \section{Evaluation of Nameless Expressions}
 
@@ -483,9 +487,12 @@ the name, it is enough to prepend the value of the argument in front of the list
 
 \section{Exercises}
 
-\begin{enumerate}
+\begin{exercise}
+\labex{nameless-representation-of-expressions-trans}
+
 \item Write the nameless representation of the following expression:
-  \[
-    \eapp{\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\efun{\cz}{\eadd{(\esub{\cz}{\cx})}{\cy}}}})}{42}}{0}}{10}
-  \]
-\end{enumerate}
+\[
+  \eapp{\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\efun{\cz}{\eadd{(\esub{\cz}{\cx})}{\cy}}}})}{42}}{0}}{10}
+\]
+
+\end{exercise}

@@ -744,17 +744,144 @@ is the bottom type.
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Write whether each expression is well-typed in \lang without the top type,
+\begin{exercise}
+\labex{subtype-polymorphism-welltyped}
+
+Write whether each expression is well-typed in \lang without the top type,
 If so, draw the type derivation. Otherwise, explain why.
 \begin{enumerate}
-\item
-  $\textsf{if0}\ {1}\ {\{ \}}\ {2}$
-\item
-  $\textsf{if0}\ {1}\ {\{ \}}\ {\{\code{a}=2\}}$
+\item $\eifz{1}{\{ \}}{2}$
+\item $\eifz{1}{\{ \}}{\{\ca=2\}}$
 \end{enumerate}
 
-\item Consider \plang with lists in Exercise~1 of \refch{type-systems}.
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-arrow}
+
+If we change Rule~\textsc{Sub-ArrowT} like below, the language is not type
+  sound.
+  \[
+    \inferrule
+    { \tau_1<:\tau_1' \\ \tau_2<:\tau_2' }
+    { \tau_1\rightarrow\tau_2<:\tau_1'\rightarrow\tau_2' }
+  \]
+Write an expression that is accepted by the new type system but
+causes a run-time error.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-subtyper}
+
+Consider the following implementation of an \lang subtype checker:
+
+\begin{verbatim}
+sealed trait Type
+case object TopT extends Type
+case object BottomT extends Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+case class RecordT(fs: Map[String, Type]) extends Type
+
+def subtype(t1: Type, t2: Type): Boolean = (t1, t2) match {
+  case ??? => true
+  case ??? => true
+  case ??? => true
+  case (ArrowT(p1, r1), ArrowT(p2, r2)) => ???
+  case (RecordT(fs1), RecordT(fs2)) => ???
+  case _ => false
+}
+\end{verbatim}
+
+where \code{RecordT(Map($l_1$ -> $\tau_1$, $\cdots$, $l_n$ -> $\tau_n$))}
+denotes $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$.
+
+The specification of \code{subtype} is as follows:
+\begin{itemize}
+  \item \code{subtype($\tau_1$, $\tau_2$)} is \code{true} when $\subt{\tau_1}{\tau_2}$
+    is true.
+  \item \code{subtype($\tau_1$, $\tau_2$)} is \code{false} when $\subt{\tau_1}{\tau_2}$
+    is false.
+\end{itemize}
+
+Fill every \code{???} to complete the implementation.  You may use the
+\code{get}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#get(key:K):Option[V]}}
+and
+\code{forall}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#forall(p:A=\%3EBoolean):Boolean}}
+methods of \code{Map}:
+
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-typer}
+
+The following code implements a type checker for a variant of \lang:
+
+\begin{verbatim}
+sealed trait Type
+case object NumT extends Type
+case class ArrowT(p: Type, r: Type) extends Type
+case object TopT extends Type
+case object BottomT extends Type
+
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
+  case Num(n) => NumT
+  case Add(l, r) =>
+    val lt = typeCheck(l, tenv)
+    val rt = typeCheck(r, tenv)
+    ???
+  case Id(x) => tenv(x)
+  case Fun(x, t, b) =>
+    ArrowT(t, typeCheck(b, tenv + (x -> t)))
+  case App(f, a) =>
+    val ft = typeCheck(f, tenv)
+    val at = typeCheck(a, tenv)
+    ft match {
+      case NumT => ???
+      case ArrowT(pt, rt) => ???
+      case TopT => ???
+      case BottomT => ???
+    }
+  case Throw => BottomT
+}
+\end{verbatim}
+
+We say that $\tau$ is the minimal type of $e$ under $\Gamma$ if and only if
+the following conditions are satisfied:
+
+\begin{itemize}
+  \item $\typeofd{e}{\tau}$
+  \item for every $\tau'$ satisfying $\typeofd{e}{\tau'}$, $\subt{\tau}{\tau'}$
+\end{itemize}
+
+If $\tau$ is the minimal type of $e$ under $\Gamma$, \code{typeCheck($e$,
+$\Gamma$)} returns $\tau$. If there is no $\tau$ satisfying $\typeofd{e}{\tau}$,
+\code{typeCheck($e$, $\Gamma$)} throws an exception.
+
+Fill every \code{???} to complete the implementation. You may use the
+following helper function without defining it:
+
+\begin{verbatim}
+// returns true if t1 is a subtype of t2
+// returns false otherwise
+def subtype(t1: Type, t2: Type): Boolean
+\end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-box}
+
+Consider \plang with boxes in \refex{type-systems-box}.
+  When can $\textsf{box}\ \tau_1$ be a subtype of $\textsf{box}\ \tau_2$?
+  Write a new subtyping rule for box types.
+
+\end{exercise}
+
+\begin{exercise}
+
+Consider \plang with lists in \refex{type-systems-list}.
   \begin{enumerate}
     \item When can $\textsf{list}\ \tau_1$ be a subtype of $\textsf{list}\
       \tau_2$? Write a new subtyping rule for list types.
@@ -782,21 +909,12 @@ If so, draw the type derivation. Otherwise, explain why.
       \tau_2$? Write a new subtyping rule for list types.
   \end{enumerate}
 
-\item If we change Rule~\textsc{Sub-ArrowT} like below, the language is not type
-  sound.
-  \[
-    \inferrule
-    { \tau_1<:\tau_1' \\ \tau_2<:\tau_2' }
-    { \tau_1\rightarrow\tau_2<:\tau_1'\rightarrow\tau_2' }
-  \]
-Write an expression that is accepted by the new type system but
-causes a run-time error.
+\end{exercise}
 
-\item Consider \plang with boxes in Exercise~2 of \refch{type-systems}.
-  When can $\textsf{box}\ \tau_1$ be a subtype of $\textsf{box}\ \tau_2$?
-  Write a new subtyping rule for box types.
+\begin{exercise}
+\labex{subtype-polymorphism-vcc}
 
-\item This exercise extends \lang with first-class continuations.
+This exercise extends \lang with first-class continuations.
 
     \vspace{0.5em}
     $e\ ::=\ \cdots\ |\ (\textsf{vcc}\ x\ \textsf{in}\ e){:}\tau$
@@ -813,7 +931,32 @@ causes a run-time error.
     $(\textsf{vcc}\ {\code{x}}\ \textsf{in}\ {\eapp{(\eapp{\code{x}}{1})}{42}}){:}\tnum$.
 \end{enumerate}
 
-\item This exercse extends \textsf{TVFAE} to allow types with any number (including zero) of variants.
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-intersection}
+
+Many real-world languages, such as Scala and TypeScript, provide
+intersection types. The intersection type of two types is a type containing values that
+belong to both of the types. In other words, $v$ is an element of
+$\tau_1\land\tau_2$, the intersection type of $\tau_1$ and $\tau_2$, if and only
+if $v$ is an element of both $\tau_1$ and $\tau_2$.
+
+\begin{enumerate}
+  \item Write one or more subtyping rules each of which has
+    $\subt{\tau_1\land\tau_2}{\tau_3}$ as a conclusion.
+  \item Write one or more subtyping rules each of which has
+    $\subt{\tau_3}{\tau_1\land\tau_2}$ as a conclusion.
+  \item Draw a subtype derivation tree proving that
+    $\subt{\tau_1\land\tau_2}{\tau_2\land\tau_1}$.
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-adt}
+
+This exercise extends \textsf{TVFAE} to allow types with any number (including zero) of variants.
 
 \vspace{0.5em}
 $
@@ -879,7 +1022,12 @@ to the language. Assume that the following rules already exist:
   { \typeofd{e}{\tau} }
 \]
 
-\item Consider a language with exceptions. Its syntax and semantics are as
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-exception}
+
+Consider a language with exceptions. Its syntax and semantics are as
   follows:
 \[
   \begin{array}{rrl}
@@ -1004,110 +1152,4 @@ given as follows:
   { \typeofd{e}{\tau_1\uparrow\tau_2} }
 \]
 
-\item Consider the following implementation of an \lang subtype checker:
-
-\begin{verbatim}
-sealed trait Type
-case object TopT extends Type
-case object BottomT extends Type
-case object NumT extends Type
-case class ArrowT(p: Type, r: Type) extends Type
-case class RecordT(fs: Map[String, Type]) extends Type
-
-def subtype(t1: Type, t2: Type): Boolean = (t1, t2) match {
-  case ??? => true
-  case ??? => true
-  case ??? => true
-  case (ArrowT(p1, r1), ArrowT(p2, r2)) => ???
-  case (RecordT(fs1), RecordT(fs2)) => ???
-  case _ => false
-}
-\end{verbatim}
-
-where \code{RecordT(Map($l_1$ -> $\tau_1$, $\cdots$, $l_n$ -> $\tau_n$))}
-denotes $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$.
-
-The specification of \code{subtype} is as follows:
-\begin{itemize}
-  \item \code{subtype($\tau_1$, $\tau_2$)} is \code{true} when $\subt{\tau_1}{\tau_2}$
-    is true.
-  \item \code{subtype($\tau_1$, $\tau_2$)} is \code{false} when $\subt{\tau_1}{\tau_2}$
-    is false.
-  \item \code{subtype($\tau_1$, $\tau_2$)} always terminates and never throws an
-    exception.
-\end{itemize}
-
-Fill every \code{???} to complete the implementation.  You may use the
-\code{get}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#get(key:K):Option[V]}}
-and
-\code{forall}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#forall(p:A=\%3EBoolean):Boolean}}
-methods of \code{Map}:
-
-\item Many real-world languages, such as Scala and TypeScript, provide
-intersection types. The intersection type of two types is a type containing values that
-belong to both of the types. In other words, $v$ is an element of
-$\tau_1\land\tau_2$, the intersection type of $\tau_1$ and $\tau_2$, if and only
-if $v$ is an element of both $\tau_1$ and $\tau_2$.
-
-\begin{enumerate}
-  \item Write one or more subtyping rules each of which has
-    $\subt{\tau_1\land\tau_2}{\tau_3}$ as a conclusion.
-  \item Write one or more subtyping rules each of which has
-    $\subt{\tau_3}{\tau_1\land\tau_2}$ as a conclusion.
-  \item Draw a subtype derivation tree proving that
-    $\subt{\tau_1\land\tau_2}{\tau_2\land\tau_1}$.
-\end{enumerate}
-
-\item The following code implements a type checker for a variant of \lang:
-
-\begin{verbatim}
-sealed trait Type
-case object NumT extends Type
-case class ArrowT(p: Type, r: Type) extends Type
-case object TopT extends Type
-case object BottomT extends Type
-
-def typeCheck(e: Expr, tenv: TEnv): Type = e match {
-  case Num(n) => NumT
-  case Add(l, r) =>
-    val lt = typeCheck(l, tenv)
-    val rt = typeCheck(r, tenv)
-    ???
-  case Id(x) => tenv(x)
-  case Fun(x, t, b) =>
-    ArrowT(t, typeCheck(b, tenv + (x -> t)))
-  case App(f, a) =>
-    val ft = typeCheck(f, tenv)
-    val at = typeCheck(a, tenv)
-    ft match {
-      case NumT => ???
-      case ArrowT(pt, rt) => ???
-      case TopT => ???
-      case BottomT => ???
-    }
-  case Throw => BottomT
-}
-\end{verbatim}
-
-We say that $\tau$ is the minimal type of $e$ under $\Gamma$ if and only if
-the following conditions are satisfied:
-
-\begin{itemize}
-  \item $\typeofd{e}{\tau}$
-  \item for every $\tau'$ satisfying $\typeofd{e}{\tau'}$, $\subt{\tau}{\tau'}$
-\end{itemize}
-
-If $\tau$ is the minimal type of $e$ under $\Gamma$, \code{typeCheck($e$,
-$\Gamma$)} returns $\tau$. If there is no $\tau$ satisfying $\typeofd{e}{\tau}$,
-\code{typeCheck($e$, $\Gamma$)} throws an exception.
-
-Fill every \code{???} to complete the implementation. You may use the
-following helper function without defining it:
-
-\begin{verbatim}
-// returns true if t1 is a subtype of t2
-// returns false otherwise
-def subtype(t1: Type, t2: Type): Boolean
-\end{verbatim}
-
-\end{enumerate}
+\end{exercise}

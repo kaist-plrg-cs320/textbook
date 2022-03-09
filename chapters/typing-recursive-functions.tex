@@ -344,13 +344,18 @@ to add only the type of \code{f} to the type environment used to type-check
 
 \section{Exercises}
 
-\begin{enumerate}
-\item Write a \texttt{TRFAE} expression $e$ such that
-only one of $e$ and $\efun{\texttt{x}{:}\textsf{num}}{(\eapp{e}{\texttt{x}})}$ terminates,
-while both $e$ and $\efun{\texttt{x}{:}\textsf{num}}{(\eapp{e}{\texttt{x}})}$ are
-well-typed.
+\begin{exercise}
+\labex{typing-recursive-functions-terminate}
 
-\item Consider the following language:
+Write a \lang expression $e$ such that only one of $e$ and
+  $\efunt{\cx}{\tnum}{(\eapp{e}{\cx})}$ terminates, while both $e$ and
+  $\efunt{\cx}{\tnum}{(\eapp{e}{\cx})}$ are well-typed.
+
+\end{exercise}
+
+\begin{exercise}
+
+Consider the following language:
 \[
 \begin{array}{rllrllrll}
   e::= & n &\qquad& c::= & \textsf{skip} &\qquad& b::= & \textsf{true} \\
@@ -430,10 +435,10 @@ The following is the operational semantics of the commands:
 \]
 
 \begin{enumerate}
-    \setcounter{enumii}{1}
+    \setcounter{enumi}{1}
 \item Write the typing rules of the form \fbox{$\typeofd{c}{\Gamma}$}.
 The following command must be well-typed: \verb+x := 1; x := 2+.
 However, the following command must be ill-typed: \verb+x := 1; x := true+.
 \end{enumerate}
 
-\end{enumerate}
+\end{exercise}

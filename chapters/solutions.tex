@@ -596,3 +596,567 @@ case Tail(e) =>
   val v = strict(t)
   if (isList(v)) v else error()
 \end{verbatim}
+
+\textbf{\refex{continuations-lfae}}
+\vspace{-1em}
+\begin{verbatim}
+case ExprV(e, env) =>
+  interp(e, env, v => strict(v, k))
+
+case Add(l, r) =>
+  interp(l, env, v1 =>
+    interp(r, env, v2 =>
+      strict(v1, n =>
+        strict(v2, m => {
+          val NumV(l) = n
+          val NumV(r) = m
+          k(NumV(l + r))
+        }))))
+case App(f, a) =>
+  interp(f, env, v =>
+    strict(v, fv => {
+      val CloV(x, b, fenv) = fv
+      interp(b, fenv + (x -> ExprV(a, env)), k)
+    }))
+\end{verbatim}
+
+\textbf{\refex{first-class-continuations-result}}
+\begin{enumerate}
+  \item 3
+  \item 6
+  \item Error
+  \item 5
+  \item Does not terminate
+\end{enumerate}
+
+\textbf{\refex{first-class-continuations-print}}
+
+$\begin{array}{@{}l}
+  \eapp{(\evcc{\cx}{\cx})}{\efun{\cy}{\cy}} \\
+  \evcc{\cx}{\cx} \\
+  \efun{\cy}{\cy} \\
+  \efun{\cy}{\cy} \\
+  \cy \\
+\end{array}$
+\\
+
+\textbf{\refex{first-order-representation-of-continuations-pair}}
+\vspace{-1em}
+\begin{verbatim}
+case class PairSecondK(s: Expr, env: Env, k: Cont) extends Cont
+case class DoPairK(fv: Value, k: Cont) extends Cont
+case class DoFstK(k: Cont) extends Cont
+case class DoSndK(k: Cont) extends Cont
+
+case PairSecondK(s, env, k) => interp(s, env, DoPairK(v, k))
+case DoPairK(fv, k) => continue(k, PairV(fv, v))
+case DoFstK(k) =>
+  val PairV(fv, _) = v
+  continue(k, fv)
+case DoSndK(k) =>
+  val PairV(_, sv) = v
+  continue(k, sv)
+
+case Pair(f, s) => interp(f, env, PairSecondK(s, env, k))
+case Fst(p) => interp(p, env, DoFstK(k))
+case Snd(p) => interp(p, env, DoSndK(k))
+\end{verbatim}
+
+\textbf{\refex{nameless-representation-of-expressions-trans}}
+
+$\eapp{\eapp{\eapp{(\efun{}{\efun{}{\efun{}{\eadd{(\esub{\underline{0}}{\underline{2}})}{\underline{1}}}}})}{42}}{0}}{10}$
+\\
+
+\textbf{\refex{typing-recursive-functions-terminate}}
+
+$\erect{\cf}{\cx}{\tnum}{\tarrow{\tnum}{\tnum}}{\eapp{\cf}{\cx}}{\eapp{\cf}{0}}$
+\\
+
+\textbf{\refex{algebraic-data-types-norec}}
+
+$\etdef{\code{A}}{\cX}{\code{A}}{\cY}{\tnum}{0}$
+\\
+
+\textbf{\refex{algebraic-data-types-nowf}}
+
+$\begin{array}{@{}l}
+  \etdef{\cX}{\code{A}}{\code{Y}}{\code{B}}{\tnum}{ \\
+  \eapp{( \\
+  \ \ \ \ \etdef{\cY}{\code{C}}{\tnum}{\code{D}}{\tnum}{ \\
+  \ \ \ \ \efunt{\cx}{\cX}{\ematch{\cx}{ \\
+  \ \ \ \ \ \ \ \ \code{A}}{\cy}{\ematch{\cy}{ \\
+  \ \ \ \ \ \ \ \ \ \ \ \ \code{C}}{\cz}{0}{ \\
+  \ \ \ \ \ \ \ \ \ \ \ \ \code{D}}{\cz}{0}}{ \\
+  \ \ \ \ \ \ \ \ \code{B}}{\cy}{0}} \\
+  })}{( \\
+  \ \ \ \ \etdef{\cY}{\code{E}}{\tnum}{\code{F}}{\tnum}{ \\
+  \ \ \ \ \eapp{\code{A}}{(\eapp{\code{E}}{0})} \\
+  })}}
+\end{array}$
+
+\textbf{\refex{parametric-polymorphism-nameless}}
+\vspace{-1em}
+\begin{verbatim}
+case class ArrowT(p: Type, r: Type) extends Type
+case class ForallT(t: Type) extends Type
+case class VarT(i: Int) extends Type
+
+case NumT => Nameless.NumT
+case ArrowT(p, r) =>
+  Nameless.ArrowT(transform(p, tvars), transform(r, tvars))
+case ForallT(a, t) =>
+  Nameless.ForallT(transform(t, a :: tvars))
+case VarT(a) =>
+  Nameless.VarT(locate(a, tvars))
+\end{verbatim}
+
+\textbf{\refex{parametric-polymorphism-adt}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      {
+        \Gamma'=\Gamma[t=[\alpha]x_1@\tau_1+x_2@\tau_2,x_1:\tforall{\alpha}{\tarrow{\tau_1}{t[\alpha]}},x_2:\tforall{\alpha}{\tarrow{\tau_2}{t[\alpha]}}] \\
+        t\not\in\dom{\Gamma} \\
+        \Gamma'[\alpha]\vdash\tau_1 \\
+        \Gamma'[\alpha]\vdash\tau_2 \\
+        \typeof{\Gamma'}{e}{\tau} \\
+        \wftd{\tau}
+      }
+      { \typeofd{\etdef{t[\alpha]}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
+    \]
+    \[
+      \inferrule
+      {
+        t\in\dom{\Gamma} \\
+        \Gamma(t)=[\alpha]x_1@\tau_1+x_2@\tau_2 \\
+        \typeofd{e}{t[\tau]} \\
+        \typeof{\Gamma[x_3:\tau_1[\alpha\leftarrow\tau]]}{e_1}{\tau'} \\
+        \typeof{\Gamma[x_4:\tau_2[\alpha\leftarrow\tau]]}{e_2}{\tau'}
+      }
+      { \typeofd{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{\tau'} }
+    \]
+  \item
+    \[
+      \inferrule
+      { t\in\dom{\Gamma} \\ \wftd{\tau} }
+      { \Gamma\vdash t[\tau] }
+    \]
+  \item
+    $\tforall{\alpha}{\tarrow{\code{option}[\alpha]}{\tarrow{\alpha}{\alpha}}}$
+\end{enumerate}
+
+\textbf{\refex{subtype-polymorphism-welltyped}}
+\begin{enumerate}
+  \item Not well-typed
+  \item
+  \[
+    \inferrule
+    {
+      \typeofe{1}{\tnum} \\
+      \typeofe{\{\}}{\{\}} \\
+      \inferrule
+      {
+        \inferrule
+        { \typeof{\emptyset}{2}{\tnum} }
+        { \typeof{\emptyset}{\{\ca=2\}}{\{\ca:\tnum\}} }
+        \\
+        \subt{\{\ca:\tnum\}}{\{\}}
+      }
+      { \typeofe{\{\ca=2\}}{\{\}} }
+    }
+    { \typeofe{\eifz{1}{\{\}}{\{\ca=2\}}}{\{\}} }
+  \]
+\end{enumerate}
+
+\textbf{\refex{subtype-polymorphism-arrow}}
+
+$\eapp{(\efunt{\cx}{\tarrow{\tnum}{\tnum}}{\eapp{\cx}{1}})}{1}$
+\\
+
+\textbf{\refex{subtype-polymorphism-subtyper}}
+\vspace{-1em}
+\begin{verbatim}
+case (_, TopT) => true
+case (BotT, _) => true
+case (NumT, NumT) => true
+case (ArrowT(p1, r1), ArrowT(p2, r2)) =>
+  subtype(p2, p1) && subtype(r1, r2)
+case (RecordT(fs1), RecordT(fs2)) =>
+  fs2.forall{
+    case (x, t2) => fs1.get(x) match {
+      case None => false
+      case Some(t1) => subtype(t1, t2)
+    }
+  }
+\end{verbatim}
+
+\textbf{\refex{subtype-polymorphism-typer}}
+\vspace{-1em}
+\begin{verbatim}
+  case Add(l, r) =>
+    val lt = typeCheck(l, tenv)
+    val rt = typeCheck(r, tenv)
+    if (!subtype(lt, NumT)) error()
+    if (!subtype(rt, NumT)) error()
+    NumT
+  case App(f, a) =>
+    val ft = typeCheck(f, tenv)
+    val at = typeCheck(a, tenv)
+    ft match {
+      case NumT => error()
+      case ArrowT(pt, rt) =>
+        if (!subtype(at, pt)) error()
+        rt
+      case TopT => error()
+      case BottomT => BottomT
+    }
+\end{verbatim}
+
+\textbf{\refex{subtype-polymorphism-box}}
+
+$\eapp{(\efunt{\cx}{\eref{(\tarrow{\tnum}{\tnum})}}{\eseq{\eset{\cx}{1}}{\eapp{\ederef{\cx}}{1}}})}{\eref{\efunt{\cx}{\tnum}{\cx}}}$
+\\
+
+\textbf{\refex{subtype-polymorphism-vcc}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { \typeof{\Gamma[x:\tarrow{\tau}{\tbot}]}{e}{\tau} }
+      { \typeofd{(\evcc{x}{e}){:}\tau}{\tau} }
+    \]
+  \item
+    \[
+      \inferrule
+      {
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            {
+              \inferrule
+              { \cx\in\dom{\Gamma} }
+              { \typeofd{\cx}{\tarrow{\tnum}{\tbot}} }
+              \\
+              \typeofd{1}{\tnum}
+            }
+            { \typeofd{\eapp{\cx}{1}}{\tbot} }
+            \\
+            \subt{\tbot}{\tarrow{\tnum}{\tnum}}
+          }
+          { \typeofd{\eapp{\cx}{1}}{\tarrow{\tnum}{\tnum}} }
+          \\
+          \typeofd{42}{\tnum}
+        }
+        { \typeofd{\eapp{(\eapp{\cx}{1})}{42}}{\tnum} }
+      }
+      { \typeofe{(\evcc{\cx}{\eapp{(\eapp{\cx}{1})}{42}}){:}\tnum}{\tnum} }
+    \]
+
+    $\Gamma=[\cx:\tarrow{\tnum}{\tbot}]$
+\end{enumerate}
+
+\textbf{\refex{subtype-polymorphism-intersection}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule{\subt{\tau_1}{\tau_3}}{\subt{\tau_1\land\tau_2}{\tau_3}}
+      \qquad
+      \inferrule{\subt{\tau_2}{\tau_3}}{\subt{\tau_1\land\tau_2}{\tau_3}}
+    \]
+  \item
+    \[
+      \inferrule{\subt{\tau_3}{\tau_1}\\\subt{\tau_3}{\tau_2}}{\subt{\tau_3}{\tau_1\land\tau_2}}
+    \]
+  \item
+    \[
+      \inferrule
+      {
+        \inferrule
+        { \subt{\tau_2}{\tau_2} }
+        { \subt{\tau_1\land\tau_2}{\tau_2} } \\
+        \inferrule
+        { \subt{\tau_1}{\tau_1} }
+        { \subt{\tau_1\land\tau_2}{\tau_1} }
+      }
+      { \subt{\tau_1\land\tau_2}{\tau_2\land\tau_1} }
+    \]
+\end{enumerate}
+
+\textbf{\refex{subtype-polymorphism-adt}}
+\[
+  \begin{array}{c}
+  \inferrule
+  {
+    \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
+    \Gamma(t_2)=x_1@\tau_1+\cdots+x_n@\tau_n+x_{n+1}@\tau_{n+1} \\
+  }
+  { \Gamma\vdash\subt{t_1}{t_2} }
+  \\[2em]
+  \inferrule
+  {
+    \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
+    \Gamma(t_2)=x_1@\tau_1'+\cdots+x_n@\tau_n' \\
+    \Gamma\vdash\subt{\tau_1}{\tau_1'} \\
+    \cdots \\
+    \Gamma\vdash\subt{\tau_n}{\tau_n'}
+  }
+  { \Gamma\vdash\subt{t_1}{t_2} }
+  \\[2em]
+  \inferrule
+  {
+    \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
+    \Gamma(t_2)=x_1'@\tau_1'+\cdots+x_n'@\tau_n' \\
+    x_1@\tau_1+\cdots+x_n@\tau_n
+    \ \text{is a permutation of}\
+    x_1'@\tau_1'+\cdots+x_n'@\tau_n'
+  }
+  { \Gamma\vdash\subt{t_1}{t_2} }
+  \end{array}
+\]
+
+\textbf{\refex{subtype-polymorphism-exception}}
+\[
+  \begin{array}{c}
+    \inferrule
+    {}
+    { \typeofd{n}{\tnum\uparrow\tbot} }
+    \quad
+    \inferrule
+    { \typeofd{e_1}{\tnum\uparrow\tau} \\ \typeofd{e_2}{\tnum\uparrow\tau} }
+    { \typeofd{e_1+e_2}{\tnum\uparrow\tau} }
+    \\[2em]
+    \inferrule
+    { x\in\dom{\Gamma} }
+    { \typeofd{x}{\Gamma(x)\uparrow\tbot} }
+    \quad
+    \inferrule
+    { \typeof{\Gamma[x:\tau_1]}{e}{\tau_2\uparrow\tau_3} }
+    { \typeofd{\efunt{x}{\tau_1}{e}}{(\tarrow{\tau_1}{\tau_2/\uparrow\tau_3})\uparrow\tbot} }
+    \\[2em]
+    \inferrule
+    { \typeofd{e_1}{(\tarrow{\tau_1}{\tau_2/\uparrow\tau_3})\uparrow\tau_3} \\
+      \typeofd{e_2}{\tau_1\uparrow\tau_3} }
+    { \typeofd{e_1\ e_2}{\tau_2\uparrow\tau_3} }
+    \\[2em]
+    \inferrule
+    { \typeofd{e}{\tau\uparrow\tau} }
+    { \typeofd{\textsf{throw}\ e}{\tbot\uparrow\tau} }
+    \quad
+    \inferrule
+    { \typeofd{e_1}{\tau_1\uparrow\tau_2} \\
+      \typeofd{e_2}{(\tarrow{\tau_2}{\tau_1/\uparrow\tau_3})\uparrow\tau_3}}
+    { \typeofd{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{\tau_1\uparrow\tau_3} }
+  \end{array}
+\]
+
+\textbf{\refex{type-inference-pair}}
+\begin{enumerate}
+  \item
+\begin{verbatim}
+case (PairT(l1, r1), PairT(l2, r2)) =>
+  unify(l1, l2)
+  unify(r1, r2)
+
+case PairT(l, r) =>
+  occurs(t1, l) || occurs(t1, r)
+
+case Pair(l, r) =>
+  val lt = typeCheck(l, tenv)
+  val rt = typeCheck(r, tenv)
+  PairT(lt, rt)
+case Fst(e) =>
+  val et = typeCheck(e, tenv)
+  val ft = VarT(None)
+  val st = VarT(None)
+  unify(PairT(ft, st), et)
+  ft
+case Snd(e) =>
+  val et = typeCheck(e, tenv)
+  val ft = VarT(None)
+  val st = VarT(None)
+  unify(PairT(ft, st), et)
+  st
+\end{verbatim}
+  \item
+    \verb+ArrowT(VarT(Some(PairT(VarT(Some(NumT)), VarT(None)))), NumT)+
+\end{enumerate}
+
+\textbf{\refex{type-inference-box}}
+\vspace{-1em}
+\begin{verbatim}
+case (BoxT(t3), BoxT(t4)) =>
+  unify(t3, t4)
+
+case BoxT(t) =>
+  occurs(t1, t)
+
+case NewBox(e) =>
+  val et = typeCheck(e, tenv)
+  BoxT(et)
+case OpenBox(b) =>
+  val bt = typeCheck(b, tenv)
+  val t = VarT(None)
+  unify(bt, BoxT(t))
+  t
+case SetBox(b, e) =>
+  val bt = typeCheck(b, tenv)
+  val et = typeCheck(e, tenv)
+  unify(bt, BoxT(et))
+  et
+\end{verbatim}
+
+\textbf{\refex{type-inference-list}}
+\vspace{-1em}
+\begin{verbatim}
+case (ListT(t3), ListT(t4)) =>
+  unify(t3, t4)
+
+case ListT(t) =>
+  occurs(t1, t)
+
+case Nil =>
+  val t = VarT(None)
+  ListT(t)
+case Cons(h, t) =>
+  val ht = typeCheck(h, tenv)
+  val tt = typeCheck(t, tenv)
+  unify(ListT(ht), tt)
+  tt
+case Head(e) =>
+  val et = typeCheck(e, tenv)
+  val t = VarT(None)
+  unify(et, ListT(t))
+  t
+case Tail(e) =>
+  val et = typeCheck(e, tenv)
+  val t = VarT(None)
+  unify(et, ListT(t))
+  et
+\end{verbatim}
+
+\textbf{\refex{type-inference-sysf}}
+\begin{enumerate}
+  \item
+    \[
+      \begin{array}{rcl}
+        \ersr{n}&=&n \\
+        \ersr{\eadd{e_1}{e_2}}&=&\eadd{\ersr{e_1}}{\ersr{e_2}} \\
+        \ersr{\esub{e_1}{e_2}}&=&\esub{\ersr{e_1}}{\ersr{e_2}} \\
+        \ersr{x}&=&x \\
+        \ersr{\efunt{x}{\tau}{e}}&=&\efun{x}{\ersr{e}} \\
+        \ersr{\eapp{e_1}{e_2}}&=&\eapp{\ersr{e_1}}{\ersr{e_2}} \\
+        \ersr{\etfun{\alpha}{e}}&=&\ersr{e} \\
+        \ersr{\etapp{e}{\tau}}&=&\ersr{e} \\
+      \end{array}
+    \]
+  \item
+    \begin{enumerate}
+      \item $\eapp{(\efun{\cx}{\cx})}{1}$
+      \item $\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\cy}})}{1}}{2}$
+    \end{enumerate}
+  \item
+    \begin{enumerate}
+      \item
+        $\efunt{\cx}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}
+        {\eapp{\eapp{(\etapp{\cx}{\tarrow{\tnum}{\tnum}})}{(\efunt{\cx}{\tnum}{\cx})}}{(\eapp{\etapp{\cx}{\tnum}}{1})}}$
+      \item
+        $\eapp{
+          \eapp{(\efunt{\cx}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{\efunt{\cy}{\tnum}{\eapp{\eapp{(\etapp{\cx}{\tarrow{\tnum}{\tnum}})}{(\etapp{\cx}{\tnum})}}{\cy}}})}
+          {(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}
+        }{1}$
+      \item
+        $\eapp{(\efunt{\cx}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{\eapp{\eapp{(\etapp{\cx}{\tarrow{\tnum}{\tnum}})}{(\etapp{\cx}{\tnum})}}{1}})}
+        {\etfun{\alpha}{\efunt{\cy}{\alpha}{\cy}}}$
+    \end{enumerate}
+\end{enumerate}
+
+\textbf{\refex{type-inference-hm}}
+\begin{enumerate}
+  \item
+    \[
+      \tiny
+      \inferrule
+      {
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            {
+              \cx\in\dom{\Gamma_1} \\
+              \tarrow{\tnum}{\tnum}\succ\tarrow{\tnum}{\tnum}
+            }
+            { \typeof{\Gamma_1}{\cx}{\tarrow{\tnum}{\tnum}} }
+            \\
+            \typeof{\Gamma_1}{42}{\tnum}
+          }
+          { \typeof{\Gamma_1}{\eapp{\cx}{42}}{\tnum} }
+        }
+        { \typeofe{\efun{\cx}{\eapp{\cx}{42}}}{\tarrow{(\tarrow{\tnum}{\tnum})}{\tnum}} } \\
+        \inferrule
+        {
+          \inferrule
+          { \cz\in\dom{\Gamma_2} \\ \tnum\succ\tnum }
+          { \typeof{\Gamma_2}{\cz}{\tnum} }
+        }
+        { \typeofe{\efun{\cz}{\cz}}{\tarrow{\tnum}{\tnum}} }
+      }
+      { \typeofe{\eapp{(\efun{\cx}{\eapp{\cx}{42}})}{\efun{\cz}{\cz}}}{\tnum} }
+    \]
+    $\Gamma_1=[\cx:\tarrow{\tnum}{\tnum}]$, $\Gamma_2=[\cz:\tnum]$
+  \item Not well-typed
+  \item
+    \[
+      \tiny
+      \inferrule
+      {
+        \inferrule
+        {
+          \inferrule
+          { \cz\in\dom{\Gamma_1} \\ \alpha\succ\alpha }
+          { \typeof{\Gamma_1}{\cz}{\alpha} }
+        }
+        { \typeofe{\efun{\cz}{\cz}}{\tarrow{\alpha}{\alpha}} }
+        \\
+        \inferrule
+        { \embox{FTV}(\tarrow{\alpha}{\alpha})\setminus\embox{FTV}(\emptyset)=\{\alpha\} }
+        { \tarrow{\alpha}{\alpha}\prec_\emptyset\tforall{\alpha}{\tarrow{\alpha}{\alpha}} }
+        \\
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            {
+              x\in\dom{\Gamma_2} \\
+              \tforall{\alpha}{\tarrow{\alpha}{\alpha}}\succ\tarrow{\tnum}{\tnum}
+            }
+            { \typeof{\Gamma_2}{\cx}{\tarrow{\tnum}{\tnum}} }
+            \\
+            \typeof{\Gamma_2}{42}{\tnum}
+          }
+          { \typeof{\Gamma_2}{\eapp{\cx}{42}}{\tnum} }
+          \inferrule
+          {
+            \inferrule
+            {
+              x\in\dom{\Gamma_2} \\
+              \tforall{\alpha}{\tarrow{\alpha}{\alpha}}\succ\tarrow{\tbool}{\tbool}
+            }
+            { \typeof{\Gamma_2}{\cx}{\tarrow{\tbool}{\tbool}} }
+            \\
+            \typeof{\Gamma_2}{\true}{\tbool}
+          }
+          { \typeof{\Gamma_2}{\eapp{\cx}{\true}}{\tbool} }
+        }
+        { \typeof{\Gamma_2}{\eseq{\eapp{\cx}{42}}{\eapp{\cx}{\true}}}{\tbool} }
+      }
+      { \typeofe{\ebind{\cx}{\efun{\cz}{\cz}}{\eseq{\eapp{\cx}{42}}{\eapp{\cx}{\true}}}}{\tbool} }
+    \]
+
+    $\Gamma_1=[\cz:\alpha]$,
+    $\Gamma_2=[\cx:\forall\alpha.\alpha\rightarrow\alpha]$
+\end{enumerate}

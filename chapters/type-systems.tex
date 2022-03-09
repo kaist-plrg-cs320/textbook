@@ -1085,7 +1085,7 @@ type of such a function. Thus, programs using pairs cannot be written in \lang.
 
 To overcome the limitation, we extend \lang to support pairs.
 The syntax and dynamic semantics of pairs follow
-Exercise~7 of \refch{first-class-functions}.
+\refex{first-class-functions-pair}
 We add pair types as follows:
 
 \[ \tau \ ::= \ \cdots\ | \ \tau\times\tau \]
@@ -1142,8 +1142,10 @@ The following rules define the static semantics:
 
 \section{Exercises}
 
-\begin{enumerate}
-\item This exercise extends \lang with lists.
+\begin{exercise}
+\labex{type-systems-list}
+
+This exercise extends \lang with lists.
   \[
     \begin{array}{r@{~~}r@{~~}l}
       e & ::= & \cdots
@@ -1156,7 +1158,12 @@ The following rules define the static semantics:
   \]
 Write the typing rules of the added expressions.
 
-\item This exercise extends \lang with boxes.
+\end{exercise}
+
+\begin{exercise}
+\labex{type-systems-box}
+
+This exercise extends \lang with boxes.
   \[
     \begin{array}{r@{~~}r@{~~}l}
       e & ::= & \cdots
@@ -1183,7 +1190,11 @@ Write the typing rules of the added expressions.
   $
 \end{enumerate}
 
-\item This exercise extends \lang with mutable variables.
+\end{exercise}
+
+\begin{exercise}
+
+This exercise extends \lang with mutable variables.
   \[ e\ ::=\ \cdots\ |\ \eset{x}{e} \]
     The dynamic semantic of mutable variables is the same as \textsf{MFAE}.
 \begin{enumerate}
@@ -1196,15 +1207,14 @@ Now, we extend the language again with pointers.
     \tau & ::= & \cdots\ |\ \tau\ast
   \end{array}
 \]
-The dynamic semantic of pointers is the same as Exercise~1 of
-\refch{mutable-variables}.
+The dynamic semantic of pointers is the same as \refex{mutable-variables-ptr}.
 A type $\tau\ast$ denotes the address type of a type $\tau$.
 For example, for a given address $a$, if the value at $a$ is a number,
 then the type of $a$ is $\tnum\ast$.
 
 \begin{enumerate}
-  \setcounter{enumii}{1}
+  \setcounter{enumi}{1}
   \item Write the typing rules of the added expressions.
 \end{enumerate}
 
-\end{enumerate}
+\end{exercise}
