@@ -89,6 +89,18 @@ we can define the syntax of \lang. The following is the syntax of \lang:
     $e_1$ denotes the function; $e_2$ denotes the argument.
 \end{itemize}
 
+This book follows the following conventions on the notation of lambda
+abstractions and function applications:
+
+\begin{itemize}
+  \item The body of a lambda abstraction extends as far right as possible. For
+    example, $\efun{\cx}{\eadd{\cx}{\cx}}$ is $\efun{\cx}{(\eadd{\cx}{\cx})}$,
+    not $\eadd{(\efun{\cx}{\cx})}{\cx}$.
+  \item Function applications are left-associative. For example,
+    $\eapp{\eapp{\cf}{1}}{2}$ is $\eapp{(\eapp{\cf}{1})}{2}$, not
+    $\eapp{\cf}{(\eapp{1}{2})}$.
+\end{itemize}
+
 \section{Semantics}
 
 Integers are the only values in \plang. It is not true in \lang. Since

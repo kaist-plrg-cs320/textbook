@@ -486,20 +486,29 @@ be the same.
 
 This section implements a type checker of \lang.
 
-To allow attaching type variables, we implement the abstract syntax as follows:
+We define type variables as follows:
 
 \begin{verbatim}
-sealed trait Expr
-...
-case class Fun(x: String, t: Type, b: Expr) extends Expr
-
 sealed trait Type
 ...
 case class VarT(x: String) extends Type
 \end{verbatim}
 
-For example, \code{Fun("x", VarT("X"), Add(Id("x"), Id("x")))} corresponds to
-$\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$.
+For instance, \code{VarT("X")} denotes the type variable $\cX$.
+We implement the abstract syntax is as usual:
+
+\begin{verbatim}
+sealed trait Expr
+...
+case class Fun(x: String, t: Type, b: Expr) extends Expr
+\end{verbatim}
+
+This allows the type checker to attach type variables to parameters.  For
+example, \code{Fun("x", VarT("X"), Add(Id("x"), Id("x")))} corresponds to
+$\efunt{\cx}{\cX}{\eadd{\cx}{\cx}}$. Note that it is still possible for
+programmers to attach type annotations to parameters because the type of
+\code{t} is still \code{Type}. However, to focus on type inference, this chapter
+does not consider expressions with type annotations.
 
 Following the high-level idea illustrated in the previous section, the type
 checker consists of two steps: collecting constraints and solving them.
