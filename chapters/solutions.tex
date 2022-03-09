@@ -206,8 +206,9 @@ case Fun(y, b) =>
         { \evald{e_1.l(e_2)}{v} }
       \]
   \item
-    {\small
+    {
       \[
+        \tiny
         \inferrule
         {
           \inferrule
@@ -239,23 +240,27 @@ case Fun(y, b) =>
     \item
     \[
       \begin{array}{c}
-        \evald{n}{n}
-        \qquad
+        \inferrule
+        {}
+        { \evald{n}{n} }
+        \quad
         \inferrule
         { x\in\dom{\sigma} }
         { \evald{x}{\sigma(x)} }
-        \qquad
-        \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}}
         \\[2em]
+        \inferrule
+        {}
+        { \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}} }
+        \quad
         \inferrule
         { \evald{e_1}{\textsf{exc}} }
         { \evald{e_1+e_2}{\textsf{exc}} }
-        \qquad
+        \\[2em]
         \inferrule
         { \evald{e_1}{v} \\
           \evald{e_2}{\textsf{exc}} }
         { \evald{e_1+e_2}{\textsf{exc}} }
-        \qquad
+        \quad
         \inferrule
         { \evald{e_1}{n_1} \\
           \evald{e_2}{n_2} }
@@ -264,7 +269,7 @@ case Fun(y, b) =>
         \inferrule
         { \evald{e_1}{\textsf{exc}} }
         { \evald{e_1\ e_2}{\textsf{exc}} }
-        \qquad
+        \quad
         \inferrule
         { \evald{e_1}{v} \\
           \evald{e_2}{\textsf{exc}} }
@@ -277,12 +282,14 @@ case Fun(y, b) =>
         }
         { \evald{\eapp{e_1}{e_2}}{r} }
         \\[2em]
-        \evald{\textsf{throw}}{\textsf{exc}}
-        \qquad
+        \inferrule
+        {}
+        { \evald{\textsf{throw}}{\textsf{exc}} }
+        \quad
         \inferrule
         { \evald{e_1}{v} }
         { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{v} }
-        \qquad
+        \\[2em]
         \inferrule
         { \evald{e_1}{\textsf{exc}} \\ \evald{e_2}{r} }
         { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{r} }
@@ -323,38 +330,39 @@ $\eifz{0}{0}{(\eapp{0}{0})}$
 \begin{enumerate}
   \item
     \[
-      \evald{b}{b}
-      \qquad
+      \begin{array}{c}
+      \inferrule
+      {}
+      { \evald{b}{b} }
+      \quad
       \inferrule
       { \evald{e_1}{v_1} \\ v_1\not={\false} \\ \evald{e_2}{v_2} }
       { \evald{\eif{e_1}{e_2}{e_3}}{v_2} }
-      \qquad
+      \\[2em]
       \inferrule
       { \evald{e_1}{\false} \\ \evald{e_3}{v_3} }
       { \evald{\eif{e_1}{e_2}{e_3}}{v_3} }
-    \]
-
-    \[
+      \quad
       \inferrule
       { \evald{e_1}{\false} }
       { \evald{\eand{e_1}{e_2}}{\false} }
-      \qquad
+      \\[2em]
       \inferrule
       { \evald{e_1}{v_1} \\ v_1\not={\false} \\ \evald{e_2}{v_2} }
       { \evald{\eand{e_1}{e_2}}{v_2} }
-    \]
-
-    \[
+      \\[2em]
       \inferrule
       { \evald{e_1}{v_1} \\ v_1\not={\false} }
       { \evald{\eor{e_1}{e_2}}{v_1} }
-      \qquad
+      \quad
       \inferrule
       { \evald{e_1}{\false} \\ \evald{e_2}{v_2}}
       { \evald{\eor{e_1}{e_2}}{v_2} }
+      \end{array}
     \]
   \item
     \[
+      \scriptsize
       \inferrule
       {
         \inferrule
@@ -446,40 +454,39 @@ interp(b, fenv + (x -> fields(f)), rs)
 \begin{enumerate}
   \item
       \[
-        \evald{\eskip}{\sigma}
-        \qquad
+        \begin{array}{c}
+        \inferrule
+        {}
+        { \evald{\eskip}{\sigma} }
+        \quad
         \inferrule
         { \evald{e}{v} }
         { \evald{\eset{x}{e}}{\sigma[x\mapsto v]} }
-      \]
-
-      \[
+        \\[2em]
         \inferrule
         { \evald{e}{0} \\ \evald{c_1}{\sigma_1} }
         { \evald{\eifz{e}{c_1}{c_2}}{\sigma_1} }
-        \qquad
+        \quad
         \inferrule
         { \evald{e}{v} \\ v\not=0 \\ \evald{c_2}{\sigma_2} }
         { \evald{\eifz{e}{c_1}{c_2}}{\sigma_2} }
-      \]
-
-      \[
+        \\[2em]
         \inferrule
         { \evald{e}{0} \\ \evald{c}{\sigma_1} \\ \eval{\sigma_1}{\ewhile{e}{c}}{\sigma_2} }
         { \evald{\ewhile{e}{c}}{\sigma_2} }
-        \qquad
+        \\[2em]
         \inferrule
         { \evald{e}{v} \\ v\not=0 }
         { \evald{\ewhile{e}{c}}{\sigma} }
-      \]
-
-      \[
+        \quad
         \inferrule
         { \evald{c_1}{\sigma_1} \\ \eval{\sigma_1}{c_2}{\sigma_2} }
         { \evald{\eseq{c_1}{c_2}}{\sigma_2} }
+        \end{array}
       \]
   \item
     \[
+      \scriptsize
       \inferrule
       {
         \inferrule
@@ -751,6 +758,7 @@ case VarT(a) =>
   \item Not well-typed
   \item
   \[
+    \scriptsize
     \inferrule
     {
       \typeofe{1}{\tnum} \\
@@ -828,6 +836,7 @@ $\eapp{(\efunt{\cx}{\eref{(\tarrow{\tnum}{\tnum})}}{\eseq{\eset{\cx}{1}}{\eapp{\
     \]
   \item
     \[
+      \scriptsize
       \inferrule
       {
         \inferrule
