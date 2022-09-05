@@ -566,7 +566,7 @@ computes an address not used in the store. We use the method \code{maxOption}.
 If a collection is empty, the method returns \code{None}. Otherwise, the
 result is \code{Some(n)}, where \code{n} is the greatest value in the collection.
 By \code{.getOrElse(0)}, we can get \code{n} from \code{Some(n)} and \code{0}
-from \code{None}. Consequently, \code{sto.keys.maxOption.getOrElse(0)} results
+from \code{None}. Consequently, \code{s.keys.maxOption.getOrElse(0)} results
 in the maximum key in the store when the store is nonempty and \code{0}
 otherwise. \code{a} is one greater than that value and thus does not belong to
 the store. Therefore, we can use \code{a} as the address of the box.

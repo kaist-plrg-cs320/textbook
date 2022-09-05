@@ -6,7 +6,7 @@
 \newcommand{\bfae}{\textsf{BFAE}\xspace}
 \renewcommand{\lang}{\textsf{MFAE}\xspace}
 
-\bfae of the previous chatper provides boxes. Boxes are good abstraction
+\bfae of the previous chapter provides boxes. Boxes are good abstraction
 of mutable objects and data structures but do not explain mutable variables
 well. Boxes, mutable objects, mutable data structures are values, while mutable
 variables are names. Mutable variables allow the values associated with
@@ -338,7 +338,7 @@ argument is a variable:
 \semanticrule{App-Cbr}{
   \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
     If \\
-    & \sevaldn{}{e_1}{\clov{x'}{e'}{\sigma'}}{1}, \\
+    & \sevaldn{}{e}{\clov{x'}{e'}{\sigma'}}{1}, \\
     & $x$ is in the domain of $\sigma$, and \\
     & \sevaln{\sigma'[x'\mapsto\sigma(x)]}{M_1}{e'}{v}{M_2}, \\
     then \\
@@ -351,7 +351,7 @@ argument is a variable:
 \[
   \inferrule
   {
-    \sevald{}{e_1}{\clov{x'}{e'}{\sigma'}}{1} \\
+    \sevald{}{e}{\clov{x'}{e'}{\sigma'}}{1} \\
     x\in \dom{\sigma} \\
     \seval{\sigma'[x'\mapsto\sigma(x)]}{M_1}{e'}{v}{M_2}
   }

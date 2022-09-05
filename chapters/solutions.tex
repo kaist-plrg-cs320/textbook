@@ -153,8 +153,8 @@ case Fun(y, b) =>
   if (y == x)
     Fun(y, b)
   else {
-    val ny = fresh(binding(b) ++ free(b) ++ free(e) ++ Set(x))
-    Fun(ny, subst(subst(b, y, Id(ny)), x, e))
+    val ny = fresh(binding(b) ++ free(b) ++ free(v) ++ Set(x))
+    Fun(ny, subst(subst(b, y, Id(ny)), x, v))
   }
 \end{verbatim}
 \end{enumerate}
@@ -424,7 +424,7 @@ App(Fun(fresh(free(r)), desugar(r)), desugar(l))
     $[\code{n} \mapsto a_1, \cf \mapsto a_2, \cx \mapsto a_4]$,\\
 $[
     a_1 \mapsto 42,
-    a_2 \mapsto \clov{\code{n}}{\eapp{\code{g}}{\code{n}}}{[\code{n} \mapsto a_1]},
+    a_2 \mapsto \clov{\code{g}}{\eapp{\code{g}}{\code{n}}}{[\code{n} \mapsto a_1]},
     a_3 \mapsto \clov{\cx}{\eadd{\cx}{8}}{[\code{n} \mapsto a_1, \code{f} \mapsto a_2]},
     a_4 \mapsto 42
 ]$
@@ -432,7 +432,7 @@ $[
     $[\code{n} \mapsto a_1, \cf \mapsto a_2, \cx \mapsto a_1]$,\\
 $[
     a_1 \mapsto 42,
-    a_2 \mapsto \clov{\code{n}}{\eapp{\code{g}}{\code{n}}}{[\code{n} \mapsto a_1]},
+    a_2 \mapsto \clov{\code{g}}{\eapp{\code{g}}{\code{n}}}{[\code{n} \mapsto a_1]},
     a_3 \mapsto \clov{\cx}{\eadd{\cx}{8}}{[\code{n} \mapsto a_1, \code{f} \mapsto a_2]}
 ]$
 \end{enumerate}
@@ -581,10 +581,10 @@ case class PairV(f: Value, s: Value) extends Value
 
 case Pair(f, s) => PairV(ExprV(f, env), ExprV(s, env))
 case Fst(e) =>
-  val Pair(v, _) = strict(interp(e, env))
+  val PairV(v, _) = strict(interp(e, env))
   v
 case Snd(e) =>
-  val Pair(_, v) = strict(interp(e, env))
+  val PairV(_, v) = strict(interp(e, env))
   v
 \end{verbatim}
 
@@ -641,6 +641,7 @@ case App(f, a) =>
 $\begin{array}{@{}l}
   \eapp{(\evcc{\cx}{\cx})}{\efun{\cy}{\cy}} \\
   \evcc{\cx}{\cx} \\
+  \cx \\
   \efun{\cy}{\cy} \\
   \efun{\cy}{\cy} \\
   \cy \\
@@ -710,11 +711,11 @@ case class VarT(i: Int) extends Type
 
 case NumT => Nameless.NumT
 case ArrowT(p, r) =>
-  Nameless.ArrowT(transform(p, tvars), transform(r, tvars))
+  Nameless.ArrowT(transform(p, ctx), transform(r, ctx))
 case ForallT(a, t) =>
-  Nameless.ForallT(transform(t, a :: tvars))
+  Nameless.ForallT(transform(t, a :: ctx))
 case VarT(a) =>
-  Nameless.VarT(locate(a, tvars))
+  Nameless.VarT(locate(a, ctx))
 \end{verbatim}
 
 \textbf{\refex{parametric-polymorphism-adt}}
@@ -786,7 +787,7 @@ $\eapp{(\efunt{\cx}{\tarrow{\tnum}{\tnum}}{\eapp{\cx}{1}})}{1}$
 \vspace{-1em}
 \begin{verbatim}
 case (_, TopT) => true
-case (BotT, _) => true
+case (BottomT, _) => true
 case (NumT, NumT) => true
 case (ArrowT(p1, r1), ArrowT(p2, r2)) =>
   subtype(p2, p1) && subtype(r1, r2)
@@ -823,7 +824,11 @@ case (RecordT(fs1), RecordT(fs2)) =>
 
 \textbf{\refex{subtype-polymorphism-box}}
 
-$\eapp{(\efunt{\cx}{\eref{(\tarrow{\tnum}{\tnum})}}{\eseq{\eset{\cx}{1}}{\eapp{\ederef{\cx}}{1}}})}{\eref{\efunt{\cx}{\tnum}{\cx}}}$
+$
+\inferrule
+{ \subt{\tau_1}{\tau_2} \\ \subt{\tau_2}{\tau_1} }
+{ \subt{\textsf{box}\ \tau_1}{\textsf{box}\ \tau_2} }
+$
 \\
 
 \textbf{\refex{subtype-polymorphism-vcc}}
@@ -900,7 +905,7 @@ $\eapp{(\efunt{\cx}{\eref{(\tarrow{\tnum}{\tnum})}}{\eseq{\eset{\cx}{1}}{\eapp{\
   \inferrule
   {
     \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
-    \Gamma(t_2)=x_1@\tau_1+\cdots+x_n@\tau_n+x_{n+1}@\tau_{n+1} \\
+    \Gamma(t_2)=x_1@\tau_1+\cdots+x_n@\tau_n+x_{n+1}@\tau_{n+1}+\cdots+x_{n+m}@\tau_{n+m} \\
   }
   { \Gamma\vdash\subt{t_1}{t_2} }
   \\[2em]
@@ -925,6 +930,8 @@ $\eapp{(\efunt{\cx}{\eref{(\tarrow{\tnum}{\tnum})}}{\eseq{\eset{\cx}{1}}{\eapp{\
   { \Gamma\vdash\subt{t_1}{t_2} }
   \end{array}
 \]
+(The last rule is unnecessary in fact because the $\_@\_+\cdots+\_@\_$ notation
+denotes a set, whose equality is already not affected by the order of its elements.)
 
 \textbf{\refex{subtype-polymorphism-exception}}
 \[

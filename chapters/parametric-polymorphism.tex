@@ -802,7 +802,7 @@ case class ForallT(a: String, t: Type) extends Type
 case class VarT(a: String) extends Type
 
 object Nameless {
-  sealed trait MType
+  sealed trait Type
   case object NumT extends Type
   case class ArrowT(???) extends Type
   case class ForallT(???) extends Type

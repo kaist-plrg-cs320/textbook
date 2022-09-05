@@ -99,7 +99,7 @@ A type checking algorithm is an algorithm solving this decision problem. Our
 algorithm, terminates without an exception if the answer is ``yes'' and throws
 an exception if the answer is ``no.''
 
-This section formuates the type inference problem as a decision problem in two
+This section formulates the type inference problem as a decision problem in two
 different ways. While they reflect two different perspectives on type
 inference, they define the same problem.
 
@@ -538,7 +538,7 @@ We implement the \code{typeCheck} function, which collects the constraints
 from a given expression, as follows:
 
 \begin{verbatim}
-def typeCheck(e: Expr, env: TEnv): Type = e match {
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
   case Num(_) => NumT
   case Add(l, r) =>
     val lt = typeCheck(l, tenv)
@@ -986,7 +986,7 @@ the only remaining change is to fix \code{typeCheck} to immediately call
 \code{collections}.
 
 \begin{verbatim}
-def typeCheck(e: Expr, env: TEnv): Type = e match {
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
   ...
   case Add(l, r) =>
     val lt = typeCheck(l, tenv)
@@ -1127,7 +1127,7 @@ Instead of looking up \code{solution}, it simply checks the optional type in a
 Combining all, our type checker implementation is as follows:
 
 \begin{verbatim}
-def typeCheck(e: Expr, env: TEnv): Type = e match {
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
   case Num(_) => NumT
   case Add(l, r) =>
     val lt = typeCheck(l, tenv)
@@ -1525,7 +1525,7 @@ Consider the following non-algorithmic type system:
     \tau\prec_\Gamma\sigma \\
     \typeof{\Gamma[x:\sigma]}{e_2}{\tau'}
   }
-  { \typeof{\ebind{x}{e_1}{e_2}}{\tau'} }
+  { \typeofd{\ebind{x}{e_1}{e_2}}{\tau'} }
 \end{array}
 \]
 

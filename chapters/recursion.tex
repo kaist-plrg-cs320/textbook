@@ -149,7 +149,7 @@ Now, let us discuss the semantics of recursive functions.
 Consider $\erec{x_1}{x_2}{e_1}{e_2}$.
 $e_2$ is in the scope of $x_1$, and $x_1$ denotes a function. Therefore, we can
 start by defining $\sigma'=[x_1\mapsto\clov{x_2}{e_1}{\sigma}]$ and evaluating
-$e_2$ under $\sigma'$. However, this apporach is incorrect. When the body of the
+$e_2$ under $\sigma'$. However, this approach is incorrect. When the body of the
 closure, $e_1$, is evaluated, the environment is $\sigma[x_2\mapsto v]$ for some
 $v$. The environment does not contain $x_1$, and therefore using $x_1$ in
 $e_1$ will incur a free identifier error, which is certainly wrong since $x_1$

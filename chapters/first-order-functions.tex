@@ -96,9 +96,9 @@ The following rule describes the semantics of function calls:
 \semanticrule{Call}{
 \begin{tabular}{@{\hskip0pt}l@{\hskip0pt}l}
   If \\
-  & \evaln{\sigma\tand\Lambda}{e}{n'},\\
   & $x$ is in the domain of $\Lambda$,\\
-  & $\Lambda(x)$ is $\fundef{x}{x'}{e'}$, and\\
+  & $\Lambda(x)$ is $\fundef{x}{x'}{e'}$,\\
+  & \evaln{\sigma\tand\Lambda}{e}{n'}, and\\
   & \evaln{[x'\mapsto n']\tand\Lambda}{e'}{n},\\
   then \\
   & \evaln{\sigma\tand\Lambda}{\eappfo{x}{e}}{n}.
@@ -314,9 +314,9 @@ as follows:
 \semanticrule{Call-Dyn}{
 \begin{tabular}{@{\hskip0pt}l@{\hskip0pt}l}
   If \\
-  & \evaln{\sigma\tand\Lambda}{e}{n'},\\
   & $x$ is in the domain of $\Lambda$,\\
-  & $\Lambda(x)$ is $\fundef{x}{x'}{e'}$, and\\
+  & $\Lambda(x)$ is $\fundef{x}{x'}{e'}$,\\
+  & \evaln{\sigma\tand\Lambda}{e}{n'}, and\\
   & \evaln{\sigma[x'\mapsto n']\tand\Lambda}{e'}{n},\\
   then \\
   & \evaln{\sigma\tand\Lambda}{\eappfo{x}{e}}{n}.

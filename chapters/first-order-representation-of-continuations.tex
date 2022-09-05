@@ -185,7 +185,7 @@ v1 match ...)}, which can be done with \code{(e2, env, k)} and \code{v1}.
 
 \begin{itemize}
   \item Previous: \code{v1 => interp(e2, env, v2 => v1 match ...)} and \code{v1}
-  are given. Then, evaluate \code{v1 => interp(e2, env, v2 => v1 match ...)} by
+  are given. Then, evaluate \code{interp(e2, env, v2 => v1 match ...)} by
   applying \code{v1 => interp(e2, env, v2 => v1 match ...)} to \code{v1}.
   \item Current: \code{(e2, env, k)} and \code{v1} are given. Then, evaluate
   \code{interp(e2, env, v2 => v1 match ...)} with \code{e2}, \code{env},

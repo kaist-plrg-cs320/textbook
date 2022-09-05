@@ -17,8 +17,9 @@ What is \textit{functional programming}?\index{functional programming}
 According to Wikipedia,
 
 \begin{quote}
-Functional programming is a programming paradigm that treats computation as the
-evaluation of mathematical functions and avoids changing-state and mutable data.
+It is a declarative programming paradigm in which function definitions are trees
+of expressions that map values to other values, rather than a sequence of
+imperative statements which update the running state of the program.
 \end{quote}
 
 According to the book Functional Programming in Scala~\cite{fp-in-scala},
@@ -31,7 +32,8 @@ functions that have no side effects.
 
 The above two sentences are enough to describe functional programming.
 
-First, consider the phrase ``the evaluation of mathematical functions.''
+First, consider the phrase ``trees of expressions that map values to other
+values.''
 From the perspective of functional programming, a
 program is a single mathematical expression and the execution of the program is
 finding a value denoted by the expression.
@@ -98,7 +100,7 @@ an expression is determined by the results of its subexpressions.
 Since the programs are simple, two programs look similar, but it is important to
 understand two different perspectives of what a program is.
 
-Now, look at the phrases ``avoids changing-state and mutable data'' and ``using
+Now, look at the phrase ``using
 only pure functions.'' Functional programming avoids mutable variables, mutable data
 structures, and mutable objects. The term \textit{mutable}\index{mutable}
 means being able to change. Its opposite is \textit{immutable}\index{immutable},

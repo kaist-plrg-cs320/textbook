@@ -193,7 +193,7 @@ def f() = {
   val x = g()
 }
 
-def g(): Int = {
+def g(): C = {
   val a = C(1, 2, 3, 4)
   return a
 }
@@ -641,7 +641,7 @@ attack, the PDF reader could have exhibited a much worse behavior, e.g.,
 deleting all the files.
 
 On the other hand, if programmers insert \code{free} too late or do not insert
-at all, \textit{memory leacks}\index{memory leak} happen. A memory leak is a
+at all, \textit{memory leaks}\index{memory leak} happen. A memory leak is a
 waste of the heap space by not deallocating garbage. Memory leaks are less
 critical than UAF in most cases. Unless the heap becomes full, memory leaks do
 not yield an observable problem. However, memory leaks may make the heap lack
@@ -1386,7 +1386,7 @@ scanned. Note that when the \code{scan} pointer advances, the old addresses
 \code{0x13} and \code{0x15}, respectively.
 This shows that the objects before \code{scan} are \scn objects.
 
-This repeats until \code{scan} catchs up with \code{free}, i.e., there is no
+This repeats until \code{scan} catches up with \code{free}, i.e., there is no
 \uscn object.
 
 {\small
@@ -1536,7 +1536,7 @@ execution.
 \paragraph{Cost of Copying}
 
 Unlike reference counting and mark-and-sweep GC, copying GC copies reachable
-objects every time GC is triggered. If the heap has a large ammount of reachable
+objects every time GC is triggered. If the heap has a large amount of reachable
 objects, copying will take a long time and increase the duration of the pause.
 
 \section{Exercises}

@@ -31,7 +31,7 @@ If we ignore its type annotation, it consists of two parts: \code{x} and \code{x
 function. This observation lets us know that an anonymous function consists of
 its parameter and body.
 
-In \textsf{F1VAE}, the sytnax of a function call is $\eappfo{x}{e}$. To call a
+In \textsf{F1VAE}, the syntax of a function call is $\eappfo{x}{e}$. To call a
 function, the name of the function should be given. However, it is not true in
 languages with first-class functions. Let us see some function calls in Scala.
 
@@ -421,7 +421,7 @@ does not allow recursion.
 
 Instead of changing the semantics, \lang can provide named local functions as
 syntactic sugar. Let $s$ be a string transformed into $\erec{x_1}{x_2}{e_1}{e_2}$
-by the parser of \lang with named local functions embeded in the semantics.
+by the parser of \lang with named local functions embedded in the semantics.
 To treat named local functions as syntactic sugar, the parser should transform
 $s$ into $\ebind{x_1}{\efun{x_2}{e_1}}{e_2}$.
 
@@ -693,7 +693,7 @@ case class Id(x: String) extends Expr
 case class Fun(x: String, b: Expr) extends Expr with Value
 case class App(f: Expr, a: Expr) extends Expr
 
-def subst(e: Expr, x: String, v: Value): Expr = e match {
+def subst(e: Expr, x: String, v: Expr): Expr = e match {
   case Num(n) => e
   case Add(l, r) =>
     Add(subst(l, x, v), subst(r, x, v))
@@ -719,7 +719,7 @@ def interp(e: Expr): Value = e match {
   case Sub(l, r) =>
     val Num(n) = interp(l)
     val Num(m) = interp(r)
-    Num(n + m)
+    Num(n - m)
   case Val(x, i, b) =>
     interp(subst(b, x, interp(i)))
   case Id(x) => error("free identifier")
@@ -760,7 +760,7 @@ In this implementation, a value is either an integer or a lambda abstraction:
 \item Why are the results different?
 \end{enumerate}
 
-  \item Fix the \code{Fun} case of the funtion \code{subst} in the
+  \item Fix the \code{Val} and \code{Fun} case of the funtion \code{subst} in the
     implementation to make substitution-based \lang equivalent to
     environment-based \lang.  You may use the following helper functions
     without defining them:
@@ -857,7 +857,7 @@ The semantics of some constructs are as follows:
 which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
 to the value $v_i$ which is evaluated from the expression $e_i$ under $\sigma$.
   \item The evaluation of $e.f$ under $\sigma$ yields the value of the field $f$ in the record $\rho$,
-      where evaluation $e$ under $\sigma$ yields $\rho$.
+      where evaluation of $e$ under $\sigma$ yields $\rho$.
   \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation
     of $e_2$ yields $v$ under $\sigma$,
       then evaluation of $e_1; e_2$ yields $v$ under $\sigma$.

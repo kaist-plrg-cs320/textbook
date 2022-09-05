@@ -172,7 +172,7 @@ is outside the scope of this book.
 % OK}$ contradicts the property of $check$. The contradiction comes from assuming
 % the existence of $check$. In conclusion, $check$ does not exist.
 
-Fortunately, there is a tolerable solution. If we give up either completenss or
+Fortunately, there is a tolerable solution. If we give up either completeness or
 soundness, we can find such a program $P$. The most common choice is to forgo
 completeness. Dynamic analysis is complete because a run-time error found
 during execution always indicates a real bug. Dynamic analysis does not suffer
@@ -484,7 +484,7 @@ value must be a number to avoid a type error. If a function is given as an
 argument, the evaluation of the body incurs a type error. Each function has its
 own requirement. Therefore, the type of a function must describe the type of an
 argument expected by the function. Second, different functions return different
-values. Some functions returns numbers, while others return functions. To
+values. Some functions return numbers, while others return functions. To
 predict the type of a function application expression, the type checker must be
 able to predict the type of the return value. Thus, the type of a function must
 describe the type of the return value as well.
@@ -1031,7 +1031,7 @@ and pairs.
 \subsection{Local Variable Definitions}
 
 Local variable definitions (\textsf{val} expressions)
-are the second kind of an extension. Even without
+are the first kind of extension. Even without
 local variable definitions, programmers can write the equivalent code with
 functions. However, local variable definitions help them write
 code concisely.
@@ -1061,11 +1061,11 @@ The static semantics is as follows:
 
 Note that local variable definitions do not require type annotations, while
 lambda abstractions do. Therefore, local variable definitions are more
-convenient then lambda abstractions for binding.
+convenient than lambda abstractions for binding.
 
 \subsection{Pairs}
 
-Pairs are the first kind of an extension. In \plang, we can desugar pairs to
+Pairs are the second kind of extension. In \plang, we can desugar pairs to
 functions:
 \begin{itemize}
   \item $(e_1,e_2)$, which creates a new pair, is desugared to $\efun{\cf}{\cf\ e_1\

@@ -276,7 +276,7 @@ def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) =
       (NumV(n + m), rs)
     case NewBox(e) =>
       val (v, s) = interp(e, env, sto)
-      val a = sto.keys.maxOption.getOrElse(0) + 1
+      val a = s.keys.maxOption.getOrElse(0) + 1
       (BoxV(a), s + (a -> v))
   }
 \end{verbatim}
@@ -922,7 +922,7 @@ $\conss{2}\mts$.
 Before moving on to the formal defintion of reduction, let us see the high-level
 idea of reduction first.
 Each reduction step pops the element at the top of the computation stack and
-manipluates the computation and value stacks depending on the popped computation.
+manipulates the computation and value stacks depending on the popped computation.
 $\sigma\vdash e$ is the only kind that pushes a value onto the value stack.
 It evaluates $e$ under $\sigma$ and pushes the result of $e$ onto the value stack.
 Therefore, if the current state is $\evalk{\sigma}{e}k\ ||\ s$, then the redex
