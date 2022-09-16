@@ -1,23 +1,22 @@
-\setchapterpreamble[u]{\margintoc}
 \chapter{First-Order Representation of Continuations}
 \labch{first-order-representation-of-continuations}
 
-\renewcommand{\lang}{\textsf{KFAE}\xspace}
+\renewcommand{\Lang}{\textsf{KFAE}\xspace}
 
-The previous chapter implements an interpreter of \lang with first-class
+The previous chapter implements an interpreter of \Lang with first-class
 functions in Scala. The interpreter treats
 continuations as Scala functions. Since the interpreter uses CPS, continuations
 are passed from functions to functions. In addition, continuations sometimes need to be
-stored in \code{ContV} because \lang supports first-class continuations.
+stored in \code{ContV} because \Lang supports first-class continuations.
 \code{ContV} instances are stored inside environments or returned from
 \code{interp}. Therefore, the interpreter relies on the fact that Scala provides
 first-class functions. Since functions are values in Scala, the interpreter can
 represent continuations with functions and uses them as values.
 
 The use of first-class functions is problematic for some cases. First, low-level languages, such
-as C, lack first-class functions.\sidenote{C provides function pointers but not
+as C, lack first-class functions.\footnote{C provides function pointers but not
 closures. Closures are necessary to represent continuations.} There must be
-another way to implement an interpreter of \lang for those who use low-level languages.
+another way to implement an interpreter of \Lang for those who use low-level languages.
 Second, functions do not give useful information. The only ability of functions
 is being applied to arguments. However, in particular programs like debuggers, it
 is necessary to figure out what a given first-class continuation does. The
@@ -34,8 +33,8 @@ instead, debuggers can analyze what a given continuation denotes.
 
 \section{First-Order Representation of Continuations}
 
-The following code shows the \lang interpreter implemented in the previous
-chapter:\sidenote{Since the \code{Sub} case is similar to the \code{Add} case,
+The following code shows the \Lang interpreter implemented in the previous
+chapter:\footnote{Since the \code{Sub} case is similar to the \code{Add} case,
 this chapter omits the \code{Sub} case.}
 
 \begin{verbatim}
@@ -174,7 +173,7 @@ a function application. It evaluates an argument and applies a function (or
 a continuation) to the argument.
 \code{v1} denotes the value of the expression at the function position. The body
 of the function representing the continuation contains three free variables:
-\code{e2}, \code{env}, and \code{k}.\sidenote{\code{k} is in \code{...}.}
+\code{e2}, \code{env}, and \code{k}.\footnote{\code{k} is in \code{...}.}
 \code{e2} is the expression at the argument
 position; \code{env} is the current environment; \code{k} is the continuation of
 the application. Therefore, \code{e2}, \code{env},
@@ -197,7 +196,7 @@ evaluation of the argument of a function application. It applies a function (or
 a continuation) to the argument.
 \code{v2} denotes the value of the argument. The body of the function
 representing the continuation contains two free variables: \code{v1} and
-\code{k}.\sidenote{\code{k} is in \code{...}.}
+\code{k}.\footnote{\code{k} is in \code{...}.}
 \code{v1} is the value of the expression at the function position;
 \code{k} is the continuation of the application. Therefore, \code{(v1, k)},
 a pair of a value and a continuation, can represent
@@ -227,7 +226,7 @@ evaluation with the continuation and a value \code{v}, it is enough to give
   \code{v}.
 \end{itemize}
 
-In summary, the \lang interpreter uses continuations of the following five
+In summary, the \Lang interpreter uses continuations of the following five
 sorts:
 
 \begin{itemize}
@@ -345,11 +344,11 @@ Note that \code{MtK} does not appear in \code{interp}. \code{MtK} is used to
 call \code{interp} in the beginning. One should write \code{interp($e$, Map(),
 MtK)} to evaluate $e$.
 
-\section{Big-Step Semantics of \lang}
+\section{Big-Step Semantics of \Lang}
 
 Representing continuations without first-class functions additionally gives us a clue to
-define the big-step semantics of \lang. This section defines
-the big-step semantics of \lang from the new interpreter implementation.
+define the big-step semantics of \Lang. This section defines
+the big-step semantics of \Lang from the new interpreter implementation.
 
 First, we can define continuations inductively.
 It is straightforward from the implementation.

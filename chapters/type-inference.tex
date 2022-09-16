@@ -1,9 +1,8 @@
-\setchapterpreamble[u]{\margintoc}
 \chapter{Type Inference}
 \labch{type-inference}
 
 \renewcommand{\plang}{\textsf{TFAE}\xspace}
-\renewcommand{\lang}{\textsf{TIFAE}\xspace}
+\renewcommand{\Lang}{\textsf{TIFAE}\xspace}
 
 While type checking helps programmers by preventing run-time errors, it gives
 programmers the burden of attaching type annotations to function parameters.
@@ -67,11 +66,11 @@ f x = x + 1
 \end{itemize}
 
 This chapter introduces a basic implementation of type inference by implementing a
-type checker of \lang, which extends \plang with type inference.
+type checker of \Lang, which extends \plang with type inference.
 
 \section{Syntax}
 
-The syntax of \lang is as follows:
+The syntax of \Lang is as follows:
 
 \[
 e\ ::=\ n
@@ -81,7 +80,7 @@ e\ ::=\ n
 \ |\ \eapp{e}{e}
 \]
 
-The only difference from \plang is the absence of type annotations. \lang allows
+The only difference from \plang is the absence of type annotations. \Lang allows
 omission of every type annotation, just like OCaml and Haskell, so the syntax
 does not require type annotations.
 
@@ -121,11 +120,11 @@ defined as the following function $\embox{erase}$:
   \end{array}
 \]
 
-It takes a \plang expression as an input and outputs a \lang expression.
+It takes a \plang expression as an input and outputs a \Lang expression.
 For example, $\ersr{\efunt{\cx}{\tnum}{\eadd{\cx}{\cx}}}$ is
 $\efun{\cx}{\eadd{\cx}{\cx}}$.
 
-The type inference problem of \lang is the following decision problem on a \lang
+The type inference problem of \Lang is the following decision problem on a \Lang
 expression $e$:
 
 \begin{quote}
@@ -136,7 +135,7 @@ For example, when $\efun{\cx}{\eadd{\cx}{\cx}}$ is given, the answer is ``yes''
 because $\efunt{\cx}{\tnum}{\eadd{\cx}{\cx}}$ is such a \plang expression. On
 the other hand, when $\efun{\cx}{\eapp{\cx}{\cx}}$ is given, the answer is
 ``no'' because there is no such expression. An algorithm solving this decision
-problem is the type inference algorithm of \lang.
+problem is the type inference algorithm of \Lang.
 
 From this perspective, type inference is to figure out whether there are type
 annotations that can make a given expression become a well-typed, fully
@@ -146,7 +145,7 @@ fits our intuitive understanding of type inference.
 
 \subsection{Non-Algorithmic Type System}
 
-Consider the following static semantics of \lang:
+Consider the following static semantics of \Lang:
 
 \typerule{Typ-Num}{
   \typeofdnc{n}{\tnum}.
@@ -230,7 +229,7 @@ premise. $\tau_1$ just comes out of thin air. How can it be possible?
 A type system does not necessarily let us know how to implement a type checker.
 Its goal is to declare whether a certain expression is well-typed or not.
 Therefore, $\tau_1$ coming out of thin air cannot be any problem. This type
-system still tells us the well-typedness of each \lang expression. For example,
+system still tells us the well-typedness of each \Lang expression. For example,
 we can prove that $\efun{\cx}{\eadd{\cx}{\cx}}$ is well-typed with the type
 system:
 
@@ -273,7 +272,7 @@ how to implement type checking algorithms in a syntax-directed fashion, i.e., by
 giving an exact type-checking procedure for each syntactic form of an
 expression.
 
-The type inference problem of \lang is the following decision problem on a \lang
+The type inference problem of \Lang is the following decision problem on a \Lang
 expression $e$:
 
 \begin{quote}
@@ -282,7 +281,7 @@ expression $e$:
 
 Like before, the answer to $\efun{\cx}{\eadd{\cx}{\cx}}$ is ``yes,'' and the
 answer to $\efun{\cx}{\eapp{\cx}{\cx}}$ is ``no.'' The type inference algorithm
-of \lang is the same as the type checking algorithm of this non-algorithmic type
+of \Lang is the same as the type checking algorithm of this non-algorithmic type
 system.
 
 From this perspective, the type inference problem asks us to design a type
@@ -293,7 +292,7 @@ a nontrivial problem.
 \section{Type Variables and Constraints}
 
 Now, our goal is to design and implement a type inference algorithm of
-\lang. We mostly focus on the first perspective on type inference. Therefore,
+\Lang. We mostly focus on the first perspective on type inference. Therefore,
 the decision problem we want to solve is as follows:
 
 \begin{quote}
@@ -484,7 +483,7 @@ be the same.
 
 \section{Type Checker}
 
-This section implements a type checker of \lang.
+This section implements a type checker of \Lang.
 
 We define type variables as follows:
 
@@ -1184,7 +1183,7 @@ Note that we do not need any global variables now.
 \begin{exercise}
 \labex{type-inference-pair}
 
-This exercise extends \lang with pairs.
+This exercise extends \Lang with pairs.
 
 \begin{verbatim}
 sealed trait Expr
@@ -1258,7 +1257,7 @@ where
 \begin{exercise}
 \labex{type-inference-box}
 
-This exercise extends \lang with boxes. Complete the following implementation:
+This exercise extends \Lang with boxes. Complete the following implementation:
 \begin{verbatim}
 sealed trait Expr
 ...
@@ -1323,7 +1322,7 @@ where
 \begin{exercise}
 \labex{type-inference-list}
 
-This exercise extends \lang with lists. Complete the following implementation:
+This exercise extends \Lang with lists. Complete the following implementation:
 \begin{verbatim}
 sealed trait Expr
 ...
@@ -1396,7 +1395,7 @@ where
 \begin{exercise}
 \labex{type-inference-option}
 
-This exercise extends \lang with options. Complete the following implementation:
+This exercise extends \Lang with options. Complete the following implementation:
 \begin{verbatim}
 sealed trait Expr
 ...

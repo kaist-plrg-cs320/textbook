@@ -1,9 +1,8 @@
-\setchapterpreamble[u]{\margintoc}
 \chapter{Typing Recursive Functions}
 \labch{typing-recursive-functions}
 
 \renewcommand{\plang}{\textsf{TFAE}\xspace}
-\renewcommand{\lang}{\textsf{TRFAE}\xspace}
+\renewcommand{\Lang}{\textsf{TRFAE}\xspace}
 
 In \textsf{FAE}, recursive functions can be considered as syntactic sugar.
 For example, a function that computes the sum from one to a given integer
@@ -41,19 +40,19 @@ programs cannot be written in \plang. In other words, every well-typed \plang
 expression evaluates to a value in a finite time. This is called the
 \textit{normalization}\index{normalization} property of \plang. The
 normalization property of \plang was proved by Tait in
-1967~\cite{tait1967intensional}.\sidenote{Actually, the Tait's proof is about
+1967~\cite{tait1967intensional}.\footnote{Actually, the Tait's proof is about
 the lazy version of \plang, but the same technique can be applied to \plang,
 which is eager, as Pierce discussed~\cite{pierce2002types}.}
 
-This chpater defines \lang, which extends \plang with recursive functions. By
+This chpater defines \Lang, which extends \plang with recursive functions. By
 adding recursive functions to the language, programmers become able to implement
 recursive functions and nonterminating programs, which are impossible in \plang.
 Thus, while the extension from \textsf{FAE} to \textsf{RFAE} does not increase
-the expressivity, the extension from \plang to \lang does.
+the expressivity, the extension from \plang to \Lang does.
 
 \section{Syntax}
 
-The following is the syntax of \lang:
+The following is the syntax of \Lang:
 
 \[
 e\ ::=\ \cdots
@@ -70,7 +69,7 @@ used for type checking, just like type annotations in \plang.
 
 \section{Dynamic Semantics}
 
-The dynamic semantics of \lang is similar to that of \textsf{RFAE}, but type
+The dynamic semantics of \Lang is similar to that of \textsf{RFAE}, but type
 annotations are ignored during closure construction.
 
 \semanticrule{Rec}{
@@ -347,7 +346,7 @@ to add only the type of \code{f} to the type environment used to type-check
 \begin{exercise}
 \labex{typing-recursive-functions-terminate}
 
-Write a \lang expression $e$ such that only one of $e$ and
+Write a \Lang expression $e$ such that only one of $e$ and
   $\efunt{\cx}{\tnum}{(\eapp{e}{\cx})}$ terminates, while both $e$ and
   $\efunt{\cx}{\tnum}{(\eapp{e}{\cx})}$ are well-typed.
 
