@@ -509,7 +509,31 @@ Map(), x => x)} print?
 \end{exercise}
 
 \begin{exercise}
+\labex{first-class-continuations-reduction}
 
 Write the reduction steps of $(\evcc{\cx}{42+(\cx\ 2)})+8$.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-continuations-var}
+
+This exercise extends \lang with mutable variables.
+Complete the following interpreter implementation:
+
+\begin{verbatim}
+type Env = Map[String, Addr]
+type Sto = Map[Addr, Value]
+type Cont = (Value, Sto) => (Value, Sto)
+
+def interp(e: Expr, env: Env, sto: Sto, k: Cont): (Value, Sto) = e match {
+  case Num(n) => ???
+  case Id(x) => ???
+  case Fun(x, b) => ???
+  case App(f, a) => ???
+  case Set(x, e) => ???
+  case Vcc(x, b) => ???
+}
+\end{verbatim}
 
 \end{exercise}

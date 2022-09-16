@@ -448,6 +448,7 @@ subtraction can be desugared into the lambda calculus.
 \section{Exercises}
 
 \begin{exercise}
+\labex{first-class-functions-trace}
 
 Consider the following expression:
 
@@ -460,15 +461,15 @@ $\begin{array}{@{}l}
 }
 \end{array}$
 
-Describe a trace of the evaluation in terms of arguments to the \code{interp}
-function for every call. The \code{interp} function takes two arguments---an
-expression and an environment---so show both for each call.  For \code{Num},
-\code{Id}, and \code{Fun} expressions, show their result values, which are
-immediate.
+Write the arguments to \code{interp} each time it is called during the
+evaluation of the expression. Write them in the order in which the calls to
+\code{interp} occur during evaluation. For \code{Num}, \code{Id}, and
+\code{Fun} expressions, show their result values as well.
 
 \end{exercise}
 
 \begin{exercise}
+\labex{first-class-functions-scope}
 
 This exercise examines differences between semantics by changing scope.
 Consider the following code:
@@ -508,8 +509,10 @@ desugaring \textsf{val}:
 \labex{first-class-functions-rewrite-impl}
 
 This exercise asks you to implement the \code{desugar} function, which
-  takes an \lang expression as an argument and returns an \textsf{FAE} by
-  desugaring \textsf{val}.
+takes an \lang expression as an argument and returns an \textsf{FAE} by
+desugaring \textsf{val}.
+
+Complete the following implementation:
 
 \begin{verbatim}
 def desugar(e: Expr): Expr = e match {
@@ -521,7 +524,41 @@ def desugar(e: Expr): Expr = e match {
 }
 \end{verbatim}
 
-Fill every \code{???} to complete the implementation.
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-pair}
+
+We can extend \lang with pairs:
+\begin{verbatim}
+case class Pair(f: Expr, s: Expr) extends Expr
+case class Fst(e: Expr) extends Expr
+case class Snd(e: Expr) extends Expr
+\end{verbatim}
+
+This exercise asks you to implement the \code{desugar} function, which takes an
+expression and returns an expression that lacks \code{Pair},
+\code{Fst}, and \code{Snd} but has the same behavior as the given expression.
+Precisely speaking, \code{desugar} satisfies the following:
+\begin{itemize}
+  \item If \code{e} evaluates to an integer, \code{desugar(e)} evaluates to the same integer.
+  \item If \code{e} evaluates to a function, \code{desugar(e)} evaluates to a function.
+  \item If \code{e} evaluates to a pair, \code{desugar(e)} evaluates to a function.
+  \item If \code{e} does not terminate, \code{desugar(e)} does not terminate.
+  \item If \code{e} incurs a run-time error, \code{desugar(e)} can have any behavior.
+\end{itemize}
+Complete the following implementation:
+\begin{verbatim}
+def desugar(e: Expr): Expr = e match {
+  case Num(n) => Num(n)
+  case Id(x) => Id(x)
+  case Fun(x, b) => Fun(x, desugar(b))
+  case App(f, a) => App(desugar(f), desugar(a))
+  case Fst(e) => App(desugar(e), Fun("x", Fun("y", Id("x"))))
+  case Snd(e) => App(desugar(e), Fun("x", Fun("y", Id("y"))))
+  case Pair(f, s) => ???
+}
+\end{verbatim}
 
 \end{exercise}
 
@@ -568,6 +605,15 @@ that only one of $e$ and $\efun{\cx}{\eapp{e}{\cx}}$ terminates properly.
 \end{exercise}
 
 \begin{exercise}
+\labex{first-class-functions-free}
+
+Write an \lang expression that has a free identifier but
+evaluates to a value without incurring any run-time errors.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{first-class-functions-fv}
 
 This exercise modifies \lang to check body expressions when evaluating
 function expressions.
@@ -589,30 +635,30 @@ For example, $\embox{fv}(\efun{\cx}{\eapp{\cy}{\cx}}) = \{ \cy \}$.
 \end{exercise}
 
 \begin{exercise}
+\labex{first-class-functions-mult}
 
 This exercise extends \lang to support multiple parameters.
 Consider the following language:
 \[
-\begin{array}{lrrl}
-  \text{Expression}& e & ::= & \cdots\ |\ \efun{x\cdots x}{e}\ |\
-  \eappfo{e}{e,\cdots,e}\\
-  \text{Value}& v & ::= & \cdots\ |\ \clov{x\cdots x}{e}{\sigma} \\
+\begin{array}{rrl}
+  e & ::= & \cdots\ |\ \efun{x\cdots x}{e}\ |\ \eappfo{e}{e,\cdots,e}\\
+  v & ::= & \cdots\ |\ \clov{x\cdots x}{e}{\sigma} \\
 \end{array}
 \]
 The semantics of some constructs are as follows:
 \begin{itemize}
-  \item Evaluating $\lambda x_1\ \cdots\ x_n. e$ under $\sigma$
-      yields a closure $\langle \lambda x_1 \cdots\ x_n.e,\sigma \rangle$.
+  \item Evaluating $\lambda x_1\cdots x_n. e$ under $\sigma$
+      yields a closure $\langle \lambda x_1\cdots x_n.e,\sigma \rangle$.
   \item If
     \begin{itemize}
     \item evaluating $e_0$ under $\sigma$ yields a closure $\langle \lambda x_1
-      \cdots\ x_n.e,\sigma' \rangle$,
+      \cdots x_n.e,\sigma' \rangle$,
     \item evaluating $e_i$ under $\sigma$ yields $v_i$ for each $1 \leq i \leq
       n$, and
     \item evaluating $e$ under $\sigma'[x_1 \mapsto v_1, \cdots, x_n \mapsto
       v_n]$ yields $v$,
     \end{itemize}
-\item[] then evaluating $\eappfo{e}{e,\cdots,e}$ under $\sigma$ yields $v$.
+\item[] then evaluating $\eappfo{e_0}{e_1,\cdots,e_n}$ under $\sigma$ yields $v$.
 \end{itemize}
 
 \begin{enumerate}
@@ -625,13 +671,13 @@ The semantics of some constructs are as follows:
 \end{exercise}
 
 \begin{exercise}
+\labex{first-class-functions-js-app}
 
 Consider the following language:
 \[
-  \begin{array}{lrrl}
-  \text{Expression}& e & ::= & n\ |\ x\ |\ \efun{x\cdots x}{e}\ |\
-  \eappfo{e}{e,\cdots,e}\ |\ \textsf{get}\ e \\
-  \text{Value}& v & ::= & n\ |\ \textsf{undefined}\ |\ \clov{x\cdots x}{e}{\sigma} \\
+  \begin{array}{rrl}
+  e & ::= & n\ |\ x\ |\ \efun{x\cdots x}{e}\ |\ \eappfo{e}{e,\cdots,e}\ |\ \textsf{get}\ e \\
+  v & ::= & n\ |\ \textsf{undefined}\ |\ \clov{x\cdots x}{e}{\sigma} \\
   \end{array}
 \]
 The semantics of some constructs are as follows:
@@ -662,7 +708,7 @@ The semantics of some constructs are as follows:
 \end{itemize}
 
 For example,
-$\eappfo{(\efun{\cx\cy}{\cy})}{4}$
+$\eappfo{(\efun{\cx\ \cy}{\cy})}{4}$
 evaluates to \textsf{undefined}, and
 $\eappfo{(\efun{\cx}{\textsf{get}\ 0})}{5}$
 evaluate to $5$.
@@ -671,7 +717,7 @@ evaluate to $5$.
   \item Write the operational semantics of the form
     \fbox{$\eval{\sigma,\alpha}{e}{v}$}.
   \item Write the evaluation derivation of
-    $\eappfo{(\efun{\cx\ \cy}{\textsf{get}\ x})}{2,19,141}$.
+    $\eappfo{(\efun{\cx\ \cy}{\textsf{get}\ \cx})}{2,19,141}$.
 \end{enumerate}
 
 \end{exercise}
@@ -686,22 +732,12 @@ Consider the following implementation:
 trait Expr
 trait Value extends Expr
 case class Num(n: Int) extends Expr with Value
-case class Add(l: Expr, r: Expr) extends Expr
-case class Sub(l: Expr, r: Expr) extends Expr
-case class Val(x: String, e: Expr, b: Expr) extends Expr
 case class Id(x: String) extends Expr
 case class Fun(x: String, b: Expr) extends Expr with Value
 case class App(f: Expr, a: Expr) extends Expr
 
 def subst(e: Expr, x: String, v: Expr): Expr = e match {
   case Num(n) => e
-  case Add(l, r) =>
-    Add(subst(l, x, v), subst(r, x, v))
-  case Sub(l, r) =>
-    Sub(subst(l, x, v), subst(r, x, v))
-  case Val(y, i, b) =>
-    val nb = if (y == x) b else subst(b, x, v)
-    Val(y, subst(i, x, v), nb)
   case Id(name) =>
     if (name == x) v else e
   case Fun(y, b) =>
@@ -712,16 +748,6 @@ def subst(e: Expr, x: String, v: Expr): Expr = e match {
 
 def interp(e: Expr): Value = e match {
   case Num(n) => Num(n)
-  case Add(l, r) =>
-    val Num(n) = interp(l)
-    val Num(m) = interp(r)
-    Num(n + m)
-  case Sub(l, r) =>
-    val Num(n) = interp(l)
-    val Num(m) = interp(r)
-    Num(n - m)
-  case Val(x, i, b) =>
-    interp(subst(b, x, interp(i)))
   case Id(x) => error("free identifier")
   case Fun(x, b) => Fun(x, b)
   case App(f, a) =>
@@ -745,11 +771,7 @@ In this implementation, a value is either an integer or a lambda abstraction:
 
   \item Consider the following expression:
 \[
-\ebind{\code{z}}{\efun{\cx}{\esub{\cx}{\cy}}}{
-    \ebind{\cy}{10}{
-        (\eapp{\code{z}}{32})
-    }
-}
+  \eapp{\eapp{(\efun{\cf}{\efun{\cx}{\eapp{\cf}{0}}})}{(\efun{\cy}{\cx})}}{0}
 \]
 
 \begin{enumerate}
@@ -760,7 +782,7 @@ In this implementation, a value is either an integer or a lambda abstraction:
 \item Why are the results different?
 \end{enumerate}
 
-  \item Fix the \code{Val} and \code{Fun} case of the funtion \code{subst} in the
+  \item Fix the \code{Fun} case of the funtion \code{subst} in the
     implementation to make substitution-based \lang equivalent to
     environment-based \lang.  You may use the following helper functions
     without defining them:
@@ -776,95 +798,7 @@ def free(e: Expr): Set[String]
 def fresh(xs: Set[String]): String
 \end{verbatim}
 
-    Also, \code{xs1 ++ xs2} is the union of \code{xs1} and \code{xs2} where both
-    \code{xs1} and \code{xs2} are sets, and \code{Set(x)} is a set whose only
-    element is \code{x}.
-
 \end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
-
-The following quote describes the JavaScript sequencing semantics:
-\sidenote{\url{https://tc39.es/ecma262/\#sec-block-runtime-semantics-evaluation}}
-
-\begin{quote}
-The value of a \embox{StatementList} is the value of the last
-value-producing item in the \embox{StatementList}.  For example, the
-following calls to the \verb!eval! function all return the value 1:
-\begin{verbatim}
-eval("1;;;;;")
-eval("1;()")
-eval("1;var a;")
-\end{verbatim}
-\end{quote}
-Consider the following language:
-\[
-  \begin{array}{lrrl}
-    \text{Expression} & e & ::= & \textsf{()}\ |\ x\ |\ \efun{x}{e}\ |\ \eapp{e}{e}\ |\
-    e;\cdots;e \\
-    \text{Value} & v & ::= & \textsf{()}\ |\ \clov{x}{e}{\sigma} \\
-  \end{array}
-\]
-The value of the sequence expression $e_1;\cdots;e_n$
-is the value of the last expression whose value is not $\textsf{()}$.
-If the values of all the expressions $e_1,\cdots,e_n$ are $\textsf{()}$,
-the value of the sequence expression is $\textsf{()}$.
-Write the operational semantics of each expression of the form
-\fbox{$\evald{e}{v}$}.
-
-\end{exercise}
-
-\begin{exercise}
-\labex{first-class-functions-pair}
-
-This exercise extends \lang with pairs. Consider the following language:
-\[
-\begin{array}{lrrl}
-  \text{Expression}& e & ::= & \cdots\ |\ (e,e)\ |\ e\textsf{.1}\ |\ e\textsf{.2} \\
-  \text{Value} & v & ::= & \cdots\ |\ \fbox{ (a) }
-\end{array}
-\]
-
-\begin{enumerate}
-  \item Write the syntax of a pair value in \fbox{ (a) } and
-    the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
-  \item Write the evaluation derivation of
-      $(8,(320,42)\textsf{.1})\textsf{.2}$.
-\end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
-
-This exercise extends \lang with records.
-  Consider the following language:
-\[
-\begin{array}{lrrl}
-  \text{Field} & f & \in & \textit{Field} \\
-  \text{Record} & \rho & \in & \embox{Record} = \embox{Field} \finto \embox{Value} \\
-  \text{Expression}& e & ::= & \cdots\ |\ \{f\ e,\ \ldots,\ f\ e\}\ |\ e.f\ |\
-  e;e \\
-  \text{Value} & v & ::= & \cdots\ |\ \rho \\
-\end{array}
-\]
-
-The semantics of some constructs are as follows:
-\begin{itemize}
-  \item The evaluation of $\{f_1\ e_1,\ \cdots,\ f_k\ e_k\}$
-    under $\sigma$ yields a finite map $\rho$,
-which maps $f_i \in \{f_1\ \cdots,\ f_k\}$
-to the value $v_i$ which is evaluated from the expression $e_i$ under $\sigma$.
-  \item The evaluation of $e.f$ under $\sigma$ yields the value of the field $f$ in the record $\rho$,
-      where evaluation of $e$ under $\sigma$ yields $\rho$.
-  \item If evaluation of $e_1$ yields some value under $\sigma$, and evaluation
-    of $e_2$ yields $v$ under $\sigma$,
-      then evaluation of $e_1; e_2$ yields $v$ under $\sigma$.
-\end{itemize}
-
-Write the operational semantics of the form
-$\boxed{\sigma \vdash e \Rightarrow v}$
 
 \end{exercise}
 
@@ -876,8 +810,8 @@ This exercise extends \lang with JavaScript-like records, field accesses,
 
 \[
 \begin{array}{rcl}
-  e & ::= & \cdots\ |\ \{l:e,\ldots,l:e\}\ |\ e.l\ |\ e.l(e)\ |\ v \\
-  v & ::= & \cdots\ |\ \langle l:v,\ldots,l:v\rangle \ |\ \textsf{undefined} \\
+  e & ::= & \cdots\ |\ \{l:e,\cdots,l:e\}\ |\ e.l\ |\ e.l(e)\ |\ v \\
+  v & ::= & \cdots\ |\ \langle l:v,\cdots,l:v\rangle \ |\ \textsf{undefined} \\
 \end{array}
 \]
 
@@ -894,10 +828,10 @@ The operational semantics of $v$ is as follows: $\evald{v}{v}$
   \item
     The following sentences describe the operational semantics:
     \begin{itemize}
-      \item $\{l_1:e_1,\ldots,l_n:e_n\}$
+      \item $\{l_1:e_1,\cdots,l_n:e_n\}$
 
-        Let $v_1$, \ldots, $v_n$ be the results of $e_1$, \ldots, $e_n$.
-        The result is $\langle l_1:v_1,\ldots,l_n:v_n\rangle$.
+        Let $v_i$ be the results of $e_i$.
+        The result is $\langle l_1:v_1,\cdots,l_n:v_n\rangle$.
 
       \item $e.l$
 
@@ -924,7 +858,7 @@ The operational semantics of $v$ is as follows: $\evald{v}{v}$
         result is $v$.
 
     \end{itemize}
-    Write the operational semantics of $\{l_1:e_1,\ldots,l_n:e_n\}$, $e.l$, and
+    Write the operational semantics of $\{l_1:e_1,\cdots,l_n:e_n\}$, $e.l$, and
     $e_1.l(e_2)$ of the form \fbox{$\evald{e}{v}$}.
 
   \item Draw the evaluation derivation of $\{\code{proto}:\{\cx:1\}\}.\cx$ under
@@ -939,106 +873,6 @@ The operational semantics of $v$ is as follows: $\evald{v}{v}$
     $(\eapp{e}{1})$ does not evaluate to that $v$.
 
 \end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
-
-Consider the following language:
-\[
-\begin{array}{rll}
-e ::= & a& \text{atomic expression}\\
-\mid& e\ a& \text{function application}\\
-\mid& \textsf{fn}\ m& \text{function expression}\\
-a ::= & n & \text{number}\\
-\mid&x & \text{identifier}\\
-m ::= & p\ \leadsto\ e & \text{pattern matching}\\
-\mid& p\ \leadsto\ e\ \verb!|!\ m & \text{pattern matching sequence}\\
-p ::= & \verb!_! & \text{wildcard pattern}\\
-\mid&n& \text{number pattern}\\
-\mid&x& \text{identifier pattern}
-\end{array}
-\]
-where a value of the language $v$ is either a number $n$ or a closure $\langle m, \sigma\rangle$,
-a result of evaluation $r$ is either a value $v$ or a failure in pattern matching $\uparrow$,
-which is different from run-time errors,
-and an environment $\sigma$ maps identifiers to their values.
-
-The operational semantics rules for expressions and atomic expressions are as follows:
-
-\fbox{$\sigma\vdash e \Rightarrow r$}
-\[
-\begin{array}{c}
-  \inferrule
-  {\sigma \vdash a \hookrightarrow v}
-  {\sigma \vdash a \Rightarrow v}
-  \qquad
-  \inferrule
-  {\sigma \vdash e \Rightarrow \uparrow}
-  {\sigma \vdash e\ a \Rightarrow \uparrow}
-  \qquad
-  \sigma \vdash \textsf{fn}\ m \Rightarrow \langle m, \sigma \rangle
-  \\[1.5em]
-  \inferrule
-  {
-    \sigma \vdash e \Rightarrow \langle m, \sigma' \rangle \\
-    \sigma \vdash a \Rightarrow v \\
-    (\sigma', v) \vdash m \Rightarrow v'
-  }
-  {\sigma \vdash e\ a \Rightarrow v'}
-  \\[1.5em]
-  \inferrule
-  {
-    \sigma \vdash e \Rightarrow \langle m, \sigma' \rangle \\
-    \sigma \vdash a \Rightarrow v \\
-    (\sigma', v) \vdash m \Rightarrow \uparrow
-  }
-  {\sigma \vdash e\ a \Rightarrow \uparrow}
-\end{array}
-\]
-
-\fbox{$\sigma\vdash a \hookrightarrow v$}
-\[
-\begin{array}{c}
-  \sigma \vdash n \hookrightarrow n
-  \qquad\qquad
-  \inferrule
-  {x \in \dom{\sigma}}
-  {\sigma \vdash x \hookrightarrow \sigma(x)}
-\end{array}
-\]
-
-The semantics of pattern matching $m$ and pattern $p$ are as follows:
-\begin{itemize}
-\item Evaluation of $p\ \leadsto\ e$ under $(\sigma, v)$ has two possibilities.
-First, when evaluation of $p$ results in a new environment $\sigma'$,
-the result of this pattern matching is the result of evaluation of $e$ under $\sigma+\sigma'$,
-where $\sigma+\sigma'$ is a disjoint union of $\sigma$ and $\sigma'$.
-Second, when evaluation of $p$ produces $\uparrow$,
-the evaluation of this pattern matching produces $\uparrow$ as well.
-\item Evaluation of ``$p\ \leadsto\ e\ \verb!|!\ m$'' under $(\sigma, v)$
-also has two possibilities.
-First, when evaluation of $p\ \leadsto\ e$ succeeds with a value $v'$,
-the value of this pattern matching sequence is $v'$.
-Second, when evaluation of $p\ \leadsto\ e$ fails,
-the result of evaluation of this pattern matching sequence is
-the result of evaluation of $m$.
-\item Evaluation of the wildcard pattern \verb!_! under $(\sigma, v)$
-produces the empty environment.
-\item Evaluation of the number pattern $n$ under $(\sigma, v)$ has two possibilities.
-If $v=n$,
-it produces the empty environment.  Otherwise, it produces $\uparrow$.
-\item Evaluation of the identifier pattern $x$ under $(\sigma, v)$
-produces a singleton environment $\{x \mapsto v\}$
-if $x$ is not in the domain of $\sigma$.
-\end{itemize}
-Write the operational semantics for $m$ and $p$
-of the forms \fbox{$(\sigma, v)\vdash m \Rightarrow r$} and
-\fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$}, respectively,
-where \fbox{$(\sigma, v)\vdash p \Rightarrow \sigma/\uparrow$} denotes
-\fbox{$(\sigma, v)\vdash p \Rightarrow \sigma$} or
-\fbox{$(\sigma, v)\vdash p \Rightarrow \uparrow$}.
-Remember that the operational semantics do not specify run-time errors.
 
 \end{exercise}
 

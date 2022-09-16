@@ -596,15 +596,14 @@ The \code{SetBox} case evaluates both subexpressions and modifies the store.
 \section{Exercises}
 
 \begin{exercise}
+\labex{mutable-boxes-trace}
 
 Consider the following expression:
-
 \[
   \eapp{(\efun{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}})}{\eref{7}}
 \]
-
-Write out the arguments to and results of \code{interp} each time it is called
-during the evaluation of the expression. Write them out in the order in
+Write the arguments and result of \code{interp} each time it is called
+during the evaluation of the expression. Write them in the order in
 which the calls to \code{interp} occur during evaluation.
 
 \end{exercise}
@@ -626,17 +625,34 @@ def desugar(e: Expr): Expr = e match {
 Fill \code{???} to complete the implementation.
 You may use the following helper functions without defining them:
 \begin{verbatim}
-// returns the set of every binding identifier in e
-def binding(e: Expr): Set[String]
-
-// returns the set of every bound identifier in e
-def bound(e: Expr): Set[String]
-
 // returns the set of every free identifier in e
 def free(e: Expr): Set[String]
 
 // returns a new identifier that does not belong to xs
 def fresh(xs: Set[String]): String
 \end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{mutable-boxes-landin}
+
+We can implement a fixed point combinator with boxes. The key idea is to put a
+dummy function in a box, create a recursive function with the box, and replace
+the dummy function with the correct recursive function. This strategy is
+known as \textit{Landin's knot}\index{Landin's knot}~\cite{landin1964mechanical}.
+
+Complete the following implementation:
+
+$\begin{array}{l}
+  \ebind{\cz}{\efun{\cb}{(\\
+  \ \ \ \ \ebind{\ca}{\eref{\efun{\cx}{\cy}}}{\\
+  \ \ \ \ \ebind{\cf}{(\eapp{\cb}{???})}{\\
+  \ \ \ \ \eseq{\eset{\ca}{???}}{\\
+  \ \ \ \ ???\\
+  }}})}}{\\
+  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
+  \eapp{\cf}{10}}}
+\end{array}$
 
 \end{exercise}

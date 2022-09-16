@@ -577,10 +577,44 @@ actually $v$.
 \section{Exercises}
 
 \begin{exercise}
+\labex{first-order-representation-of-continuations-val}
+
+This exercise asks you to implement an interpreter of \textsf{FAE}
+with \textsf{val} and \textsf{if0} in CPS without first-class functions.
+Complete the following implementation:
+
+\begin{verbatim}
+sealed trait Expr
+...
+case class Val(x: String, e: Expr, b: Expr) extends Expr
+case class If0(c: Expr, t: Expr, f: Expr) extends Expr
+
+sealed trait Cont
+...
+case class ValSecondK(???) extends Cont
+case class If0SecondK(???) extends Cont
+
+def continue(k: Cont, v: Value): Value = k match {
+  ...
+  case ValSecondK(???) => ???
+  case If0SecondK(???) => ???
+}
+
+def interp(e: Expr, env: Env, k: Cont): Value = e match {
+  ...
+  case Val(x, e, b) => ???
+  case If0(c, t, f) => ???
+}
+\end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
 \labex{first-order-representation-of-continuations-pair}
 
 This exercise asks you to implement an interpreter of \textsf{FAE}
 with pairs in CPS without first-class functions.
+Complete the following implementation:
 
 \begin{verbatim}
 sealed trait Expr
@@ -617,7 +651,6 @@ def interp(e: Expr, env: Env, k: Cont): Value = e match {
 \end{verbatim}
 
 \code{Pair(e1, e2)} creates a new pair; \code{Fst(e)} gives the first value of a
-pair; \code{Snd(e)} gives the second value of a pair.  Fill every \code{???}
-to complete the implementation.
+pair; \code{Snd(e)} gives the second value of a pair.
 
 \end{exercise}

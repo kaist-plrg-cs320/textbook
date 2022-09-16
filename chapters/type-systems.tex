@@ -1084,8 +1084,6 @@ $\tarrow{\tnum}{\tnum}$ in some other cases. There is no way to represent the
 type of such a function. Thus, programs using pairs cannot be written in \lang.
 
 To overcome the limitation, we extend \lang to support pairs.
-The syntax and dynamic semantics of pairs follow
-\refex{first-class-functions-pair}
 We add pair types as follows:
 
 \[ \tau \ ::= \ \cdots\ | \ \tau\times\tau \]
@@ -1143,6 +1141,20 @@ The following rules define the static semantics:
 \section{Exercises}
 
 \begin{exercise}
+\labex{type-systems-unsound}
+
+If we change the typing rule for addition as follows, the type system
+is not sound any longer:
+\[
+  \inferrule
+  { \typeofd{e_1}{\tnum} }
+  { \typeofd{\eadd{e_1}{e_2}}{\tnum} }
+\]
+Write a \lang expression that passes type checking but incurs a run-time error.
+
+\end{exercise}
+
+\begin{exercise}
 \labex{type-systems-list}
 
 This exercise extends \lang with lists.
@@ -1193,6 +1205,7 @@ This exercise extends \lang with boxes.
 \end{exercise}
 
 \begin{exercise}
+\labex{type-systems-var}
 
 This exercise extends \lang with mutable variables.
   \[ e\ ::=\ \cdots\ |\ \eset{x}{e} \]

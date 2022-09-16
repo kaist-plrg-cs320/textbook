@@ -461,6 +461,7 @@ have the same semantics, and the desugaring is correct.
 \section{Exercises}
 
 \begin{exercise}
+\labex{recursion-arrow}
 
   Consider the following expression:
 
@@ -478,6 +479,40 @@ $
   \item Draw arrows from each bound occurrence to its binding occurrence.
   \item Circle each free identifier.
 \end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{recursion-bindings}
+
+Consider the following functions:
+\begin{itemize}
+  \item \code{bindings}: returns the set of every identifier that has at least
+    one binding occurrence in a given expression
+  \item \code{frees}: returns the set of every identifier that has at least
+    one free occurrence in a given expression
+\end{itemize}
+Complete the following implementation of \code{bindings} and \code{frees} for
+\lang:
+\begin{verbatim}
+def bindings(e: Expr): Set[String] = e match {
+  case Num(n) => ???
+  case Id(x) => ???
+  case Val(x, e, b) => ???
+  case App(f, a) => ???
+  case Fun(x, b) => ???
+  case Rec(f, x, b, e) => ???
+}
+
+def frees(e: Expr): Set[String] = e match {
+  case Num(n) => ???
+  case Id(x) => ???
+  case Val(x, e, b) => ???
+  case App(f, a) => ???
+  case Fun(x, b) => ???
+  case Rec(f, x, b, e) => ???
+}
+\end{verbatim}
 
 \end{exercise}
 
@@ -534,6 +569,36 @@ Map("f" -> CloV("x", Add(Num(13), Id("x")), Map()))
 \end{exercise}
 
 \begin{exercise}
+\labex{recursion-bool}
+
+Consider the following language:
+\[
+\begin{array}{rrl}
+  e & ::= & \cdots\ |\ b\ |\ e\wedge e\ |\ \neg e\ |\ \eif{e}{e}{e} \\
+  v & ::= & \cdots\ |\ b \\
+\end{array}
+\]
+where $b$ ranges over booleans.
+
+The semantics is as follows:
+\begin{itemize}
+  \item The value of $b$ is $b$.
+  \item
+The value of $e_1\wedge e_2$ is $v_1\wedge v_2$,
+where $e_i$ evaluates to $v_i$.
+Note that the language does not support the short-circuiting
+semantics, i.e., $e_2$ is always evaluated.
+  \item
+The value of $\neg e$ is $\neg v$, where $e$ evaluates to $v$.
+  \item
+    The value of $\eif{e_1}{e_2}{e_3}$ is the value of $e_2$ if $e_1$ evaluates
+    to $\true$ and $e_3$ if $e_1$ evaluates to $\false$.
+\end{itemize}
+Write the operational semantics of the form \fbox{$\evald{e}{v}$}.
+
+\end{exercise}
+
+\begin{exercise}
 \labex{recursion-racket-if}
 
   The following sentences are a simplified version of the Racket programming
@@ -574,33 +639,12 @@ Now, we extend \lang with Racket-like booleans.
 
 \begin{enumerate}
   \item
-    Write the operational semantics
-    $\eif{e_1}{e_2}{e_3}$, $\eand{e_1}{e_2}$, and $\eor{e_1}{e_2}$
-    of the form \fbox{$\evald{e}{v}$}.
+    Write the operational semantics of the form \fbox{$\evald{e}{v}$}.
   \item
     Draw the evaluation derivation of
     $\eif{(\eor{\false}{2})}{(\eand{\false}{2})}{1}$
     under the empty environment.
 \end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
-
-Consider the following language:
-\[
-\begin{array}{lrrl}
-  \text{Expression} & e & ::= & n\ |\ \esub{e}{e}\ |\ b\ |\ e\wedge e\ |\ \neg
-  e\ |\ \textsf{if}\ e\ e\ e\ |\ x \\
-  &&|& \efun{x\cdots x}{e}\ |\ \eappfo{e}{e,\cdots,e}\ |\
-  \erec{x}{x,\cdots,x}{e}{e} \\
-  \text{Value} & v & ::= & n\ |\ b\ |\ \clov{x\cdots x}{e}{\sigma} \\
-\end{array}
-\]
-Note that $b$ ranges over boolean values. The language does not support the short-circuiting
-semantics, i.e. $e_2$ must be evaluated in expression $e_1\wedge e_2$ whenever $e_1$
-evaluates to true or not.
-Write the operational semantics of the form \fbox{$\evald{e}{v}$} for the expressions.
 
 \end{exercise}
 
@@ -649,6 +693,7 @@ $\begin{array}{l}
 \end{exercise}
 
 \begin{exercise}
+\labex{recursion-sum-arrow}
 
 Consider the following expression:
 
@@ -667,18 +712,13 @@ $\begin{array}{l}
 \begin{enumerate}
 \item Draw arrows on the above expression from each bound variable to its binding occurrence.
 \item Draw dotted arrows on the above expression from each shadowing variable to its shadowed variable.
-\item Write the value of $\cf$ at the last line by using the following Scala types:
-\begin{verbatim}
-trait Value
-case class NumV(n: Int) extends Value
-case class CloV(p: String, b: Expr, e: Env) extends Value
-type Env = Map[String, Value]
-\end{verbatim}
+\item Write the value of $\cf$ in the last line.
 \end{enumerate}
 
 \end{exercise}
 
 \begin{exercise}
+\labex{recursion-describe}
 
 Consider the following definition of $\cz$ and its use to define the recursive
 function $\cf$.
@@ -721,7 +761,6 @@ Also, in order to implement \code{even} and \code{odd}, we add booleans to
 \code{FAE}: $\true$ and $\false$.
 
 The following expression implements \code{even} and \code{odd} in \plang:
-\vspace{1em}
 
 $\begin{array}{@{}l@{}}
   \ebind{\cz}{(\efun{\cb}{\\
@@ -735,8 +774,7 @@ $\begin{array}{@{}l@{}}
   \ebind{\code{odd}}{\cf\textsf{.2}}{\\
   (\eapp{\code{even}}{10}, \eapp{\code{odd}}{10})}}}}
 \end{array}$
-\vspace{1em}
 
-Fill every \code{???} to complete the expression.
+Complete the expression.
 
 \end{exercise}

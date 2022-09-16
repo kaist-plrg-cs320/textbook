@@ -765,6 +765,7 @@ into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
 \section{Exercises}
 
 \begin{exercise}
+\labex{parametric-polymorphism-typeck}
 
 Draw the type derivation of each of the following expressions:
 
@@ -794,6 +795,8 @@ types with numbers.  For example, \code{ForallT("a", ArrowT(VarT("a"),
 VarT("a")))}, which is $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$, becomes
 \code{ForallT( ArrowT(VarT(0), VarT(0)))}.
 
+Complete the following implementation:
+
 \begin{verbatim}
 sealed trait Type
 case object NumT extends Type
@@ -819,8 +822,6 @@ def transform(t: Type, ctx: Ctx): Nameless.Type =
     case VarT(a) => ???
   }
 \end{verbatim}
-
-Fill every \code{???} to complete the implementation.
 
 \end{exercise}
 

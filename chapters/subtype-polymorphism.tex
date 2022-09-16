@@ -774,7 +774,7 @@ causes a run-time error.
 \begin{exercise}
 \labex{subtype-polymorphism-subtyper}
 
-Consider the following implementation of an \lang subtype checker:
+Complete the following implementation of an \lang subtype checker:
 
 \begin{verbatim}
 sealed trait Type
@@ -805,18 +805,12 @@ The specification of \code{subtype} is as follows:
     is false.
 \end{itemize}
 
-Fill every \code{???} to complete the implementation.  You may use the
-\code{get}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#get(key:K):Option[V]}}
-and
-\code{forall}\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/Map.html\#forall(p:A=\%3EBoolean):Boolean}}
-methods of \code{Map}:
-
 \end{exercise}
 
 \begin{exercise}
 \labex{subtype-polymorphism-typer}
 
-The following code implements a type checker for a variant of \lang:
+Complete the following implementation of a \lang type checker:
 
 \begin{verbatim}
 sealed trait Type
@@ -859,14 +853,73 @@ If $\tau$ is the minimal type of $e$ under $\Gamma$, \code{typeCheck($e$,
 $\Gamma$)} returns $\tau$. If there is no $\tau$ satisfying $\typeofd{e}{\tau}$,
 \code{typeCheck($e$, $\Gamma$)} throws an exception.
 
-Fill every \code{???} to complete the implementation. You may use the
-following helper function without defining it:
+You may use the following helper function without defining it:
 
 \begin{verbatim}
 // returns true if t1 is a subtype of t2
 // returns false otherwise
 def subtype(t1: Type, t2: Type): Boolean
 \end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{subtype-polymorphism-lattice}
+
+\code{Type} is defined as the same as \refex{subtype-polymorphism-subtyper}.
+Consider the following implementation:
+
+\begin{verbatim}
+def lub(t1: Type, t2: Type): Type = (t1, t2) match {
+  case (BottomT, t) => ???
+  case (t, BottomT) => ???
+  case (NumT, NumT) => ???
+  case (ArrowT(p1, r1), ArrowT(p2, r2)) => ???
+  case (RecordT(fs1), RecordT(fs2)) => ???
+  case _ => TopT
+}
+
+def glb(t1: Type, t2: Type): Type = (t1, t2) match {
+  case (TopT, t) => ???
+  case (t, TopT) => ???
+  case (NumT, NumT) => ???
+  case (ArrowT(p1, r1), ArrowT(p2, r2)) => ???
+  case (RecordT(fs1), RecordT(fs2)) => ???
+  case _ => BottomT
+}
+
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
+  ...
+  case If0(c, t, f) => ???
+}
+\end{verbatim}
+
+\code{lub} and \code{glb} compute the \emph{least upper bound} and the
+\emph{greatest lower bound} of given types, respectively.
+The least upper bound of $\tau_1$ and $\tau_2$ is $\tau_3$ if and only if
+the following three conditions are satisfied:
+
+\begin{itemize}
+  \item $\subt{\tau_1}{\tau_3}$
+  \item $\subt{\tau_2}{\tau_3}$
+  \item for every $\tau$, if $\subt{\tau_1}{\tau}$ and $\subt{\tau_2}{\tau}$,
+    then $\subt{\tau_3}{\tau}$
+\end{itemize}
+
+The greatest lower bound of $\tau_1$ and $\tau_2$ is $\tau_3$ if and only if
+the following three conditions are satisfied:
+
+\begin{itemize}
+  \item $\subt{\tau_3}{\tau_1}$
+  \item $\subt{\tau_3}{\tau_2}$
+  \item for every $\tau$, if $\subt{\tau}{\tau_1}$ and $\subt{\tau}{\tau_2}$,
+    then $\subt{\tau}{\tau_3}$
+\end{itemize}
+
+\code{typeCheck} satisfies the same condition as that of
+\refex{subtype-polymorphism-typer}.
+
+Complete the implementation.
 
 \end{exercise}
 
@@ -880,6 +933,7 @@ Consider \plang with boxes in \refex{type-systems-box}.
 \end{exercise}
 
 \begin{exercise}
+\labex{subtype-polymorphism-list}
 
 Consider \plang with lists in \refex{type-systems-list}.
   \begin{enumerate}
@@ -954,6 +1008,26 @@ if $v$ is an element of both $\tau_1$ and $\tau_2$.
 \end{exercise}
 
 \begin{exercise}
+\labex{subtype-polymorphism-union}
+
+Many real-world languages, such as Scala and TypeScript, provide
+union types. The union type of two types is a type containing values that
+belong to at least one of the types. In other words, $v$ is an element of
+$(\tau_1\lor\tau_2)$, the union type of $\tau_1$ and $\tau_2$, if and only
+if $v$ is an element of either $\tau_1$ or $\tau_2$.
+
+\begin{enumerate}
+  \item Write one or more subtyping rules each of which has
+    $\subt{(\tau_1\lor\tau_2)}{\tau_3}$ as a conclusion.
+  \item Write one or more subtyping rules each of which has
+    $\subt{\tau_3}{(\tau_1\lor\tau_2)}$ as a conclusion.
+  \item Draw a subtype derivation tree proving that
+    $\subt{((\tau_1\lor\tau_2)\lor\tau_3)}{(\tau_1\lor(\tau_2\lor\tau_3))}$.
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
 \labex{subtype-polymorphism-adt}
 
 This exercise extends \textsf{TVFAE} to allow types with any number (including zero) of variants.
@@ -962,8 +1036,8 @@ This exercise extends \textsf{TVFAE} to allow types with any number (including z
 $
     \small
   \begin{array}{@{}l}
-    e ::=\ \cdots\ |\ {\textsf{type}}\ t=x@\tau+\ldots+x@\tau;\ e\ |\
-           e\ {\textsf{match}}\ x(x)\rightarrow e,\ldots,x(x)\rightarrow e \\
+    e ::=\ \cdots\ |\ {\textsf{type}}\ t=x@\tau+\cdots+x@\tau;\ e\ |\
+           e\ {\textsf{match}}\ x(x)\rightarrow e,\cdots,x(x)\rightarrow e \\
   \end{array}
 $
 
@@ -973,7 +1047,7 @@ For example, you can write the following code in the extended language:
 $
   \begin{array}{@{}l}
     {\textsf{type}}\ \code{fruit}=\code{apple}@\tnum+\code{banana}@\tnum+\code{cherry}@\tnum;\\
-    \ldots
+    \cdots
   \end{array}
 $
 \vspace{0.5em}

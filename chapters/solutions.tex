@@ -1,5 +1,5 @@
 \setchapterpreamble[u]{\margintoc}
-\chapter{Solutions to Selected Exercises}
+\chapter{Solutions to Exercises}
 \labch{solutions}
 
 Many exercises are meant to have multiple solutions. Each provided solution may
@@ -73,6 +73,131 @@ def reverse(l: List[Int]): List[Int] =
   l.foldLeft(Nil: List[Int])((l, e) => e :: l)
 \end{verbatim}
 
+\textbf{\refex{syntax-and-semantics-expr}}
+\begin{enumerate}
+  \item No
+  \item No
+  \item No
+  \item No
+  \item Yes
+\end{enumerate}
+
+\textbf{\refex{syntax-and-semantics-icecream}}
+\begin{enumerate}
+  \item No
+  \item Yes
+  \item No
+  \item Yes
+  \item No
+  \item Yes
+  \item Yes
+\end{enumerate}
+
+\textbf{\refex{syntax-and-semantics-coffee}}
+\begin{enumerate}
+  \item No
+  \item Yes
+  \item Yes
+  \item Yes
+  \item No
+  \item Yes
+\end{enumerate}
+
+\textbf{\refex{syntax-and-semantics-pair}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { {e_1}\Rightarrow{v_1}\\{e_2}\Rightarrow{v_2} }
+      { {(e_1,e_2)}\Rightarrow{(v_1,v_2)} }
+    \]
+
+    \[
+      \inferrule
+      { {e}\Rightarrow{(v_1,v_2)} }
+      { {e\textsf{.1}}\Rightarrow{v_1} }
+    \]
+
+    \[
+      \inferrule
+      { {e}\Rightarrow{(v_1,v_2)} }
+      { {e\textsf{.2}}\Rightarrow{v_2} }
+    \]
+  \item
+    \[
+      \inferrule
+      {
+        \inferrule
+        {
+          {8}\Rightarrow{8} \\
+          \inferrule
+          {
+            \inferrule
+            { {320}\Rightarrow{320} \\ {42}\Rightarrow{42} }
+            { {(320,42)}\Rightarrow{(320,42)} }
+          }
+          { {(320,42)\textsf{.1}}\Rightarrow{320} }
+        }
+        { {(8,(320,42)\textsf{.1})}\Rightarrow{(8,320)} }
+      }
+      { {(8,(320,42)\textsf{.1})\textsf{.2}}\Rightarrow{320} }
+    \]
+\end{enumerate}
+
+\textbf{\refex{syntax-and-semantics-record}}
+\[
+  \inferrule
+  { {e_1}\Rightarrow{v_1} \\\cdots\\ {e_n}\Rightarrow{v_n} }
+  { {\{l_1:e_1,\cdots,l_n:e_n\}}\Rightarrow{\langle l_1:v_1,\cdots,l_n:v_n\rangle} }
+\]
+
+\[
+  \inferrule
+  { {e}\Rightarrow{\langle\cdots,l:v,\cdots\rangle} }
+  { {e.l}\Rightarrow{v} }
+\]
+
+\textbf{\refex{syntax-and-semantics-stlist}}
+\[
+  {\textsf{()}}\Rightarrow{\textsf{()}}
+\]
+
+\[
+  \inferrule
+  { {e_1}\Rightarrow{\textsf{()}}\\ \cdots\\ {e_n}\Rightarrow{\textsf{()}} }
+  { {e_1;\cdots;e_n}\Rightarrow{\textsf{()}} }
+\]
+
+\[
+  \inferrule
+  {
+    {e_1}\Rightarrow{v_1}\quad\cdots\quad{e_m}\Rightarrow{v_m}\quad
+    v_m\not=\textsf{()}\quad
+    {e_{m+1}}\Rightarrow{\textsf{()}}\quad\cdots\quad{e_n}\Rightarrow{\textsf{()}}
+  }
+  { {e_1;\cdots;e_n}\Rightarrow{v_m} }
+\]
+
+\textbf{\refex{identifiers-arrow}}
+
+\begin{itemize}
+  \item $\ebind{\cx_A}{(\ebind{\cx_B}{3}{\esub{5}{\cx_C}})}{\eadd{1}{\cx_D}}$
+  \begin{enumerate}
+    \item $C\rightarrow B,D\rightarrow A$
+    \item No shadowing
+  \end{enumerate}
+  \item $\ebind{\cx_A}{3}{\ebind{\cy_B}{5}{\eadd{1}{\cx_C}}}$
+  \begin{enumerate}
+    \item $C\rightarrow A$
+    \item No shadowing
+  \end{enumerate}
+  \item $\ebind{\cx_A}{3}{\ebind{\cx_B}{5}{\eadd{1}{\cx_C}}}$
+  \begin{enumerate}
+    \item $C\rightarrow B$
+    \item $B\rightarrow A$
+  \end{enumerate}
+\end{itemize}
+
 \textbf{\refex{identifiers-shadowing-impl}}
 \vspace{-1em}
 \begin{verbatim}
@@ -83,6 +208,60 @@ case Val(x, e, b) =>
   val s = if (env(x)) Set(x) else Set()
   s ++ helper(e, env) ++ helper(b, env + x)
 \end{verbatim}
+
+\textbf{\refex{first-order-functions-eval}}
+\begin{enumerate}
+  \item Free identifier error
+  \item $5$
+  \item $3$
+  \item Free identifier error
+  \item Free identifier error
+\end{enumerate}
+
+\textbf{\refex{first-class-functions-trace}}
+
+$\sigma_1=[\cx\mapsto5]$\\
+$\sigma_2=\sigma_1[\cf\mapsto v_1]$\\
+$\sigma_3=\sigma_2[\code{g}\mapsto v_2]$\\
+$\sigma_4=\sigma_2[\cx\mapsto1]$\\
+$\sigma_5=\sigma_1[\cy\mapsto1]$\\
+$v_1=\clov{\cy}{\eadd{\cy}{\cx}}{\sigma_1}$\\
+$v_2=\clov{\cx}{\cx}{\sigma_2}$\\
+$
+\begin{array}{@{}c|c|c@{}}
+  \text{expr} & \text{env} & \text{res} \\\hline
+\ebind{\cx}{5}{
+   \ebind{\code{f}}{\efun{\cy}{\eadd{\cy}{\cx}}}{
+     \eapp{(\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}})}
+       {(\efun{\cx}{\cx})}}} & \emptyset & \\
+5 & \emptyset & 5 \\
+\ebind{\code{f}}{\efun{\cy}{\eadd{\cy}{\cx}}}{
+  \eapp{(\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}})}
+    {(\efun{\cx}{\cx})}} & \sigma_1 & \\
+\efun{\cy}{\eadd{\cy}{\cx}} & \sigma_1 & v_1 \\
+\eapp{(\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}})}{(\efun{\cx}{\cx})} & \sigma_2 & \\
+\efun{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}} & \sigma_2 &
+\clov{\code{g}}{\eapp{\code{f}}{(\eapp{\code{g}}{1})}}{\sigma_2} \\
+\efun{\cx}{\cx} & \sigma_2 & v_2 \\
+\eapp{\code{f}}{(\eapp{\code{g}}{1})} & \sigma_3 & \\
+\cf & \sigma_3 & v_1 \\
+\eapp{\code{g}}{1} & \sigma_3 \\
+\code{g} & \sigma_3 & v_2 \\
+1 & \sigma_3 & 1 \\
+\cx & \sigma_4 & 1 \\
+\eadd{\cy}{\cx} & \sigma_5 \\
+\cy & \sigma_5 & 1 \\
+\cx & \sigma_5 & 5 \\
+\end{array}
+$
+\\
+
+\textbf{\refex{first-class-functions-scope}}
+\begin{enumerate}
+  \item Dynamic scoping
+  \item The argument is the only identifier the body can use unless the body defines a new identifier by itself.
+  \item Static scoping
+\end{enumerate}
 
 \textbf{\refex{first-class-functions-rewrite}}
 
@@ -99,6 +278,20 @@ case Fun(x, b) => Fun(x, desugar(b))
 case App(f, a) => App(desugar(f), desugar(a))
 \end{verbatim}
 
+\textbf{\refex{first-class-functions-pair}}
+\vspace{-1em}
+\begin{verbatim}
+App(
+  App(
+    Fun("x", Fun("y", Fun("z",
+      App(App(Id("z"), Id("x")), Id("y"))
+    ))),
+    desugar(f)
+  ),
+  desugar(s)
+)
+\end{verbatim}
+
 \textbf{\refex{first-class-functions-closure}}
 
 $\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\cx}})}{0}}{0}$
@@ -109,32 +302,159 @@ $\eapp{\eapp{(\efun{\cx}{\efun{\cy}{\cx}})}{0}}{0}$
 $\eapp{1}{1}$
 \\
 
+\textbf{\refex{first-class-functions-free}}
+
+$\efun{\cx}{\cy}$
+\\
+
+\textbf{\refex{first-class-functions-fv}}
+\[
+  \inferrule
+  { \embox{fv}(e)\subseteq\dom{\sigma}\cup\{x\} }
+  { \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}} }
+\]
+
+\[
+  \inferrule
+  { \embox{fv}(e)\not\subseteq\dom{\sigma}\cup\{x\} }
+  { \evald{\efun{x}{e}}{\uparrow} }
+\]
+
+\textbf{\refex{first-class-functions-mult}}
+\begin{enumerate}
+  \item
+    \[
+      \evald{\lambda x_1\cdots x_n. e}{\langle \lambda x_1\cdots x_n.e,\sigma \rangle}
+    \]
+
+    \[
+      \inferrule
+      {
+        \evald{e_0}{\langle \lambda x_1\cdots x_n.e,\sigma' \rangle}\\
+        \evald{e_1}{v_1}\quad\cdots\quad\evald{e_n}{v_n}\\
+        \eval{\sigma'[x_1 \mapsto v_1,\cdots,x_n \mapsto v_n]}{e}{v}
+      }
+      { \evald{\eappfo{e_0}{e_1,\cdots,e_n}}{v} }
+    \]
+  \item
+    $\sigma_1=[\cf\mapsto{\clov{\cx}{\cx}{\emptyset}},\code{m}\mapsto8],
+    \sigma_2=[\cx\mapsto8]$
+    \[
+      \small
+      \inferrule
+      {
+        \evale{\efun{\code{f}\ \code{m}}{\eappfo{\code{f}}{\code{m}}}}
+        {\clov{\code{f}\ \code{m}}{\eappfo{\code{f}}{\code{m}}}{\emptyset}} \\
+        \evale{\efun{\cx}{\cx}}{\clov{\cx}{\cx}{\emptyset}} \\
+        \evale{8}{8} \\
+        \inferrule
+        {
+          \inferrule
+          { \cf\in\dom{\sigma_1} }
+          { \eval{\sigma_1}{\code{f}}{\clov{\cx}{\cx}{\emptyset}} }
+          \\
+          \inferrule
+          { \code{m}\in\dom{\sigma_1} }
+          { \eval{\sigma_1}{\code{m}}{8} }
+          \\
+          \inferrule
+          { \cx\in\dom{\sigma_2} }
+          { \eval{\sigma_2}{\cx}{8} }
+        }
+        { \eval{\sigma_1}{\eappfo{\code{f}}{\code{m}} }{8} }
+      }
+      {
+        \evale{
+          \eappfo{(\efun{\code{f}\
+          \code{m}}{\eappfo{\code{f}}{\code{m}}})}{\efun{\cx}{\cx},8}
+        }{8}
+      }
+    \]
+\end{enumerate}
+
+\textbf{\refex{first-class-functions-js-app}}
+\begin{enumerate}
+  \item
+    \[
+      \eval{\sigma,\alpha}{\efun{x_1\cdots x_n}{e}}{\clov{x_1\cdots x_n}{e}{\sigma}}
+    \]
+    \[
+      \tiny
+      \inferrule
+      {
+        \eval{\sigma,\alpha}{e_0}{\clov{x_1\cdots x_m}{e}{\sigma}}\\
+        \eval{\sigma,\alpha}{e_1}{v_1}\quad\cdots\quad\eval{\sigma,\alpha}{e_n}{v_n}\\
+        \eval{\sigma'[x_1\mapsto v_1,\cdots,x_{\min(m,n)}\mapsto v_{\min(m,n)},
+        x_{\min(m,n)+1}\mapsto\textsf{undefined},\cdots,x_m\mapsto\textsf{undefined}],
+        [v_1,\cdots,v_n]}{e}{v}
+      }
+      { \eval{\sigma,\alpha}{\eappfo{e_0}{e_1,\cdots,e_n}}{v} }
+    \]
+    \[
+      \inferrule
+      { \eval{\sigma,\alpha}{e}{n} \\ 0\le n<\embox{Length}(\alpha) }
+      { \eval{\sigma,\alpha}{\textsf{get}\ e}{\alpha[n]} }
+    \]
+  \item
+    \[
+      \tiny
+      \inferrule
+      {
+        \eval
+        {\emptyset,[]}
+        {\efun{\cx\ \cy}{\textsf{get}\ \cx}}
+        {\clov{\cx\ \cy}{\textsf{get}\ \cx}{\emptyset}}
+        \\
+        \eval{\emptyset,[]}{2}{2} \\
+        \eval{\emptyset,[]}{19}{19} \\
+        \eval{\emptyset,[]}{141}{141} \\
+        \inferrule
+        {
+          \inferrule
+          { \cx\in\dom{[\cx\mapsto2,\cy\mapsto19]} }
+          { \eval{[\cx\mapsto2,\cy\mapsto19],[2,19,141]}{\cx}{2} }
+          \\
+          0\le2<\embox{Length}([2,19,141])
+        }
+        {
+          \eval
+          {[\cx\mapsto2,\cy\mapsto19],[2,19,141]}
+          {\textsf{get}\ \cx}
+          {141}
+        }
+      }
+      {
+        \eval
+        {\emptyset,[]}
+        {\eappfo{(\efun{\cx\ \cy}{\textsf{get}\ \cx})}{2,19,141}}
+        {141}
+      }
+    \]
+\end{enumerate}
+
 \textbf{\refex{first-class-functions-subst}}
 \newcommand{\evals}[2]{#1\Rightarrow#2}
 \begin{enumerate}
   \item
-      \[
-        \evals{n}{n}
-        \qquad
-        \inferrule
-        { \evals{e_1}{n_1} \\ \evals{e_2}{n_2} }
-        { \evals{\eadd{e_1}{e_2}}{\eadd{n_1}{n_2}} }
-      \]
+    \[
+      \evals{n}{n}
+    \]
 
-      \[
-        \evals{\efun{x}{e}}{\efun{x}{e}}
-        \qquad
-        \inferrule
-        { \evals{e_1}{\efun{x}{e}} \\
-          \evals{e_2}{v_2} \\
-          \evals{e[x/v_2]}{v} }
-        { \evals{\eapp{e_1}{e_2}}{v} }
-      \]
+    \[
+      \evals{\efun{x}{e}}{\efun{x}{e}}
+    \]
+
+    \[
+      \inferrule
+      { \evals{e_1}{\efun{x}{e}} \\
+        \evals{e_2}{v_2} \\
+        \evals{e[x/v_2]}{v} }
+      { \evals{\eapp{e_1}{e_2}}{v} }
+    \]
   \item
       \[
         \begin{array}{rcl}
           n[x/v] &=& n \\
-          (\eadd{e_1}{e_2})[x/v] &=& \eadd{e_1[x/v]}{e_2[x/v]} \\
           x'[x/v] &=& v \quad \text{if}\ x=x' \\
           x'[x/v] &=& x' \quad \text{if}\ x\not=x' \\
           (\efun{x'}{e})[x/v] &=& \efun{x'}{e} \quad \text{if}\ x=x' \\
@@ -144,8 +464,8 @@ $\eapp{1}{1}$
       \]
   \item
     \begin{enumerate}
-        \item 22
-        \item Error
+        \item 0
+        \item error
     \end{enumerate}
   \item
 \begin{verbatim}
@@ -153,7 +473,7 @@ case Fun(y, b) =>
   if (y == x)
     Fun(y, b)
   else {
-    val ny = fresh(binding(b) ++ free(b) ++ free(v) ++ Set(x))
+    val ny = fresh(binding(b) ++ free(b) ++ free(v) + x)
     Fun(ny, subst(subst(b, y, Id(ny)), x, v))
   }
 \end{verbatim}
@@ -165,20 +485,20 @@ case Fun(y, b) =>
       \[
         \inferrule
         { \evald{e_1}{v_1} \\\cdots\\ \evald{e_n}{v_n} }
-        { \evald{\{l_1:e_1,\ldots,l_n:e_n\}}{\langle l_1:v_1,\ldots,l_n:v_n\rangle} }
+        { \evald{\{l_1:e_1,\cdots,l_n:e_n\}}{\langle l_1:v_1,\cdots,l_n:v_n\rangle} }
       \]
 
       \[
         \inferrule
-        { \evald{e}{\langle\ldots,l:v,\ldots\rangle} }
+        { \evald{e}{\langle\cdots,l:v,\cdots\rangle} }
         { \evald{e.l}{v} }
       \]
 
       \[
         \inferrule
         {
-          \evald{e}{\langle l_1:v_1,\ldots,l_n:v_n\rangle} \\
-          l\not\in\{l_1,\ldots,l_n\} \\
+          \evald{e}{\langle l_1:v_1,\cdots,l_n:v_n\rangle} \\
+          l\not\in\{l_1,\cdots,l_n\} \\
           l_i=\code{proto} \\
           \evald{v_i.l}{v}
         }
@@ -188,9 +508,9 @@ case Fun(y, b) =>
       \[
         \inferrule
         {
-          \evald{e}{\langle l_1:v_1,\ldots,l_n:v_n\rangle} \\
-          l\not\in\{l_1,\ldots,l_n\} \\
-          \code{proto}\not\in\{l_1,\ldots,l_n\}
+          \evald{e}{\langle l_1:v_1,\cdots,l_n:v_n\rangle} \\
+          l\not\in\{l_1,\cdots,l_n\} \\
+          \code{proto}\not\in\{l_1,\cdots,l_n\}
         }
         { \evald{e.l}{\textsf{undefined}} }
       \]
@@ -206,31 +526,29 @@ case Fun(y, b) =>
         { \evald{e_1.l(e_2)}{v} }
       \]
   \item
-    {
-      \[
-        \tiny
+    \[
+      \tiny
+      \inferrule
+      {
         \inferrule
         {
           \inferrule
-          {
-            \inferrule
-            { \eval{\emptyset}{1}{1} }
-            { \eval{\emptyset}{\{\code{x}:1\}}{\langle\code{x}:1\rangle} }
-          }
-          { \eval
-            {\emptyset}
-            {\{\code{proto}:\{\code{x}:1\}\}}
-            {\langle\code{proto}:\langle\code{x}:1\rangle\rangle}
-          } \\
-          \code{x}\not\in\{\code{proto}\} \\
-          \code{proto}=\code{proto} \\
-          \inferrule
-          { \evald{\langle\code{x}:1\rangle}{\langle\code{x}:1\rangle} }
-          { \evald{\langle\code{x}:1\rangle.\code{x}}{1} }
+          { \eval{\emptyset}{1}{1} }
+          { \eval{\emptyset}{\{\code{x}:1\}}{\langle\code{x}:1\rangle} }
         }
-        { \eval{\emptyset}{\{\code{proto}:\{\code{x}:1\}\}.\code{x}}{1} }
-      \]
-    }
+        { \eval
+          {\emptyset}
+          {\{\code{proto}:\{\code{x}:1\}\}}
+          {\langle\code{proto}:\langle\code{x}:1\rangle\rangle}
+        } \\
+        \code{x}\not\in\{\code{proto}\} \\
+        \code{proto}=\code{proto} \\
+        \inferrule
+        { \evald{\langle\code{x}:1\rangle}{\langle\code{x}:1\rangle} }
+        { \evald{\langle\code{x}:1\rangle.\code{x}}{1} }
+      }
+      { \eval{\emptyset}{\{\code{proto}:\{\code{x}:1\}\}.\code{x}}{1} }
+    \]
   \item
     $\efun{\code{x}}{\code{this}.\code{a}}$
 \end{enumerate}
@@ -239,61 +557,75 @@ case Fun(y, b) =>
 \begin{enumerate}
     \item
     \[
-      \begin{array}{c}
-        \inferrule
-        {}
-        { \evald{n}{n} }
-        \quad
-        \inferrule
-        { x\in\dom{\sigma} }
-        { \evald{x}{\sigma(x)} }
-        \\[2em]
-        \inferrule
-        {}
-        { \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}} }
-        \quad
-        \inferrule
-        { \evald{e_1}{\textsf{exc}} }
-        { \evald{e_1+e_2}{\textsf{exc}} }
-        \\[2em]
-        \inferrule
-        { \evald{e_1}{v} \\
-          \evald{e_2}{\textsf{exc}} }
-        { \evald{e_1+e_2}{\textsf{exc}} }
-        \quad
-        \inferrule
-        { \evald{e_1}{n_1} \\
-          \evald{e_2}{n_2} }
-        { \evald{e_1+e_2}{n_1+n_2} }
-        \\[2em]
-        \inferrule
-        { \evald{e_1}{\textsf{exc}} }
-        { \evald{e_1\ e_2}{\textsf{exc}} }
-        \quad
-        \inferrule
-        { \evald{e_1}{v} \\
-          \evald{e_2}{\textsf{exc}} }
-        { \evald{e_1\ e_2}{\textsf{exc}} }
-        \\[2em]
-        \inferrule
-        { \evald{e_1}{\clov{x}{e}{\sigma'}} \\
-          \evald{e_2}{v_2} \\
-          \eval{\sigma'[x\mapsto v_2]}{e}{r}
-        }
-        { \evald{\eapp{e_1}{e_2}}{r} }
-        \\[2em]
-        \inferrule
-        {}
-        { \evald{\textsf{throw}}{\textsf{exc}} }
-        \quad
-        \inferrule
-        { \evald{e_1}{v} }
-        { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{v} }
-        \\[2em]
-        \inferrule
-        { \evald{e_1}{\textsf{exc}} \\ \evald{e_2}{r} }
-        { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{r} }
-      \end{array}
+      \evald{n}{n}
+    \]
+
+    \[
+      \inferrule
+      { x\in\dom{\sigma} }
+      { \evald{x}{\sigma(x)} }
+    \]
+
+    \[
+      \evald{\efun{x}{e}}{\clov{x}{e}{\sigma}}
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{\textsf{exc}} }
+      { \evald{e_1+e_2}{\textsf{exc}} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{v} \\
+        \evald{e_2}{\textsf{exc}} }
+      { \evald{e_1+e_2}{\textsf{exc}} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{n_1} \\
+        \evald{e_2}{n_2} }
+      { \evald{e_1+e_2}{n_1+n_2} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{\textsf{exc}} }
+      { \evald{e_1\ e_2}{\textsf{exc}} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{v} \\
+        \evald{e_2}{\textsf{exc}} }
+      { \evald{e_1\ e_2}{\textsf{exc}} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{\clov{x}{e}{\sigma'}} \\
+        \evald{e_2}{v_2} \\
+        \eval{\sigma'[x\mapsto v_2]}{e}{r}
+      }
+      { \evald{\eapp{e_1}{e_2}}{r} }
+    \]
+
+    \[
+      \evald{\textsf{throw}}{\textsf{exc}}
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{v} }
+      { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{v} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e_1}{\textsf{exc}} \\ \evald{e_2}{r} }
+      { \evald{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{r} }
     \]
     \item
   \[
@@ -313,6 +645,41 @@ case Fun(y, b) =>
   \]
 \end{enumerate}
 
+\textbf{\refex{recursion-arrow}}
+
+$
+\begin{array}{@{}l@{}}
+  \ebind{\cf_A}{\efun{\cx_B}{\eifz{\cx_C}{0}{(\eapp{\cf_D}{(\esub{\cx_E}{1})})}}}{ \\
+  \erec{\cf_F}{\cx_G}{\eifz{\cx_H}{0}{(\eapp{\cf_I}{(\esub{\cx_J}{1})})}}{ \\
+  \eapp{\cf_K}{\cy_L}
+  }
+  }
+\end{array}
+$
+\begin{enumerate}
+  \item $C\rightarrow B,E\rightarrow B,H\rightarrow G,I\rightarrow
+    F,J\rightarrow G,K\rightarrow F$
+  \item $D,L$
+\end{enumerate}
+
+\textbf{\refex{recursion-bindings}}
+\vspace{-1em}
+\begin{verbatim}
+case Num(n) => Set()
+case Id(x) => Set()
+case Val(x, e, b) => (bindings(e) ++ bindings(b)) + x
+case App(f, a) => bindings(f) ++ bindings(a)
+case Fun(x, b) => bindings(b) + x
+case Rec(f, x, b, e) => bindings(b) ++ bindings(e) + f + x
+
+case Num(n) => Set()
+case Id(x) => Set(x)
+case Val(x, e, b) => frees(e) ++ (frees(b) - x)
+case App(f, a) => frees(f) ++ frees(a)
+case Fun(x, b) => frees(b) - x
+case Rec(f, x, b, e) => (frees(b) - f - x) ++ (frees(e) - f)
+\end{verbatim}
+
 \textbf{\refex{recursion-scope}}
 \begin{enumerate}
     \item Does not terminate
@@ -324,41 +691,76 @@ case Fun(y, b) =>
 $\eifz{0}{0}{(\eapp{0}{0})}$
 \\
 
+\textbf{\refex{recursion-bool}}
+\[ \evald{b}{b} \]
+
+\[
+  \inferrule
+  { \evald{e_1}{v_1} \\ \evald{e_2}{v_2} }
+  { \evald{e_1\wedge e_2}{v_1\wedge v_2} }
+\]
+
+\[
+  \inferrule
+  { \evald{e}{v} }
+  { \evald{\neg e}{\neg v} }
+\]
+
+\[
+  \inferrule
+  { \evald{e_1}{\true} \\ \evald{e_2}{v_2} }
+  { \evald{\eif{e_1}{e_2}{e_3}}{v_2} }
+\]
+
+\[
+  \inferrule
+  { \evald{e_1}{\false} \\ \evald{e_3}{v_3} }
+  { \evald{\eif{e_1}{e_2}{e_3}}{v_3} }
+\]
+
 \textbf{\refex{recursion-racket-if}}
 \newcommand{\eand}[2]{\textsf{and}\ #1\ #2}
 \newcommand{\eor}[2]{\textsf{or}\ #1\ #2}
 \begin{enumerate}
   \item
     \[
-      \begin{array}{c}
-      \inferrule
-      {}
       { \evald{b}{b} }
-      \quad
+    \]
+
+    \[
       \inferrule
       { \evald{e_1}{v_1} \\ v_1\not={\false} \\ \evald{e_2}{v_2} }
       { \evald{\eif{e_1}{e_2}{e_3}}{v_2} }
-      \\[2em]
+    \]
+
+    \[
       \inferrule
       { \evald{e_1}{\false} \\ \evald{e_3}{v_3} }
       { \evald{\eif{e_1}{e_2}{e_3}}{v_3} }
-      \quad
+    \]
+
+    \[
       \inferrule
       { \evald{e_1}{\false} }
       { \evald{\eand{e_1}{e_2}}{\false} }
-      \\[2em]
+    \]
+
+    \[
       \inferrule
       { \evald{e_1}{v_1} \\ v_1\not={\false} \\ \evald{e_2}{v_2} }
       { \evald{\eand{e_1}{e_2}}{v_2} }
-      \\[2em]
+    \]
+
+    \[
       \inferrule
       { \evald{e_1}{v_1} \\ v_1\not={\false} }
       { \evald{\eor{e_1}{e_2}}{v_1} }
-      \quad
+    \]
+
+    \[
       \inferrule
       { \evald{e_1}{\false} \\ \evald{e_2}{v_2}}
       { \evald{\eor{e_1}{e_2}}{v_2} }
-      \end{array}
     \]
   \item
     \[
@@ -392,6 +794,42 @@ Change $\ebind{\cf}{\eapp{\cz}{({\efun{\cv}{\sumbodyfv}})}}{}$to
 $\ebind{\cf}{\eapp{\cz}{({\efun{\cf}{\efun{\cv}{\sumbodyfv}}})}}{}$\!.
 \\
 
+\textbf{\refex{recursion-sum-arrow}}
+
+$\begin{array}{l}
+  \ebind{\cf_A}{(\\
+  \ \ \ \ \ebind{\cx_B}{\efun{\cy_C}{(\\
+  \ \ \ \ \ \ \ \ \ebind{\cf_D}{\efun{\cv_E}{\eapp{\eapp{\cy_F}{\cy_G}}{\cv_H}}}{\\
+  \ \ \ \ \ \ \ \ \efun{\cv_I}{\eifz{\cv_J}{0}{(\eadd{\cv_K}{\eapp{\cf_L}{(\esub{\cv_M}{1})}})}}}\\
+  \ \ \ \ )}}{\\
+  \ \ \ \ \eapp{\cx_N}{\cx_O}\\
+  )}}{\\
+  \eapp{\cf_P}{10}
+  }
+\end{array}$
+\begin{enumerate}
+  \item $F\rightarrow C,G\rightarrow C,H\rightarrow E,J\rightarrow I,
+    K\rightarrow I,L\rightarrow D,M\rightarrow I,N\rightarrow B,
+    O\rightarrow B,P\rightarrow A$
+  \item No shadowing
+  \item
+    $e={\ebind{\cf}{\efun{\cv}{\eapp{\eapp{\cy}{\cy}}{\cv}}}{\efun{\cv}{\sumbodyfv}}}$
+    \\
+    $\clov{\cv}{\sumbodyfv}{[
+      \cy\mapsto\clov{\cy}{e}{\emptyset},
+      \cf\mapsto\clov{\cv}{\eapp{\eapp{\cy}{\cy}}{\cv}}{[\cy\mapsto\clov{\cy}{e}{\emptyset}]}
+    ]}$
+
+\end{enumerate}
+
+\textbf{\refex{recursion-describe}}
+
+An argument to $\cz$ must be a function whose fixed point is a recursive function
+to be constructed. For example, to make the $\embox{sum}$ function with $\cz$,
+its argument must be a function that returns $\embox{sum}$ when $\embox{sum}$ is
+given.
+\\
+
 \textbf{\refex{recursion-mutual}}
 
 $\begin{array}{@{}l@{}}
@@ -411,11 +849,70 @@ $\begin{array}{@{}l@{}}
 \end{array}$
 \\
 
+\textbf{\refex{mutable-boxes-trace}}
+
+$
+\begin{array}{@{}c|c|c|c@{}}
+  \text{expr} & \text{env} & \text{sto} & \text{res} \\\hline
+  \eapp{(\efun{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}})}{\eref{7}}
+  & \emptyset & \emptyset & (8,[a_0\mapsto8]) \\
+  \efun{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}}
+  & \emptyset & \emptyset &
+  (\clov{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}}{\emptyset},\emptyset) \\
+  \eref{7} & \emptyset & \emptyset & (a_0,[a_0\mapsto7]) \\
+  \eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx} &
+  [\cx\mapsto a_0] & [a_0\mapsto7] & (8,[a_0\mapsto8]) \\
+  \efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}} &
+  [\cx\mapsto a_0] & [a_0\mapsto7] &
+  (\clov{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}}{[\cx\mapsto a_0]},[a_0\mapsto7]) \\
+  \cx & [\cx\mapsto a_0] & [a_0\mapsto7] & (a_0,[a_0\mapsto7]) \\
+  \eseq{\eset{\cx}{8}}{\ederef{\cy}} & [\cx\mapsto a_0,\cy\mapsto a_0]
+  & [a_0\mapsto7] & (8,[a_0\mapsto8]) \\
+  \eset{\cx}{8} & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto7]
+  & (8,[a_0\mapsto8]) \\
+  8 & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto7] & (8,[a_0\mapsto7]) \\
+  \ederef{\cy} & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto8]
+  & (8,[a_0\mapsto8]) \\
+  \cy & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto8] & (a_0,[a_0\mapsto8]) \\
+\end{array}
+$
+\\
+
 \textbf{\refex{mutable-boxes-desugar}}
 \vspace{-1em}
 \begin{verbatim}
 App(Fun(fresh(free(r)), desugar(r)), desugar(l))
 \end{verbatim}
+
+\textbf{\refex{mutable-boxes-landin}}
+
+$\begin{array}{l}
+  \ebind{\cz}{\efun{\cb}{(\\
+  \ \ \ \ \ebind{\ca}{\eref{\efun{\cx}{\cy}}}{\\
+  \ \ \ \ \ebind{\cf}{(\eapp{\cb}{\efun{\cx}{\eapp{\ederef{\ca}}{\cx}}})}{\\
+  \ \ \ \ \eseq{\eset{\ca}{\cf}}{\\
+  \ \ \ \ \cf\\
+  }}})}}{\\
+  \ebind{\cf}{\eapp{\cz}{(\efun{\cf}{\efun{\cv}{\sumbodyfv}})}}{\\
+  \eapp{\cf}{10}}}
+\end{array}$
+\\
+
+\textbf{\refex{mutable-variables-trace}}
+
+$
+\begin{array}{@{}c|c|c@{}}
+  \text{expr} & \text{env} & \text{sto} \\\hline
+  \eapp{(\efun{\cx}{\cx})}{(\eapp{(\efun{\cx}{\cx})}{1})} & \emptyset & \emptyset \\
+  \efun{\cx}{\cx} & \emptyset & \emptyset \\
+  \eapp{(\efun{\cx}{\cx})}{1} & \emptyset & \emptyset \\
+  \efun{\cx}{\cx} & \emptyset & \emptyset \\
+  1 & \emptyset & \emptyset \\
+  \cx & [\cx\mapsto a_1] & [a_1\mapsto1] \\
+  \cx & [\cx\mapsto a_2] & [a_1\mapsto1,a_2\mapsto1] \\
+\end{array}
+$
+\\
 
 \textbf{\refex{mutable-variables-cbr}}
 \begin{enumerate}
@@ -450,40 +947,83 @@ interp(b, fenv + (x -> fields(f)), rs)
     $[a_1 \mapsto 1, a_2 \mapsto \{\cz{:}a_1\}, a_3 \mapsto \clov{\cy}{\eset{\cy}{2}}{[\cx \mapsto a_2]}, a_4 \mapsto 2]$
 \end{enumerate}
 
+\textbf{\refex{mutable-variables-ptr}}
+\begin{enumerate}
+    \item
+\[
+  \inferrule
+  { \sevald{}{e}{a}{1} \\ a\in\dom{M_1} }
+  { \sevald{}{\ast e}{M_1(a)}{1} }
+\]
+
+\[
+  \inferrule
+  { x\in\dom{\sigma} }
+  { \sevald{}{\&x}{\sigma(x)}{} }
+\]
+
+\[
+  \inferrule
+  { \sevald{}{e_2}{v}{1} \\ \sevald{1}{e_1}{a}{2} }
+  { \seval{\sigma}{M}{\ast\eset{e_1}{e_2}}{v}{M_2[a\mapsto v]} }
+\]
+\item
+\begin{verbatim}
+case Deref(p) =>
+  val (pv, ps) = interp(p, env, sto)
+  val PtrV(a) = pv
+  (ps(a), ps)
+case Ref(x) => (PtrV(env(x)), sto)
+case Assign(p, e) =>
+  val (ev, es) = interp(e, env, sto)
+  val (pv, ps) = interp(p, env, es)
+  val PtrV(a) = pv
+  (ev, ps + (a -> ev))
+\end{verbatim}
+\end{enumerate}
+
 \textbf{\refex{mutable-variables-imp}}
 \begin{enumerate}
   \item
-      \[
-        \begin{array}{c}
-        \inferrule
-        {}
-        { \evald{\eskip}{\sigma} }
-        \quad
-        \inferrule
-        { \evald{e}{v} }
-        { \evald{\eset{x}{e}}{\sigma[x\mapsto v]} }
-        \\[2em]
-        \inferrule
-        { \evald{e}{0} \\ \evald{c_1}{\sigma_1} }
-        { \evald{\eifz{e}{c_1}{c_2}}{\sigma_1} }
-        \quad
-        \inferrule
-        { \evald{e}{v} \\ v\not=0 \\ \evald{c_2}{\sigma_2} }
-        { \evald{\eifz{e}{c_1}{c_2}}{\sigma_2} }
-        \\[2em]
-        \inferrule
-        { \evald{e}{0} \\ \evald{c}{\sigma_1} \\ \eval{\sigma_1}{\ewhile{e}{c}}{\sigma_2} }
-        { \evald{\ewhile{e}{c}}{\sigma_2} }
-        \\[2em]
-        \inferrule
-        { \evald{e}{v} \\ v\not=0 }
-        { \evald{\ewhile{e}{c}}{\sigma} }
-        \quad
-        \inferrule
-        { \evald{c_1}{\sigma_1} \\ \eval{\sigma_1}{c_2}{\sigma_2} }
-        { \evald{\eseq{c_1}{c_2}}{\sigma_2} }
-        \end{array}
-      \]
+    \[
+      { \evald{\eskip}{\sigma} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e}{v} }
+      { \evald{\eset{x}{e}}{\sigma[x\mapsto v]} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e}{0} \\ \evald{c_1}{\sigma_1} }
+      { \evald{\eifz{e}{c_1}{c_2}}{\sigma_1} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e}{v} \\ v\not=0 \\ \evald{c_2}{\sigma_2} }
+      { \evald{\eifz{e}{c_1}{c_2}}{\sigma_2} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e}{0} \\ \evald{c}{\sigma_1} \\ \eval{\sigma_1}{\ewhilez{e}{c}}{\sigma_2} }
+      { \evald{\ewhilez{e}{c}}{\sigma_2} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e}{v} \\ v\not=0 }
+      { \evald{\ewhilez{e}{c}}{\sigma} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{c_1}{\sigma_1} \\ \eval{\sigma_1}{c_2}{\sigma_2} }
+      { \evald{\eseq{c_1}{c_2}}{\sigma_2} }
+    \]
   \item
     \[
       \scriptsize
@@ -560,6 +1100,64 @@ interp(b, fenv + (x -> fields(f)), rs)
 \end{tabular}
 \end{itemize}
 
+\textbf{\refex{lazy-evaluation-trace}}
+\begin{itemize}
+  \item Call-by-name\\
+$
+\begin{array}{@{}c|c@{}}
+  \text{expr} & \text{env} \\\hline
+  \eapp{(\efun{\cx}{\eadd{\cx}{\cx}})}{(\eadd{1}{2})} & \emptyset \\
+  \efun{\cx}{\eadd{\cx}{\cx}} & \emptyset \\
+  \eadd{\cx}{\cx} & [\cx\mapsto\exprv{\eadd{1}{2}}{\emptyset}] \\
+  \cx & [\cx\mapsto\exprv{\eadd{1}{2}}{\emptyset}] \\
+  \eadd{1}{2} & \emptyset \\
+  1 & \emptyset \\
+  2 & \emptyset \\
+  \cx & [\cx\mapsto\exprv{\eadd{1}{2}}{\emptyset}] \\
+  \eadd{1}{2} & \emptyset \\
+  1 & \emptyset \\
+  2 & \emptyset \\
+\end{array}
+$
+  \item Call-by-need\\
+$
+\begin{array}{@{}c|c@{}}
+  \text{expr} & \text{env} \\\hline
+  \eapp{(\efun{\cx}{\eadd{\cx}{\cx}})}{(\eadd{1}{2})} & \emptyset \\
+  \efun{\cx}{\eadd{\cx}{\cx}} & \emptyset \\
+  \eadd{\cx}{\cx} & [\cx\mapsto(\eadd{1}{2},\emptyset,\cdot)] \\
+  \cx & [\cx\mapsto(\eadd{1}{2},\emptyset,\cdot)] \\
+  \eadd{1}{2} & \emptyset \\
+  1 & \emptyset \\
+  2 & \emptyset \\
+  \cx & [\cx\mapsto(\eadd{1}{2},\emptyset,3)] \\
+\end{array}
+$
+\end{itemize}
+
+\textbf{\refex{lazy-evaluation-eval}}
+\begin{enumerate}
+  \item CBV: error, CBN: error
+  \item CBV: error, CBN: 10
+  \item CBV: error, CBN: error
+  \item CBV: error, CBN: error
+  \item CBV: error, CBN: 3
+  \item CBV: error, CBN: error
+  \item CBV: error, CBN: 8
+  \item CBV: $\clov{\cx}{(\eapp{(\efun{\cy}{42})}{(\eapp{9}{2})})}{\emptyset}$,
+    CBN: $\clov{\cx}{(\eapp{(\efun{\cy}{42})}{(\eapp{9}{2})})}{\emptyset}$
+  \item CBV: error, CBN: error
+  \item CBV: error, CBN: 15
+\end{enumerate}
+
+\textbf{\refex{lazy-evaluation-scope}}
+\begin{enumerate}
+  \item error
+  \item 12
+  \item error
+  \item error
+\end{enumerate}
+
 \textbf{\refex{lazy-evaluation-strict}}
 
 $\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{\cx}{0}})}{\cy}})}{0}$
@@ -603,6 +1201,43 @@ case Tail(e) =>
   val v = strict(t)
   if (isList(v)) v else error()
 \end{verbatim}
+
+\textbf{\refex{lazy-evaluation-racket}}
+\begin{enumerate}
+  \item
+    \[
+      \stricte{n}{n}
+    \]
+    \[
+      \inferrule
+      {}
+      { \stricte{\clov{x}{e}{\sigma}}{\clov{x}{e}{\sigma}} }
+    \]
+    \[
+      \inferrule
+      { \evald{e}{v} }
+      { \stricte{\delay(e,\sigma)}{v} }
+    \]
+    \[
+      \inferrule
+      { \evald{e}{v'} \\ \stricte{v'}{v} }
+      { \stricte{\lazy(e,\sigma)}{v} }
+    \]
+  \item
+    \[
+      \evald{\delay\ e}{\delay(e,\sigma)}
+    \]
+    \[
+      \inferrule
+      {}
+      { \evald{\lazy\ e}{\lazy(e,\sigma)} }
+    \]
+    \[
+      \inferrule
+      { \evald{e}{v'} \\ \stricte{v'}{v} }
+      { \evald{\force\ e}{v} }
+    \]
+\end{enumerate}
 
 \textbf{\refex{continuations-lfae}}
 \vspace{-1em}
@@ -648,6 +1283,71 @@ $\begin{array}{@{}l}
 \end{array}$
 \\
 
+\textbf{\refex{first-class-continuations-reduction}}
+
+$\sigma=[\cx\mapsto\langle\emptyset\vdash8::(+)::\square\ ||\ \blacksquare\rangle]$
+\\
+$
+\begin{array}{lrcr}
+& \emptyset\vdash (\evcc{\cx}{42+(\cx\ 2)})+8::\square &||& \blacksquare \\
+\rightarrow & \emptyset\vdash\evcc{\cx}{42+(\cx\ 2)}
+  ::\emptyset\vdash8::(+)::\square &||& \blacksquare \\
+\rightarrow & \sigma\vdash42+(\cx\ 2)
+  ::\emptyset\vdash8::(+)::\square &||& \blacksquare \\
+\rightarrow & \sigma\vdash42::\sigma\vdash(\cx\ 2)::(+)
+  ::\emptyset\vdash8::(+)::\square &||& \blacksquare \\
+\rightarrow & \sigma\vdash(\cx\ 2)::(+)
+  ::\emptyset\vdash8::(+)::\square &||& 42::\blacksquare \\
+\rightarrow & \sigma\vdash\cx::\sigma\vdash2::(@)::(+)
+  ::\emptyset\vdash8::(+)::\square &||& 42::\blacksquare \\
+\rightarrow & \sigma\vdash2::(@)::(+)::\emptyset\vdash8::(+)::\square
+  &||& \langle\emptyset\vdash8::(+)::\square\ ||\ \blacksquare\rangle::42::\blacksquare \\
+\rightarrow & (@)::(+)::\emptyset\vdash8::(+)::\square
+  &||& 2::\langle\emptyset\vdash8::(+)::\square\ ||\ \blacksquare\rangle::42::\blacksquare \\
+\rightarrow & \emptyset\vdash8::(+)::\square &||& 2::\blacksquare \\
+\rightarrow & (+)::\square &||& 8::2::\blacksquare \\
+\rightarrow & \square &||& 10::\blacksquare \\
+\end{array}
+$
+\\
+
+\textbf{\refex{first-class-continuations-var}}
+\vspace{-1em}
+\begin{verbatim}
+case Num(n) => k(NumV(n), sto)
+case Id(x) => k(sto(env(x)), sto)
+case Fun(x, b) => k(CloV(x, b, env), sto)
+case App(f, a) =>
+  interp(f, env, sto, (fv, fs) =>
+    interp(a, env, fs, (av, as) => fv match {
+      case CloV(x, b, fenv) =>
+        val addr = malloc(as)
+        interp(b, fenv + (x -> addr), as + (addr -> av), k)
+      case ContV(k) => k(av, as)
+    })
+  )
+case Set(x, e) =>
+  interp(e, env, sto, (v, s) =>
+    k(v, s + (env(x) -> v))
+  )
+case Vcc(x, b) =>
+  val addr = malloc(sto)
+  interp(b, env + (x -> addr), sto + (addr -> ContV(k)), k)
+\end{verbatim}
+
+\textbf{\refex{first-order-representation-of-continuations-val}}
+\vspace{-1em}
+\begin{verbatim}
+case class ValSecondK(x: String, b: Expr, env: Env, k: Cont) extends Cont
+case class If0SecondK(t: Expr, f: Expr, env: Env, k: Cont) extends Cont
+
+case ValSecondK(x, b, env, k) => interp(b, env + (x -> v), k)
+case If0SecondK(t, f, env, k) => interp(if (v == NumV(0)) t else f, env, k)
+
+case Val(x, e, b) => interp(e, env, ValSecondK(x, b, env, k))
+case If0(c, t, f) => interp(c, env, If0SecondK(t, f, env, k))
+\end{verbatim}
+
 \textbf{\refex{first-order-representation-of-continuations-pair}}
 \vspace{-1em}
 \begin{verbatim}
@@ -675,10 +1375,233 @@ case Snd(p) => interp(p, env, DoSndK(k))
 $\eapp{\eapp{\eapp{(\efun{}{\efun{}{\efun{}{\eadd{(\esub{\underline{0}}{\underline{2}})}{\underline{1}}}}})}{42}}{0}}{10}$
 \\
 
+\textbf{\refex{nameless-representation-of-expressions-detrans}}
+
+$\efun{\cx}{\efun{\cy}{\efun{\cz}{\eapp{\eapp{\cz}{\cy}}{\cz}}}}$
+\\
+
+\textbf{\refex{type-systems-unsound}}
+
+$\eadd{1}{\cx}$
+\\
+
+\textbf{\refex{type-systems-list}}
+
+\[
+  \typeofd{\textsf{nil}[\tau]}{\textsf{list}\ \tau}
+\]
+
+\[
+  \inferrule
+  { \typeofd{e_1}{\tau} \\ \typeofd{e_2}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{cons}\ e_1\ e_2}{\textsf{list}\ \tau} }
+\]
+
+\[
+  \inferrule
+  { \typeofd{e}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{head}\ e}{\tau} }
+\]
+
+\[
+  \inferrule
+  { \typeofd{e}{\textsf{list}\ \tau} }
+  { \typeofd{\textsf{tail}\ e}{\textsf{list}\ \tau} }
+\]
+
+\textbf{\refex{type-systems-box}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { \typeofd{e}{\tau} }
+      { \typeofd{\eref{e}}{\eref{\tau}} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e}{\eref{\tau}} }
+      { \typeofd{\ederef{e}}{\tau} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e_1}{\eref{\tau}} \\ \typeofd{e_2}{\tau} }
+      { \typeofd{\eset{e_1}{e_2}}{\tau} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e_1}{\tau_1} \\ \typeofd{e_2}{\tau_2} }
+      { \typeofd{\eseq{e_1}{e_2}}{\tau_2} }
+    \]
+  \item
+    $\Gamma_1=[\cx:\eref{\tnum}],\Gamma_2=\Gamma_1[\cy:\tnum]$
+    \[
+      \tiny
+      \inferrule
+      {
+        \inferrule
+        { \typeofe{3}{\tnum} }
+        { \typeofe{\eref{3}}{\eref{\tnum}} }
+        \\
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            {
+              \inferrule
+              { \cx\in\dom{\Gamma_1} }
+              { \typeof{\Gamma_1}{\cx}{\eref{\tnum}} }
+            }
+            { \typeof{\Gamma_1}{\ederef{\cx}}{\tnum} }
+            \\
+            \typeof{\Gamma_1}{7}{\tnum}
+          }
+          { \typeof{\Gamma_1}{\ederef{\cx}+7}{\tnum} }
+          \\
+          \inferrule
+          {
+            \inferrule
+            {
+              \inferrule
+              { \cx\in\Gamma_2}
+              { \typeof{\Gamma_2}{\cx}{\eref{\tnum}} }
+              \\
+              \typeof{\Gamma_2}{8}{\tnum}
+            }
+            { \typeof{\Gamma_2}{\eset{\cx}{8}}{\tnum} }
+            \\
+            \inferrule
+            {
+              \inferrule
+              { \cy\in\dom{\Gamma_2}}
+              { \typeof{\Gamma_2}{\cy}{\tnum} }
+              \\
+              \inferrule
+              {
+                \inferrule
+                { \cx\in\dom{\Gamma_2} }
+                { \typeof{\Gamma_2}{\cx}{\eref{\tnum}} }
+              }
+              { \typeof{\Gamma_2}{\ederef{\cx}}{\tnum} }
+            }
+            { \typeof{\Gamma_2}{\cy+\ederef{\cx}}{\tnum} }
+          }
+          { \typeof{\Gamma_2}{\eseq{\eset{\cx}{8}}{\cy+\ederef{\cx}}}{\tnum} }
+        }
+        { \typeof{\Gamma_1}{\ebind{\cy}{\ederef{\cx}+7}{\eseq{\eset{\cx}{8}}{\cy+\ederef{\cx}}}}{\tnum} }
+      }
+      { \typeofe{\ebind{\cx}{\eref{3}}{\ebind{\cy}{\ederef{\cx}+7}{\eseq{\eset{\cx}{8}}{\cy+\ederef{\cx}}}}}{\tnum} }
+    \]
+
+\end{enumerate}
+
+\textbf{\refex{type-systems-var}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { x\in\dom{\Gamma} \\ \typeofd{e}{\Gamma(x)} }
+      { \typeofd{\eset{x}{e}}{\Gamma(x)} }
+    \]
+  \item
+    \[
+      \inferrule
+      { \typeofd{e}{\tau\ast} }
+      { \typeofd{\ast e}{\tau} }
+    \]
+
+    \[
+      \inferrule
+      { x\in\dom{\Gamma} }
+      { \typeofd{\&x}{\Gamma(x)\ast} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e_1}{\tau\ast} \\ \typeofd{e_2}{\tau} }
+      { \typeofd{\ast\eset{e_1}{e_2}}{\tau} }
+    \]
+\end{enumerate}
+
 \textbf{\refex{typing-recursive-functions-terminate}}
 
 $\erect{\cf}{\cx}{\tnum}{\tarrow{\tnum}{\tnum}}{\eapp{\cf}{\cx}}{\eapp{\cf}{0}}$
 \\
+
+\textbf{\refex{typing-recursive-functions-imp}}
+\begin{enumerate}
+  \item
+    \[
+      \typeofd{n}{\tnum}
+    \]
+
+    \[
+      \typeofd{b}{\textsf{bool}}
+    \]
+
+    \[
+      \inferrule
+      { x\in\dom{\Gamma} }
+      { \typeofd{x}{\Gamma(x)} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e_1}{\tnum} \\ \typeofd{e_2}{\tnum} }
+      { \typeofd{e_1+e_2}{\tnum} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e_1}{\tnum} \\ \typeofd{e_2}{\tnum} }
+      { \typeofd{e_1<e_2}{\textsf{bool}} }
+    \]
+  \item
+    \[
+      \typeofd{\textsf{skip}}{\Gamma}
+    \]
+
+    \[
+      \inferrule
+      { x\not\in\dom{\Gamma} \\ \typeofd{e}{\tau} }
+      { \typeofd{\eset{x}{e}}{\Gamma[x:\tau]} }
+    \]
+
+    \[
+      \inferrule
+      { x\in\dom{\Gamma} \\ \typeofd{e}{\Gamma(x)} }
+      { \typeofd{\eset{x}{e}}{\Gamma} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e}{\textsf{bool}} \\
+        \typeofd{c_1}{\Gamma_1} \\
+        \typeofd{c_2}{\Gamma_1} }
+      { \typeofd{\eif{e}{c_1}{c_2}}{\Gamma_1} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e}{\textsf{bool}} \\ \typeofd{c}{\Gamma_1} }
+      { \typeofd{\textsf{while}\ e\ c}{\Gamma} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{c_1}{\Gamma_1} \\ \typeof{\Gamma_1}{c_2}{\Gamma_2} }
+      { \typeofd{\eseq{c_1}{c_2}}{\Gamma_2} }
+    \]
+\end{enumerate}
+
+\textbf{\refex{algebraic-data-types-eval}}
+\begin{enumerate}
+  \item 10
+  \item 10
+\end{enumerate}
 
 \textbf{\refex{algebraic-data-types-norec}}
 
@@ -701,6 +1624,368 @@ $\begin{array}{@{}l}
   \ \ \ \ \eapp{\code{A}}{(\eapp{\code{E}}{0})} \\
   })}}
 \end{array}$
+
+\textbf{\refex{algebraic-data-types-nested}}
+
+$\textsf{Color}$
+\[
+  \inferrule
+  { \typeofd{e}{t} \\
+    t\in\dom{\Gamma} \\
+    \Gamma(t)=x_1@\tau_1+x_2@\tau_2 \\
+    \Gamma'=\Gamma[x_1:\tarrow{\tau_1}{t},x_2:\tarrow{\tau_2}{t}] \\
+    \typeof{\Gamma'[x_3:\tau_1]}{e_1}{\tau} \\
+    \typeof{\Gamma'[x_4:\tau_2]}{e_2}{\tau} }
+  { \typeofd{\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}}{\tau} }
+\]
+
+\textbf{\refex{algebraic-data-types-mult}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { \wftd{\tau_1}\\\cdots\\\wftd{\tau_n}\\\wftd{\tau} }
+      { \wftd{\tarrow{(\tau_1,\cdots,\tau_n)}{\tau}} }
+    \]
+  \item
+    \[
+      \inferrule
+      { \wftd{\tau_1}\\\cdots\\\wftd{\tau_n} \\
+        \typeof{\Gamma[x_1:\tau_1,\cdots,x_n:\tau_n]}{e}{\tau} }
+      { \typeofd{\efun{(x_1{:}\tau_1,\cdots,x_n{:}\tau_n)}{e}}{\tarrow{(\tau_1,\cdots,\tau_n)}{\tau}} }
+    \]
+
+    \[
+      \inferrule
+      { \typeofd{e}{\tarrow{(\tau_1,\cdots,\tau_n)}{\tau}} \\
+        \typeofd{e_1}{\tau_1}\\\cdots\\\typeofd{e_n}{\tau_n} }
+      { \typeofd{e(e_1,\cdots,e_n)}{\tau} }
+    \]
+
+    \[
+      \inferrule
+      {
+        \Gamma'=\Gamma[t=x_1@(\tau_{11},\cdots,\tau_{1m_1})+\cdots+x_n@(\tau_{n1},\cdots,\tau_{nm_n}),
+        x_1:\tarrow{(\tau_{11},\cdots,\tau_{1m_1})}{t},\cdots,x_n:\tarrow{(\tau_{n1},\cdots,\tau_{nm_n})}{t}] \\
+        \wft{\Gamma'}{\tau_{11}} \\\cdots\\ \wft{\Gamma'}{\tau_{nm_n}} \\
+        \typeof{\Gamma'}{e}{\tau}
+      }
+      { \typeofd{\textsf{type}\
+      t=x_1@(\tau_{11},\cdots,\tau_{1m_1})+\cdots+x_n@(\tau_{n1},\cdots,\tau_{nm_n})\
+      \textsf{in}\ e}{\tau} }
+    \]
+
+    \[
+      \inferrule
+      {
+        \typeofd{e}{t} \\
+        t\in\dom{\Gamma} \\
+        \Gamma(t)=x_1@(\tau_{11},\cdots,\tau_{1m_1})+\cdots+x_n@(\tau_{n1},\cdots,\tau_{nm_n}) \\
+        \typeof{\Gamma[x_{11}:\tau_{11},\cdots,x_{1m_1}:\tau_{1m_1}]}{e_1}{\tau}
+        \quad\cdots\quad
+        \typeof{\Gamma[x_{n1}:\tau_{n1},\cdots,x_{nm_n}:\tau_{nm_n}]}{e_n}{\tau}
+      }
+      { \typeofd{e\ \textsf{match}\ x_1(x_{11},\cdots,x_{1m_1})\rightarrow
+      e_1,\cdots,x_n(x_{n1},\cdots,x_{nm_n})\rightarrow e_n}{\tau} }
+    \]
+  \item
+    $\Gamma=[\code{Fruit}=\code{Apple}@()+\code{Banana}@(\tarrow{(\code{Fruit})}{\tnum},\code{Fruit})+\code{Cherry}@(\tnum),
+        \code{Apple}:\tarrow{()}{\code{Fruit}},
+        \code{Banana}:\tarrow{(\tarrow{(\code{Fruit})}{\tnum},\code{Fruit})}{\code{Fruit}},
+        \code{Cherry}:\tarrow{(\tnum)}{\code{Fruit}}
+        ]$\\
+    $\Gamma'=\Gamma[\cf:\tarrow{(\code{Fruit})}{\tnum},\cx:\tnum]$\\
+    $e'={\code{Apple}()\ \textsf{match}\ \code{Apple}()\rightarrow
+          42,\code{Banana}(\cf,\cx)\rightarrow\cf(\cx),\code{Cherry}(\cx)\rightarrow\cx}$\\
+    $e={\textsf{type}\
+    \code{Fruit}=\code{Apple}@()+\code{Banana}@(\tarrow{(\code{Fruit})}{\tnum},\code{Fruit})+
+          \code{Cherry}@(\tnum)\ \textsf{in}\ e'
+          }$\\
+    \[
+      \scriptsize
+      T:
+      \inferrule
+      {
+        \inferrule
+        {
+          \inferrule
+          { \code{Apple}\in\dom{\Gamma} }
+          { \typeofd{\code{Apple}}{\tarrow{()}{\code{Fruit}}} }
+        }
+        { \typeofd{\code{Apple}()}{\code{Fruit}} }
+        \\
+        \code{Fruit}\in\dom{\Gamma}
+        \\
+        \Gamma(\code{Fruit})=\code{Apple}@()+\code{Banana}@(\tarrow{(\code{Fruit})}{\tnum},\code{Fruit})+\code{Cherry}@(\tnum)
+        \\
+        \typeofd{42}{\tnum}
+        \\
+        \inferrule
+        {
+          \inferrule
+          { \cf\in\dom{\Gamma'} }
+          { \typeof{\Gamma'}{\cf}{\tarrow{(\code{Fruit})}{\tnum}} }
+          \\
+          \inferrule
+          { \cx\in\dom{\Gamma'} }
+          { \typeof{\Gamma'}{\cx}{\code{Fruit}} }
+        }
+        { \typeof{\Gamma'}{\cf(\cx)}{\tnum} }
+        \\
+        \inferrule
+        { \cx\in\dom{\Gamma[\cx:\tnum]} }
+        { \typeof{\Gamma[\cx:\tnum]}{\cx}{\tnum} }
+      }
+      {
+        \typeofd{e'}{\tnum}
+      }
+    \]
+    \[
+      \scriptsize
+      \inferrule
+      {
+        \Gamma=\Gamma
+        \quad
+        \inferrule
+        {
+          \inferrule
+          { \code{Fruit}\in\dom{\Gamma} }
+          { \wftd{\code{Fruit}} }
+          \\
+          \wftd{\tnum}
+        }
+        { \wftd{\tarrow{(\code{Fruit})}{\tnum}} }
+        \quad
+        \inferrule
+        { \code{Fruit}\in\dom{\Gamma} }
+        { \wftd{\code{Fruit}} }
+        \quad
+        \inferrule
+        { \code{Fruit}\in\dom{\Gamma} }
+        { \wftd{\code{Fruit}} }
+        \quad
+        T
+      }
+      { \typeofe{e}{\tnum} }
+    \]
+\end{enumerate}
+
+\textbf{\refex{algebraic-data-types-nonterminate}}
+
+$\begin{array}{@{}l@{}}
+  \textsf{type}\ \cX=\code{toX}@(\tarrow{\cX}{\cX}); \\
+  \textsf{val}\ \code{fromX}:\tarrow{\cX}{(\tarrow{\cX}{\cX})}=\efunt{\cx}{\cX}{\cx\ \textsf{match}\ \code{toX}(\cf)\rightarrow\cf};\\
+  \textsf{val}\ \cf:\cX=\eapp{\code{toX}}{(\efunt{\cx}{\cX}{(\eapp{(\eapp{\code{fromX}}{\cx})}{\cx})})};\\
+  \eapp{(\eapp{\code{fromX}}{\cf})}{\cf}
+\end{array}$
+\\
+
+\textbf{\refex{parametric-polymorphism-typeck}}
+\begin{enumerate}
+  \item
+    $\Gamma_1=[\cf:{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}]$\\
+    $\Gamma_2=[\alpha,\cx:\alpha]$\\
+    \[
+      \tiny
+      \inferrule
+      {
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            {
+              \inferrule
+              { \alpha\in\dom{[\alpha]} }
+              { \wft{[\alpha]}{\alpha} }
+              \\
+              \inferrule
+              { \alpha\in\dom{[\alpha]} }
+              { \wft{[\alpha]}{\alpha} }
+            }
+            { \wft{[\alpha]}{\tarrow{\alpha}{\alpha}} }
+          }
+          { \wft{\emptyset}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}} }
+          \\
+          \inferrule
+          {
+            \inferrule
+            {
+              \inferrule
+              { \cf\in\dom{\Gamma_1} }
+              { \typeof{\Gamma_1}{\cf}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}} }
+            }
+            { \typeof{\Gamma_1}{\etapp{\cf}{\tnum}}{\tarrow{\tnum}{\tnum}} }
+            \\
+            \typeof{\Gamma_1}{10}{\tnum}
+          }
+          { \typeof{\Gamma_1}{\etapp{\cf}{\tnum}\ 10}{\tnum} }
+        }
+        {
+          \typeofe{\efunt{\cf}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{
+          \etapp{\cf}{\tnum}\
+          10}}{\tarrow{(\tforall{\alpha}{\tarrow{\alpha}{\alpha}})}{\tnum}}
+        }
+        \\
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            { \alpha\in\dom{[\alpha]} }
+            { \wft{[\alpha]}{\alpha} }
+            \\
+            \inferrule
+            { \cx\in\dom{\Gamma_2} }
+            { \typeof{\Gamma_2}{\cx}{\alpha} }
+          }
+          {
+            \typeof{[\alpha]}{\efunt{\cx}{\alpha}{\cx}}{\tarrow{\alpha}{\alpha}}
+          }
+        }
+        {
+          \typeofe{\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}}}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}
+        }
+      }
+      { \typeofe{(\efunt{\cf}{\tforall{\alpha}{\tarrow{\alpha}{\alpha}}}{
+        \etapp{\cf}{\tnum}\ 10})\
+        (\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum} }
+    \]
+  \item
+    $\Gamma_1=[\alpha,\beta]$\\
+    $\Gamma_2=\Gamma_1[\cf:\tarrow{\alpha}{\beta}]$\\
+    $\Gamma_3=\Gamma_2[\cx:\alpha]$\\
+    $\Gamma_4=[\cy:\tnum]$\\
+    \[
+      T:
+      \tiny
+      \inferrule
+      {
+        \inferrule
+        {
+          \inferrule
+          {
+            \inferrule
+            {
+              \inferrule
+              {
+                \inferrule
+                {
+                  \inferrule
+                  { \alpha\in\dom{\Gamma_1} }
+                  { \wft{\Gamma_1}{\alpha} }
+                  \\
+                  \inferrule
+                  { \beta\in\dom{\Gamma_1} }
+                  { \wft{\Gamma_1}{\beta} }
+                }
+                { \wft{\Gamma_1}{\tarrow{\alpha}{\beta}} }
+                \\
+                \inferrule
+                {
+                  \inferrule
+                  { \alpha\in\dom{\Gamma_2} }
+                  { \wft{\Gamma_2}{\alpha} }
+                  \\
+                  \inferrule
+                  {
+                    \inferrule
+                    { \cf\in\dom{\Gamma_3} }
+                    { \typeof{\Gamma_3}{\cf}{\tarrow{\alpha}{\beta}} }
+                    \\
+                    \inferrule
+                    { \cx\in\dom{\Gamma_3} }
+                    { \typeof{\Gamma_3}{\cx}{\alpha} }
+                  }
+                  { \typeof{\Gamma_3}{\cf\ \cx}{\beta} }
+                }
+                {
+                  \typeof{\Gamma_2}
+                  {\efunt{\cx}{\alpha}{\cf\ \cx}}{\tarrow{\alpha}{\beta}}
+                }
+              }
+              { \typeof{\Gamma_1}{
+                  \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+                    \efunt{\cx}{\alpha}{\cf\ \cx}}}
+                {\tarrow{(\tarrow{\alpha}{\beta})}{(\tarrow{\alpha}{\beta})}}
+              }
+            }
+            { \typeof{[\alpha]}{\etfun{\beta}{
+                \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+                  \efunt{\cx}{\alpha}{\cf\ \cx}}}}
+              {\tforall{\beta}{\tarrow{(\tarrow{\alpha}{\beta})}{(\tarrow{\alpha}{\beta})}}}
+            }
+          }
+          { \typeofe
+            {\etfun{\alpha}{\etfun{\beta}{
+              \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+                \efunt{\cx}{\alpha}{\cf\ \cx}}}}}
+            {\tforall{\alpha}{\tforall{\beta}{\tarrow{(\tarrow{\alpha}{\beta})}{(\tarrow{\alpha}{\beta})}}}}
+          }
+        }
+        {
+          \typeofe
+          {\etapp{(\etfun{\alpha}{\etfun{\beta}{
+            \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+              \efunt{\cx}{\alpha}{\cf\ \cx}
+            }
+          }})}{\tnum}}
+          {\tforall{\beta}{\tarrow{(\tarrow{\tnum}{\beta})}{(\tarrow{\tnum}{\beta})}}}
+        }
+      }
+      { \typeofe
+        {\etapp{\etapp{(\etfun{\alpha}{\etfun{\beta}{
+          \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+            \efunt{\cx}{\alpha}{\cf\ \cx}
+          }
+        }})}{\tnum}}{\tnum}
+        }
+        {\tarrow{(\tarrow{\tnum}{\tnum})}{(\tarrow{\tnum}{\tnum})}}
+      }
+    \]
+    \[
+      \tiny
+      \inferrule
+      {
+        \inferrule
+        {
+          T
+          \\
+          \inferrule
+          {
+            \wft{\emptyset}{\tnum} \\
+            \inferrule
+            {
+              \typeof{\Gamma_4}{17}{\tnum}
+              \\
+              \inferrule
+              { \cy\in\dom{\Gamma_4} }
+              { \typeof{\Gamma_4}{\cy}{\tnum} }
+            }
+            { \typeof{\Gamma_4}{17-\cy}{\tnum} }
+          }
+          { \typeofe{\efunt{\cy}{\tnum}{17-\cy}}{\tarrow{\tnum}{\tnum}} }
+        }
+        { \typeofe{\etapp{\etapp{(\etfun{\alpha}{\etfun{\beta}{
+            \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+              \efunt{\cx}{\alpha}{\cf\ \cx}
+            }
+          }})}{\tnum}}{\tnum}\ (\efunt{\cy}{\tnum}{17-\cy})}
+          {\tarrow{\tnum}{\tnum}} }
+        \\
+        \typeofe{9}{\tnum}
+      }
+      {
+        \typeofe{
+          \etapp{\etapp{(\etfun{\alpha}{\etfun{\beta}{
+            \efunt{\cf}{\tarrow{\alpha}{\beta}}{
+              \efunt{\cx}{\alpha}{\cf\ \cx}
+            }
+          }})}{\tnum}}{\tnum}\ (\efunt{\cy}{\tnum}{17-\cy})\ 9
+        }{\tnum}
+      }
+    \]
+\end{enumerate}
 
 \textbf{\refex{parametric-polymorphism-nameless}}
 \vspace{-1em}
@@ -733,6 +2018,7 @@ case VarT(a) =>
       }
       { \typeofd{\etdef{t[\alpha]}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
     \]
+
     \[
       \inferrule
       {
@@ -803,33 +2089,77 @@ case (RecordT(fs1), RecordT(fs2)) =>
 \textbf{\refex{subtype-polymorphism-typer}}
 \vspace{-1em}
 \begin{verbatim}
-  case Add(l, r) =>
-    val lt = typeCheck(l, tenv)
-    val rt = typeCheck(r, tenv)
-    if (!subtype(lt, NumT)) error()
-    if (!subtype(rt, NumT)) error()
-    NumT
-  case App(f, a) =>
-    val ft = typeCheck(f, tenv)
-    val at = typeCheck(a, tenv)
-    ft match {
-      case NumT => error()
-      case ArrowT(pt, rt) =>
-        if (!subtype(at, pt)) error()
-        rt
-      case TopT => error()
-      case BottomT => BottomT
-    }
+case Add(l, r) =>
+  val lt = typeCheck(l, tenv)
+  val rt = typeCheck(r, tenv)
+  if (!subtype(lt, NumT)) error()
+  if (!subtype(rt, NumT)) error()
+  NumT
+case App(f, a) =>
+  val ft = typeCheck(f, tenv)
+  val at = typeCheck(a, tenv)
+  ft match {
+    case NumT => error()
+    case ArrowT(pt, rt) =>
+      if (!subtype(at, pt)) error()
+      rt
+    case TopT => error()
+    case BottomT => BottomT
+  }
+\end{verbatim}
+
+\textbf{\refex{subtype-polymorphism-lattice}}
+\vspace{-1em}
+\begin{verbatim}
+case (BottomT, t) => t
+case (t, BottomT) => t
+case (NumT, NumT) => NumT
+case (ArrowT(p1, r1), ArrowT(p2, r2)) =>
+  ArrowT(glb(p1, p2), lub(r1, r2))
+case (RecordT(fs1), RecordT(fs2)) =>
+  val fs = fs1.keySet & fs2.keySet
+  RecordT(fs.map(x => x -> lub(fs1(x), fs2(x))).toMap)
+
+case (TopT, t) => t
+case (t, TopT) => t
+case (NumT, NumT) => NumT
+case (ArrowT(p1, r1), ArrowT(p2, r2)) =>
+  ArrowT(lub(p1, p2), glb(r1, r2))
+case (RecordT(fs1), RecordT(fs2)) =>
+  val fs = fs1.keySet | fs2.keySet
+  RecordT(fs.map(x =>
+    x -> glb(fs1.getOrElse(x, TopT), fs2.getOrElse(x, TopT))
+  ).toMap)
+
+case If0(c, t, f) =>
+  val ct = typeCheck(c, tenv)
+  val tt = typeCheck(t, tenv)
+  val ft = typeCheck(f, tenv)
+  if (subtype(ct, NumT)) lub(tt, ft) else error()
 \end{verbatim}
 
 \textbf{\refex{subtype-polymorphism-box}}
-
-$
+\[
 \inferrule
 { \subt{\tau_1}{\tau_2} \\ \subt{\tau_2}{\tau_1} }
 { \subt{\textsf{box}\ \tau_1}{\textsf{box}\ \tau_2} }
-$
-\\
+\]
+
+\textbf{\refex{subtype-polymorphism-list}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { \subt{\tau_1}{\tau_2} }
+      { \subt{\textsf{list}\ \tau_1}{\textsf{list}\ \tau_2} }
+    \]
+  \item
+    \[
+      \inferrule
+      { \subt{\tau_1}{\tau_2} \\ \subt{\tau_2}{\tau_1} }
+      { \subt{\textsf{list}\ \tau_1}{\textsf{list}\ \tau_2} }
+    \]
+\end{enumerate}
 
 \textbf{\refex{subtype-polymorphism-vcc}}
 \begin{enumerate}
@@ -877,7 +2207,9 @@ $
   \item
     \[
       \inferrule{\subt{\tau_1}{\tau_3}}{\subt{\tau_1\land\tau_2}{\tau_3}}
-      \qquad
+    \]
+
+    \[
       \inferrule{\subt{\tau_2}{\tau_3}}{\subt{\tau_1\land\tau_2}{\tau_3}}
     \]
   \item
@@ -899,73 +2231,107 @@ $
     \]
 \end{enumerate}
 
+\textbf{\refex{subtype-polymorphism-union}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { \subt{\tau_1}{\tau_3} \\ \subt{\tau_2}{\tau_3} }
+      { \subt{(\tau_1\lor\tau_2)}{\tau_3} }
+    \]
+  \item
+    \[
+      \inferrule
+      { \subt{\tau_3}{\tau_1} }
+      { \subt{\tau_3}{(\tau_1\lor\tau_2)} }
+    \]
+
+    \[
+      \inferrule
+      { \subt{\tau_3}{\tau_2} }
+      { \subt{\tau_3}{(\tau_1\lor\tau_2)} }
+    \]
+  \item
+    \[
+      \scriptsize
+      \inferrule
+      {
+        \inferrule
+        {
+          \inferrule
+          { \subt{\tau_1}{\tau_1} }
+          { \subt{\tau_1}{(\tau_1\lor(\tau_2\lor\tau_3))} }
+          \\
+          \inferrule
+          {
+            \inferrule
+            { \subt{\tau_2}{\tau_2} }
+            { \subt{\tau_2}{(\tau_2\lor\tau_3)} }
+          }
+          { \subt{\tau_2}{(\tau_1\lor(\tau_2\lor\tau_3))} }
+        }
+        { \subt{(\tau_1\lor\tau_2)}{(\tau_1\lor(\tau_2\lor\tau_3))} }
+        \\
+        \inferrule
+        {
+          \inferrule
+          { \subt{\tau_3}{\tau_3} }
+          { \subt{\tau_3}{(\tau_2\lor\tau_3)} }
+        }
+        { \subt{\tau_3}{(\tau_1\lor(\tau_2\lor\tau_3))} }
+      }
+      { \subt{((\tau_1\lor\tau_2)\lor\tau_3)}{(\tau_1\lor(\tau_2\lor\tau_3))} }
+    \]
+\end{enumerate}
+
 \textbf{\refex{subtype-polymorphism-adt}}
 \[
-  \begin{array}{c}
   \inferrule
   {
     \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
     \Gamma(t_2)=x_1@\tau_1+\cdots+x_n@\tau_n+x_{n+1}@\tau_{n+1}+\cdots+x_{n+m}@\tau_{n+m} \\
-  }
-  { \Gamma\vdash\subt{t_1}{t_2} }
-  \\[2em]
-  \inferrule
-  {
-    \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
-    \Gamma(t_2)=x_1@\tau_1'+\cdots+x_n@\tau_n' \\
     \Gamma\vdash\subt{\tau_1}{\tau_1'} \\
     \cdots \\
     \Gamma\vdash\subt{\tau_n}{\tau_n'}
   }
   { \Gamma\vdash\subt{t_1}{t_2} }
-  \\[2em]
-  \inferrule
-  {
-    \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
-    \Gamma(t_2)=x_1'@\tau_1'+\cdots+x_n'@\tau_n' \\
-    x_1@\tau_1+\cdots+x_n@\tau_n
-    \ \text{is a permutation of}\
-    x_1'@\tau_1'+\cdots+x_n'@\tau_n'
-  }
-  { \Gamma\vdash\subt{t_1}{t_2} }
-  \end{array}
 \]
-(The last rule is unnecessary in fact because the $\_@\_+\cdots+\_@\_$ notation
-denotes a set, whose equality is already not affected by the order of its elements.)
 
 \textbf{\refex{subtype-polymorphism-exception}}
 \[
-  \begin{array}{c}
-    \inferrule
-    {}
-    { \typeofd{n}{\tnum\uparrow\tbot} }
-    \quad
-    \inferrule
-    { \typeofd{e_1}{\tnum\uparrow\tau} \\ \typeofd{e_2}{\tnum\uparrow\tau} }
-    { \typeofd{e_1+e_2}{\tnum\uparrow\tau} }
-    \\[2em]
-    \inferrule
-    { x\in\dom{\Gamma} }
-    { \typeofd{x}{\Gamma(x)\uparrow\tbot} }
-    \quad
-    \inferrule
-    { \typeof{\Gamma[x:\tau_1]}{e}{\tau_2\uparrow\tau_3} }
-    { \typeofd{\efunt{x}{\tau_1}{e}}{(\tarrow{\tau_1}{\tau_2/\uparrow\tau_3})\uparrow\tbot} }
-    \\[2em]
-    \inferrule
-    { \typeofd{e_1}{(\tarrow{\tau_1}{\tau_2/\uparrow\tau_3})\uparrow\tau_3} \\
-      \typeofd{e_2}{\tau_1\uparrow\tau_3} }
-    { \typeofd{e_1\ e_2}{\tau_2\uparrow\tau_3} }
-    \\[2em]
-    \inferrule
-    { \typeofd{e}{\tau\uparrow\tau} }
-    { \typeofd{\textsf{throw}\ e}{\tbot\uparrow\tau} }
-    \quad
-    \inferrule
-    { \typeofd{e_1}{\tau_1\uparrow\tau_2} \\
-      \typeofd{e_2}{(\tarrow{\tau_2}{\tau_1/\uparrow\tau_3})\uparrow\tau_3}}
-    { \typeofd{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{\tau_1\uparrow\tau_3} }
-  \end{array}
+  { \typeofd{n}{\tnum\uparrow\tbot} }
+\]
+\[
+  \inferrule
+  { \typeofd{e_1}{\tnum\uparrow\tau} \\ \typeofd{e_2}{\tnum\uparrow\tau} }
+  { \typeofd{e_1+e_2}{\tnum\uparrow\tau} }
+\]
+\[
+  \inferrule
+  { x\in\dom{\Gamma} }
+  { \typeofd{x}{\Gamma(x)\uparrow\tbot} }
+\]
+\[
+  \inferrule
+  { \typeof{\Gamma[x:\tau_1]}{e}{\tau_2\uparrow\tau_3} }
+  { \typeofd{\efunt{x}{\tau_1}{e}}{(\tarrow{\tau_1}{\tau_2/\uparrow\tau_3})\uparrow\tbot} }
+\]
+\[
+  \inferrule
+  { \typeofd{e_1}{(\tarrow{\tau_1}{\tau_2/\uparrow\tau_3})\uparrow\tau_3} \\
+    \typeofd{e_2}{\tau_1\uparrow\tau_3} }
+  { \typeofd{e_1\ e_2}{\tau_2\uparrow\tau_3} }
+\]
+\[
+  \inferrule
+  { \typeofd{e}{\tau\uparrow\tau} }
+  { \typeofd{\textsf{throw}\ e}{\tbot\uparrow\tau} }
+\]
+\[
+  \inferrule
+  { \typeofd{e_1}{\tau_1\uparrow\tau_2} \\
+    \typeofd{e_2}{(\tarrow{\tau_2}{\tau_1/\uparrow\tau_3})\uparrow\tau_3}}
+  { \typeofd{\textsf{try}\ e_1\ \textsf{catch}\ e_2}{\tau_1\uparrow\tau_3} }
 \]
 
 \textbf{\refex{type-inference-pair}}
@@ -1053,6 +2419,29 @@ case Tail(e) =>
   et
 \end{verbatim}
 
+\textbf{\refex{type-inference-option}}
+\vspace{-1em}
+\begin{verbatim}
+case (OptionT(t3), OptionT(t4)) =>
+  unify(t3, t4)
+
+case OptionT(t) =>
+  occurs(t1, t)
+
+case NoneE =>
+  OptionT(VarT(None))
+case SomeE(e) =>
+  OptionT(typeCheck(e, tenv))
+case Match(e, e1, x, e2) =>
+  val et = typeCheck(e, tenv)
+  val t = VarT(None)
+  unify(OptionT(t), et)
+  val nt = typeCheck(e1, tenv)
+  val st = typeCheck(e2, tenv + (x -> t))
+  unify(nt, st)
+  nt
+\end{verbatim}
+
 \textbf{\refex{type-inference-sysf}}
 \begin{enumerate}
   \item
@@ -1115,14 +2504,14 @@ case Tail(e) =>
         \inferrule
         {
           \inferrule
-          { \cz\in\dom{\Gamma_2} \\ \tnum\succ\tnum }
-          { \typeof{\Gamma_2}{\cz}{\tnum} }
+          { \cy\in\dom{\Gamma_2} \\ \tnum\succ\tnum }
+          { \typeof{\Gamma_2}{\cy}{\tnum} }
         }
-        { \typeofe{\efun{\cz}{\cz}}{\tarrow{\tnum}{\tnum}} }
+        { \typeofe{\efun{\cy}{\cy}}{\tarrow{\tnum}{\tnum}} }
       }
-      { \typeofe{\eapp{(\efun{\cx}{\eapp{\cx}{42}})}{\efun{\cz}{\cz}}}{\tnum} }
+      { \typeofe{\eapp{(\efun{\cx}{\eapp{\cx}{42}})}{\efun{\cy}{\cy}}}{\tnum} }
     \]
-    $\Gamma_1=[\cx:\tarrow{\tnum}{\tnum}]$, $\Gamma_2=[\cz:\tnum]$
+    $\Gamma_1=[\cx:\tarrow{\tnum}{\tnum}]$, $\Gamma_2=[\cy:\tnum]$
   \item Not well-typed
   \item
     \[
@@ -1132,10 +2521,10 @@ case Tail(e) =>
         \inferrule
         {
           \inferrule
-          { \cz\in\dom{\Gamma_1} \\ \alpha\succ\alpha }
-          { \typeof{\Gamma_1}{\cz}{\alpha} }
+          { \cy\in\dom{\Gamma_1} \\ \alpha\succ\alpha }
+          { \typeof{\Gamma_1}{\cy}{\alpha} }
         }
-        { \typeofe{\efun{\cz}{\cz}}{\tarrow{\alpha}{\alpha}} }
+        { \typeofe{\efun{\cy}{\cy}}{\tarrow{\alpha}{\alpha}} }
         \\
         \inferrule
         { \embox{FTV}(\tarrow{\alpha}{\alpha})\setminus\embox{FTV}(\emptyset)=\{\alpha\} }
@@ -1170,9 +2559,9 @@ case Tail(e) =>
         }
         { \typeof{\Gamma_2}{\eseq{\eapp{\cx}{42}}{\eapp{\cx}{\true}}}{\tbool} }
       }
-      { \typeofe{\ebind{\cx}{\efun{\cz}{\cz}}{\eseq{\eapp{\cx}{42}}{\eapp{\cx}{\true}}}}{\tbool} }
+      { \typeofe{\ebind{\cx}{\efun{\cy}{\cy}}{\eseq{\eapp{\cx}{42}}{\eapp{\cx}{\true}}}}{\tbool} }
     \]
 
-    $\Gamma_1=[\cz:\alpha]$,
+    $\Gamma_1=[\cy:\alpha]$,
     $\Gamma_2=[\cx:\forall\alpha.\alpha\rightarrow\alpha]$
 \end{enumerate}

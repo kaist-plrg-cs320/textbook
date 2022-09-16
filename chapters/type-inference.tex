@@ -1184,7 +1184,7 @@ Note that we do not need any global variables now.
 \begin{exercise}
 \labex{type-inference-pair}
 
-The following code extends \lang with pairs:
+This exercise extends \lang with pairs.
 
 \begin{verbatim}
 sealed trait Expr
@@ -1221,7 +1221,7 @@ def typeCheck(e: Expr, tenv: TEnv): Type = e match {
 
     \begin{enumerate}
         \item
-Fill every \code{???} to complete the type checker.
+Complete the implementation.
 You may refer to the following typing rules:
 
 \[
@@ -1258,7 +1258,7 @@ where
 \begin{exercise}
 \labex{type-inference-box}
 
-The following code extends \lang with boxes:
+This exercise extends \lang with boxes. Complete the following implementation:
 \begin{verbatim}
 sealed trait Expr
 ...
@@ -1292,7 +1292,6 @@ def typeCheck(e: Expr, tenv: TEnv): Type = e match {
 }
 \end{verbatim}
 
-Fill every \code{???} to complete the type checker.
 You may refer to the following typing rules:
 
 \[
@@ -1324,7 +1323,7 @@ where
 \begin{exercise}
 \labex{type-inference-list}
 
-The following code extends \lang with lists:
+This exercise extends \lang with lists. Complete the following implementation:
 \begin{verbatim}
 sealed trait Expr
 ...
@@ -1360,7 +1359,6 @@ def typeCheck(e: Expr, tenv: TEnv): Type = e match {
 }
 \end{verbatim}
 
-Fill every \code{???} to complete the type checker.
 You may refer to the following typing rules:
 
 \[
@@ -1391,6 +1389,76 @@ where
   \item $\textsf{head}\ e$ denotes \code{Head($e$)}.
   \item $\textsf{tail}\ e$ denotes \code{Tail($e$)}.
   \item $\textsf{list}\ \tau$ denotes \code{ListT($\tau$)}.
+\end{itemize}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{type-inference-option}
+
+This exercise extends \lang with options. Complete the following implementation:
+\begin{verbatim}
+sealed trait Expr
+...
+case object NoneE extends Expr
+case class SomeE(e: Expr) extends Expr
+case class Match(e: Expr, e1: Expr, x: String, e2: Expr) extends Expr
+
+sealed trait Type
+...
+case class OptionT(t: Type) extends Type
+
+def resolve(ty: Type): Type = ...
+
+def unify(t1: Type, t2: Type): Unit =
+  (resolve(t1), resolve(t2)) match {
+    ...
+    case (OptionT(t3), OptionT(t4)) => ???
+  }
+
+def occurs(t1: VarT, t2: Type): Boolean =
+  resolve(t2) match {
+    ...
+    case OptionT(t) => ???
+  }
+
+def typeCheck(e: Expr, tenv: TEnv): Type = e match {
+  ...
+  case NoneE => ???
+  case SomeE(e) => ???
+  case Match(e, e1, x, e2) => ???
+}
+\end{verbatim}
+
+You may refer to the following typing rules:
+
+\[
+\inferrule
+{}
+{ \typeofd{\textsf{none}}{\textsf{option}\ \tau} }
+\qquad
+\inferrule
+{ \typeofd{e}{\tau} }
+{ \typeofd{\textsf{some}\ e}{\textsf{option}\ \tau} }
+\qquad
+\inferrule
+{
+  \typeofd{e}{\textsf{option}\ \tau'} \\
+  \typeofd{e_1}{\tau} \\
+  \typeof{\Gamma[x:\tau']}{e_2}{\tau} \\
+}
+{ \typeofd{e\ \textsf{match}\ \textsf{none}\rightarrow e_1,\textsf{some}\ x\rightarrow e_2}{\tau} }
+\]
+
+where
+
+\begin{itemize}
+  \item $\textsf{none}$ denotes \code{NoneE}.
+  \item $\textsf{some}\ e$ denotes \code{SomeE($e$)}.
+  \item ${e\ \textsf{match}\ \textsf{none}\rightarrow e_1,
+    \textsf{some}\ x\rightarrow e_2}$ denotes \code{Match($e$, $e_1$, $x$, $e_2$)}.
+  \item $\textsf{option}\ \tau$ denotes \code{OptionT($\tau$)}, which is the type
+    of an option possibly containing a value of $\tau$.
 \end{itemize}
 
 \end{exercise}
@@ -1543,13 +1611,13 @@ where
   \begin{array}{r@{\hskip4pt}c@{\hskip4pt}l}
     \tau&\succ&\tau \\[0.5em]
     \tforall{\alpha_1}{\cdots\tforall{\alpha_n}{\tau}}&\succ&
-    \tau[\alpha_1\leftarrow\tau_1,\ldots,\alpha_n\leftarrow\tau_n]\\[1em]
+    \tau[\alpha_1\leftarrow\tau_1,\cdots,\alpha_n\leftarrow\tau_n]\\[1em]
   \end{array}
   \\[2em]
   \fbox{$\tau\prec_\Gamma\sigma$}
   &&
   \inferrule
-  { \embox{FTV}(\tau)\setminus\embox{FTV}(\Gamma)=\{\alpha_1,\ldots,\alpha_n\} }
+  { \embox{FTV}(\tau)\setminus\embox{FTV}(\Gamma)=\{\alpha_1,\cdots,\alpha_n\} }
   { \tau\prec_\Gamma\tforall{\alpha_1}{\cdots\tforall{\alpha_n}{\tau}} }
   \\[2em]
 \embox{FTV}(\tnum) &=& \emptyset

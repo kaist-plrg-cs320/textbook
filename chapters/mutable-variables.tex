@@ -449,6 +449,19 @@ intended.
 \section{Exercises}
 
 \begin{exercise}
+\labex{mutable-variables-trace}
+
+Consider the following \lang expression:
+\[
+  \eapp{(\efun{\cx}{\cx})}{(\eapp{(\efun{\cx}{\cx})}{1})}
+\]
+Write the arguments to \code{interp} each time it is called
+during the evaluation of the expression. Write them in the order in
+which the calls to \code{interp} occur during evaluation.
+
+\end{exercise}
+
+\begin{exercise}
 \labex{mutable-variables-cbr}
 
 The following code is an excerpt from the implementation of the interpreter for
@@ -548,7 +561,7 @@ Note that
 -> $a_n$))} is $\{f_1{:}a_1,\cdots,f_n{:}a_n\}$.
 
 \begin{enumerate}
-  \item Fill \code{???} to complete the implementation. The
+  \item Complete the implementation. The
   language uses CBR when a record field is an argument of a
   function call.
 \end{enumerate}
@@ -596,7 +609,26 @@ The semantics of some constructs are as follows:
     the value of the whole expression. Then, it evaluates $e_1$, and it maps the
     address denoted $e_1$ to the value of $e_2$.
 \end{itemize}
+\begin{enumerate}
+  \item
 Write the operational semantics of the form \fbox{$\sevald{}{e}{v}{}$} for the expressions.
+  \item
+Complete the following interpreter implementation:
+\begin{verbatim}
+case class Deref(p: Expr) extends Expr
+case class Ref(x: String) extends Expr
+case class Assign(p: Expr, e: Expr) extends Expr
+
+case class PtrV(a: Addr) extends Value
+
+def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) = e match {
+  ...
+  case Deref(p) => ???
+  case Ref(x) => ???
+  case Assign(p, e) => ???
+}
+\end{verbatim}
+\end{enumerate}
 
 \end{exercise}
 

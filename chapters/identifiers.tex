@@ -390,7 +390,7 @@ We can express the rules in a natural language as the following inference rules:
 \]
 
 The following proof tree proves that $\ebind{\cx}{1}{\eadd{\cx}{\cx}}$ evaluates
-to $2$ under the empty environment. Note that $[x_1\mapsto n_1,\ldots,x_m\mapsto
+to $2$ under the empty environment. Note that $[x_1\mapsto n_1,\cdots,x_m\mapsto
 n_m]$ denotes an environment whose domain includes from $x_1$ to $x_m$ and each
 $x_i$ is mapped to $n_i$.
 
@@ -460,6 +460,7 @@ terminates without producing any results.
 \section{Exercises}
 
 \begin{exercise}
+\labex{identifiers-arrow}
 
 For each of the following expression:
 \begin{itemize}
@@ -475,17 +476,6 @@ For each of the following expression:
 \end{exercise}
 
 \begin{exercise}
-
-Explain whether each of the following expressions is an example of shadowing:
-\begin{enumerate}
-  \item $\ebind{\cx}{(\ebind{\cx}{3}{\esub{5}{\cx}})}{\eadd{1}{\cx}}$
-  \item $\ebind{\cx}{3}{\ebind{\cy}{5}{\eadd{1}{\cx}}}$
-  \item $\ebind{\cx}{3}{\ebind{\cx}{5}{\eadd{1}{\cx}}}$
-\end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
 \labex{identifiers-shadowing-impl}
 
 This exercise asks you to implement the \code{shadowing} function, which
@@ -495,6 +485,8 @@ example, \code{shadowing($e$)} equals \code{Set("x")} where $e$ denotes
 $\ebind{\cx}{\cy}{\ebind{\cx}{1}{\cz}}$.  The \code{shadowing} function
 calls the \code{helper} function, which tracks the set of every identifier
 defined already to detect shadowing.
+
+Complete the following implementation:
 
 \begin{verbatim}
 def shadowing(e: Expr): Set[String] = helper(e, Set())
@@ -507,17 +499,5 @@ def helper(e: Expr, env: Set[String]): Set[String] =
     case Val(x, e, b) => ???
   }
 \end{verbatim}
-
-Fill every \code{???} to complete the implementation. You may refer to the following
-to deal with sets:
-\begin{itemize}
-  \item \code{Set()} is the empty set.
-  \item \code{Set(v)} is the set consisting of a single element \code{v}.
-  \item Where \code{s} is a set, \code{s(v)} is \code{true} if \code{v} is an
-    element of \code{s} and \code{false} otherwise.
-  \item Where \code{s} is a set, \code{s + v} is the union of \code{s} and $\{\code{v}\}$.
-  \item Where \code{s1} and \code{s2} are sets, \code{s1 ++ s2} is the union of \code{s1}
-    and \code{s2}.
-\end{itemize}
 
 \end{exercise}

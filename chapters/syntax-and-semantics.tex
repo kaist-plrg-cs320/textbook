@@ -59,7 +59,7 @@ Once characters are defined, we can define strings with the definition of
 characters. $S$ is the set of every string:
 
 \[S = \text{the set of every string} = \{ \code{"}c_1\cdots c_n\code{"}\ |\
-c_1,\ldots,c_n\in C \}\]
+c_1,\cdots,c_n\in C \}\]
 
 A string is an element of $S$, which is a
 sequence of zero or more characters. For example, if $\code{'a'},\code{'b'}\in
@@ -1272,6 +1272,7 @@ as user-defined syntactic sugar.
 \section{Exercises}
 
 \begin{exercise}
+\labex{syntax-and-semantics-expr}
 
 Consider the following concrete syntax:
 
@@ -1299,6 +1300,7 @@ Assume that it is allowed to add whitespaces among terminals freely.
 \end{exercise}
 
 \begin{exercise}
+\labex{syntax-and-semantics-icecream}
 
 Consider the following concrete syntax:
 
@@ -1328,6 +1330,7 @@ Describe whether each of the following is \code{<ice-cream>} and why.
 \end{exercise}
 
 \begin{exercise}
+\labex{syntax-and-semantics-coffee}
 
 Consider the following concrete syntax:
 
@@ -1377,5 +1380,86 @@ Describe whether each of the following is \code{<coffee>} and why.
   \item \code{steamed-milk on espresso on chocolate-syrup}
   \item \code{cocoa-powder on milk-foam on steamed-milk on espresso}
 \end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{syntax-and-semantics-pair}
+
+This exercise extends \lang with pairs. Consider the following language:
+\[
+\begin{array}{rrl}
+  e & ::= & \cdots\ |\ (e,e)\ |\ e\textsf{.1}\ |\ e\textsf{.2} \\
+  v & ::= & \cdots\ |\ (v,v)
+\end{array}
+\]
+The semantics is as follows:
+\begin{itemize}
+  \item The evaluation of $(e_1,e_2)$
+    yields $(v_1,v_2)$, where $e_i$ evaluates to $v_i$.
+  \item The evaluation of $e\textsf{.1}$ yields the first value of
+    a pair $v$, where $e$ evalutes to $v$.
+  \item The evaluation of $e\textsf{.2}$ yields the second value of
+    a pair $v$, where $e$ evalutes to $v$.
+\end{itemize}
+
+\begin{enumerate}
+  \item Write the operational semantics of the form \fbox{$e\Rightarrow v$}.
+  \item Write the evaluation derivation of $(8,(320,42)\textsf{.1})\textsf{.2}$.
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{syntax-and-semantics-record}
+
+This exercise extends \lang with records. A record is a value that maps labels to values.
+Consider the following language:
+\[
+\begin{array}{rrl}
+  e & ::= & \cdots\ |\ \{l:e,\cdots,l:e\}\ |\ e.l\\
+  v & ::= & \cdots\ |\ \langle l:v,\cdots,l:v\rangle \\
+\end{array}
+\]
+where $l$ ranges over labels.
+
+The semantics is as follows:
+\begin{itemize}
+  \item The evaluation of $\{l_1:e_1,\cdots,l_n:e_n\}$
+    yields $\langle l_1:v_1,\cdots,l_n:v_n\rangle$,
+    where $e_i$ evaluates to $v_i$.
+  \item The evaluation of $e.l$ yields the value of a field $l$
+    in a record $v$, where $e$ evaluates to $v$.
+\end{itemize}
+
+Write the operational semantics of the form \fbox{$e\Rightarrow v$}.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{syntax-and-semantics-stlist}
+
+This exercise extends \lang with JavaScript-like
+sequencing.\sidenote{\url{https://tc39.es/ecma262/\#sec-block-runtime-semantics-evaluation}}
+Consider the following language:
+\[
+  \begin{array}{rrl}
+    e & ::= & \cdots\ |\ \textsf{()}\ |\ e;\cdots;e \\
+    v & ::= & \cdots\ |\ \textsf{()} \\
+  \end{array}
+\]
+The semantics is as follows:
+\begin{itemize}
+  \item
+The value of $\textsf{()}$ is $\textsf{()}$.
+  \item
+The value of $e_1;\cdots;e_n$ is $\textsf{()}$
+if every $e_i$ evaluates to $\textsf{()}$.
+  \item
+The value of $e_1;\cdots;e_n$
+is the value of the last expression whose value is not $\textsf{()}$
+if there is such an expression.
+\end{itemize}
+Write the operational semantics of the form \fbox{${e}\Rightarrow{v}$}.
 
 \end{exercise}

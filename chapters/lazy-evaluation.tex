@@ -512,6 +512,20 @@ not evaluated at all.
 \section{Exercises}
 
 \begin{exercise}
+\labex{lazy-evaluation-trace}
+
+Consider the following \lang expression:
+\[
+  \eapp{(\efun{\cx}{\eadd{\cx}{\cx}})}{(\eadd{1}{2})}
+\]
+Write the arguments to \code{interp} each time it is called
+during the evaluation of the expression. Write them in the order in
+which the calls to \code{interp} occur during evaluation.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{lazy-evaluation-eval}
 
 Write the results of each expression under CBV and CBN.
 
@@ -537,6 +551,7 @@ Write the results of each expression under CBV and CBN.
 \end{exercise}
 
 \begin{exercise}
+\labex{lazy-evaluation-scope}
 
 Consider the following expression:
 \[
@@ -555,19 +570,6 @@ Explain the result of evaluating it under the following semantics:
   \item CBN with dynamic scoping
   \item CBV with static scoping
   \item CBV with dynamic scoping
-\end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
-
-For each of the following \lang expressions, show how it is evaluated and its result.
-
-\begin{enumerate}
-  \item
-    $\eapp{(\efun{\cx}{\eapp{\cx}{8}})}{(\eadd{\eapp{42}}{\efun{\cy}{\esub{\cy}{\cx}}})}$
-  \item
-    $\eapp{(\efun{\cy}{\eapp{(\efun{\cx}{\eadd{3}{\cx}})}{\cy})}}{5}$
 \end{enumerate}
 
 \end{exercise}
@@ -595,7 +597,7 @@ Write an example \lang expression showing the need for the recursive \code{stric
 \begin{exercise}
 \labex{lazy-evaluation-val}
 
-This exercise extends \lang with \textsf{val} and \textsf{if0}.  Consider
+This exercise extends \lang with \textsf{val} and \textsf{if0}. Complete
 the following interpreter implementation:
 
 \begin{verbatim}
@@ -603,8 +605,6 @@ sealed trait Expr
 ...
 case class Val(x: String, e: Expr, b: Expr) extends Expr
 case class If0(c: Expr, t: Expr, f: Expr) extends Expr
-
-def strict(v: Value): Value = ...
 
 def interp(e: Expr, env: Env): Value = e match {
   ...
@@ -618,14 +618,12 @@ $\eapp{(\efun{x}{e_2})}{e_1}$.  Like in \textsf{RFAE}, $\eifz{e_1}{e_2}{e_3}$
 evaluates $e_2$ when $e_1$ evaluates to $0$ and evaluates $e_3$ when $e_1$
 evaluates to a nonzero integer or a closure.
 
-Fill every \code{???} to complete the interpreter.
-
 \end{exercise}
 
 \begin{exercise}
 \labex{lazy-evaluation-pair}
 
-This exercise extends \lang with pairs. Consider the following interpreter
+This exercise extends \lang with pairs. Complete the following interpreter
 implementation:
 
 \begin{verbatim}
@@ -638,8 +636,6 @@ case class Snd(e: Expr) extends Expr
 sealed trait Value
 ...
 case class PairV(???) extends Value
-
-def strict(v: Value): Value = ...
 
 def interp(e: Expr, env: Env): Value = e match {
   ...
@@ -668,14 +664,12 @@ Each of them is evaluated only when its value is needed. For example,
   \item $\eadd{(3, \eadd{(\efun{\cx}{\cx})}{4})\textsf{.2}}{5}$ incurs a run-time error.
 \end{itemize}
 
-Fill every \code{???} to complete the interpreter.
-
 \end{exercise}
 
 \begin{exercise}
 \labex{lazy-evaluation-list}
 
-This exercise extends \lang with lists. Consider the following interpreter
+This exercise extends \lang with lists. Complete the following interpreter
 implementation:
 
 \begin{verbatim}
@@ -690,8 +684,6 @@ sealed trait Value
 ...
 case object NilV extends Value
 case class ConsV(???) extends Value
-
-def strict(v: Value): Value = ...
 
 def interp(e: Expr, env: Env): Value = e match {
   ...
@@ -722,9 +714,64 @@ For example,
   \item $(0::1)\textsf{.tail}$ incurs a run-time error.
 \end{itemize}
 
-Fill every \code{???} to complete the interpreter.  You may use the helper
+You may use the helper
 function \verb!def isList(v: Value): Boolean!, which returns \code{true} if a
 given value is \code{ConsV} or \code{NilV} and \code{false} otherwise, without
 defining it.
+
+\end{exercise}
+
+\newcommand{\lazy}{\textsf{lazy}\xspace}
+\newcommand{\delay}{\textsf{delay}\xspace}
+\newcommand{\force}{\textsf{force}\xspace}
+
+\begin{exercise}
+\labex{lazy-evaluation-racket}
+
+This exercise asks you to extend \plang with \emph{promises},
+which originate from the Racket programming language. A promise is a value that
+encapsulates an expression to be evaluated on demand via \emph{force}. Due to the
+introduction of promises, values are now defined as follows:
+\[
+  v\ ::=\ n\ |\ \clov{x}{e}{\sigma}\ |\ \delay(e,\sigma)\ |\ \lazy(e,\sigma)
+\]
+While $n$ and $\clov{x}{e}{\sigma}$ are usual number and closure values,
+$\delay(e,\sigma)$ and $\lazy(e,\sigma)$ are two different kinds of a promise
+value. They are similar in that both encapsulate expressions, but their
+behaviors are slightly different when being forced.
+
+When a value is forced, a value comes out as the result. The semantics of
+force is as follows:
+\begin{itemize}
+  \item $n$ \\
+    When forced, it produces $n$ as the result.
+  \item $\clov{x}{e}{\sigma}$ \\
+    When forced, it produces $\clov{x}{e}{\sigma}$ as the
+    result.
+  \item $\delay(e,\sigma)$ \\
+    When forced, it evaluates $e$ under $\sigma$ and produces $e$'s result as
+    the result.
+  \item $\lazy(e,\sigma)$ \\
+    When forced, it evaluates $e$ under $\sigma$. Then, $e$'s result is also
+    forced to obtain a value $v$. $v$ is the result of forcing $\lazy(e,\sigma)$.
+\end{itemize}
+There are three kinds of an expression treating a promise:
+\[
+  e\ ::=\ \cdots\ |\ \delay\ e\ |\ \lazy\ e\ |\ \force\ e
+\]
+\begin{itemize}
+  \item $\delay\ e$\\
+    Creates a \delay promise with $e$ and the current environment.
+  \item $\lazy\ e$\\
+    Creates a \lazy promise with $e$ and the current environment.
+  \item $\force\ e$\\
+    Evaluates $e$ and forces $e$'s result to obtain the result.
+\end{itemize}
+\begin{enumerate}
+  \item Define the semantics of force of the form \fbox{$\stricte{v}{v}$}.
+    $\stricte{v_1}{v_2}$ means forcing $v_1$ results in $v_2$.
+  \item Define the operational semantics of the form
+    \fbox{$\evald{e}{v}$} for $\delay\ e$, $\lazy\ e$, and $\force\ e$.
+\end{enumerate}
 
 \end{exercise}

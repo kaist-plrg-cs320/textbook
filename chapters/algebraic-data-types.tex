@@ -70,7 +70,7 @@ $
 \begin{array}{@{}l}
   \ebind{\code{Apple}}{\efunt{\cx}{\tnum}{(0,(\cx,(0,0)))}}{\\
   \ebind{\code{Banana}}{\efunt{\cx}{(\tnum\times\tnum)}{(1,(0,\cx))}}{\\
-  \ldots}}
+  \cdots}}
 \end{array}
 $
 
@@ -84,7 +84,7 @@ $
 \begin{array}{@{}l}
   \ebind{\code{apple}}{\code{Apple}\ 5}{\\
   \ebind{\code{banana}}{\code{Banana}\ (6,2)}{\\
-  \ldots}}
+  \cdots}}
 \end{array}
 $
 
@@ -107,7 +107,7 @@ i.e. the first value is nonzero. The following expression defines the
 $\code{radius}$ function:
 
 $\ebind{\code{radius}}{\efunt{\cx}{(\tnum\times(\tnum\times(\tnum\times\tnum)))}
-{\eifz{\cx\textsf{.1}}{\cx\textsf{.2.1}}{\cx\textsf{.2.2.1}}}}{\ldots}$
+{\eifz{\cx\textsf{.1}}{\cx\textsf{.2.1}}{\cx\textsf{.2.2.1}}}}{\cdots}$
 
 This example shows that we can desugar ADTs and pattern matching to pairs,
 functions, and conditional expressions in \plang. The ADT of the example has
@@ -229,14 +229,14 @@ $
 \ebind{\code{radius}}{\efunt{\cx}{\code{Fruit}}{
   \ematch{\cx}{\code{Apple}}{\cy}{\cy}{\code{Banana}}{\cy}{\cy\textsf{.1}}
 }}{\\
-\ldots
+\cdots
 }}$
 
 The following expression defines the \code{List} type:
 
 $
 \etdef{\code{List}}{\code{Nil}}{\tnum}{\code{Cons}}{(\tnum\times\code{List})}
-{\ldots}$
+{\cdots}$
 
 Note that \code{Nil} has one parameter since every variant of \lang must have a
 parameter. \code{Nil} can have any value because the value is not used at all anyway.
@@ -250,7 +250,7 @@ $\erect{\code{sum}}{\cx}{\code{List}}{\tnum}{
   \ematch{\cx}{\code{Nil}}{\cy}{0}{\code{Cons}}{\cy}{
     \cy\textsf{.1}+(\code{sum}\ \cy\textsf{.2})
   }
-}{\ldots}$
+}{\cdots}$
 
 \section{Dynamic Semantics}
 
@@ -1092,6 +1092,7 @@ language.
 \section{Exercises}
 
 \begin{exercise}
+\labex{algebraic-data-types-eval}
 
 What does each of the following expressions evaluate to?
 If it is a run-time error, describe where the error occurs.
@@ -1170,6 +1171,7 @@ Write a \lang expression that
 \end{exercise}
 
 \begin{exercise}
+\labex{algebraic-data-types-nested}
 
 Consider the following expression:
 
@@ -1194,6 +1196,7 @@ Otherwise, revise the typing rules to make it \code{Fruit}.
 \end{exercise}
 
 \begin{exercise}
+\labex{algebraic-data-types-mult}
 
 This exercise extends \lang to have
   \begin{itemize}
@@ -1204,12 +1207,12 @@ This exercise extends \lang to have
 \[
   \begin{array}{@{}r@{~~}r@{~~}l}
     e & ::= & \cdots \\
-    &|& \efun{(x{:}\tau,\ldots,x{:}\tau)}{e} \\
-    &|& e(e,\ldots,e) \\
-    &|& \textsf{type}\ t=x@(\tau,\ldots,\tau)+\ldots+x@(\tau,\ldots,\tau)\ \textsf{in}\ e \\
-    &|& e\ \textsf{match}\ x(x,\ldots,x)\rightarrow e,\ldots,x(x,\ldots,x)\rightarrow e \\
+    &|& \efun{(x{:}\tau,\cdots,x{:}\tau)}{e} \\
+    &|& e(e,\cdots,e) \\
+    &|& \textsf{type}\ t=x@(\tau,\cdots,\tau)+\cdots+x@(\tau,\cdots,\tau)\ \textsf{in}\ e \\
+    &|& e\ \textsf{match}\ x(x,\cdots,x)\rightarrow e,\cdots,x(x,\cdots,x)\rightarrow e \\
     \tau & ::= & \cdots \\
-    &|& \tarrow{(\tau,\ldots,\tau)}{\tau}
+    &|& \tarrow{(\tau,\cdots,\tau)}{\tau}
   \end{array}
 \]
 
@@ -1222,7 +1225,7 @@ This exercise extends \lang to have
     \begin{array}{@{}l}
       \textsf{type}\ \code{Fruit}=
       \code{Apple}@()+
-      \code{Banana}@(\tarrow{\code{Fruit}}{\tnum},\code{Fruit})+
+      \code{Banana}@(\tarrow{(\code{Fruit})}{\tnum},\code{Fruit})+
       \code{Cherry}@(\tnum)\ \textsf{in} \\
       \code{Apple}()\ \textsf{match} \\
       \ \ \ \ \code{Apple}()\rightarrow 42,\\
@@ -1231,5 +1234,34 @@ This exercise extends \lang to have
     \end{array}
     $
 \end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{algebraic-data-types-nonterminate}
+
+It is known that every \plang expression terminates. On the other
+hand, \textsf{TRFAE} expressions can run forever by using \textsf{def}. Then, how
+about \lang? Is it possible to write a non-terminating \lang
+expression? The answer is yes, and this exercise asks you to construct such an
+expression.
+
+For simplicity, we extend \lang to allow a type of a single variant:
+
+$e\ ::=\ \cdots\ |\ \textsf{type}\ t=x@\tau;e\ |\ e\ \textsf{match}\ x(x)\rightarrow e$
+
+The following \lang expression passes type checking and runs forever:
+
+$\begin{array}{@{}l@{}}
+  \textsf{type}\ \cX=\code{toX}@(\tarrow{\cX}{\cX}); \\
+  \textsf{val}\ \code{fromX}:\tarrow{\cX}{(\tarrow{\cX}{\cX})}=???;\\
+  \textsf{val}\ \cf:\cX=???;\\
+  ???
+\end{array}$
+
+Complete the expression. Use the fact that the following
+\textsf{FAE} expression runs forever:
+
+$\ebind{\cf}{\efun{\cx}{(\eapp{\cx}{\cx})}}{\eapp{\cf}{\cf}}$
 
 \end{exercise}
