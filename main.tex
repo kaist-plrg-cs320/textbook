@@ -60,7 +60,7 @@
 %\usepackage{showlabels} % Uncomment to output the content of \label commands to the document where they are used
 
 % Load the bibliography package
-\usepackage{kaobiblio}
+\usepackage[style=alphabetic]{kaobiblio}
 \addbibresource{main.bib} % Bibliography file
 
 % Load mathematical packages for theorems and related environments
@@ -414,6 +414,14 @@
 \input{chapters/parametric-polymorphism.tex}
 \input{chapters/subtype-polymorphism.tex}
 \input{chapters/type-inference.tex}
+
+\appendix % From here onwards, chapters are numbered with letters, as is the appendix convention
+
+\pagelayout{wide} % No margins
+\addpart{Appendix}
+\pagelayout{margin} % Restore margins
+
+\input{chapters/solutions.tex}
 
 %----------------------------------------------------------------------------------------
 
