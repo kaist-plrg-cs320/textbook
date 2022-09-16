@@ -1,4 +1,3 @@
-\setchapterpreamble[u]{\margintoc}
 \chapter{Immutability}
 \labch{immutability}
 
@@ -160,7 +159,7 @@ Therefore, it is impossible to apply the same operation on different values for
 each iteration or to terminate the loops. As a consequence, loops are useless in
 functional programming. Functional programs use recursive functions instead of
 loops to rerun computation. A \textit{recursive}\index{recursion}
-function is a function that calls itself.\sidenote{In general, a definition that
+function is a function that calls itself.\footnote{In general, a definition that
 refers to itself is a recursive definition. There can be recursive variables,
 recursive types, and so on.}
 To do more computation, the function calls itself with proper arguments.
@@ -438,7 +437,7 @@ public int factorial(int, int);
 \end{verbatim}
 
 We can check that there is no function call at
-all.\sidenote{\code{invokevirtual} is a function call instruction.}
+all.\footnote{\code{invokevirtual} is a function call instruction.}
 The function just jumps to instructions inside the function.
 Due to the tail call optimization, the function never incurs stack overflow.
 
