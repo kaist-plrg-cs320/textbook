@@ -1,10 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
 \chapter{Mutable Variables}
 \labch{mutable-variables}
 
 \renewcommand{\plang}{\textsf{FAE}\xspace}
 \newcommand{\bfae}{\textsf{BFAE}\xspace}
-\renewcommand{\lang}{\textsf{MFAE}\xspace}
+\renewcommand{\Lang}{\textsf{MFAE}\xspace}
 
 \bfae of the previous chapter provides boxes. Boxes are good abstraction
 of mutable objects and data structures but do not explain mutable variables
@@ -47,7 +46,7 @@ What does the program print? The first value will be \code{1} since
 However, predicting the other ones is difficult. We need the exact semantics of
 mutable variables to answer the question.
 
-This chapter defines \lang by extending \plang with mutable variables.
+This chapter defines \Lang by extending \plang with mutable variables.
 We will see the semantics of mutable variables. Addition of mutable
 variables gives us a chance to explore a different design of the function
 application semantics. We will see what is the call-by-reference semantics and how
@@ -55,9 +54,9 @@ it differs from the call-by-value semantics.
 
 \section{Syntax}
 
-As variables are mutable in \lang, we need to add expressions that change the
-values of variables. The following is the abstract syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+As variables are mutable in \Lang, we need to add expressions that change the
+values of variables. The following is the abstract syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \[ e\ ::=\ \cdots\ |\ \eset{x}{e} \]
 
@@ -68,7 +67,7 @@ a variable. The reason is that variables are not values. We cannot get a
 variable by evaluating an expression. The only way to designate a variable is
 to write the name of the variable, and the syntax reflects this point.
 
-Note that \lang lacks sequencing expressions, which exist in \bfae. Actually, it
+Note that \Lang lacks sequencing expressions, which exist in \bfae. Actually, it
 is not problematic at all. We can desugar sequencing expressions into
 lambda abstractions and function applications: transform $\eseq{e_1}{e_2}$ into
 $\eapp{(\efun{x}{e_2})}{e_1}$, where $x$ is not free in $e_2$. The semantics of
@@ -83,7 +82,7 @@ We may use sequencing expressions in examples as they can be easily desugared.
 
 \section{Semantics}
 
-Since \lang provides mutation, its semantics uses store-passing just like \bfae.
+Since \Lang provides mutation, its semantics uses store-passing just like \bfae.
 Therefore, a store is a finite partial function from addresses to values.
 
 \[ \embox{Sto} = \embox{Addr}\finto V \]
@@ -94,14 +93,14 @@ relation over $\embox{Env}$, $\embox{Sto}$, $E$, $V$, and $\embox{Sto}$.
 
 \[\Rightarrow\subseteq\embox{Env}\times\embox{Sto}\times E\times V\times\embox{Sto}\]
 
-Like \plang, a value of \lang is either an integer or a closure. It is different
+Like \plang, a value of \Lang is either an integer or a closure. It is different
 from \bfae, which allows addresses to be values. \bfae treats addresses as
 values because expressions creating boxes evaluate to addresses. However, there
-are mutable variables instead of boxes in \lang. \lang has addresses to support
+are mutable variables instead of boxes in \Lang. \Lang has addresses to support
 mutation, but they are used only for tracking the value of each variable. Addresses
 are not exposed to programmers as values.
 
-An environment of \lang is a finite partial function from identifiers to addresses,
+An environment of \Lang is a finite partial function from identifiers to addresses,
 but not values.
 
 \[ \embox{Env}=\embox{Id}\finto\embox{Addr} \]
@@ -110,7 +109,7 @@ but not values.
 The semantics needs environments to find the value denoted by
 a variable. \plang, whose variables are immutable, is
 satisfied with environments that take identifiers as input and return values.
-However, variables of \lang are mutable. Evaluation outputs a value and a store.
+However, variables of \Lang are mutable. Evaluation outputs a value and a store.
 Environments are not the output of evaluation. Therefore, we cannot use
 environments to record changes in the values of variables. On the other hand, we
 can use stores to record the changes as stores are output of evaluation.
@@ -162,7 +161,7 @@ from the environment and find the value at the address from the store.
   \quad\textsc{[Id]}
 \]
 
-Like boxes in \bfae, each variable of \lang has its own address. New variables
+Like boxes in \bfae, each variable of \Lang has its own address. New variables
 can be defined only by function applications. Hence,
 function applications are the only expressions that create new addresses.
 Let us see the semantics of function applications.
@@ -203,7 +202,7 @@ argument in the store. Finally, the function body is evaluated.
 Changing the value of a variable is similar to changing the value of a box of
 \bfae. However, we have to evaluate an expression to find the address of the box
 to be updated in \bfae. On the other hand, we can find the address of the
-variable to be updated from the environment by using its name in \lang.
+variable to be updated from the environment by using its name in \Lang.
 
 \semanticrule{Set}{
   \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
@@ -240,8 +239,8 @@ until the next call to \code{counter1}. Thus, both of the last two lines of
 
 \section{Interpreter}
 
-The following Scala code implements the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+The following Scala code implements the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
@@ -266,7 +265,7 @@ type Env = Map[String, Addr]
 
 As in \bfae, \code{interp} takes an expression, an environment, and a store as
 arguments and returns a pair of a value and a store.
-\sidenote{We omit the common part to \bfae.}
+\footnote{We omit the common part to \bfae.}
 
 \begin{verbatim}
 def interp(e: Expr, env: Env, sto: Sto): (Value, Sto) =
@@ -366,7 +365,7 @@ function body affects the variable outside the function. We say that the
 parameter is an \textit{alias}\index{alias} of the argument as they share the
 same address.
 
-Even if we want to adopt the CBR semantics in \lang, we cannot use it when the argument is not
+Even if we want to adopt the CBR semantics in \Lang, we cannot use it when the argument is not
 a variable. We cannot get an address from an expression that is not a variable.
 In such cases, we fall back to the CBV semantics. The following rule specifies
 such cases:
@@ -451,7 +450,7 @@ intended.
 \begin{exercise}
 \labex{mutable-variables-trace}
 
-Consider the following \lang expression:
+Consider the following \Lang expression:
 \[
   \eapp{(\efun{\cx}{\cx})}{(\eapp{(\efun{\cx}{\cx})}{1})}
 \]
@@ -465,7 +464,7 @@ which the calls to \code{interp} occur during evaluation.
 \labex{mutable-variables-cbr}
 
 The following code is an excerpt from the implementation of the interpreter for
-\lang:
+\Lang:
 \begin{verbatim}
 def interp(e:Expr, env:Env, sto:Sto): (Value, Sto) =
   e match {
@@ -506,7 +505,7 @@ $\begin{array}{@{}l}
 \begin{exercise}
 \labex{mutable-variables-record}
 
-This question extends \lang with mutable records as follows:
+This question extends \Lang with mutable records as follows:
 
 \[
 \begin{array}{@{}rrl@{}}
@@ -592,7 +591,7 @@ $
 \begin{exercise}
 \labex{mutable-variables-ptr}
 
-This exercise extends \lang with pointers.
+This exercise extends \Lang with pointers.
 Consider the following language:
 \[
   \begin{array}{@{}r@{~}r@{~}l@{}}

@@ -221,7 +221,7 @@
 
 \graphicspath{{images/}} % Paths in which to look for images
 
-\makeindex[columns=3, title=Alphabetical Index, intoc] % Make LaTeX produce the files required to compile the index
+\makeindex[columns=2, title=Alphabetical Index, intoc] % Make LaTeX produce the files required to compile the index
 
 \makeglossaries % Make LaTeX produce the files required to compile the glossary
 % \input{glossary.tex} % Include the glossary definitions
@@ -385,6 +385,20 @@
 \input{chapters/immutability.tex}
 \input{chapters/functions.tex}
 \input{chapters/pattern-matching.tex}
+
+\pagelayout{wide} % No margins
+\addpart{Untyped Languages}
+\pagelayout{margin} % Restore margins
+
+\input{chapters/syntax-and-semantics.tex}
+\input{chapters/identifiers.tex}
+\input{chapters/first-order-functions.tex}
+\input{chapters/first-class-functions.tex}
+\input{chapters/recursion.tex}
+\input{chapters/mutable-boxes.tex}
+\input{chapters/mutable-variables.tex}
+\input{chapters/garbage-collection.tex}
+\input{chapters/lazy-evaluation.tex}
 
 %----------------------------------------------------------------------------------------
 

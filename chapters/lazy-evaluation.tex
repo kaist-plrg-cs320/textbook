@@ -1,9 +1,8 @@
-\setchapterpreamble[u]{\margintoc}
 \chapter{Lazy Evaluation}
 \labch{lazy-evaluation}
 
 \renewcommand{\plang}{\textsf{FAE}\xspace}
-\renewcommand{\lang}{\textsf{LFAE}\xspace}
+\renewcommand{\Lang}{\textsf{LFAE}\xspace}
 
 This chapter is about lazy evaluation. \textit{Lazy evaluation}\index{lazy
 evaluation} means delaying the evaluation of an expression until the result
@@ -28,7 +27,7 @@ eager evaluation. CBV means that every argument is passed as a value. The value
 of an argument can be acquired only by evaluating the argument expression. It
 implies that every argument is evaluated before the evaluation of the function
 body regardless of whether the argument is used during the body evaluation.
-Thus, the CBV semantics is equal to the eager evaluation semantics.\sidenote{One
+Thus, the CBV semantics is equal to the eager evaluation semantics.\footnote{One
 may wonder whether CBR is eager or not. The best answer is that CBR is
 irrelevant to distinction between eagerness and laziness. As shown in the previous chapter, CBR is
 possible only when an argument is a variable, whose address is known. In that
@@ -45,19 +44,19 @@ itself, rather than the value denoted by the expression. Since it is passed as a
 expression, there is no need to evaluate the expression to obtain its value. The
 expression will be evaluated when the value is required by the function body.
 As you can see, CBN delays the computation of arguments by passing them as
-expressions and can be considered as lazy evaluation. We will define \lang, which
-is a lazy version of \plang, in this chapter. \lang adopts the CBN semantics. In
-addition, we will introduce call-by-need,\sidenote{Some people use the term lazy
+expressions and can be considered as lazy evaluation. We will define \Lang, which
+is a lazy version of \plang, in this chapter. \Lang adopts the CBN semantics. In
+addition, we will introduce call-by-need,\footnote{Some people use the term lazy
 evaluation to denote call-by-need only. In that sense, CBN is not considered as
 lazy evaluation. However, this book views lazy evaluation as a term that can be
 used broadly to mean any form of delayed computation. In this sense, both CBN
 and call-by-need belong to lazy evaluation.} which is another form of lazy
 evaluation, as an optimized version of CBN.
 
-Before we discuss the CBN semantics and \lang, let us see why lazy evaluation is
+Before we discuss the CBN semantics and \Lang, let us see why lazy evaluation is
 valuable in practice. We can find lazy evaluation in a few real-world languages.
 Haskell is well-known as treating every computation lazily by
-default.\sidenote{Programmers can force evaluation if they really want.} On the
+default.\footnote{Programmers can force evaluation if they really want.} On the
 other hand, Scala is an eager language but allows programmers to selectively
 apply lazy evaluation to their programs. We will see code examples in Scala as
 it is the language used in this book, though Haskell is the most famous lazy
@@ -113,10 +112,10 @@ parameter, the first argument for \code{foo} is evaluated only when the value of
 
 \section{Semantics}
 
-We do not explain the syntax of \lang as it is the same as \plang.
+We do not explain the syntax of \Lang as it is the same as \plang.
 We can move on to the semantics immediately. The definition of an environment is
 the same as \plang. Also, as in \plang, $\evald{e}{v}$ is true if and only if
-\evaldn{e}{v}. We can use Rule \textsc{Num} of \lang since evaluation of
+\evaldn{e}{v}. We can use Rule \textsc{Num} of \Lang since evaluation of
 integers are not affected by lazy evaluation. Similarly, Rule \textsc{Fun} can
 be reused as well. Rule \textsc{Id} also remains the same.
 The value of an identifier can be found in an environment.
@@ -129,7 +128,7 @@ to store arguments in environments in the CBN semantics. However, arguments are
 passed as expressions, and expressions are not values. We need a way to put
 expressions in environments. The simplest solution is to define a new kind of
 values as follows:
-\sidenote{We omit the common part to \plang.}
+\footnote{We omit the common part to \plang.}
 
 \[ v\ ::=\ \cdots\ |\ \exprv{e}{\sigma} \]
 
@@ -316,11 +315,11 @@ $e$ is $v$ when $\evale{e}{v'}$ and $\stricte{v'}{v}$.'' Note that it is
 different from applying strict evaluation to the evaluation of every expression
 in the program. Strict evaluation is applied to only the result of the whole
 expression, which is the program. In this way, we can make the result of the
-above expression $2$ and eliminate the flaw.\sidenote{It is not a flaw in real-world
+above expression $2$ and eliminate the flaw.\footnote{It is not a flaw in real-world
 programming languages like Haskell. A program shows its result by output operations
 (e.g. to files) rather than the value of a single expression. Each output
 operation applies strict evaluation to its argument (like Rule \textsc{Add},
-Rule \textsc{Sub}, and Rule \textsc{App} in \lang), and the value of
+Rule \textsc{Sub}, and Rule \textsc{App} in \Lang), and the value of
 each expression does not need to be a normal value.}
 
 If evaluating an expression in the CBV semantics results in a value,
@@ -344,7 +343,7 @@ with CBN results in zero, while evaluation with CBV does not terminate.
 \section{Interpreter}
 
 We need to add a new variant to \code{Value} to represent expression-values.
-\sidenote{We omit the common part to \plang.}
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Value
@@ -364,7 +363,7 @@ def strict(v: Value): Value = v match {
 \end{verbatim}
 
 We can implement \code{interp} as follows:
-\sidenote{We omit the common part to \plang.}
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 def interp(e: Expr, env: Env): Value = e match {
@@ -432,7 +431,7 @@ that increases the value of the box by one. Suppose that its value is used twice
 in the function body. Then, the value of the box increases by two in CBN, while
 it increases by one in call-by-need.
 
-Since \lang lacks side effects, we can adopt call-by-need to the language as
+Since \Lang lacks side effects, we can adopt call-by-need to the language as
 optimization of the interpreter. There is no need to newly define the call-by-need
 version of the semantics.
 
@@ -514,7 +513,7 @@ not evaluated at all.
 \begin{exercise}
 \labex{lazy-evaluation-trace}
 
-Consider the following \lang expression:
+Consider the following \Lang expression:
 \[
   \eapp{(\efun{\cx}{\eadd{\cx}{\cx}})}{(\eadd{1}{2})}
 \]
@@ -590,14 +589,14 @@ def strict(v: Value): Value = v match {
 }
 \end{verbatim}
 
-Write an example \lang expression showing the need for the recursive \code{strict} call.
+Write an example \Lang expression showing the need for the recursive \code{strict} call.
 
 \end{exercise}
 
 \begin{exercise}
 \labex{lazy-evaluation-val}
 
-This exercise extends \lang with \textsf{val} and \textsf{if0}. Complete
+This exercise extends \Lang with \textsf{val} and \textsf{if0}. Complete
 the following interpreter implementation:
 
 \begin{verbatim}
@@ -623,7 +622,7 @@ evaluates to a nonzero integer or a closure.
 \begin{exercise}
 \labex{lazy-evaluation-pair}
 
-This exercise extends \lang with pairs. Complete the following interpreter
+This exercise extends \Lang with pairs. Complete the following interpreter
 implementation:
 
 \begin{verbatim}
@@ -669,7 +668,7 @@ Each of them is evaluated only when its value is needed. For example,
 \begin{exercise}
 \labex{lazy-evaluation-list}
 
-This exercise extends \lang with lists. Complete the following interpreter
+This exercise extends \Lang with lists. Complete the following interpreter
 implementation:
 
 \begin{verbatim}

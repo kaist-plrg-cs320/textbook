@@ -1,10 +1,10 @@
 main.pdf: main.tex chapters/*.tex
-	xelatex -interaction=nonstopmode main; \
+	pdflatex -interaction=nonstopmode main; \
 	makeindex main && \
 	biber main && \
-	xelatex main && \
+	pdflatex main && \
 	makeglossaries main && \
-	xelatex main
+	pdflatex main
 
 clean:
 	rm -f *.aux *.bbl *.bcf *.blg *.glg *.glo *.gls *.glsdefs *.idx *.ilg *.ind *.lof *.log *.lot *.mw *.nlo *.nls *.pdf *.run.xml *.toc *.xdy
