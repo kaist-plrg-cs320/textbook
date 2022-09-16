@@ -377,29 +377,11 @@
 
 \input{chapters/introduction.tex}
 
-% \pagelayout{wide} % No margins
-% \addpart{Class Options, Commands and Environments}
-% \pagelayout{margin} % Restore margins
+\pagelayout{wide} % No margins
+\addpart{Scala}
+\pagelayout{margin} % Restore margins
 
-% \input{chapters/options.tex}
-% \input{chapters/textnotes.tex}
-% \input{chapters/figsntabs.tex}
-% \input{chapters/references.tex}
-
-% \pagelayout{wide} % No margins
-% \addpart{Design and Additional Features}
-% \pagelayout{margin} % Restore margins
-
-% \input{chapters/layout.tex}
-% \input{chapters/mathematics.tex}
-
-% \appendix % From here onwards, chapters are numbered with letters, as is the appendix convention
-
-% \pagelayout{wide} % No margins
-% \addpart{Appendix}
-% \pagelayout{margin} % Restore margins
-
-% \input{chapters/appendix.tex}
+\input{chapters/introduction-to-scala.tex}
 
 %----------------------------------------------------------------------------------------
 
@@ -465,6 +447,19 @@
 %----------------------------------------------------------------------------------------
 
 % The glossary needs to be compiled on the command line with 'makeglossaries main' from the template directory
+
+\newacronym[longplural={algebraic data types}]{adtLabel}{ADT}{algebraic data type}
+\newacronym[longplural={real-eval-print loop}]{replLabel}{REPL}{read-eval-print loop}
+\newacronym[longplural={Java Virtual Machines}]{jvmLabel}{JVM}{Java Virtual Machine}
+\newacronym[longplural={Backus-Naur forms}]{bnfLabel}{BNF}{Backus-Naur form}
+\newacronym[longplural={abstract syntax trees}]{astLabel}{AST}{abstract syntax tree}
+\newacronym[longplural={call-by-value}]{cbvLabel}{CBV}{call-by-value}
+\newacronym[longplural={call-by-reference}]{cbrLabel}{CBR}{call-by-reference}
+\newacronym[longplural={call-by-name}]{cbnLabel}{CBN}{call-by-name}
+\newacronym[longplural={continuation-passing style}]{cpsLabel}{CPS}{continuation-passing style}
+\newacronym[longplural={garbage collection}]{gcLabel}{GC}{garbage collection}
+\newacronym[longplural={last in, first out}]{lifoLabel}{LIFO}{last in, first out}
+\newacronym[longplural={use-after-free}]{uafLabel}{UAF}{use-after-free}
 
 \setglossarystyle{listgroup} % Set the style of the glossary (see https://en.wikibooks.org/wiki/LaTeX/Glossary for a reference)
 \printglossary[title=Special Terms, toctitle=List of Terms] % Output the glossary, 'title' is the chapter heading for the glossary, toctitle is the table of contents heading
