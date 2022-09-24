@@ -1,0 +1,904 @@
+\chapter{스칼라 소개}
+\labch{introduction-to-scala}
+
+이 장에서는 책에서 인터프리터와 타입 검사기를 구현하는 데 사용하는 언어인
+\term{스칼라}{Scala}를 소개한다. 스칼라는 \term{성장 가능한 언어}{scalable language}라는 뜻을
+담은 언어로, 함수형과 \term{객체 지향}{object-oriented} 방식을 모두 지원하는 다중
+패러다임 언어다. 이 책에서는 그중 함수형 방식에 초점을 맞춘다. 이번 장에서
+함수형 프로그래밍이 무엇이며 왜 이 책에서 함수형 프로그래밍을 사용하는지 알아볼
+것이다. 또한, 스칼라를 설치하고 간단한 프로그램을 스칼라로 작성해 본다.
+
+\section{함수형 프로그래밍}
+
+\term{함수형 프로그래밍}{functional programming}은 무엇일까? 영문 위키백과에는 다음과
+같이 서술되어 있다.
+
+\begin{quote}
+It is a declarative programming paradigm in which function definitions are trees
+of expressions that map values to other values, rather than a sequence of
+imperative statements which update the running state of the program.
+\end{quote}
+
+한편, 책 『Functional Programming in Scala』에서는 다음과 같이 설명한다.
+
+\begin{quote}
+Functional programming (FP) is based on a simple premise with far-reaching
+implications: we construct our programs using only pure functions---in other words,
+functions that have no side effects.
+\end{quote}
+
+위 두 문장이면 함수형 프로그래밍을 정의하기 충분하다.
+
+우선, ``trees of expressions that map values to other values''라는 구절을 보자.
+함수형 프로그래밍의 관점에서는 각 프로그램이 하나의 수학적인
+\term{식}{expression}이며
+그 프로그램을 실행하는 것은 그 식이 나타내는 \term{값}{value}을 찾는 것이다. 각 식은
+0개 이상의 \term{부분식}{subexpression}으로 구성되며 값으로 계산된다.
+
+코드 예시를 통해 함수형 프로그래밍이 \term{명령형 프로그래밍}{imperative programming}과
+어떻게 다른지 알아보자.
+
+\begin{verbatim}
+int x = 1;
+int y = 2;
+if (y < 3)
+    x = x + 4;
+else
+    x = x - 5;
+\end{verbatim}
+
+위 코드는 대표적인 명령형 언어인 C로 작성되었다. 명령형 프로그래밍은 실제
+컴퓨터가 작동하는 방식을 흉내 낸다. 프로그램이 실행되는 동안 상태가 존재하며,
+실행에 의해 \term{상태}{state}가 변화한다. 여기서 상태는 컴퓨터의 메모리로 이해할 수
+있다. 가령 위 프로그램의 실행은 다음과 같은 단계를 거친다.
+
+\begin{enumerate}
+\item \cx와 \cy가 모두 초기화 되지 않은 상태
+\item \cx가 \code{1}이고 \cy가 초기화 되지 않은 상태
+\item \cx가 \code{1}이고 \cy가 \code{2}인 상태
+\item 3단계의 상태에서 \code{y < 3}이 \code{true}이므로 다음 줄로 이동
+\item \cx가 \code{5}이고 \cy가 \code{2}인 상태
+\end{enumerate}
+
+프로그램이 실행되는 동안 상태가 계속 바뀐다. 프로그램의 각 줄은 어떤 값으로
+계산되기보다는 현재의 상태를 변화시킨다.
+
+\begin{verbatim}
+let x = 1 in
+let y = 2 in
+if y < 3 then x + 4 else x - 5
+\end{verbatim}
+
+위 코드는 대표적인 함수형 언어인 \term{오캐멀}{OCaml}로 작성되었다. 각 프로그램은
+하나의 식이며 그 식을 계산한 결과가 곧 실행의 결과다. 실행 중에는 상태라는
+개념이 필요 없다. 위 프로그램의 실행은 다음과 같은 단계를 거친다.
+
+\begin{enumerate}
+\item \cx가 \code{1}이라는 사실을 가지고 \code{let y = 2 in if y < 3 then x + 4 else x - 5}를 계산
+\item \cx가 \code{1}이고 \cy가 \code{2}라는 사실을 가지고 \code{if y < 3 then x + 4 else x - 5}를 계산
+\item \cx가 \code{1}이고 \cy가 \code{2}라는 사실에 따라 \code{y < 3}이
+  \code{true}이므로 다음 단계로 \code{x + 4}를 계산
+\item \cx가 \code{1}이고 \cy가 \code{2}라는 사실을 가지고 \code{x + 4}를 계산
+\item 최종 결과는 5
+\end{enumerate}
+
+상태가 존재하지 않음을 볼 수 있다. 각 식은 부분식들로 구성되며 식의 결과를
+구하는 데 부분식의 결과가 사용된다.
+
+단순한 일을 하는 프로그램이기에 두 언어로 작성된 코드가 비슷해 보인다. 하지만
+프로그램을 바라보는 전혀 다른 두 가지 관점이 그 기저에 있음을 잊지 말아야 한다.
+
+이제 ``using only pure functions''라는 구절을 보자. 함수형 프로그래밍은
+\term{수정할 수 있는}{mutable} \term{변수}{variable}, 자료 구조,
+\term{객체}{object}를 사용하는 것을 피한다.
+대신 \term{수정할 수 없는}{immutable} 변수, 자료 구조, 객체를 즐겨 사용한다. 명령형
+프로그램의 실행 중에 상태가 지속적으로 변화하는 것과 달리, 함수형 프로그램의
+실행 중에는 상태가 존재하지 않는다. 변화하는 상태가 없으니 각 함수는 언제나 같은
+일을 한다. 즉, 어떤 함수에 같은 인자가 주어진다면 항상 같은 결과를 낸다. 이런
+함수를 \term{순수 함수}{pure function}라 부른다.
+
+수정할 수 없는 것들만 사용하여 코드를 작성하는 것은 현실 세계에서 많은 경우에
+비효율적이다. 큰 프로그램을 만든다면 특히 그렇다. 그래서 대부분의 함수형 언어는
+수정할 수 있는 것들도 함께 제공한다. 스칼라의 \code{var}, 오캐멀의 \code{ref},
+\term{래킷}{Racket}의
+\code{set!}과 \code{box}가 그 예시다. 그럼에도 함수형 프로그래밍은 거의 항상 수정할 수 없는
+것들을 사용한다. 놀랍게도 수정할 수 없는 것들만으로도 여러 프로그램을 어려움 없이
+작성할 수 있다.
+
+지금까지 본 것처럼, 함수형 프로그래밍에서 가장 중요한 개념은 \term{수정 불가능함}{immutability}이다.
+수정할 수 없는 것들을 사용함으로써 프로그램을 더 \term{모듈적}{modular}이고
+이해하기 쉽게 만들 수 있다. 수정 불가능함 덕분에 함수형 프로그래밍은 올바른
+동작이 중요한 프로그램이나 \term{병렬}{parallel} 작업이 필요한 프로그램을 작성하는 데
+적합하다. \refch{immutability}에서 수정할 수 없는 것들의 장점을 더 자세히 살펴본 뒤 흥미로운
+프로그램들을 작성해 본다.
+
+수정 불가능함 이외에도 함수형 프로그래밍의 중요한 특징이 더 있다. 바로
+\term{일급 함수}{first-class function}의 사용과 \term{패턴 대조}{pattern matching}다. 두 개념은
+프로그램이 복잡한 작업을 단순하게 \term{요약}{abstraction}할 수 있게 돕는다는 가치를
+지닌다. 일급 함수는 계산을 요약하는 것을 돕고, 패턴 대조는 데이터를 요약하는
+것을 돕는다. 이러한 요약 능력은 복잡한 구조를 가진 입력을 받는 프로그램을 작성할
+때 함수형 프로그래밍이 매력적인 이유다. \refch{functions}과 \refch{pattern-matching}에서 각각 스칼라의 일급 함수와
+패턴 대조를 살펴본다.
+
+이 책은 인터프리터와 타입 검사기를 구현한다. 이들은 소스 코드를 입력으로 받아
+언어의 수학적인 의미에 따라 처리한다. 소스 코드는 복잡한 구조를 가진다. 또한,
+인터프리터와 타입 검사기가 올바르게 작동하도록 구현하는 것은 중요하다. 이런
+특징은 함수형 프로그래밍의 장점과 정확히 일치한다. 그래서 이 책은 함수형
+언어인 스칼라를 사용한다.
+
+다음 절로 넘어가기 전에 산업계에서 함수형 프로그래밍을 어떻게 사용하고 있는지
+살펴보자.
+
+Akka\footnote{\url{https://akka.io/}}는 스칼라로 작성된
+\term{동시성}{concurrent} \term{분산}{distributed} 컴퓨팅 라이브러리다.
+여러 회사가 Akka를 사용하고 있다. 널리 사용되는 데이터 처리 라이브러리인 Apache
+Spark\footnote{\url{https://spark.apache.org/}} 역시 스칼라로 작성되었다.
+Play\footnote{\url{https://www.playframework.com/}}는 Akka에 기반한 웹 프레임워크다.
+
+페이스북은 \term{자바}{Java}, C, C++, \term{오브젝티브-C}{Objective-C}로 작성된 프로그램을 분석하는
+도구인 Infer\footnote{\url{https://fbinfer.com/}}를 오캐멀로 개발했다. 페이스북 및 아마존, 모질라 등의 여러 회사가
+자신들의 프로그램에서 버그를 자동으로 찾기 위해 Infer를 사용한다. 페이스북은
+\term{자바스크립트}{JavaScript}를 위한 타입 검사기인 Flow\footnote{\url{https://flow.org/}} 역시 오캐멀로 개발했다.
+Jane Street\footnote{\url{https://www.janestreet.com/}}는 자신들의 소프트웨어를 오캐멀로 개발한 금융 회사다. 그 밖에도 도커를
+비롯한 여러 회사가 오캐멀을 사용한다.\footnote{\url{http://ocaml.org/learn/companies.html}}
+
+구글, 페이스북, 마이크로소프트, 엔비디아 등 여러 회사가 \term{하스켈}{Haskell}을
+사용한다.\footnote{\url{http://wiki.haskell.org/Haskell_in_industry}}
+
+\term{얼랭}{Erlang}과 \term{일릭서}{Elixir}는 동시성 및 병렬 컴퓨팅을 위한 함수형 언어다.
+이들은 왓츠앱, 핀터레스트, 골드만삭스 등에서 사용된다.\footnote{\url{https://codesync.global/media/successful-companies-using-elixir-and-erlang/}}
+
+\section{설치}
+
+스칼라 프로그램은 자바 \term{바이트코드}{bytecode}로 컴파일되어
+\term{자바 가상 기계}{Java Virtual Machine, JVM}에서
+실행되기에 스칼라를 설치하기에 앞서 자바를 먼저
+설치해야 한다. 이 책에서는 스칼라 2.13을 사용하며, 스칼라 2.13은 JDK 8 이상의
+자바를 필요로 한다.
+
+자바 설치 파일은 오라클 웹 사이트에서 찾을 수 있다.\footnote{\url{https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html}}
+
+스칼라 설치 파일은 스칼라 웹 사이트에서 받을 수 있다.\footnote{\url{https://www.scala-lang.org/download/}}
+스칼라를 설치하면 스칼라
+REPL, 인터프리터, 컴파일러를 사용할 수 있게 된다. 이들의 사용법은
+\refsec{scala-repl}, \refsec{scala-interpreter}, \refsec{scala-compiler}에서 각각 다룬다.
+
+또 하나 설치할 것은 sbt다. sbt는 스칼라를 위한 빌드 도구다. sbt 설치
+파일은 sbt 웹 사이트에 있다.\footnote{\url{https://www.scala-sbt.org/download.html}}
+\refsec{sbt}이 sbt 사용법을 다룬다.
+
+\section{REPL}
+\labsec{scala-repl}
+
+REPL은 읽고 계산하고 출력하는 것을 반복한다(\textbf{r}ead,
+\textbf{e}val, \textbf{p}rint, and \textbf{l}oop)는
+뜻이다. 즉, REPL이란 사용자로부터 코드를 읽어 계산하고 그 결과를 출력하는 작업을
+반복하는 프로그램이다. REPL은 긴 코드를 작성하는 데는 적합하지 않지만, 간단한
+코드를 작성한 뒤 그 코드가 어떤 결과를 내는지 보는 데는 매우 유용하다.
+
+스칼라를 설치하면 \term{명령줄}{command line}에 \code{scala}라고 입력하여 스칼라 REPL을 시작할 수 있다.
+
+\begin{verbatim}
+$ scala
+Welcome to Scala 2.13.5.
+Type in expressions for evaluation. Or try :help.
+
+scala>
+\end{verbatim}
+
+REPL에 정수를 입력하면 그 정수를 계산하여 결과를 보여 준다.
+
+\begin{verbatim}
+scala> 0
+val res0: Int = 0
+\end{verbatim}
+
+식 \code{0}을 계산하면 값 \code{0}이 나오며 \code{0}의 타입이 \code{Int}임을 보여 준다.
+
+산술 \term{연산자}{operator}를 사용할 수 있다.
+
+\begin{verbatim}
+scala> 1 + 2
+val res1: Int = 3
+\end{verbatim}
+
+\term{불리언}{boolean}은 \term{참}{true} 또는 \term{거짓}{false}를 나타내는
+값이다. 스칼라에서 참과 거짓은 각각 \code{true}와 \code{false}라 쓴다.
+
+\begin{verbatim}
+scala> true
+val res2: Boolean = true
+\end{verbatim}
+
+논리 연산자도 사용할 수 있다.
+
+\begin{verbatim}
+scala> true && false
+val res3: Boolean = false
+\end{verbatim}
+
+문자열 \term{리터럴}{literal}은 큰따옴표가 필요하다.
+
+\begin{verbatim}
+scala> "hello"
+val res4: String = hello
+\end{verbatim}
+
+문자열 관련 연산은 \term{메서드}{method}를 \term{호출}{call}해 수행할 수 있다.
+
+\begin{verbatim}
+scala> "hello".length
+val res5: Int = 5
+
+scala> "hello".substring(0, 4)
+val res6: String = hell
+\end{verbatim}
+
+스칼라의 문자열은 자바의 문자열과 동일한 메서드를 제공한다.\footnote{\url{https://docs.oracle.com/javase/8/docs/api/java/lang/String.html}}
+
+\code{println} 함수는 주어진 문구를 콘솔에 출력한다.
+
+\begin{verbatim}
+scala> println("Hello world!")
+Hello world!
+\end{verbatim}
+
+\code{println(...)}의 결과가 출력되지 않은 것을 볼 수 있다. 사실
+\code{println(...)}은 \code{()}으로
+계산된다. \code{()}은 \term{유닛}{unit}이라 부른다. 값이 유닛이라는 것은 그 값이 의미 있는
+정보를 담고 있지 않다는 사실을 표현한다. \term{파이썬}{Python}의 \code{None}이나
+자바스크립트의 \code{undefined}와 비슷하다. 또한, \term{결괏값}{return value}이 유닛인 함수는 C나 자바에서
+\term{결과 타입}{return type}이 \code{void}인 함수와 비슷하다. 유닛에는 의미 있는 정보가 없으므로 REPL은
+결과가 유닛일 때는 결과를 보여 주지 않는다.
+
+이제 변수와 함수 같은 스칼라의 다른 기본 기능을 REPL에서 계속 살펴보자.
+
+\subsection{변수}
+
+변수를 정의하는 방법은 다음과 같다.
+
+\begin{verbatim}
+val [name]: [type] = [expression]
+\end{verbatim}
+
+위 식은 이름이 \code{[name]}인 변수를 정의한다. 주어진 식의 결과가 변수가 나타내는 값이
+된다. 그 결과는 주어진 타입에 속해야 한다.
+
+\begin{verbatim}
+scala> val x: Int = 1
+val x: Int = 1
+\end{verbatim}
+
+만약 결과가 주어진 타입에 속하지 않으면 타입 불일치로 인해 변수가 정의되지
+않는다.
+
+\begin{verbatim}
+scala> val y: Boolean = 2
+                        ^
+       error: type mismatch;
+        found   : Int(2)
+        required: Boolean
+\end{verbatim}
+
+원한다면 \term{타입 표시}{type annotation}를 생략한 채 다음과 같이 변수를 정의할 수 있다.
+
+\begin{verbatim}
+val [name] = [expression]
+\end{verbatim}
+
+이 경우 타입 불일치가 발생하지 않으며 변수의 타입은 자동으로 그 값의 타입과
+같아진다. \term{지역 변수}{local variable}를 정의할 때는 타입 표시를
+생략하는 경우가 많다.
+
+\begin{verbatim}
+scala> val x = 3
+val x: Int = 3
+\end{verbatim}
+
+\code{val}을 통해 정의된 변수는 수정할 수 없다. 수정할 수 없는 변수에 새로운 값을
+대입하려고 하면 \term{오류}{error}가 발생한다.
+
+\begin{verbatim}
+scala> x = 4
+         ^
+       error: reassignment to val
+\end{verbatim}
+
+수정할 수 있는 변수가 유용한 경우가 종종 있다. 스칼라는 수정할 수 있는 변수 역시
+제공한다. 수정할 수 있는 변수를 정의하려면 \code{val} 대신 \code{var}를 사용해야
+한다. \code{val}을
+사용할 때와 마찬가지로 타입 표시를 붙여도 되고 안 붙여도 된다.
+
+\begin{verbatim}
+scala> var z = 5
+var z: Int = 5
+
+scala> z = 6
+// mutated z
+
+scala> z
+val res8: Int = 6
+\end{verbatim}
+
+수정할 수 있는 변수에 새로운 값을 대입할 때는 값과 변수의 타입이 일치해야 한다.
+일치하지 않으면 타입 불일치가 발생하여 대입에 실패한다.
+
+\begin{verbatim}
+scala> z = true
+           ^
+       error: type mismatch;
+        found   : Boolean(true)
+        required: Int
+\end{verbatim}
+
+\subsection{함수}
+
+함수는 다음과 같이 정의할 수 있다.
+
+\begin{verbatim}
+def [name]([name]: [type], …): [type] = [expression]
+\end{verbatim}
+
+여러 언어에서는 \code{return}을 사용해 함수의 결괏값을 정한다. 반면,
+스칼라의 함수는 수학에서의 함수와 비슷하게 \code{return}이 필요 없다. 함수
+\term{몸통}{body}을
+계산한 결과가 결괏값이 된다. 함수의 몸통이란 정의에서 \code{=} 우측에 있는 식을 말한다.
+각 \term{매개변수}{parameter} 뒤에 붙은 타입 표시는 해당 매개변수의 타입을 나타내며,
+매개변수를 담은 괄호 뒤에 있는 타입은 결과 타입이다. 결괏값의
+타입은 결과 타입과 같아야 한다.
+
+\begin{verbatim}
+scala> def add(x: Int, y: Int): Int = x + y
+def add(x: Int, y: Int): Int
+
+scala> add(3, 7)
+val res9: Int = 10
+\end{verbatim}
+
+결과 타입은 생략할 수 있다.
+
+\begin{verbatim}
+scala> def add(x: Int, y: Int) = x + y
+def add(x: Int, y: Int): Int
+\end{verbatim}
+
+그러나 \term{매개변수 타입}{parameter type}은 생략할 수 없다.
+
+\begin{verbatim}
+scala> def add(x, y) = x + y
+                ^
+       error: ':' expected but ',' found.
+\end{verbatim}
+
+함수 몸통에 여러 식을 적고 싶을 때는 중괄호를 사용한다. 각 식을 줄 바꿈으로
+구분하여 중괄호 안에 적으면 각 줄이 차례대로 실행되며 마지막 줄의 결과가 함수의
+결괏값이 된다.
+
+\begin{verbatim}
+scala> def quadruple(x: Int): Int = {
+     |   val y = x + x
+     |   y + y
+     | }
+def quadruple(x: Int): Int
+\end{verbatim}
+
+\code{quadraple}은 변수 \cy를 정의한 뒤 결괏값을 계산하는 데 \cy를 사용한다. 위 코드에서 각
+줄 앞에 보이는 세로선(\code{|})은 코드의 일부가 아니며 REPL이 자동으로 삽입한 것이다.
+
+여러 식을 중괄호로 묶으면 그 전체가 하나의 식으로 간주된다. 이렇게 여러 식을
+묶어서 만든 식을 \term{나열식}{sequenced expression}이라 부른다. 나열식 역시 다른
+식처럼 사용할 수 있다. 가령 변수를 정의할 때 나열식을 사용할 수 있다.
+
+\begin{verbatim}
+scala> val a = {
+     |   val x = 1 + 1
+     |   x + x
+     | }
+val a: Int = 4
+\end{verbatim}
+
+함수에 관해 더 알아볼 개념으로는 \term{재귀}{recursion}, 일급 함수,
+\term{클로저}{closure}, \term{익명 함수}{anonymous function}가
+있다. \refch{immutability}에서 재귀를 다루고, \refch{functions}에서 나머지 주제를
+다룬다.
+
+\subsection{조건식}
+
+\term{조건식}{conditional expression}은 주어진 조건에 따라 수행할 계산을 정하는 식이다.
+조건은 불리언 값으로 주어진다. 조건식은 다음과 같이 작성한다.
+
+\begin{verbatim}
+if ([expression]) [expression] else [expression]
+\end{verbatim}
+
+조건식은 세 개의 부분식으로 구성되며, 첫 부분식은 조건, 둘째 부분식은 참
+\term{분기}{branch}, 마지막 부분식은 거짓 분기다.
+
+\begin{verbatim}
+scala> if (true) 1 else 2
+val res10: Int = 1
+\end{verbatim}
+
+조건식은 다른 식과 마찬가지로 값으로 계산된다. 즉, 여러 언어에서 볼 수 있는
+\code{if} \term{문}{statement}보다는
+C의 \term{삼항 연산자}{ternary opertor} \code{? :}에 더 가깝다. 조건식이
+값으로 계산되기 때문에 조건에 따라 다른 값을 가지는 변수를 만드느라 변수를
+수정할 필요가 없다.
+
+\begin{verbatim}
+scala> val x = if (true) 1 else 2
+val x: Int = 1
+\end{verbatim}
+
+반면, C와 같은 언어에서는 대개 다음과 같은 코드를 작성한다.
+
+\begin{verbatim}
+int x;
+if (true)
+    x = 1;
+else
+    x = 2;
+\end{verbatim}
+
+스칼라의 조건식은 C의 삼항 연산자보다 표현력이 더 뛰어나다. 나열식을 사용하여
+하나의 식이 복잡한 계산을 수행하도록 만들 수 있기 때문이다.
+
+\begin{verbatim}
+scala> if (true) {
+     |   val x = 2
+     |   x + x
+     | } else {
+     |   val x = 3
+     |   x * x
+     | }
+val res11: Int = 4
+\end{verbatim}
+
+\subsection{리스트}
+
+\term{리스트}{list}는 0개 이상의 원소로 구성된 \term{컬렉션}{collection}이다. 원소 사이의
+순서가 유지된다는 특징이 있다. 스칼라의 리스트는 수정할 수 없다. 즉, 한번 리스트를
+만들면, 그 원소를 절대 바꿀 수 없다. 리스트는 두 가지 방법으로 만들 수 있다.
+
+\begin{itemize}
+  \item \code{List([expression], …, [expression])}
+  \item \code{[expression] :: … :: [expression] :: Nil}
+\end{itemize}
+
+원소의 타입이 \code{T}인 리스트의 타입은 \code{List[T]}이다.
+
+\begin{verbatim}
+scala> List(1, 2, 3)
+val res12: List[Int] = List(1, 2, 3)
+
+scala> 1 :: 2 :: 3 :: Nil
+val res13: List[Int] = List(1, 2, 3)
+\end{verbatim}
+
+완전히 새로운 리스트를 만드는 경우에는 \code{List(...)}가 \code{::}보다 더 편리하다. 하지만
+이미 만들어진 리스트 앞에 원소를 덧붙일 때는 \code{::}가 좋다.
+\code{::}를 사용할 때 기존 리스트의 원소는 바뀌지 않는다.
+리스트 앞에 새로운 원소가 추가된 새 리스트를 만들 뿐이다.
+
+\begin{verbatim}
+scala> val l = List(1, 2, 3)
+val l: List[Int] = List(1, 2, 3)
+
+scala> 0 :: l
+val res14: List[Int] = List(0, 1, 2, 3)
+\end{verbatim}
+
+\code{length} 메서드를 사용해 리스트의 길이를 구할 수 있으며, 특정 위치의 원소를
+얻으려면 괄호를 사용한다. 가장 앞에 있는 원소가 0번째이다.
+
+\begin{verbatim}
+scala> l.length
+val res15: Int = 3
+
+scala> l(0)
+val res16: Int = 1
+\end{verbatim}
+
+함수형 프로그래밍에서는 리스트의 임의의 위치에 있는 원소에 접근하는 일이 드물다.
+대부분의 경우 패턴 대조를 사용한다. 리스트를 패턴 대조하는 방법은 다음과 같다.
+
+\begin{verbatim}
+[expression] match {
+  case Nil => [expression]
+  case [name] :: [name] => [expression]
+}
+\end{verbatim}
+
+\code{match} 앞에 오는 식이 패턴 대조의 대상이다. 만약 그 결과가 빈 리스트라면
+\code{case Nil}과
+일치하므로 해당 \term{케이스}{case}의 식이 계산된다. 비어 있지 않은 리스트가 주어진
+경우 \code{case [name] :: [name]}과 일치한다. 첫 번째 이름은 리스트의
+\term{머리}{head}를, 두 번째 이름은 \term{꼬리}{tail}를
+가리키는 상태에서 해당 케이스의 식이 계산된다. 머리는
+리스트의 가장 앞에 있는 원소를, 꼬리는 머리를 제외한 원소들로 구성된 리스트를
+말한다. 패턴 대조 식을 작성할 때 두 케이스 사이의 순서를 바꾸어 \code{::} 케이스를 먼저
+적어도 된다.
+
+다음 함수는 정수 리스트를 인자로 받아 가장 앞에 있는 원소를 결과로 낸다.
+리스트가 비어 있는 경우 결괏값이 0이다.
+
+\begin{verbatim}
+scala> def headOrZero(l: List[Int]): Int = l match {
+     |   case Nil => 0
+     |   case h :: t => h
+     | }
+def headOrZero(l: List[Int]): Int
+
+scala> headOrZero(List(1, 2, 3))
+val res17: Int = 1
+
+scala> headOrZero(List())
+val res18: Int = 0
+\end{verbatim}
+
+\refch{immutability}에서 재귀 함수와 패턴 대조를 사용해 리스트를 다루는 여러 예시를 살펴보며,
+\refch{pattern-matching}에서 패턴 대조의 장점과 다양한 사용법을 알아본다.
+
+\subsection{튜플}
+
+\term{튜플}{tuple}은 두 개 이상의 원소로 구성되며 리스트와 마찬가지로 원소 사이의
+순서를 유지한다. 여러 식을 괄호로 묶어 튜플을 만들 수 있다.
+
+\begin{verbatim}
+([expression], …, [expression])
+\end{verbatim}
+
+각 원소의 타입이 \code{T1}부터 \code{Tn}인 튜플의 타입은 \code{(T1, ... Tn)}이다. 예를 들어 첫 원소의
+타입이 \code{Int}이고 둘째 원소의 타입이 \code{Boolean}인 튜플의 타입은
+\code{(Int, Boolean)}이다.
+
+\begin{verbatim}
+scala> (1, true)
+val res19: (Int, Boolean) = (1,true)
+\end{verbatim}
+
+\code{i}번째 원소를 얻으려면 \verb!._i!를 사용한다. 가장 앞의 원소가 0번째가 아니라 1번째이다.
+
+\begin{verbatim}
+scala> (1, true)._1
+val res20: Int = 1
+\end{verbatim}
+
+튜플은 리스트와 비슷해 보이지만 중요한 차이점이 있다. 첫째, 튜플의 각 원소는
+서로 다른 타입을 가질 수 있지만, 리스트의 원소는 그렇지 않다. 가령 \code{(Int,
+Boolean)} 타입의 튜플은 정수 하나와 불리언 하나를 가지지만, \code{List[Int]} 타입의
+리스트는 정수만 가진다. 둘째, 리스트는 임의의 위치에 있는 원소에 접근하는 것이
+가능하지만, 튜플은 그렇지 않다. \code{f}가 정수를 결과로 내는 함수일 때,
+\code{x}가 리스트이면 \code{x(f())}라는 식을 작성할 수 있다.
+하지만 \code{x}가 튜플이어도 \verb!x._f()!는 불가능하다. \verb!x._1!,
+\verb!x._2!처럼 실행하지 않아도 알 수 있는 위치에만 접근할 수 있다.
+
+이러한 차이점으로 인해 리스트와 튜플은 다른 용도로 사용된다. 리스트는 원소의
+개수가 정해져 있지 않고 임의의 위치에 접근해야 할 때 사용한다. 예를 들면 한
+학급에 있는 학생들의 키를 나타내는 데 리스트를 사용할 수 있다.
+
+\begin{verbatim}
+List(189, 167, 156, 170, 183)
+\end{verbatim}
+
+이는 \code{i}번째 학생의 키를 얻을 수 있도록 한다.
+
+한편 튜플은 원소의 개수가 정해져 있고 각 위치가 특별한 의미를 가질 때 사용한다.
+예를 들면 한 학생의 이름, 키, 학비 납부 여부를 튜플로 표현할 수 있다.
+
+\begin{verbatim}
+("John Doe", 173, true)
+\end{verbatim}
+
+이름을 얻으려면 \verb!._1!, 키를 얻으려면 \verb!._2!, 학비 납부 여부를 얻으려면
+\verb!._3!을 사용하면
+된다.
+
+길이가 2인 튜플은 \term{순서쌍}{pair}, 길이가 3인 튜플은 \term{세쌍}{triple}이라 부른다. 또한,
+유닛을 길이가 0인 튜플로 간주할 수 있다.
+
+\subsection{맵}
+
+\term{맵}{map}은 \term{열쇠}{key}와 값의 순서쌍을 모아 놓은 컬렉션으로, 특정 열쇠가 주어지면 해당
+열쇠에 연결된 값을 알려 준다. 스칼라에서는 맵 역시 수정할 수 없다. 새로운 맵은
+다음과 같이 만든다.
+
+\begin{verbatim}
+Map([expression] -> [expression], …)
+\end{verbatim}
+
+열쇠의 타입이 \code{T}이고 값의 타입이 \code{S}인 맵의 타입은 \code{Map[T, S]}이다.
+
+\begin{verbatim}
+scala> val m = Map(1 -> "one", 2 -> "two", 3 -> "three")
+val m: Map[Int,String] = Map(1 -> one, 2 -> two, 3 -> three)
+\end{verbatim}
+
+특정 열쇠에 연결된 값을 구할 때는 괄호를 사용한다.
+
+\begin{verbatim}
+scala> m(2)
+val res21: String = two
+\end{verbatim}
+
+맵은 이 밖에도 다양한 메서드를 제공한다.\footnote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/Map.html}}
+
+\subsection{클래스와 객체}
+
+객체는 \term{필드}{field}와 메서드를 가진 값이다. 필드는 값을 저장하며, 메서드는 해당
+객체와 관련된 연산이다. \term{클래스}{class}는 객체의 설계도다. 클래스 하나를 정의함으로써
+같은 필드와 메서드를 가진 여러 객체를 쉽게 만들 수 있다. 이 책에서는 스칼라의
+\term{케이스 클래스}{case class}만 사용한다. 케이스 클래스는 클래스와 비슷하지만
+패턴 대조의 대상이 되는 객체를 만들기 더 편하다.
+
+케이스 클래스는 다음과 같이 정의한다.
+
+\begin{verbatim}
+case class [name]([name]: [type], …)
+\end{verbatim}
+
+괄호 앞에 쓰는 이름은 클래스의 이름이다. 괄호 안에 있는 이름은 필드의 이름이다.
+클래스를 정의할 때 반드시 각 필드의 타입을 명시해야 한다.
+
+\begin{verbatim}
+scala> case class Student(name: String, height: Int)
+class Student
+\end{verbatim}
+
+함수 호출과 비슷한 방법으로 새 객체를 만들 수 있다.
+
+\begin{verbatim}
+scala> val s = Student("John Doe", 173)
+val s: Student = Student(John Doe,173)
+\end{verbatim}
+
+필드에 접근하려면 \code{.[name]}을 사용한다.
+
+\begin{verbatim}
+scala> s.name
+val res22: String = John Doe
+\end{verbatim}
+
+스칼라의 객체는 기본적으로 수정할 수 없다. 클래스를 정의할 때 필드 이름 앞에
+\code{var}를 붙이면 해당 필드가 수정 가능해진다.
+
+\begin{verbatim}
+scala> case class Student(name: String, var height: Int)
+class Student
+
+scala> val s = Student("John Doe", 173)
+val s: Student = Student(John Doe,173)
+
+scala> s.height = 180
+// mutated s.height
+
+scala> s.height
+val res23: Int = 180
+\end{verbatim}
+
+\section{인터프리터}
+\labsec{scala-interpreter}
+
+\term{인터프리터}{interpreter}는 코드를 입력받아 해당 코드를 실행하는 프로그램이다. 스칼라
+인터프리터는 스칼라 코드를 입력받는다. 인터프리터를 사용하려면 코드를 파일에
+저장해야 한다. 다음 코드를 \code{Hello.scala} 파일에 저장해 보자.
+
+\begin{verbatim}
+println("Hello world!")
+\end{verbatim}
+
+명령줄에서 \code{scala} 다음에 파일 이름을 입력하여 인터프리터를 실행할 수 있다. 이
+경우, \code{scala Hello.scala}라 입력해야 한다.
+
+\begin{verbatim}
+$ scala Hello.scala
+Hello world!
+\end{verbatim}
+
+한 파일에 여러 줄을 작성할 수 있다. \code{Hello.scala}를 다음처럼 고쳐 보자.
+
+\begin{verbatim}
+val x = 2
+println(x)
+val y = x * x
+println(y)
+\end{verbatim}
+
+그리고 다시 인터프리터를 실행하자.
+\begin{verbatim}
+
+$ scala Hello.scala
+2
+4
+\end{verbatim}
+
+\section{컴파일러}
+\labsec{scala-compiler}
+
+\term{컴파일러}{compiler}는 코드를 입력받아 동일한 일을 하는 다른 언어의 코드로 번역하는
+프로그램이다. 대개 번역을 통해 나온 코드는 \term{기계어}{machine code}나
+\term{가상 기계}{virtual machine}의 바이트코드 같은 저수준 언어로 작성되어 있다. 스칼라
+컴파일러는 스칼라 코드를 입력받아 자바 바이트코드로 번역한다. 컴파일이 끝나면
+생성된 바이트코드를 JVM을 사용해 실행할 수 있다.
+
+스칼라 프로그램을 컴파일하려면 \code{main} 메서드를 정의해야 한다. \code{main} 메서드는
+JVM에서 실행되는 모든 프로그램의 시작점이다. 다음과 같은 코드를
+\code{Hello.scala}에 작성하자.
+
+\begin{verbatim}
+object Hello {
+  def main(args: Array[String]): Unit = {
+    println("Hello world!")
+  }
+}
+\end{verbatim}
+
+명령줄에서 \code{scalac} 다음에 파일 이름을 입력하여 컴파일러를 실행할 수 있다.
+
+\begin{verbatim}
+$ scalac Hello.scala
+\end{verbatim}
+
+컴파일이 끝나면 현재 디렉토리에 자바 바이트코드를 담은 \code{Hello.class} 파일이
+생긴다.
+
+명령줄에서 \code{scala} 뒤에 클래스 이름을 입력해 바이트코드를 실행할 수 있다.
+
+\begin{verbatim}
+$ scala Hello
+Hello world!
+\end{verbatim}
+
+프로그램의 동작을 바꾸기 위해 코드를 수정할 때마다 코드를 새로 컴파일해야 한다.
+
+바이트코드를 실행하는 것은 스칼라 코드를 인터프리터로 실행하는 것보다 훨씬
+빠르다. \code{scala Hello}와 \code{scala Hello.scala}를 각각 실행해보면 결과는 같아도 전자가
+훨씬 빠름을 알 수 있다.
+
+스칼라에는 두 종류의 오류가 있다. 바로 \term{컴파일 시간 오류}{compile-time error}와
+\term{실행 시간 오류}{run-time error}다. 컴파일 시간 오류는 컴파일 중, 즉 \code{scalac}를
+실행하는 중에 발생한다. 실행 중에 안 좋은 일이 일어날 수 있다고 컴파일러가
+판단하면 컴파일 오류가 발생하며 바이트코드가 만들어지지 않는다. 예를 들어 정수와
+불리언의 덧셈은 성공할 수 없기에 정수와 불리언을 더하는 식은 컴파일 시간 오류를
+일으킨다.
+
+\begin{verbatim}
+true + 1
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+error: type mismatch;
+ found   : Int(1)
+ required: String
+true + 1
+     ^
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+안타깝게도 어떤 안 좋은 일은 컴파일러가 미리 탐지할 수 없다. 그런 동작을
+발생시키는 프로그램의 경우, 컴파일 시간 오류가 발생하지 않고 바이트코드가
+만들어지며, 바이트코드를 \code{scala}를 사용해 실행할 때 실행 시간 오류가 발생하여
+실행이 비정상적으로 종료된다. 0으로 나누기 오류가 그 예시다.
+
+\begin{verbatim}
+1 / 0
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+java.lang.ArithmeticException: / by zero
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{실행 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+\section{sbt}
+\labsec{sbt}
+
+sbt는 스칼라를 위한 \term{빌드 도구}{build tool}다. 빌드 도구는 파일 사이의 의존성을 추적하고
+라이브러리를 관리하여 큰 프로젝트가 여러 파일과 라이브러리를 편하게 사용할 수 있도록
+돕는다. 다양한 빌드 도구가 존재하지만 스칼라의 경우 sbt가 가장 흔하게 사용된다.
+
+\code{sbt new} 명령을 사용해 새로운 스칼라 프로젝트를 만들 수 있다.
+
+\begin{verbatim}
+$ sbt new scala/scala-seed.g8
+[info] welcome to sbt 1.4.7
+[info] loading global plugins from ~/.sbt/1.0/plugins
+[info] set current project to ~/ (in build file:~/)
+[info] set current project to ~/ (in build file:~/)
+
+
+A minimal Scala project.
+
+name [Scala Seed Project]: hello
+
+Template applied in ~/hello
+\end{verbatim}
+
+만들어진 프로젝트의 디렉토리 구조는 다음과 같다.
+
+\dirtree{%
+  .1 hello.
+  .2 build.sbt.
+  .2 project.
+  .3 Dependencies.scala.
+  .3 build.properties.
+  .2 src.
+  .3 main.
+  .4 scala.
+  .5 example.
+  .6 Hello.scala.
+  .3 test.
+  .4 scala.
+  .5 example.
+  .6 HelloSpec.scala.
+}
+
+\code{build.scala} 파일은 프로젝트 관련 설정을 담고 있다. 프로젝트에 사용할 스칼라 버전
+및 라이브러리 목록 등을 기록한다. 코드 파일은 \code{src} 디렉토리 안에 넣는다.
+\code{src/main}
+디렉토리 안의 파일이 프로그램의 동작을 결정하고, \code{src/test} 안의 파일은 프로그램을
+테스트하는 데 사용된다. 프로그램을 작성하려면 \code{src/main/scala} 안에 파일을 추가한
+뒤 코드를 작성하면 된다.
+
+\code{sbt} 명령을 사용해 sbt 콘솔을 시작할 수 있다. sbt 콘솔은 현재 디렉토리에
+있는 \code{build.scala} 파일에서 프로젝트 정보를 읽는다.
+
+\begin{verbatim}
+$ sbt
+[info] welcome to sbt 1.4.7
+[info] loading global plugins from ~/.sbt/1.0/plugins
+[info] loading project definition from ~/hello/project
+[info] loading settings for project root from build.sbt ...
+[info] set current project to hello (in build file:~/hello/)
+
+[info] sbt server started at
+local:///~/.sbt/1.0/server/d4cd702f998423203dfe/sock
+[info] started sbt server
+sbt:hello>
+\end{verbatim}
+
+sbt 콘솔에서 다음과 같은 명령을 사용해 프로젝트를 컴파일, 실행, 테스트할 수
+있다.
+
+\begin{itemize}
+  \item \code{compile}: 프로젝트를 컴파일
+  \item \code{run}: 프로젝트를 실행 (필요하면 다시 컴파일)
+  \item \code{test}: 프로젝트를 테스트 (필요하면 다시 컴파일)
+  \item \code{exit}: 콘솔을 종료
+\end{itemize}
+
+\begin{verbatim}
+sbt:hello> compile
+[info] compiling 1 Scala source to ~/hello/target/scala-2.13
+
+| => root / Compile / compileIncremental 0s
+[success] Total time: 4 s
+sbt:hello> test
+[info] compiling 1 Scala source to ~/hello/target/scala-2.13
+[info] HelloSpec:
+[info] The Hello object
+[info] - should say hello
+[info] Run completed in 455 milliseconds.
+[info] Total number of tests run: 1
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 1, failed 0, canceled 0, ignored 0
+[info] All tests passed.
+[success] Total time: 2 s
+sbt:hello> run
+[info] running example.Hello
+hello
+[success] Total time: 0 s
+sbt:hello> exit
+[info] shutting down sbt server
+\end{verbatim}
+
+더 자세한 사용법은 sbt 웹 사이트에서 찾을 수 있다.\footnote{\url{https://www.scala-sbt.org/learn.html}}

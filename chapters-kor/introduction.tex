@@ -26,8 +26,9 @@ library}와 \term{생태계}{ecosystem}까지 추가로 가진다.''
 
 하지만 개발자들에게는 문법과 의미가 전부가 아니다. 표준 라이브러리 역시 중요한
 요소다. 표준 라이브러리는 유용한 프로그램을 작성하는 데 필요한 다양한 기능을
-제공한다. \term{리스트}{list}와 \term{맵}{map} 등의 자료 구조, 파일 및 네트워크 입출력 처리
-함수 같은 기능들 말이다. 표준 라이브러리는 사람으로 치면 옷과 같다. 나체의
+제공한다. \term{리스트}{list}와 \term{맵}{map} 등의 \term{자료 구조}{data structure},
+파일 및 네트워크 입출력 처리
+\term{함수}{function} 같은 기능들 말이다. 표준 라이브러리는 사람으로 치면 옷과 같다. 나체의
 사람도 물론 사람이다. 마찬가지로 표준 라이브러리가 없는 프로그래밍 언어도 여전히
 프로그래밍 언어다. 하지만 옷이 몸을 따뜻하게 만들고 위험한 물체로부터 보호하기에
 사람에게 중요하듯, 표준 라이브러리는 여러 편의 기능을 제공한다는 면에서
@@ -90,27 +91,33 @@ library}와 \term{생태계}{ecosystem}까지 추가로 가진다.''
 이상, 새로운 문법에만 적응하면 새 언어에 금세 능숙해질 수 있다.
 
 이 책은 프로그래밍 언어들이 공통적으로 제공하는 기본 기능의 의미를 설명한다.
-...에서는 우선 \term{스칼라}{Scala} 언어를 소개한다. 스칼라는 책에서 도입하는 언어들의
+\chnum{introduction-to-scala}, \chnum{immutability}, \chnum{functions},
+\chnum{pattern-matching}장에서는 우선 \term{스칼라}{Scala} 언어를 소개한다. 스칼라는 책에서 도입하는 언어들의
 \term{인터프리터}{interpreter}와 \term{타입 검사기}{type checker}를 구현하는 데 사용된다.
-...에서는 문법과 의미를 알아본다. 그 뒤에는 프로그래밍 언어의 여러 기능을
+\refch{syntax-and-semantics}에서는 문법과 의미를 알아본다. 그 뒤에는 프로그래밍 언어의 여러 기능을
 살펴본다.
 
 \begin{itemize}
-\item \refch{introduction}은 \term{식별자}{identifier}를 다룬다.
-\item ...은 \term{함수}{function}를 다룬다.
-\item ...은 \term{수정}{mutation}을 다룬다.
-\item ...은 \term{쓰레기 수집}{garbage collection}을 다룬다.
-\item ...은 \term{느긋한 계산}{lazy evaluation}을 다룬다.
-\item ...은 \term{컨티뉴에이션}{continuation}을 다룬다.
-\item ...은 \term{드 브루인 번호}{De Bruijn index}를 다룬다.
-\item ...은 기초적인 \term{타입 체계}{type system}를 다룬다.
-\item ...은 \term{대수적 타입}{algebraic data type}을 다룬다.
-\item ...은 \term{매개변수를 통한 다형성}{parametric polymorphism}을 다룬다.
-\item ...은 \term{서브타입을 통한 다형성}{subtype polymorphism}을 다룬다.
-\item ...은 \term{타입 추론}{type inference}을 다룬다.
+\item \refch{identifiers}은 \term{식별자}{identifier}를 다룬다.
+\item \chnum{first-order-functions}, \chnum{first-class-functions},
+\chnum{recursion}장은 함수를 다룬다.
+\item \chnum{boxes}, \chnum{mutable-variables}장은 \term{수정}{mutation}을 다룬다.
+\item \refch{garbage-collection}은 \term{쓰레기 수집}{garbage collection}을 다룬다.
+\item \refch{lazy-evaluation}은 \term{느긋한 계산}{lazy evaluation}을 다룬다.
+\item \chnum{continuations}, \chnum{first-class-continuations},
+\chnum{first-order-representation-of-continuations}은 \term{컨티뉴에이션}{continuation}을 다룬다.
+\item \refch{nameless-representation-of-expressions}은 \term{드 브루인 번호}{De Bruijn index}를 다룬다.
+\item \chnum{type-systems}, \chnum{typing-recursive-functions}장은 기초적인 \term{타입 체계}{type system}를 다룬다.
+\item \refch{algebraic-data-types}은 \term{대수적 타입}{algebraic data type}을 다룬다.
+\item \refch{parametric-polymorphism}은 \term{매개변수를 통한 다형성}{parametric polymorphism}을 다룬다.
+\item \refch{subtype-polymorphism}은 \term{서브타입을 통한 다형성}{subtype polymorphism}을 다룬다.
+\item \refch{type-inference}은 \term{타입 추론}{type inference}을 다룬다.
 \end{itemize}
 
-각 장은 특정 기능을 제공하는 작은 언어를 정의함으로써 그 기능을 설명한다. 그렇게 정의한 작은 언어들은 너무 적은 기능만을 제공하기 때문에 실용적으로 사용하기에는 다소 불편하다. 그 대신 간단하기 때문에 각 장의 주제에 집중하는 데 도움이 될 것이다.
+각 장은 특정 기능을 제공하는 작은 언어를 정의함으로써 그 기능을 설명한다. 그렇게
+정의한 작은 언어들은 너무 적은 기능만을 제공하기 때문에 실용적으로 사용하기에는
+다소 불편하다. 그 대신 간단하기 때문에 각 장의 주제에 집중하는 데 도움이 될
+것이다.
 
 \section{예제}
 
@@ -125,24 +132,3 @@ library}와 \term{생태계}{ecosystem}까지 추가로 가진다.''
 알고 있는 프로그래밍 언어 두 개의 이름을 쓰고 두 언어를 비교하라.
 
 \end{exercise}
-
-% This book explains the semantics of principal concepts in programming languages.
-% Chapters \chnum{introduction-to-scala}, \chnum{immutability}, \chnum{functions},
-% and \chnum{pattern-matching} introduce the Scala programming language. This book
-% uses Scala to implement interpreters and type checkers of languages introduced
-% in the book.  \refch{syntax-and-semantics} explains syntax and semantics. Then,
-% the book finally introduces various features of programming languages.
-% \begin{itemize}
-%     \item \refch{identifiers} introduces identifiers.
-%     \item \refchss{first-order-functions}{first-class-functions}{recursion} introduce functions.
-%     \item \refchs{boxes}{mutable-variables} introduce mutation.
-%     \item \refch{garbage-collection} introduces garbage collection.
-%     \item \refch{lazy-evaluation} introduces lazy evaluation.
-%     \item \refchss{continuations}{first-class-continuations}{first-order-representation-of-continuations} introduce continuations.
-%     \item \refch{nameless-representation-of-expressions} introduces De Bruijn indices.
-%     \item \refchs{type-systems}{typing-recursive-functions} introduce basic type systems.
-%     \item \refch{algebraic-data-types} introduces algebraic data types.
-%     \item \refch{parametric-polymorphism} introduces parametric polymorphism.
-%     \item \refch{subtype-polymorphism} introduces subtype polymorphism.
-%     \item \refch{type-inference} introduces type inference.
-% \end{itemize}

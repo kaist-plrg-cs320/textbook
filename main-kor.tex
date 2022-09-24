@@ -51,7 +51,7 @@
 \setmainfont[Ligatures=TeX,ExternalLocation=ymfonts/,BoldFont=YDV_YMjO33.ttf]{YDV_YMjO31.ttf}
 \setmainhangulfont[Ligatures=TeX,ExternalLocation=ymfonts/,BoldFont=YDV_YMjO33.ttf]{YDV_YMjO31.ttf}
 \setsansfont[Ligatures=TeX,ExternalLocation=ygfonts/,BoldFont=YDV_YGO33.ttf]{YDV_YGO31.ttf}
-\setsanshangulfont[Ligatures=TeX,ExternalLocation=ymfonts/,BoldFont=YDV_YMjO33.ttf]{YDV_YMjO31.ttf}
+\setsanshangulfont[Ligatures=TeX,ExternalLocation=ygfonts/,BoldFont=YDV_YGO33.ttf]{YDV_YGO31.ttf}
 
 % Load packages for testing
 \usepackage{blindtext}
@@ -90,7 +90,7 @@
   arn_nc/.style = {treenode, circle, black, draw=white, text width=0.8cm, line width=0.25mm},
 }
 
-\newcommand{\term}[2]{#1\index{#1}{\footnotesize#2}\index{#2}}
+\newcommand{\term}[2]{#1{\scriptsize#2}}
 \renewcommand{\refch}[1]{\hyperref[ch:#1]{\ref{ch:#1}\chaptername}}
 \renewcommand{\refsec}[1]{\hyperref[sec:#1]{\ref{sec:#1}\sectionname}}
 \renewcommand{\exercisename}{예제}
@@ -113,8 +113,6 @@
 \newcommand{\inred}{\color{red}}
 
 \newcommand{\chnum}[1]{\hyperref[ch:#1]{\ref{ch:#1}}}
-\newcommand{\refchs}[2]{Chapters \chnum{#1} and \chnum{#2}}
-\newcommand{\refchss}[3]{Chapters \chnum{#1}, \chnum{#2}, and \chnum{#3}}
 \newcommand{\refex}[1]{Exercise~\hyperref[thm:#1]{\ref{thm:#1}}}
 \newcommand{\labex}[1]{\labthm{#1}}
 \newcommand{\pto}{\mathrel{\ooalign{\hfil$\mapstochar$\hfil\cr$\to$\cr}}}
@@ -383,11 +381,11 @@
 
 \input{chapters-kor/introduction.tex}
 
-% \pagelayout{wide} % No margins
-% \addpart{Scala}
-% \pagelayout{margin} % Restore margins
+\pagelayout{wide} % No margins
+\addpart{스칼라}
+\pagelayout{margin} % Restore margins
 
-% \input{chapters-kor/introduction-to-scala.tex}
+\input{chapters-kor/introduction-to-scala.tex}
 % \input{chapters-kor/immutability.tex}
 % \input{chapters-kor/functions.tex}
 % \input{chapters-kor/pattern-matching.tex}

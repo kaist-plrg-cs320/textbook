@@ -191,10 +191,10 @@ Scala REPL, interpreter, and compiler. \refsec{scala-repl},
 \refsec{scala-interpreter}, and \refsec{scala-compiler} will discuss
 their usages respectively.
 
-Another thing to install is SBT. SBT is a build tool for Scala. An installation
-file for SBT is available at the SBT
+Another thing to install is sbt. sbt is a build tool for Scala. An installation
+file for sbt is available at the sbt
 website.\footnote{\url{https://www.scala-sbt.org/download.html}}
-\refsec{sbt} will discuss the usage of SBT.
+\refsec{sbt} will discuss the usage of sbt.
 
 \section{REPL}
 \labsec{scala-repl}
@@ -419,8 +419,8 @@ def quadruple(x: Int): Int
 
 Inside \code{quadruple}, the variable \code{y} is defined and used for the
 computation of
-the return value.\footnote{Vertical bars (\code{|}) at the beginning of lines are
-not part of code. They have been automatically inserted by REPL.}
+the return value. Note that vertical bars (\code{|}) at the beginning of lines are
+not part of code. They have been automatically inserted by REPL.
 
 Multiple expressions inside curly braces are collectively treated as a single
 expression. We call such an expression a sequenced expression. Like any other
@@ -515,8 +515,8 @@ val res13: List[Int] = List(1, 2, 3)
 
 \code{List(…)} is more convenient than \code{::} for creating a new list from
 scratch. However, \code{::} is more flexible since it can prepend a new element
-in front of an existing list.\footnote{It does not mutate the existing list to
-prepend the new element. It creates a new list with the element and the list.}
+in front of an existing list. It does not mutate the existing list to
+prepend the new element but rather creates a new list with the element and the list.
 
 \begin{verbatim}
 scala> val l = List(1, 2, 3)
@@ -526,8 +526,8 @@ scala> 0 :: l
 val res14: List[Int] = List(0, 1, 2, 3)
 \end{verbatim}
 
-The \code{length} method computes the length of a list; parentheses are used
-to fetch the element at a specific index.\footnote{The first index is \code{0}.}
+The \code{length} method computes the length of a list. Parentheses are used
+to fetch the element at a specific index; the first index is \code{0}.
 
 \begin{verbatim}
 scala> l.length
@@ -539,8 +539,7 @@ val res16: Int = 1
 
 In functional programming, accessing an arbitrary element of a list by an index
 is rare. We use pattern matching in most cases. The syntax of pattern matching
-for a list is as follows:\footnote{The order between the cases can vary, which
-means that the \code{::} case may come first.}
+for a list is as follows.
 
 \begin{verbatim}
 [expression] match {
@@ -553,9 +552,11 @@ The expression in front of \code{match} is the target of pattern matching.
 If it is an empty list, it matches \code{case Nil}. The expression
 of the \code{Nil} case will be evaluated.
 Otherwise, it is a nonempty list and matches \code{case [name] :: [name]}. The first
-name denotes the head\footnote{the first element} of the list, and the second
-name denotes the tail\footnote{a list consisting of all the elements except the
-head} of the list. The expression of the \code{::} case will be evaluated.
+name denotes the head---the first element---of the list, and the second
+name denotes the tail---a list consisting of all the elements except the
+head---of the list. The expression of the \code{::} case will be evaluated.
+We can change the order between the cases, thereby making
+the \code{::} case come first.
 
 The following function takes a list of integers as an argument and returns the
 head. The return value is zero when the list is empty.
@@ -596,8 +597,8 @@ scala> (1, true)
 val res19: (Int, Boolean) = (1,true)
 \end{verbatim}
 
-To fetch the \code{i}-th element of a tuple, we can use \verb+._i+.\footnote{The
-first index is 1.}
+To fetch the \code{i}-th element of a tuple, we can use \verb+._i+. The
+first index is 1.
 
 \begin{verbatim}
 scala> (1, true)._1
@@ -675,7 +676,7 @@ methods.\footnote{\url{https://www.scala-lang.org/api/current/scala/collection/i
 An object is a value with fields and methods. Fields store values, and methods
 are operations related to the object. A class is a blueprint of objects. We can
 easily create multiple objects of the same structure by defining a single class.
-This book uses only ``case'' classes of Scala. Case classes are similar to
+This book uses only \emph{case} classes of Scala. Case classes are similar to
 classes but more convenient, e.g. automatic support for pretty printing and
 pattern matching.
 
@@ -821,7 +822,7 @@ error because such an addition cannot succeed at run time.
 true + 1
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
 error: type mismatch;
  found   : Int(1)
@@ -846,7 +847,7 @@ example of run time errors.
 1 / 0
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
 java.lang.ArithmeticException: / by zero
 \end{verbatim}
@@ -856,12 +857,12 @@ java.lang.ArithmeticException: / by zero
 \end{flushright}
 \end{mdframed}
 
-\section{SBT}
+\section{sbt}
 \labsec{sbt}
 
-SBT is a build tool for Scala. Build tools help programmers work on large
+sbt is a build tool for Scala. Build tools help programmers work on large
 projects with many files and libraries by tracking dependencies between files
-and managing libraries. There are various build tools in the world, and SBT is
+and managing libraries. There are various build tools in the world, and sbt is
 the most popular one for Scala.
 
 You can create a new Scala project by the \code{sbt new} command.
@@ -907,7 +908,7 @@ Source files are in the \code{src} directory. Files in \code{main} are
 main source files, while files in \code{test} are only for testing.
 You can add files into the \code{src/main/scala} directory and edit them to write code.
 
-An SBT console can be started by the \code{sbt} command. The current working
+An sbt console can be started by the \code{sbt} command. The current working
 directory of your shell should be the base directory of the project.
 
 \begin{verbatim}
@@ -924,7 +925,7 @@ local:///~/.sbt/1.0/server/d4cd702f998423203dfe/sock
 sbt:hello>
 \end{verbatim}
 
-You can compile, run, and test the project by executing SBT commands in the
+You can compile, run, and test the project by executing sbt commands in the
 console.
 
 \begin{itemize}
@@ -959,4 +960,4 @@ sbt:hello> exit
 [info] shutting down sbt server
 \end{verbatim}
 
-To learn SBT more, refer to the SBT website.\footnote{\url{https://www.scala-sbt.org/learn.html}}
+To learn sbt more, refer to the sbt website.\footnote{\url{https://www.scala-sbt.org/learn.html}}
