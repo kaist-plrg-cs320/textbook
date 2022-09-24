@@ -240,14 +240,14 @@
 
     \theoremstyle{kaoexercise}
     \declaretheorem[
-    	name=Exercise,
+    	name=\exerciseName,
     	%refname={example,examples},
     	refname={Exercise,Exercises},
     	Refname={Exercise,Exercises},
-    	numberwithin=section,
+    	numberwithin=chapter,
     	mdframed={
     		style=mdfkao,
-            backgroundcolor=\kaotheorems@exercisebackground,
+            % backgroundcolor=\kaotheorems@exercisebackground,
     		%frametitlebackgroundcolor=\@theorembackground,
     	},
     ]{exercise}

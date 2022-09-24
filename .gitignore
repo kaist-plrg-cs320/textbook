@@ -19,6 +19,7 @@
 *.run.xml
 *.toc
 *.xdy
+*.ttf
 
 .DS_Store
 Session.vim

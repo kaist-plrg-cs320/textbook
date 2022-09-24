@@ -192,7 +192,7 @@
 		\if@twoside%
 			\Ifthispageodd{%
 				\smash{\makebox[0pt][l]{%
-					\parbox[b]{\textwidth}{\flushright{##3}}%
+					\parbox[b]{\textwidth-25mm}{\flushright{##3}}%
 					\makebox[\marginparsep][c]{\rule[-2\vscale]{1pt}{27.4\vscale+\f@size mm}}%
 					\parbox[b]{\marginparwidth}{##2}%
 				}}%

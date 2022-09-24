@@ -45,14 +45,13 @@
   \recalchead
 }
 
-% Choose the language
-\ifxetexorluatex
-  \usepackage{polyglossia}
-  \setmainlanguage{english}
-\else
-  \usepackage[english]{babel} % Load characters and hyphenation
-\fi
-\usepackage[english=british]{csquotes}  % English quotes
+\usepackage[english]{babel} % Load characters and hyphenation
+\usepackage[hangul]{kotex}
+
+\setmainfont[Ligatures=TeX,ExternalLocation=ymfonts/,BoldFont=YDV_YMjO33.ttf]{YDV_YMjO31.ttf}
+\setmainhangulfont[Ligatures=TeX,ExternalLocation=ymfonts/,BoldFont=YDV_YMjO33.ttf]{YDV_YMjO31.ttf}
+\setsansfont[Ligatures=TeX,ExternalLocation=ygfonts/,BoldFont=YDV_YGO33.ttf]{YDV_YGO31.ttf}
+\setsanshangulfont[Ligatures=TeX,ExternalLocation=ymfonts/,BoldFont=YDV_YMjO33.ttf]{YDV_YMjO31.ttf}
 
 % Load packages for testing
 \usepackage{blindtext}
@@ -63,7 +62,7 @@
 \usepackage[style=alphabetic]{kaobiblio}
 \addbibresource{main.bib} % Bibliography file
 
-\newcommand{\exerciseName}{Exercise}
+\newcommand{\exerciseName}{예제}
 
 % Load mathematical packages for theorems and related environments
 \usepackage[framed=true]{kaotheorems}
@@ -90,6 +89,11 @@
   arn_w/.style = {treenode, circle, white, draw=white, text width=0.8cm, line width=0.25mm},
   arn_nc/.style = {treenode, circle, black, draw=white, text width=0.8cm, line width=0.25mm},
 }
+
+\newcommand{\term}[2]{#1\index{#1}{\footnotesize#2}\index{#2}}
+\renewcommand{\refch}[1]{\hyperref[ch:#1]{\ref{ch:#1}\chaptername}}
+\renewcommand{\refsec}[1]{\hyperref[sec:#1]{\ref{sec:#1}\sectionname}}
+\renewcommand{\exercisename}{예제}
 
 \newcommand{\shorteq}{\code{=}}
 
@@ -246,10 +250,10 @@
 
 % \title[Example and documentation of the {\normalfont\texttt{kaobook}} class]{Example and documentation \\ of the {\normalfont\texttt{kaobook}} class}
 % \subtitle{Customise this page according to your needs}
-\title{Introduction to Programming Languages}
+\title{프로그래밍 언어 개론}
 
 % \author[Federico Marotta]{Federico Marotta\thanks{A \LaTeX\ lover}}
-\author{Jaemin Hong and Sukyoung Ryu}
+\author{홍재민, 류석영}
 
 % \date{\today}
 \date{}
@@ -309,14 +313,14 @@
 %   First printed in May 2019 by \@publishers
 % }
 \lowertitleback{
-  \copyright2022 Jaemin Hong and Sukyoung Ryu
+  \copyright2022 홍재민, 류석영
 
   \medskip
 
-  All rights reserved. No part of this book may be reproduced in any form by any
-  electronic of mechanical means (including photocopying, recording, or
-  information storage and retrieval) without permission in writing from the
-  authors.
+  % All rights reserved. No part of this book may be reproduced in any form by any
+  % electronic of mechanical means (including photocopying, recording, or
+  % information storage and retrieval) without permission in writing from the
+  % authors.
 }
 \makeatother
 
@@ -341,7 +345,7 @@
 %  PREFACE
 %----------------------------------------------------------------------------------------
 
-\input{chapters/acknowledgement.tex}
+% \input{chapters/acknowledgement.tex}
 
 %----------------------------------------------------------------------------------------
 %  TABLE OF CONTENTS & LIST OF FIGURES/TABLES
@@ -377,53 +381,53 @@
 \mainmatter % Denotes the start of the main document content, resets page numbering and uses arabic numbers
 \setchapterstyle{kao} % Choose the default chapter heading style
 
-\input{chapters/introduction.tex}
+\input{chapters-kor/introduction.tex}
 
-\pagelayout{wide} % No margins
-\addpart{Scala}
-\pagelayout{margin} % Restore margins
+% \pagelayout{wide} % No margins
+% \addpart{Scala}
+% \pagelayout{margin} % Restore margins
 
-\input{chapters/introduction-to-scala.tex}
-\input{chapters/immutability.tex}
-\input{chapters/functions.tex}
-\input{chapters/pattern-matching.tex}
+% \input{chapters-kor/introduction-to-scala.tex}
+% \input{chapters-kor/immutability.tex}
+% \input{chapters-kor/functions.tex}
+% \input{chapters-kor/pattern-matching.tex}
 
-\pagelayout{wide} % No margins
-\addpart{Untyped Languages}
-\pagelayout{margin} % Restore margins
+% \pagelayout{wide} % No margins
+% \addpart{Untyped Languages}
+% \pagelayout{margin} % Restore margins
 
-\input{chapters/syntax-and-semantics.tex}
-\input{chapters/identifiers.tex}
-\input{chapters/first-order-functions.tex}
-\input{chapters/first-class-functions.tex}
-\input{chapters/recursion.tex}
-\input{chapters/mutable-boxes.tex}
-\input{chapters/mutable-variables.tex}
-\input{chapters/garbage-collection.tex}
-\input{chapters/lazy-evaluation.tex}
-\input{chapters/continuations.tex}
-\input{chapters/first-class-continuations.tex}
-\input{chapters/first-order-representation-of-continuations.tex}
-\input{chapters/nameless-representation-of-expressions.tex}
+% \input{chapters-kor/syntax-and-semantics.tex}
+% \input{chapters-kor/identifiers.tex}
+% \input{chapters-kor/first-order-functions.tex}
+% \input{chapters-kor/first-class-functions.tex}
+% \input{chapters-kor/recursion.tex}
+% \input{chapters-kor/mutable-boxes.tex}
+% \input{chapters-kor/mutable-variables.tex}
+% \input{chapters-kor/garbage-collection.tex}
+% \input{chapters-kor/lazy-evaluation.tex}
+% \input{chapters-kor/continuations.tex}
+% \input{chapters-kor/first-class-continuations.tex}
+% \input{chapters-kor/first-order-representation-of-continuations.tex}
+% \input{chapters-kor/nameless-representation-of-expressions.tex}
 
-\pagelayout{wide} % No margins
-\addpart{Typed Languages}
-\pagelayout{margin} % Restore margins
+% \pagelayout{wide} % No margins
+% \addpart{Typed Languages}
+% \pagelayout{margin} % Restore margins
 
-\input{chapters/type-systems.tex}
-\input{chapters/typing-recursive-functions.tex}
-\input{chapters/algebraic-data-types.tex}
-\input{chapters/parametric-polymorphism.tex}
-\input{chapters/subtype-polymorphism.tex}
-\input{chapters/type-inference.tex}
+% \input{chapters-kor/type-systems.tex}
+% \input{chapters-kor/typing-recursive-functions.tex}
+% \input{chapters-kor/algebraic-data-types.tex}
+% \input{chapters-kor/parametric-polymorphism.tex}
+% \input{chapters-kor/subtype-polymorphism.tex}
+% \input{chapters-kor/type-inference.tex}
 
-\appendix % From here onwards, chapters are numbered with letters, as is the appendix convention
+% \appendix % From here onwards, chapters are numbered with letters, as is the appendix convention
 
-\pagelayout{wide} % No margins
-\addpart{Appendix}
-\pagelayout{margin} % Restore margins
+% \pagelayout{wide} % No margins
+% \addpart{Appendix}
+% \pagelayout{margin} % Restore margins
 
-\input{chapters/solutions.tex}
+% \input{chapters-kor/solutions.tex}
 
 %----------------------------------------------------------------------------------------
 

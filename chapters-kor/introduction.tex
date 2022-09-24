@@ -1,0 +1,148 @@
+\chapter{프로그래밍 언어}
+\labch{introduction}
+
+\term{프로그래밍 언어}{programming language}란 무엇일까?
+
+간단하게는 ``프로그래밍에 사용하는 언어다''라고 대답할 수 있다. 그렇지만 이 답은
+우리가 프로그래밍 언어가 무엇인지 이해하는 데 별 도움을 주지 못한다. 더 나은
+답을 원한다면 더 나은 질문을 해야 한다.
+
+프로그래밍 언어는 무엇으로 구성될까?
+
+이 질문에는 좀 더 좋은 답이 있다. ``좁게는 \term{문법}{syntax}과
+\term{의미}{semantics}로 이루어지고, 넓게는 \term{표준 라이브러리}{standard
+library}와 \term{생태계}{ecosystem}까지 추가로 가진다.''
+
+문법과 의미는 프로그래밍 언어를 이해하는 데 필수적인 개념이다. 문법은 각 언어의
+겉모습을 결정하고, 의미는 그 속을 채운다. 프로그래밍 언어가 한 명의 사람이라면,
+문법은 외모이고 의미는 성격이라 할 수 있다. 프로그래머는 문법에 따라 프로그램을
+작성한다. 작성한 코드에 어떤 문자가 어떤 순서로 등장할지 문법이 정하는 것이다.
+프로그램을 작성했다면 이제 의미가 그 프로그램이 무슨 일을 하는지 정할 차례다.
+언어의 의미가 주어지지 않으면 프로그램은 쓸모없는 셈이다. 의미가 프로그램의
+동작을 규정해야 프로그래머가 원하는 대로 프로그램이 일할 수 있다. 그러므로
+문법과 의미가 주어진다면 프로그래머는 그 언어로 프로그램을 작성하고 실행할 수
+있다. 즉, 문법과 의미를 갖춘 프로그래밍 언어는 그 자체로 완전하다. 이론적인
+맥락에서 문법과 의미가 프로그래밍 언어의 전부라고 할 수 있는 이유다.
+
+하지만 개발자들에게는 문법과 의미가 전부가 아니다. 표준 라이브러리 역시 중요한
+요소다. 표준 라이브러리는 유용한 프로그램을 작성하는 데 필요한 다양한 기능을
+제공한다. \term{리스트}{list}와 \term{맵}{map} 등의 자료 구조, 파일 및 네트워크 입출력 처리
+함수 같은 기능들 말이다. 표준 라이브러리는 사람으로 치면 옷과 같다. 나체의
+사람도 물론 사람이다. 마찬가지로 표준 라이브러리가 없는 프로그래밍 언어도 여전히
+프로그래밍 언어다. 하지만 옷이 몸을 따뜻하게 만들고 위험한 물체로부터 보호하기에
+사람에게 중요하듯, 표준 라이브러리는 여러 편의 기능을 제공한다는 면에서
+프로그래밍 언어에게 소중하다. 각 사람이 서로 다른 옷을 입는 것처럼, 각 언어는
+조금씩 다른 기능을 표준 라이브러리에 넣는다. 어떤 언어는 최대한 많은 기능을 표준
+라이브러리에 넣고, 어떤 언어는 그보다 훨씬 적은 기능만을 넣는다. 어떤 언어는
+리스트와 맵을 아예 언어의 의미에 박아 넣는가 하면, 어떤 언어는 의미에는 더
+단순한 \term{프리미티브}{primitive}만 정의한 뒤 이를 바탕으로 표준 라이브러리에
+리스트와 맵을 정의한다. 만약 언어에 표준 라이브러리가 없다면 프로그램을 작성하는
+데 드는 노력이 늘어날 테니, 개발자들은 표준 라이브러리가 없는 언어를 원하지
+않는다.
+
+개발자들에게는 언어의 생태계 또한 중요하다. 생태계는 언어와 관련된 모든 것을
+포함한다. 그 언어를 사용하는 개발자와 회사, 그 언어를 위한
+\term{서드 파티 라이브러리}{third-party library} 등이 해당한다. 사람으로 치면 사회인 셈이다. 많은
+개발자와 회사가 사용하는 언어를 배운다면 막힐 때 도움을 받거나 관련 자료를 찾기
+쉽고, 더 나아가 더 많은 고용과 협력의 기회도 생긴다. 서드 파티 라이브러리도
+중요하다. 표준 라이브러리는 대개 일반적인 기능만 제공하고 특정 분야에 특화된
+기능은 제공하지 않는다. 원하는 기능이 표준 라이브러리에 없을지라도, 그 기능을
+제공하는 서드 파티 라이브러리가 있을 수는 있다. 이처럼 언어의 생태계는
+개발자에게 중요한 요소다.
+
+그렇기에 현실적으로는 문법과 의미뿐 아니라 표준 라이브러리와 생태계 역시 언어의
+중요한 구성 요소다. 물론 표준 라이브러리와 생태계 없이도 언어는 존재할 수 있으니
+문법과 의미처럼 필수 요소라고는 할 수 없다. 그러나 개발자들은 사용할 언어를 고를
+때 분명 문법과 의미뿐 아니라 표준 라이브러리와 생태계까지 고려할 테다. 그래서
+우리는 실용적인 맥락에서 프로그래밍 언어가 문법, 의미, 표준 라이브러리, 생태계로
+구성된다고 이야기한다.
+
+이 책은 독자들이 특정 언어를 잘 다룰 수 있도록 돕지 않는다. 특정 언어를
+추천하지도 않는다. 그 대신 새로운 언어를 쉽고 빠르게 배울 수 있도록 돕는다. 이
+책을 끝까지 읽고 완전히 이해했다면 어떤 언어든 금방 익힐 수 있을 것이다. 이 책이
+서로 다른 각각의 언어를 따로따로 설명한다면 이런 목표는 이루기 어렵다. 그렇기에
+이 책은 모든 프로그래밍 언어의 기저에 있는 기본 원리를 다룬다.
+
+프로그래밍 언어의 원리는 언어의 의미에서 찾을 수 있다. 각 언어가 다른 언어들과는
+매우 달라 보일 때가 많다. 하지만 그렇지 않다. 사실 겉모습이 다를 뿐이지, 그 속은
+거의 같다. 코드의 겉모습을 결정하는 문법과 표준 라이브러리가 다르기 때문에 달라
+보이지만, 그 속에 있는 의미는 같은 수학적 원리를 공유한다. 여러 언어의 의미에서
+공통으로 등장하는 필수 개념들을 이해한다면, 새로운 언어를 배우고 익히는 것은
+어려울 게 없다.
+
+핵심 원리를 이해하고 언어의 구성 요소들을 분리할 수 있는 사람은 언어를 쉽게 배울
+수 있다. 비유로서, 컴퓨터를 배우는 사람을 떠올려 보자. 만약 그 사람이 키보드와
+컴퓨터를 구분할 수 없다면 큰 문제다. 가령 ```안녕'이라고 말하려면 왼손 중지로
+키보드를 누르고, 오른손 중지로 키보드를 누르고, 왼손 약지로 키보드를 두 번
+누르고, 오른손 검지로 키보드를 누르고, 왼손 중지로 키보드를 눌러야 한다''고
+생각하는 식이다. 키보드의 글자 배치가 바뀐다면 컴퓨터를 처음부터 다시 배워야 할
+것이다. 반면, 키보드는 그저 글자를 입력하기 위한 도구일 뿐이라는 사실을 안다면
+글자 배치가 바뀌는 게 별 문제가 아니다. ```안녕'이라고 말하려면 ㅇ, ㅏ, ㄴ, ㄴ,
+ㅕ, ㅇ을 눌러야 한다''고 생각하기에 글자 배치가 바뀌어도 컴퓨터를 다시 배울
+필요는 없는 것이다. 물론 새로운 글자 배치를 익혀야 하겠지만, 이는 컴퓨터를 다시
+배우는 것보다는 훨씬 쉽다. 더 나아가, 기존 지식을 새로운 일에 활용하기도 쉽다.
+예를 들면 ```아니'라고 말하려면 ㅇ, ㅏ, ㄴ, ㅣ를 눌러야 한다''는 사실을 쉽게
+알아낼 수 있다. 만약 키보드와 컴퓨터를 구분하지 못한다면, ``안녕''을 말하는 것과
+``아니''를 말하는 것 사이의 어떠한 공통 원리도 찾지 못할 것이다. 프로그래밍 언어를
+배울 때도 마찬가지다. 문법과 의미를 구분하지 못하는 사람은 문법만 바뀌어도
+언어를 새로 배워야 한다. 하지만 문법과 의미를 구분할 줄 아는 사람은 문법이
+바뀌어도 의미는 거의 그대로라는 사실을 안다. 의미의 기본 원리를 이미 이해한
+이상, 새로운 문법에만 적응하면 새 언어에 금세 능숙해질 수 있다.
+
+이 책은 프로그래밍 언어들이 공통적으로 제공하는 기본 기능의 의미를 설명한다.
+...에서는 우선 \term{스칼라}{Scala} 언어를 소개한다. 스칼라는 책에서 도입하는 언어들의
+\term{인터프리터}{interpreter}와 \term{타입 검사기}{type checker}를 구현하는 데 사용된다.
+...에서는 문법과 의미를 알아본다. 그 뒤에는 프로그래밍 언어의 여러 기능을
+살펴본다.
+
+\begin{itemize}
+\item \refch{introduction}은 \term{식별자}{identifier}를 다룬다.
+\item ...은 \term{함수}{function}를 다룬다.
+\item ...은 \term{수정}{mutation}을 다룬다.
+\item ...은 \term{쓰레기 수집}{garbage collection}을 다룬다.
+\item ...은 \term{느긋한 계산}{lazy evaluation}을 다룬다.
+\item ...은 \term{컨티뉴에이션}{continuation}을 다룬다.
+\item ...은 \term{드 브루인 번호}{De Bruijn index}를 다룬다.
+\item ...은 기초적인 \term{타입 체계}{type system}를 다룬다.
+\item ...은 \term{대수적 타입}{algebraic data type}을 다룬다.
+\item ...은 \term{매개변수를 통한 다형성}{parametric polymorphism}을 다룬다.
+\item ...은 \term{서브타입을 통한 다형성}{subtype polymorphism}을 다룬다.
+\item ...은 \term{타입 추론}{type inference}을 다룬다.
+\end{itemize}
+
+각 장은 특정 기능을 제공하는 작은 언어를 정의함으로써 그 기능을 설명한다. 그렇게 정의한 작은 언어들은 너무 적은 기능만을 제공하기 때문에 실용적으로 사용하기에는 다소 불편하다. 그 대신 간단하기 때문에 각 장의 주제에 집중하는 데 도움이 될 것이다.
+
+\section{예제}
+
+\begin{exercise}
+
+지금까지 사용해 본 프로그래밍 언어 하나의 이름을 쓰라. 그 언어의 장점과 단점은 무엇인가?
+
+\end{exercise}
+
+\begin{exercise}
+
+알고 있는 프로그래밍 언어 두 개의 이름을 쓰고 두 언어를 비교하라.
+
+\end{exercise}
+
+% This book explains the semantics of principal concepts in programming languages.
+% Chapters \chnum{introduction-to-scala}, \chnum{immutability}, \chnum{functions},
+% and \chnum{pattern-matching} introduce the Scala programming language. This book
+% uses Scala to implement interpreters and type checkers of languages introduced
+% in the book.  \refch{syntax-and-semantics} explains syntax and semantics. Then,
+% the book finally introduces various features of programming languages.
+% \begin{itemize}
+%     \item \refch{identifiers} introduces identifiers.
+%     \item \refchss{first-order-functions}{first-class-functions}{recursion} introduce functions.
+%     \item \refchs{boxes}{mutable-variables} introduce mutation.
+%     \item \refch{garbage-collection} introduces garbage collection.
+%     \item \refch{lazy-evaluation} introduces lazy evaluation.
+%     \item \refchss{continuations}{first-class-continuations}{first-order-representation-of-continuations} introduce continuations.
+%     \item \refch{nameless-representation-of-expressions} introduces De Bruijn indices.
+%     \item \refchs{type-systems}{typing-recursive-functions} introduce basic type systems.
+%     \item \refch{algebraic-data-types} introduces algebraic data types.
+%     \item \refch{parametric-polymorphism} introduces parametric polymorphism.
+%     \item \refch{subtype-polymorphism} introduces subtype polymorphism.
+%     \item \refch{type-inference} introduces type inference.
+% \end{itemize}
