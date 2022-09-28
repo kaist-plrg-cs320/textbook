@@ -38,9 +38,9 @@ val x = 1
 f(x)
 \end{verbatim}
 
-At the first line of the code, \code{x} is \code{1}. Since \code{x} is immutable,
+In the first line of the code, \code{x} is \code{1}. Since \code{x} is immutable,
 there is no doubt that \code{x} is still \code{1} when \code{x} is passed as an
-argument for \code{f} at the last line of the code.
+argument for \code{f} in the last line of the code.
 
 \begin{verbatim}
 var x = 1
@@ -53,7 +53,7 @@ of code in the middle to find the value of \code{x} at the time when the functio
 call happens.
 
 When \code{x} is mutable, without tracking every
-modification of \code{x} throughout the code, the value of \code{x} at the last
+modification of \code{x} throughout the code, the value of \code{x} in the last
 line is unknown. It hampers programmers from understanding the code
 and possibly leads to more bugs.
 The program with immutable \code{x} does not suffer from such problems.
@@ -159,9 +159,7 @@ Therefore, it is impossible to apply the same operation on different values for
 each iteration or to terminate the loops. As a consequence, loops are useless in
 functional programming. Functional programs use recursive functions instead of
 loops to rerun computation. A \textit{recursive}\index{recursion}
-function is a function that calls itself.\footnote{In general, a definition that
-refers to itself is a recursive definition. There can be recursive variables,
-recursive types, and so on.}
+function is a function that calls itself.
 To do more computation, the function calls itself with proper arguments.
 Otherwise, it terminates the computation by returning some value.
 
@@ -202,7 +200,7 @@ which is a proposition that is always true at the loop head.
 The loop invariant of this case is
 $((\code{i}-1)!=\code{res})\land(\code{i}\le\code{n}+1)$.
 By using this invariant, we can conclude that $\code{i}=\code{n}+1$ and,
-therefore, $\code{res}=(\code{i}-1)!=\code{n}!$ at the last line of the
+therefore, $\code{res}=(\code{i}-1)!=\code{n}!$ in the last line of the
 function, which implies that it correctly implements factorial.
 It is nontrivial to find a proper loop invariant and show that the loop invariant
 holds at the beginning of each iteration.
@@ -366,7 +364,7 @@ again and again and finally overflows.
 factorial(10000)
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
 java.lang.StackOverflowError
   at .factorial
@@ -436,8 +434,7 @@ public int factorial(int, int);
     20: ireturn
 \end{verbatim}
 
-We can check that there is no function call at
-all.\footnote{\code{invokevirtual} is a function call instruction.}
+We can see that there is no function call instruction, \code{invokevirtual}.
 The function just jumps to instructions inside the function.
 Due to the tail call optimization, the function never incurs stack overflow.
 
@@ -496,7 +493,7 @@ compile-time error.
     n * factorial(n - 1)
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
       ^
 error:

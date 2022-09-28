@@ -1,0 +1,592 @@
+\chapter{수정 불가능함}
+\labch{immutability}
+
+수정할 수 없다는 것은 곧 바뀌지 않는다는 말이다. \term{수정할 수 없는}{immutable}
+변수는 초기화 후에 값이 바뀌지 않으며, 수정할 수 없는 자료 구조는 한번 만들고
+나면 원소들이 바뀌지 않는다. 함수형 프로그래밍은 수정할 수 없는 변수, 자료 구조,
+객체의 힘을 극한으로 활용한다. 이는 \term{수정 가능한}{mutable} 변수, 자료 구조, 객체를
+적극적으로 사용하는 명령형 프로그래밍과의 가장 큰 차이점이다. 이 장에서는
+\term{수정 불가능함}{immutability}이 중요하고 가치 있는 이유를 살펴본 뒤, 수정할
+수 없는 것들만 가지고 프로그램을 작성하는 방법을 알아본다.
+
+\section{수정 불가능함의 장점}
+
+책 『Programming in Scala』~\cite{programming-in-scala}는 수정 불가능함의 네 가지 장점을 이야기한다.
+
+\begin{quote}
+First, immutable objects are often easier to reason about than mutable ones,
+because they do not have complex state spaces that change over time. Second, you
+can pass immutable objects around quite freely, whereas you may need to make
+defensive copies of mutable objects before passing them to other code. Third,
+there is no way for two threads concurrently accessing an immutable to corrupt
+its state once it has been properly constructed, because no thread can change the
+state of an immutable. Fourth, immutable objects make safe hash table keys. If a
+mutable object is mutated after it is placed into a \code{HashSet}, for example,
+that object may not be found the next time you look into the \code{HashSet}.
+\end{quote}
+
+그중 처음 두 가지에 집중해 보자. 수정 불가능함은 프로그램을 이해하기 쉽게 만들고
+프로그램이 잘못 동작하는 것을 막기 위해 값을 복사할 일이 없도록 한다.
+
+프로그램을 이해하기 쉽게 만드는 이유부터 보겠다.
+
+\begin{verbatim}
+val x = 1
+...
+f(x)
+\end{verbatim}
+
+\cx는 첫 줄에서 \code{1}이다. \cx를 수정할 수 없으므로 마지막 줄에서 \cx를 \cf에 인자로 넘길 때
+\cx의 값이 여전히 \code{1}임이 확실하다.
+
+\begin{verbatim}
+var x = 1
+...
+f(x)
+\end{verbatim}
+
+반면, 이번에는 \cx를 수정할 수 있기에 \cf를 호출하는 마지막 줄에서 \cx의 값이 무엇인지
+알기 위해서는 그 사이의 모든 코드를 읽어야 한다.
+
+이처럼 \cx가 수정할 수 있는 변수인 경우 \cx가 코드 전체에 걸쳐 어떻게 수정되는지
+확인해야만 마지막 줄에서의 \cx의 값을 알게 된다. 프로그래머가 코드를 이해하기 더
+어려운 것이다. 코드를 이해하기 어렵다는 말은 곧 버그를 만들기 쉽다는 뜻이다. \cx가
+수정할 수 없는 변수인 경우에는 이런 문제가 전혀 없다. 오직 한 줄의 코드를
+기억함으로써 모든 줄에서의 \cx의 값을 알 수 있다.
+
+수정할 수 있는 자료 구조 역시 비슷한 문제를 낳는다.
+
+\begin{verbatim}
+val x = List(1, 2)
+...
+f(x)
+...
+x
+\end{verbatim}
+
+\code{List}는 수정할 수 없는 리스트 타입이므로 \cx는 언제나 \code{1}과 \code{2}만 가지고 있는 리스트다.
+
+\begin{verbatim}
+import scala.collection.mutable.ListBuffer
+val x = ListBuffer(1, 2)
+...
+f(x)
+...
+x
+\end{verbatim}
+
+한편 \code{ListBuffer}는 스칼라 표준 라이브러리에 정의된 수정할 수 있는 리스트
+타입이다. \cx가 나타내는 리스트에 원소를 추가할 수 있고, 리스트에서 원소를 지울
+수도 있다. 모든 코드를
+읽어야만 \cx의 원소를 확실하게 알 수 있는 것이다. 게다가 함수 \cf가 리스트의
+내용물을 바꿀 수도 있다. 만약 \cf가 리스트를 수정하지 않을 것이라는 잘못된 가정을
+가지고 코드를 작성한다면 틀리게 동작하는 프로그램을 만들게 된다.
+
+수정할 수 있는 변수가 지역 변수가 아니라 \term{전역 변수}{global variable}라면 문제는
+더 커진다.
+
+\begin{verbatim}
+def f(x: Int) = g(x, y)
+\end{verbatim}
+
+\cf의 결괏값은 전역 변수 \cy의 값에 따라 달라진다. 만약 \cy가 수정할 수 있는 변수라면
+\cf는 순수 함수가 아니며 그 동작을 예측하기는 매우 어렵다. \cy는 아무 파일에나
+정의되어 있을 수 있다. 또, 어느 파일이든 y를 수정할 수 있다. 최악의 경우에는 외부
+라이브러리가 \cy를 정의하고 있어 \cy를 수정하는 코드를 읽는 게 불가능할 수도 있다.
+
+위 예시들이 너무 간단하다 보니 수정 불가능함의 장점이 잘 느껴지지 않을 수도
+있다. 하지만 큰 프로그램을 만드는 경우에 수정 불가능함은 코드의 가독성을 크게
+향상시키고 관리에 많은 도움을 준다.
+
+이제 수정 불가능함 덕분에 값을 복사할 필요가 없는 이유를 보자.
+
+\begin{verbatim}
+val x = ListBuffer(1, 2)
+...
+f(x)
+...
+x
+\end{verbatim}
+
+\code{ListBuffer}는 수정할 수 있는 리스트이므로 \cf가 \cx를 수정하지 않는다는 보장이 없다.
+만약 \cf를 호출한 후에도 \cx의 원소가 그대로이기를 바란다면 \cx를 복사해야만 한다.
+
+\begin{verbatim}
+val x = ListBuffer(1, 2)
+val y = x.clone
+...
+f(y)
+...
+x
+\end{verbatim}
+
+\cx가 많은 원소를 가지고 있고 이 코드가 여러 번 실행된다면 \cx를 복사하는 것은 실행
+시간을 크게 증가시킨다.
+
+위 코드에서는 리스트가 정수만 가지고 있기에 \code{clone} 메서드를 호출해서 리스트를
+복사해도 괜찮았다. 하지만 수정할 수 있는 객체들이 리스트에 들어 있는 경우에는
+일이 더 복잡해진다. 함수에 리스트를 인자로 넘겼을 때 객체들이 수정되지 않기를
+바란다면 \term{깊은 복사}{deep copy}를 하기 위한 새로운 메서드를 직접 정의해야 한다.
+
+이처럼 수정 불가능함은 명확한 장점을 지닌다. 함수형 프로그래밍에서 수정
+불가능함이 중요한 개념인 이유다. 함수형 프로그래밍은 많은 경우에 수정할 수 없는
+변수와 자료 구조를 사용한다. 동작이 복잡하면서도 올바르게 동작하는 게 중요한 큰
+프로그램을 작성한다면 함수형 프로그래밍을 사용하는 것이 현명하다. 다만 수정
+불가능함은 절대 만병통치약이 아님을 명심해야 한다. 가령 여러 알고리즘을
+효율적으로 작성하는 데는 함수형 프로그래밍이 적합하지 않다. 그런 알고리즘을
+작성할 때는 \term{배열}{array} 같은 수정할 수 있는 자료 구조, 수정할 수 있는 변수,
+\term{반복문}{loop}을 사용하는 편이 낫다. 그래야 더 효율적인 구현이 탄생한다. 즉, 좋은
+코드를 작성하려면 목표에 맞는 프로그래밍 방식을 잘 골라야 한다.
+
+\section{재귀}
+
+프로그램을 작성할 때 같은 계산을 여러 번 반복해야 하는 경우가 많다. 그럴 때 보통
+반복문을 사용한다. 하지만 모든 것을 수정할 수 없다면 반복문의 시작으로 다시
+돌아가 봤자 그 어떤 상태도 바뀌지 않는다. 그러니 매 반복마다 같은 연산을 수행할
+때 다른 값을 사용할 수 없다. 반복을 끝내는 것 역시 불가능하다. 따라서 함수형
+프로그래밍에서는 반복문이 쓸모없다. 계산을 반복하려면 반복문 대신
+\term{재귀 함수}{recursive function}를 사용해야 한다. 재귀 함수는 자기 자신을 호출하는
+함수다. 계산을 더 반복하고 싶다면 올바른 인자와 함께 자기 자신을 호출한다. 자기
+자신을 호출하지 않으면 계산이 끝난다.
+
+아래의 \code{factorial} 함수는 주어진 정수의 계승을 계산한다. 편의상 입력값이 음수가
+아니라 가정하겠다. 먼저 명령형 방식의 구현부터 보자.
+
+\begin{verbatim}
+def factorial(n: Int) = {
+  var i = 1, res = 1
+  while (i <= n) {
+    res *= i
+    i += 1
+  }
+  res
+}
+\end{verbatim}
+
+같은 일을 하는 함수를 \term{재귀}{recursion}를 사용해 함수형 방식으로 구현할 수 있다.
+
+\begin{verbatim}
+def factorial(n: Int): Int =
+  if (n <= 0)
+    1
+  else
+    n * factorial(n - 1)
+\end{verbatim}
+
+스칼라에서는 일반적인 함수가 결과 타입을 생략할 수 있는 것과 달리 재귀 함수는
+반드시 결과 타입을 명시해야 한다.
+
+두 번째 구현이 첫 번째 구현보다 좋은 가장 큰 이유는 구현의 올바름을 더 쉽게
+확인할 수 있다는 점이다.
+
+첫 번째 구현의 올바름을 확인하려면 \term{반복문의 불변성질}{loop invariant}을 찾아야
+한다. 어떤 반복문의 불변성질은 그 반복문의 시작 지점에서 언제나 참인 명제를
+말한다. 이 경우에는 불변성질이 $((\code{i}-1)!=\code{res})\land(\code{i}\le\code{n}+1)$이다.
+이 불변성질을 사용해 함수의 마지막 줄에서
+$\code{i}=\code{n}+1$이고 $\code{res}=(\code{i}-1)!=\code{n}!$이라는
+사실을 확인할 수 있다. 이 함수가 올바르게 계승을
+구현했음을 알게 된 것이다. 그러나 적절한 불변성질을 찾고 그 불변성질이 실제로
+반복문의 시작 지점에서 항상 참임을 보이기는 쉽지 않다.
+
+반복문을 사용하는 함수에 비해 재귀 함수는 수학적 정의를 직접적으로 드러낸다.
+계승은 수학적으로 다음과 같이 정의된다.
+
+\[n!=\begin{cases}1 & \text{if } n=0\\n \times (n-1)! &
+\text{otherwise}\end{cases}\]
+
+두 번째 구현의 모양이 수학적 정의와 일치함을 쉽게 확인할 수 있다. 그러니 구현의
+올바름은 자명하다. 이처럼 재귀를 사용한 구현은 그 자체로 수학적 정의를 간결하고
+직관적으로 드러낸다. 많은 경우에 반복문을 사용하는 함수보다 재귀 함수의 올바름을
+확인하기 쉬운 이유다.
+
+재귀 함수는 리스트와 같은 재귀적인 자료 구조를 다룰 때도 유용하다. 어떤 리스트는
+빈 리스트거나 비어 있지 않은 리스트다. 그리고 비어 있지 않은 리스트는 머리
+원소와 꼬리 리스트로 구성된다. 이처럼 리스트의 정의가 리스트를 언급하므로
+리스트는 재귀적인 자료 구조다. 리스트를 다루는 함수를 작성해 봄으로써
+재귀를 익혀 보자.
+
+다음 함수는 인자로 받은 리스트의 각 원소보다 1 큰 수를 원소로 가지는 리스트를
+결과로 낸다.
+
+\begin{verbatim}
+def inc1(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => h + 1 :: inc1(t)
+}
+\end{verbatim}
+
+주어진 리스트가 비어 있을 때 결괏값은 빈 리스트다. 그렇지 않다면 결괏값은 비어
+있지 않은 리스트로, 머리는 원래의 머리보다 1 크고 꼬리의 각 원소는 원래 꼬리의
+각 원소보다 1 크다.
+
+다음 함수 \code{square} 역시 비슷하게 동작한다. \code{square}는 인자로 받은 리스트의 각 원소를
+제곱한 값을 원소로 가지는 리스트를 결과로 낸다.
+
+\begin{verbatim}
+def square(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => h * h :: square(t)
+}
+\end{verbatim}
+
+다음 함수는 인자로 받은 리스트의 원소 중 홀수인 값만 원소로 가지는 리스트를
+결과로 낸다.
+
+\begin{verbatim}
+def odd(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t =>
+    if (h % 2 != 0)
+      h :: odd(t)
+    else
+      odd(t)
+}
+\end{verbatim}
+
+비어 있지 않은 리스트가 주어지면 우선 머리가 홀수인지 아닌지 확인한다. 머리가
+홀수이면 결괏값은 머리를 그대로 가진 채 원래 꼬리에서 홀수만 남긴 리스트다.
+반대로 머리가 짝수이면 머리를 없앤 뒤 꼬리에서 홀수만 남긴다.
+
+비슷하게, 다음 함수는 인자로 받은 리스트의 원소 중 양수만 원소로 가지는 리스트를
+결과로 낸다.
+
+\begin{verbatim}
+def positive(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t =>
+    if (h > 0)
+      h :: positive(t)
+    else
+      positive(t)
+}
+\end{verbatim}
+
+다음 함수는 주어진 리스트의 원소의 합을 계산한다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = l match {
+  case Nil => 0
+  case h :: t => h + sum(t)
+}
+\end{verbatim}
+
+빈 리스트에는 원소가 없으므로 원소의 합이 0이다. 리스트가 비어 있지 않다면
+원소의 합은 머리의 값을 꼬리에 있는 원소들의 합에 더한 것이다.
+
+비슷하게, 다음 함수는 주어진 리스트의 원소의 곱을 계산한다.
+
+\begin{verbatim}
+def product(l: List[Int]): Int = l match {
+  case Nil => 1
+  case h :: t => h * product(t)
+}
+\end{verbatim}
+
+재귀를 사용한 구현에는 몇 가지 단점이 있다. 대표적으로는 함수 호출의
+\term{오버헤드}{overhead}와 \term{스택 넘침}{stack overflow}이 있다. 현대의
+프로세서는 함수 호출의
+오버헤드 정도는 무시할 만한 성능을 갖추고 있다. 하지만 성능이 극도로 중요한
+프로그램을 작성한다면 재귀보다는 반복문을 사용하는 편이 낫다. 스택 넘침은
+반복적인 함수 호출로 인해 스택 공간이 모자를 때 발생한다. 스택 넘침이 발생하면
+프로그램이 원하는 결과를 내지 못한 채 실행이 종료되니 이는 심각한 문제다. 게다가
+웹 서버처럼 영원히 실행되어야 하는 프로그램을 재귀 함수로 작성한다면 언젠가는
+무조건 스택이 넘치고 말 테다. 스택 넘침을 해결하기 위해 대부분의 함수형 언어는
+다음 절의 주제인 \term{꼬리 호출 최적화}{tail call optimization}를 제공한다.
+
+\section{꼬리 호출 최적화}
+\labsec{tco}
+
+함수의 마지막 작업이 함수를 호출하는 것일 때, 우리는 그 호출을
+\term{꼬리 호출}{tail call}이라 부른다. 함수를 호출한 것이 마지막 작업이라는 말은 호출된 함수의
+결괏값을 그대로 결과로 낸다는 뜻이다. 즉, 꼬리 호출 이후에는 원래 함수에서 더
+이상 어떤 계산도 하지 않으며, 호출된 함수가 계산을 수행한다. 그러니 원래 함수의
+지역 변수들을 계속 저장하고 있을 필요가 없다. 지역 변수를 저장하고 있는
+\term{스택 프레임}{stack frame}을 없애 버릴 수 있는 것이다. 대부분의 함수형 언어는 이 사실을
+활용해 꼬리 호출 최적화를 수행한다. 컴파일러는 각 함수 호출이 꼬리 호출인지
+확인한다. 만약 그렇다면 호출 전에 현재 함수의 스택 프레임을 없애는 코드를
+삽입한다. 반면 꼬리 호출이 아닌 경우에는 스택 프레임을 없애지 않는다. 호출된
+함수로부터 결괏값을 받은 다음에 계속해서 자신의 지역 변수를 사용할 수 있기
+때문이다. 함수를 호출하기 전에 스택 프레임을 없애면 함수를 호출한 뒤에도 스택
+사용량이 증가하지 않는다. 따라서 프로그램의 모든 함수 호출이 꼬리 호출이라면,
+스택이 전혀 자라지 않기에 스택 넘침이 발생하지 않는다.
+
+\begin{verbatim}
+def factorial(n: Int): Int =
+  if (n <= 0)
+    1
+  else
+    n * factorial(n - 1)
+\end{verbatim}
+
+앞서 정의한 \code{factorial} 함수는 \code{factorial(n - 1)}의 결괏값에 \code{n}을 곱한다. 함수 호출이
+아닌 곱셈이 마지막 작업인 셈이다. 그러니 재귀 호출이 꼬리 호출이 아니고, 함수를
+호출할 때 스택 프레임이 남아 있어야만 한다. \code{factorial(3)}의 계산 과정은 다음과
+같다.
+
+\begin{itemize}
+\item \code{factorial(3)}
+\item \code{3 * factorial(2)}
+\item \code{3 * (2 * factorial(1))}
+\item \code{3 * (2 * (1 * factorial(0)))}
+\item \code{3 * (2 * (1 * 1))}
+\item \code{3 * (2 * 1)}
+\item \code{3 * 2}
+\item \code{6}
+\end{itemize}
+
+최대 4개의 스택 프레임까지 스택이 자란다. 만약 처음에 \code{factorial}에 주어진 인자가
+매우 크다면 스택이 반복해서 자라 결국은 넘치고 만다.
+
+\begin{verbatim}
+factorial(10000)
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+java.lang.StackOverflowError
+  at .factorial
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{실행 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+이제 꼬리 호출을 사용해 \code{factorial}을 다시 구현해 보자. 그러려면 \code{n}을
+\code{factorial(n - 1)}의 결괏값에 곱하는 대신, \code{n}과 \code{n – 1}을 모두
+인자로 넘긴 뒤 호출된 함수에서 \code{n}을 $(\code{n - 1})!$에
+곱하도록 해야 한다. 이 전략은 다음과 같이 중간 결과를 계속해서
+인자로서 전달하는 것으로 생각할 수 있다.
+
+\begin{itemize}
+\item \code{factorial(3)}
+\item \code{factorial(2, intermediate result = 3)}
+\item \code{factorial(1, intermediate result = 3 * 2)}
+\item \code{factorial(1, intermediate result = 6)}
+\item \code{factorial(0, intermediate result = 6 * 1)}
+\item \code{factorial(0, intermediate result = 6)}
+\item \code{6}
+\end{itemize}
+
+꼬리 호출을 사용하는 \code{factorial} 구현은 다음과 같다.
+
+\begin{verbatim}
+def factorial(n: Int, inter: Int): Int =
+  if (n <= 0)
+    inter
+  else
+    factorial(n - 1, inter * n)
+\end{verbatim}
+
+중간 결과를 인자로 받기 위해 매개변수를 하나 추가했다. \code{factorial(n, i)}는
+$\code{n}!\times\code{i}$를 계산한다.
+
+사실 이 함수는 단순히 꼬리 호출을 사용하는 것이 아니다. 더 정확하게는
+\term{꼬리 재귀}{tail-recursive} 함수, 즉 마지막 작업으로 자기 자신을 호출하는 함수다. 다른
+함수형 언어와 달리 스칼라는 모든 꼬리 호출을 최적화하지 못한다. 오직 꼬리 재귀
+호출만 최적화할 수 있다. 그 이유는 스칼라 컴파일러가 JVM에서 실행되는 자바
+바이트코드를 만들기 때문이다. JVM은 현재 함수의 스택 프레임을 없애면서 다른
+함수를 호출하는 것을 지원하지 않는다. 그렇기에 스칼라 컴파일러는 일반적인 꼬리
+호출 최적화를 할 수 없다. 그 대신 꼬리 재귀 호출을 반복문으로 바꾼다. 위의
+\code{factorial} 함수는 다음 바이트코드로 컴파일된다.
+
+\begin{verbatim}
+public int factorial(int, int);
+  Code:
+     0: iload_1
+     1: iconst_0
+     2: if_icmpgt     9
+     5: iload_2
+     6: goto          20
+     9: iload_1
+    10: iconst_1
+    11: isub
+    12: iload_2
+    13: iload_1
+    14: imul
+    15: istore_2
+    16: istore_1
+    17: goto          0
+    20: ireturn
+\end{verbatim}
+
+함수 호출을 위해 사용되는 \code{invokevirtual} 명령어가 등장하지 않은 것을 볼 수 있다.
+그 대신 \code{goto} 명령어를 사용해 함수의 시작 지점으로 이동함으로써 반복문을
+실행한다. 최적화 덕분에 새로 만든 \code{factorial} 함수는 스택 넘침을 일으키지 않는다.
+
+사실 꼬리 재귀를 사용하더라도 \term{정수 넘침}{integer overflow} 때문에
+여전히 큰 수의 계승을 올바르게 구할 수 없다.
+
+\begin{verbatim}
+assert(factorial(10000, 1) == 0)  // weird result
+\end{verbatim}
+
+이럴 때는 \code{Int} 대신 \code{BigInt} 타입을 사용하면 된다.
+
+\begin{verbatim}
+def factorial(n: BigInt, inter: BigInt): BigInt =
+  if (n <= 0)
+    inter
+  else
+    factorial(n - 1, inter * n)
+
+assert(factorial(10000, 1) > 0)
+\end{verbatim}
+
+스칼라 컴파일러의 꼬리 재귀 호출을 반복문으로 바꾸는 최적화는 스택 넘침을 막는
+것 말고도 함수 호출의 오버헤드를 없앤다는 장점도 있다. 하지만
+\term{상호 재귀 함수}{mutually recursive function}의 스택 넘침을 막을 수 없다는 단점이 있다.
+\term{상호 재귀}{mutual recursion}는 두 개 이상의 정의가 서로를 참조하는 경우를 말한다.
+다음의 \code{even}과 \code{odd}는 꼬리 호출을 사용함에도 꼬리 재귀가 아니기 때문에
+스칼라에서는 스택 넘침을 막을 수 없다.
+
+\begin{verbatim}
+def even(n: Int): Boolean = if (n <= 0) true else odd(n - 1)
+def odd(n: Int): Boolean = if (n == 1) true else even(n - 1)
+\end{verbatim}
+
+프로그래머가 자신이 작성한 함수가 꼬리 재귀 함수가 맞는지 확신이 없는 경우에는
+스칼라 컴파일러에게 확인해 달라고 부탁할 수 있다. 다음과 같이 함수 정의 앞에
+\term{애너테이션}{annotation}을 붙이면 컴파일러가 해당 함수가 꼬리 재귀 함수인지
+확인한다.
+
+\begin{verbatim}
+import scala.annotation.tailrec
+@tailrec def factorial(n: BigInt, inter: BigInt): BigInt =
+  if (n <= 0)
+    inter
+  else
+    factorial(n - 1, inter * n)
+\end{verbatim}
+
+만약 주어진 함수가 꼬리 재귀 함수가 아니면 컴파일 시간 오류가 발생한다.
+
+\begin{verbatim}
+@tailrec def factorial(n: Int): Int =
+  if (n <= 0)
+    1
+  else
+    n * factorial(n - 1)
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+      ^
+error:
+could not optimize @tailrec annotated method factorial:
+it contains a recursive call not in tail position
+\end{verbatim}
+\vspace{-1.5em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+애너테이션은 컴파일을 통해 만들어지는 바이트코드의 동작에는 전혀 영향을 주지
+않는다. 애너테이션을 붙이지 않아도 컴파일러는 언제나 꼬리 재귀 함수를
+최적화한다. 다만 애너테이션을 붙임으로써 꼬리 재귀 함수여야 하는 함수를 실수로
+그렇지 않게 만드는 상황을 방지할 수 있다.
+
+꼬리 재귀 함수로 구현한 \code{factorial}을 호출할 때 굳이 인자를 하나 더 줘야 하는
+불편함이 있다. 이 문제를 해결하려면 다음과 같이 인자를 하나만 받는
+\code{factorial} 함수를 정의하고 그 안에 지역 함수로 꼬리 재귀 함수를 구현하면 된다.
+
+\begin{verbatim}
+def factorial(n: BigInt): BigInt = {
+  @tailrec def aux(n: BigInt, inter: BigInt): BigInt =
+    if (n <= 0)
+      inter
+    else
+      aux(n - 1, inter * n)
+  aux(n, 1)
+}
+\end{verbatim}
+
+리스트를 다루는 일부 재귀 함수 역시 꼬리 재귀 함수로 작성할 수 있다. 다음은
+\code{sum}을 꼬리 재귀 함수로 구현한 것이다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = {
+  @tailrec def aux(l: List[Int], inter: Int): Int = l match {
+    case Nil => inter
+    case h :: t => aux(t, inter + h)
+  }
+  aux(l, 0)
+}
+\end{verbatim}
+
+\code{aux(l, n)}은 \code{l}의 원소의 합에 \code{n}을 더한 값을 구한다.
+
+다음은 \code{product}를 꼬리 재귀 함수로 구현한 것이다.
+
+\begin{verbatim}
+def product(l: List[Int]): Int = {
+  @tailrec def aux(l: List[Int], inter: Int): Int = l match {
+    case Nil => inter
+    case h :: t => aux(t, inter * h)
+  }
+  aux(l, 1)
+}
+\end{verbatim}
+
+\section{예제}
+
+\begin{exercise}
+\labex{immutability-student}
+
+\code{Student}가 다음과 같이 정의되어 있다.
+
+\begin{verbatim}
+case class Student(name: String, height: Int)
+\end{verbatim}
+
+주어진 리스트에 들어 있는 각 학생의 이름을 가지는 리스트를 결과로 내는 함수
+\code{names}를 구현하라.
+
+\begin{verbatim}
+def names(l: List[Student]): List[String] = ???
+\end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{immutability-tall}
+
+\code{Student}가 위와 동일하게 정의되어 있다. 주어진 리스트에 들어 있는 학생 중 키가
+170보다 큰 학생만 가지는 리스트를 결과로 내는 함수 \code{tall}을 구현하라.
+
+\begin{verbatim}
+def tall(l: List[Student]): List[Student] = ???
+\end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{immutability-length}
+
+주어진 리스트의 길이를 계산하는 함수 \code{length}를 구현하라.
+
+\begin{verbatim}
+def length(l: List[Int]): Int = ???
+\end{verbatim}
+
+이미 표준 라이브러리가 \code{length} 메서드를 제공하지만, 재귀를 통해 직접 구현하라.
+
+\end{exercise}
+
+\begin{exercise}
+\labex{immutability-append}
+
+주어진 리스트의 맨 뒤에 주어진 정수를 추가하여 만들어지는 리스트를 결과로 내는
+함수 \code{append}를 구현하라.
+
+\begin{verbatim}
+def append(l: List[Int], n: Int): List[Int] = ???
+\end{verbatim}
+
+그런 다음 원소를 리스트 맨 뒤에 추가할 때의 시간 복잡도를 \code{::}을 통해 원소를
+리스트 맨 앞에 추가할 때의 시간 복잡도인 $O(1)$과 비교하라.
+
+이미 표준 라이브러리가 \code{appended} 메서드를 제공하지만, 재귀를 통해 직접 구현하라.
+
+\end{exercise}
