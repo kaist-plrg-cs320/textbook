@@ -1,10 +1,10 @@
 \chapter{Functions}
 \labch{functions}
 
-This section focuses on use of functions in functional programming.
+This chapter focuses on use of functions in functional programming.
 In functional programming, functions are first-class. First-class functions
 allow programmers to abstract complex computation easily.
-This section explains what first-class functions are.
+This chapter explains what first-class functions are.
 In addition, anonymous functions and closures, which are related to first-class
 functions, will be introduced. To show the power of first-class functions, we
 will re-implement the functions in \refch{immutability} (\code{inc1},
@@ -45,9 +45,8 @@ Now, let us see how we can use first-class functions in Scala with some code
 examples.
 
 \begin{verbatim}
-def f(x: Int): Int = x
 def g(h: Int => Int): Int = h(0)
-
+def f(x: Int): Int = x
 assert(g(f) == 0)
 \end{verbatim}
 
@@ -94,7 +93,7 @@ function values is possible. \code{h0(0)} is a valid expression and results in
 val h1 = f
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
          ^
 error: missing argument list for method f
@@ -208,7 +207,7 @@ val h: Int => Int = x => x
 val h = x => x
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
          ^
 error: missing parameter type
@@ -270,14 +269,14 @@ g1(f(_))
 \end{verbatim}
 
 As intended, \verb!f(_)! becomes \code{x => f(x)}, whose type is \code{Int =>
-Int}.\footnote{Actually, there is no need to write
-\code{g(f(\_))} because it is equal to \code{g(f)}.}
+Int}. Actually, there is no need to write
+\code{g(f(\_))} because it is equal to \code{g(f)}.
 
 \begin{verbatim}
 g1(f(_ + 1))
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
      ^
 error: missing parameter type for expanded function
@@ -305,7 +304,7 @@ Int) => Int}, and the compilation succeeds.
 g2(f(_ + 1) + _)
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
               ^
 error: missing parameter type for expanded function

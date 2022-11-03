@@ -1,0 +1,798 @@
+\chapter{함수}
+\labch{functions}
+
+이 장은 함수형 프로그래밍에서 함수를 어떻게 사용하는지 설명한다. 함수형
+프로그래밍에서 함수는 \term{일급}{first class}이다. \term{일급 함수}{first-class
+function}는 프로그래머가 복잡한 계산을 단순하게 요약하는 것을 돕는다. 이 장에서
+일급 함수가 무엇인지 알아볼 것이다. 더 나아가, 일급 함수와 관련된 개념인
+\term{익명 함수}{anonymous function}와 \term{클로저}{closure}도 소개한다. 일급
+함수의 유용함을 알아보기 위해 \refch{immutability}에서 작성한 \code{inc1}이나
+\code{square} 같은 함수를 일급 함수를 활용해 다시 구현할 것이다.
+
+\section{일급 함수}
+
+프로그래밍 언어에서 어떤 대상이 일급이라는 말은 그 대상이 다음 조건을 만족한다는
+뜻이다.
+
+\begin{itemize}
+\item 함수에 인자로 전달될 수 있다.
+\item 함수의 결괏값이 될 수 있다.
+\item 변수가 나타내는 값이 될 수 있다.
+\end{itemize}
+
+즉, 어떤 대상이 일급이라는 말은 그 대상을 값으로서 사용할 수 있다는 의미다.
+함수형 언어에서 함수는 매우 중요하며 값으로 취급된다. 이렇게 값으로 사용될 수
+있는 함수를 일급 함수라 부른다.
+
+어떤 사람들은 \term{고차 함수}{higher-order function}라는 용어를 사용한다. 고차
+함수는 \term{일차 함수}{first-order function}가 아닌 함수를 말한다. 여기서 일차
+함수는 함수를 인자로 받거나 함수를 결과로 낼 수 없는 함수다. 그러니 고차 함수는
+함수를 인자로 받거나 함수를 결과로 낼 수 있는 함수다. 일급 함수는 인자로
+전달되거나 결괏값이 될 수 있는 함수를 뜻하니, 엄밀히 따지면 고차 함수는 일급
+함수와는 다른 뜻인 셈이다. 그러나 당연하게도 일급 함수를 제공하는 언어는 고차
+함수를 제공하고, 고차 함수를 제공하는 언어는 일급 함수를 제공한다. 일급 함수를
+인자로 전달했다면 그 인자를 받은 함수는 고차 함수일 것이고, 고차 함수가 인자로
+함수를 받았다면 인자로 전달된 함수는 일급 함수일 것이기 때문이다. 그래서 많은
+경우에 사람들은 두 용어를 구분하지 않고 사용하며, 두 용어를 같은 뜻으로 이해해도
+크게 문제되지 않는다.
+
+스칼라에서 일급 함수를 사용하는 코드 예시를 보자.
+
+\begin{verbatim}
+def g(h: Int => Int): Int = h(0)
+def f(x: Int): Int = x
+assert(g(f) == 0)
+\end{verbatim}
+
+함수 \code{g}는 매개변수 \code{h}를 가진다. \code{h}의 타입은 \code{Int =>
+Int}다. \code{g}에 전달되는 인자는 정수 하나를 받아 정수를 결과로 내는 함수다.
+스칼라에서 함수의 타입을 나타낼 때는 \code{=>}를 사용한다. 매개변수가 없는
+함수의 타입은 \code{() => [return type]}이다. 매개변수가 하나라면 타입이
+\code{[parameter type] => [return type]}이다. 매개변수가 두 개 이상이라면 괄호를
+사용해 \code{([parameter type], … ) => [return type]}이라 적는다. 함수
+\code{f}는 정수 하나를 인자로 받아 정수를 결과로 낸다. 그러니 \code{f}의 타입은
+\code{Int => Int}이며 \code{f}를 \code{g}의 인자로 사용할 수 있다. \code{g(f)}를
+계산하는 것은 \code{f(0)}을 계산하는 것과 같으니 \code{g(f)}의 결과는 0이다.
+
+\begin{verbatim}
+def f(y: Int): Int => Int = {
+  def g(x: Int): Int = x
+  g
+}
+
+assert(f(0)(0) == 0)
+\end{verbatim}
+
+함수 \code{f}는 함수 \code{g}를 결과로 낸다. \code{f}의 결과 타입이 \code{Int =>
+Int}이므로 결괏값이 정수를 받아 정수를 내놓는 함수여야 한다. \code{g}는 이
+조건을 만족한다. \code{f(0)}은 \code{g}와 같고, \code{f(0)(0)}은 \code{g(0)}과
+같다. 따라서 \code{f(0)(0)}의 결과는 0이다.
+
+\begin{verbatim}
+val h0 = f(0)
+
+assert(h0(0) == 0)
+\end{verbatim}
+
+\code{f(0)}의 결과를 변수에 저장할 수 있다. \code{h0}가 \code{f(0)}의 결과를
+나타내며 \code{Int => Int} 타입을 가진다. 어떤 변수가 나타내는 값이 함수라면 그
+변수를 마치 함수처럼 사용할 수 있다. 따라서 \code{h0(0)}이라 적을 수 있으며 그 결과는 0이다.
+
+\begin{verbatim}
+val h1 = f
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+         ^
+error: missing argument list for method f
+
+Unapplied methods are only converted to functions
+when a function type is expected.
+
+You can make this conversion explicit
+by writing `f _` or `f(_)` instead of `f`.
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+한편 \code{f}와 같은 값을 나타내는 변수를 정의하려 하면 컴파일 시간 오류가
+발생한다. 스칼라에서 \code{def}를 통해 정의한 함수는 그 자체로는 값이 아니다.
+\code{f}는 함수의 이름일 뿐이지 어떤 값을 나타내는 변수가 아니다. 그렇기에
+\code{f}을 초깃값으로 하여 변수를 정의할 수 없다. 위의 오류 문구가 이야기하듯이,
+함수 이름을 값으로 바꾸려면 언더스코어가 필요하다.
+
+\begin{verbatim}
+val h1 = f _
+
+assert(h1(0)(0) == 0)
+\end{verbatim}
+
+위 코드는 성공적으로 컴파일된다. \code{h1}의 타입은 \code{Int => (Int =>
+Int)}이다. \code{=>}가 \term{오른쪽 결합을 하므로}{right-associative} 이 타입을
+\code{Int => Int => Int}라 적어도 된다. \code{h1(0)(0)}은 \code{f(0)(0)}과
+동일하며 그 결과는 0이다.
+
+사실 위에서 \code{val h1 = f}라고 작성하기 전까지는 함수 이름을 값으로 사용하는
+데 문제가 없었다. 그 이유는 함수 타입의 값이 필요한 곳에 함수 이름이 등장했을 때
+스칼라 컴파일러가 자동으로 함수 이름을 값으로 바꾸기 때문이다. 따라서
+\code{h1}의 타입을 함수 타입으로 지정해 주면 언더스코어를 사용하지 않아도
+\code{f}를 \code{h1}에 대입할 수 있다. 다음 코드는 잘 컴파일된다.
+
+\begin{verbatim}
+val h1: Int => Int => Int = f
+\end{verbatim}
+
+프로그래머가 함수 이름을 값으로 사용하려는 대부분의 경우에 함수 타입이 필요한
+자리에 함수 이름을 적는다. 이런 경우에는 언더스코어를 붙이거나 의식적으로 타입
+표시를 달지 않아도 문제가 없다. 바로 앞선 예시처럼 함수 이름이 값으로 바뀌도록
+강제하기 위해 언더스코어나 타입 표시를 추가해야 하는 경우는 드물다.
+
+컴파일러는 함수 이름을 어떻게 값으로 바꿀까? 만약 \code{f}의 매개변수 타입이
+\code{Int}이면, \code{f}에 대응되는 값은 \code{(x: Int) => f(x)}이다. 이러한
+변환을 \term{에타 확대}{eta expansion}라 부른다. 여기서 \code{(x: Int) =>
+f(x)}는 \code{f}와
+같은 일을 하는 이름 없는 함수다. 이제 이름 없는 함수에 관해 알아보자.
+
+\section{익명 함수}
+
+함수형 프로그래밍에서는 어떤 함수가 딱 한 번, 인자나 결괏값으로만 사용되는
+경우가 흔하다. 이런 경우 함수에 굳이 이름을 붙이는 것이 오히려 번거롭다. 함수에
+이름을 붙이는 것은 그 함수를 여러 번 사용할 때 편하게 이름으로 부르기 위함이다.
+함수의 동작은 매개변수와 몸통에 의해 결정되며, 이름은 동작에 영향을 주지 않는다.
+그래서 함수형 언어는 이름을 붙이지 않고 함수를 정의할 방법을 제공한다. 이름을
+붙이지 않고 정의한 함수를 익명 함수라 부른다.
+
+스칼라에서 익명 함수는 다음과 같이 만든다.
+
+\begin{verbatim}
+([parameter name]: [parameter type], …) => [expression]
+\end{verbatim}
+
+\code{def}를 통해 정의한 함수와 마찬가지로, 익명 함수는 인자도 될 수 있고,
+결괏값도 될 수 있고, 변수가 나타내는 값도 될 수 있다. 익명 함수를 어딘가에
+저장하지 않고 바로 호출할 수도 있다.
+
+\begin{verbatim}
+def g(h: Int => Int): Int = h(0)
+g((x: Int) => x)
+
+def f(): Int => Int = (x: Int) => x
+f()(0)
+
+val h = (x: Int) => x
+h(0)
+
+((x: Int) => x)(0)
+\end{verbatim}
+
+위 코드는 익명 함수를 사용해서 이전 절에서 본 코드와 같은 일을 수행한다.
+
+\code{def}를 통해 정의한 함수가 그렇듯이 익명 함수도 매개변수 타입 표시를 필요로 한다.
+하지만 오직 한 번 사용할 익명 함수의 매개변수 타입을 매번 명시하는 것은 번거롭고
+코드를 장황하게 만든다. 이를 해결하기 위해 함수 타입이 필요한 자리에 익명 함수가
+등장하면 컴파일러가 매개변수 타입을 스스로 알아낸다.
+
+\begin{verbatim}
+def g(h: Int => Int): Int = h(0)
+g(x => x)
+\end{verbatim}
+
+\code{g}의 매개변수 타입은 \code{Int => Int}이다. \code{Int => Int} 타입이
+필요한 자리에 \code{x => x}가 사용되었으므로, 컴파일러가 \code{x}의 타입이
+\code{Int}임을 알아낼 수 있다.
+
+\begin{verbatim}
+val h: Int => Int = x => x
+\end{verbatim}
+
+\code{h}에 타입 표시가 붙어 있다. 마찬가지로 컴파일러가 \code{x}의 타입이
+\code{Int}임을 알아낸다.
+
+\begin{verbatim}
+val h = x => x
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+         ^
+error: missing parameter type
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+반면 이 경우에는 \code{x}의 타입을 컴파일러가 알아낼 정보가 없기에 컴파일 시간
+오류가 발생한다.
+
+익명 함수는 대개 인자로 사용된다. 익명 함수를 인자로 받을 함수의 매개변수 타입이
+익명 함수의 타입을 결정하기 때문에 컴파일러가 익명 함수의 매개변수 타입을 알아낼
+수 있다. 즉, 많은 경우 익명 함수의 매개변수 타입을 생략해도 된다. 하지만 항상
+그렇지는 않다. 매개변수 타입을 생략하도 될지 아직 감이 잘 오지 않는다면 안전하게
+매개변수 타입을 붙이는 편이 좋다.
+
+스칼라는 언더스코어를 사용해서 익명 함수를 만드는 방법도 제공한다. 언더스코어를
+사용하면 익명 함수를 간결하면서도 직관적으로 만들 수 있다. 단, 모든 익명 함수를
+언더스코어를 사용해 만들 수 있는 것은 아니다. 특정 조건을 만족하는 익명 함수만
+가능하다. 그 조건이란, 각 매개변수가 정확히 한 번씩 순서대로 몸통에 등장하는
+것이다. 또한, \code{(x: Int) => x} 같은 항등 함수도 아니어야 한다. 이 조건을
+만족한다면 함수 몸통에서 매개변수가 필요한 자리에 언더스코어를 써서 익명 함수를
+만들 수 있다.
+
+\begin{verbatim}
+def g0(h: Int => Int): Int = h(0)
+g0(_ + 1)
+
+def g1(h: (Int, Int) => Int): Int = h(0, 0)
+g1(_ + _)
+\end{verbatim}
+
+컴파일러는 \verb!_ + 1!을 \code{x => x + 1}로 변환한다. 비슷하게, \verb!_ + _!는
+\code{(x, y) => x + y}가 된다. 컴파일러가 자동으로 언더스코어 개수만큼
+매개변수를 만든 뒤 각 언더스코어를 매개변수로 대체하는 것이다. 이 변환
+과정으로부터 앞서 설명한 조건이 필요한 이유를 자연스럽게 이해할 수 있다.
+
+\begin{verbatim}
+val h0 = (_: Int) + 1
+val h1 = (_: Int) + (_: Int)
+\end{verbatim}
+
+언더스코어에 타입 표시를 붙일 수도 있다. 이렇게 해야만 하는 경우는 드물지만,
+간혹 컴파일러가 매개변수 타입을 알아내지 못한다면 타입 표시를 직접 붙여야 한다.
+
+이 변환은 언더스코어를 포함하는 가장 짧은 식을 대상으로 한다. 그래서 때로는 내가
+원하는 익명 함수를 언더스코어를 사용해 정의하지 못할 수 있다.
+
+\begin{verbatim}
+def f(x: Int): Int = x
+def g1(h: Int => Int): Int = h(0)
+g1(f(_))
+\end{verbatim}
+
+의도한 대로 \verb!f(_)!는 \code{x => f(x)}로 바뀐다. 사실 \verb!g(f(_))!라
+적기보다는 그냥 \code{g(f)}라 적는 편이 낫다.
+
+\begin{verbatim}
+g1(f(_ + 1))
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+     ^
+error: missing parameter type for expanded function
+((<x$1: error>) => x$1.$plus(1))
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+한편, \verb!f(_ + 1)!은 \code{x => f(x + 1)} 대신 \code{f(x => x + 1)}로 바뀐다.
+\verb!_ + 1!이 언더스코어를 포함하는 가장 짧은 식이기 때문이다. \code{f}는
+함수가 아니라 정수를 인자로 받는 함수이므로 위 코드는 컴파일 시간 오류를
+일으킨다.
+
+\begin{verbatim}
+def g2(h: (Int, Int) => Int): Int = h(0, 0)
+g2(f(_) + _)
+\end{verbatim}
+
+\verb!f(_) + _!는 \code{(x, y) => f(x) + y}가 되어 컴파일이 성공한다.
+
+\begin{verbatim}
+g2(f(_ + 1) + _)
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+              ^
+error: missing parameter type for expanded function
+((<x$2: error>) => f(((<x$1: error>) => x$1.$plus(1)))
+  .<$plus: error>(x$2))
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+하지만 \verb!f(_ + 1) + _!는 \code{(x, y) => f(x + 1) + y} 대신 \code{y => f(x
+=> x + 1) + y}가 된다.
+
+언더스코어를 사용해 익명 함수를 만드는 것에 아직 익숙하지 않다면 자신이 작성한
+익명 함수가 무슨 함수를 뜻하는 것인지 정확히 알기 어려울 수 있다. 그렇다면
+언더스코어를 사용하지 않고 익명 함수를 만드는 편이 안전하다.
+
+\section{클로저}
+
+클로저는 만들어질 때의 \term{환경}{environment}을 기억하고 있는 함수를 말한다.
+여기서 환경은 존재하는 각 변수의 값을 기록한 것이다. 클로저의 몸통은 클로저
+내부에서 정의하지 않은 변수를 사용할 수 있다. 그 변수의 값은 환경에 존재한다.
+
+\begin{verbatim}
+def makeAdder(x: Int): Int => Int = {
+  def adder(y: Int): Int = x + y
+  adder
+}
+\end{verbatim}
+
+\code{adder}의 정의를 보면 \code{x}를 사용하지만 정의하지는 않는다.
+
+\begin{verbatim}
+val add1 = makeAdder(1)
+assert(add1(2) == 3)
+
+val add2 = makeAdder(2)
+assert(add2(2) == 4)
+\end{verbatim}
+
+\code{add1}과 \code{add2}는 같은 \code{adder} 함수를 나타내지만, \code{add1}은
+주어진 정수보다 1 큰 정수를 결과로 내는 반면, \code{add2}는 주어진 정수보다 2 큰
+정수를 결과로 낸다. \code{add1(2)}와 \code{add2(2)}의 결과가 각각 3과 4로 서로
+다른 것이다. 이는 클로저가 자신이 만들어질 때의 환경을 가지고 있기 때문이다.
+\code{add1}은 그냥 \code{adder}가 아니라 \code{(adder, x = 1)}과 같은 값이다.
+마찬가지로, \code{add2}는 \code{(adder, x = 2)}이다. \code{add1}의 환경에는
+\code{x}가 1이라는 정보가 저장되어 있기에 \code{add1(2)}의 결과가 3이고,
+\code{add2}의 환경에는 \code{x}가 2라는 정보가 저장되어 있기에 \code{add2(2)}의
+결과가 4이다.
+
+\section{일급 함수와 리스트}
+
+\refch{immutability}에서 정의한 함수를 일급 함수를 통해 어떻게 일반화할 수
+있는지 알아보자.
+
+\begin{verbatim}
+def inc1(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => h + 1 :: inc1(t)
+}
+
+def square(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => h * h :: square(t)
+}
+\end{verbatim}
+
+\code{inc1}은 주어진 리스트의 각 원소를 1씩 키우고, \code{square}는 각 원소를
+제곱한다. 두 함수는 굉장히 비슷하다. 두 함수의 이름을 g로 통일하면 더
+비슷해진다.
+
+\begin{verbatim}
+def g(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => h + 1 :: g(t)
+}
+
+def g(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => h * h :: g(t)
+}
+\end{verbatim}
+
+유일한 차이점은 \code{::}의 왼쪽에 \code{h + 1}과 \code{h * h} 중 무엇이 오냐는
+것이다. 매개변수 하나만 추가하면 두 함수를 완전히 같게 만들 수 있다.
+
+\begin{verbatim}
+def g(l: List[Int], f: Int => Int): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => f(h) :: g(t, f)
+}
+g(l, h => h + 1)
+
+def g(l: List[Int], f: Int => Int): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => f(h) :: g(t, f)
+}
+g(l, h => h * h)
+\end{verbatim}
+
+이 함수를 \code{map}이라 부른다. 각 원소와 대응(map)되는 값들로 이루어진
+리스트를 만들기 때문이다.
+
+\begin{verbatim}
+def map(l: List[Int], f: Int => Int): List[Int] = l match {
+  case Nil => Nil
+  case h :: t => f(h) :: map(t, f)
+}
+\end{verbatim}
+
+\code{inc1}과 \code{square}를 \code{map}을 사용해 다시 구현할 수 있다.
+
+\begin{verbatim}
+def inc1(l: List[Int]): List[Int] = map(l, h => h + 1)
+def square(l: List[Int]): List[Int] = map(l, h => h * h)
+\end{verbatim}
+
+\code{inc1}을 구현할 때는 언더스코어를 사용할 수 있다.
+
+\begin{verbatim}
+def inc1(l: List[Int]): List[Int] = map(l, _ + 1)
+\end{verbatim}
+
+이번에는 \code{odd}와 \code{positive}를 비교해 보자.
+
+\begin{verbatim}
+def odd(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t =>
+    if (h % 2 != 0)
+      h :: odd(t)
+    else
+      odd(t)
+}
+
+def positive(l: List[Int]): List[Int] = l match {
+  case Nil => Nil
+  case h :: t =>
+    if (h > 0)
+      h :: positive(t)
+    else
+      positive(t)
+}
+\end{verbatim}
+
+이 두 함수도 서로 비슷하다. 함수 이름을 통일하고 매개변수를 추가하면 두 함수를
+같게 만들 수 있다.
+
+\begin{verbatim}
+def filter(l: List[Int], f: Int => Boolean): List[Int] = l match {
+  case Nil => Nil
+  case h :: t =>
+    if (f(h))
+      h :: filter(t, f)
+    else
+      filter(t, f)
+}
+\end{verbatim}
+
+이 함수를 \code{filter}라 부른다. 조건을 만족하지 않는 원소를 걸러 내기(filter) 때문이다.
+
+\code{odd}와 \code{positive}를 \code{filter}를 사용해 다시 구현할 수 있다.
+
+\begin{verbatim}
+def odd(l: List[Int]): List[Int] =
+  filter(l, h => h % 2 != 0)
+def positive(l: List[Int]): List[Int] =
+  filter(l, h => h > 0)
+\end{verbatim}
+
+언더스코어를 사용하면 더 간결하다.
+
+\begin{verbatim}
+def odd(l: List[Int]): List[Int] = filter(l, _ % 2 != 0)
+def positive(l: List[Int]): List[Int] = filter(l, _ > 0)
+\end{verbatim}
+
+이제 꼬리 재귀를 사용하지 않은 \code{sum}과 \code{product}를 보자.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = l match {
+  case Nil => 0
+  case h :: t => h + sum(t)
+}
+
+def product(l: List[Int]): Int = l match {
+  case Nil => 1
+  case h :: t => h * product(t)
+}
+\end{verbatim}
+
+함수 이름을 \code{g}로 같게 만들고 나면 차이점이 둘 남는다. 하나는 \code{Nil}
+케이스가 계산하는 식 0과 1이고, 다른 하나는 \code{h :: t} 케이스가 계산하는 식
+\code{h + g(t)}와 \code{h * g(t)}이다. 그러니 두 함수를 완전히 같게 만들려면
+매개변수를 둘 추가해야 한다. 하나는 \code{Nil} 케이스를 위한 초깃값, 다른 하나는
+\code{h와 g(t)}를 인자로 받아 계산하는 함수다.
+
+\begin{verbatim}
+def foldRight(
+  l: List[Int],
+  n: Int,
+  f: (Int, Int) => Int
+): Int = l match {
+  case Nil => n
+  case h :: t => f(h, foldRight(t, n, f))
+}
+\end{verbatim}
+
+이 함수를 \code{foldRight}라 부른다. 초깃값을 리스트의 오른쪽(right) 끝에 붙인 뒤 그쪽부터 리스트를 접기(fold) 때문이다.
+
+\code{sum}과 \code{product}를 \code{foldRight}를 사용해 다시 구현할 수 있다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int =
+  foldRight(l, 0, (h, gt) => h + gt)
+def product(l: List[Int]): Int =
+  foldRight(l, 1, (h, gt) => h * gt)
+\end{verbatim}
+
+언더스코어를 사용하면 더 간결하다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = foldRight(l, 0, _ + _)
+def product(l: List[Int]): Int = foldRight(l, 1, _ * _)
+\end{verbatim}
+
+\code{foldRight}가 하는 일을 직관적으로 설명하면 다음과 같다.
+
+\begin{verbatim}
+  foldRight(List(a, b, .., y, z), n, f)
+= f(a, f(b, .. f(y, f(z, n)) .. ))
+
+  foldRight(List(1, 2, 3), 0, add)
+= add(1, add(2, add(3, 0)))
+
+  foldRight(List(1, 2, 3), 1, mul)
+= mul(1, mul(2, mul(3, 1)))
+\end{verbatim}
+
+이번에는 꼬리 재귀를 사용한 \code{sum}과 \code{product}를 볼 차례다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = {
+  def aux(l: List[Int], inter: Int): Int = l match {
+    case Nil => inter
+    case h :: t => aux(t, inter + h)
+  }
+  aux(l, 0)
+}
+
+def product(l: List[Int]): Int = {
+  def aux(l: List[Int], inter: Int): Int = l match {
+    case Nil => inter
+    case h :: t => aux(t, inter * h)
+  }
+  aux(l, 1)
+}
+\end{verbatim}
+
+이번에도 이름을 통일하고 나면 차이점이 두 개다. \code{h :: t} 케이스에
+\code{aux}의 두 번째 인자로 사용되는 식과 \code{aux} 바깥에서 \code{aux}를 부를
+때 두 번째 인자로 사용하는 식이다. 따라서 매개변수를 두 개 추가해야 한다.
+
+\begin{verbatim}
+def foldLeft(
+  l: List[Int],
+  n: Int,
+  f: (Int, Int) => Int
+): Int = {
+  def aux(l: List[Int], inter: Int): Int = l match {
+    case Nil => inter
+    case h :: t => aux(t, f(inter, h))
+  }
+  aux(l, n)
+}
+\end{verbatim}
+
+이 함수를 \code{foldLeft}라 부른다. \code{foldRight}와는 다른 일을 하는 함수다.
+\code{foldRight}는 리스트를 오른쪽부터 접는다. 반면, 이 함수는 초깃값을 리스트의
+왼쪽(left) 끝에 붙인 뒤 그쪽부터 리스트를 접는다(fold). \code{foldList}가 하는
+일을 다음과 같이 직관적으로 이해할 수 있다.
+
+\begin{verbatim}
+  foldLeft(List(a, b, .., y, z), n, f)
+= f(f( .. f(f(n, a), b), .. , y), z)
+
+  foldLeft(List(1, 2, 3), 0, add)
+= add(add(add(0, 1), 2), 3)
+
+  foldLeft(List(1, 2, 3), 1, mul)
+= mul(mul(mul(1, 1), 2), 3)
+\end{verbatim}
+
+사실 \code{sum}과 \code{product}를 구현할 때는 어느 쪽부터 접는지 별로 중요하지
+않다. 다음과 같이 \code{sum}과 \code{product}를 \code{foldLeft}를 사용해서 다시
+구현할 수도 있다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = foldLeft(l, 0, _ + _)
+def product(l: List[Int]): Int = foldLeft(l, 1, _ * _)
+\end{verbatim}
+
+하지만 어떤 함수의 경우에는 방향이 중요하다. 0에서 9 사이의 숫자로 구성된
+리스트를 받아 리스트의 원소들을 이어 붙여 만들어지는 십진수를 계산하는 함수를
+만들어 보자. \code{foldLeft}를 사용하면 된다.
+
+\begin{verbatim}
+def digitToDecimal(l: List[Int]) =
+  foldLeft(l, 0, _ * 10 + _)
+
+  foldLeft(List(1, 2, 3), 0, f)
+= f(f(f(0, 1), 2), 3)
+= ((0 * 10 + 1) * 10 + 2) * 10 + 3
+= (1 * 10 + 2) * 10 + 3
+= 12 * 10 + 3
+= 123
+\end{verbatim}
+
+\code{foldRight}를 사용하면 전혀 다른 함수가 만들어진다.
+
+\begin{verbatim}
+def digitToDecimal(l: List[Int]) =
+  foldRight(l, 0, _ * 10 + _)
+
+  foldRight(List(1, 2, 3), 0, f)
+= f(1, f(2, f(3, 0)))
+= 1 * 10 + (2 * 10 + (3 * 10 + 0))
+= 1 * 10 + (2 * 10 + 30)
+= 1 * 10 + 50
+= 60
+\end{verbatim}
+
+\code{map}, \code{filter}, \code{foldRight}, \code{foldLeft}는 매우 유용하다.
+이들 함수를 사용하면 리스트를 처리하는 다양한 작업을 간결하게 구현할 수 있다.
+사실 그 유용함 때문에 표준 라이브러리의 리스트가 이미 \code{map}, \code{filter},
+\code{foldRight}, \code{foldLeft}를 메서드로 제공한다. 이들을 함수로 직접 구현할
+필요가 없는 것이다.
+
+\code{map} 메서드를 사용하려면 \code{map(l, f)} 대신 \code{l.map(f)}라 적으면 된다.
+
+\begin{verbatim}
+def inc1(l: List[Int]): List[Int] = l.map(_ + 1)
+def square(l: List[Int]): List[Int] = l.map(h => h * h)
+\end{verbatim}
+
+\code{filter(l, f)} 대신 \code{l.filter(f)}라 적는다.
+
+\begin{verbatim}
+def odd(l: List[Int]): List[Int] = l.filter(_ % 2 != 0)
+def positive(l: List[Int]): List[Int] = l.filter(_ > 0)
+\end{verbatim}
+
+\code{foldRight(l, n, f)} 대신 \code{l.foldRight(n)(f)}라 적는다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = l.foldRight(0)(_ + _)
+def product(l: List[Int]): Int = l.foldRight(1)(_ * _)
+\end{verbatim}
+
+\code{foldLeft(l, n, f)} 대신 \code{l.foldLeft(n)(f)}라 적는다.
+
+\begin{verbatim}
+def sum(l: List[Int]): Int = l.foldLeft(0)(_ + _)
+def product(l: List[Int]): Int = l.foldLeft(1)(_ * _)
+def digitToDecimal(l: List[Int]) = l.foldLeft(0)(_ * 10 + _)
+\end{verbatim}
+
+우리가 정의한 함수와 달리 표준 라이브러리의 메서드는
+\term{다형}{polymorhpic}이다. 이는 메서드가 받을 수 있는 인자의 타입이 하나로
+고정되지 않음을 뜻한다. 가령 우리의 \code{map} 함수는 정수의 리스트만 인자로
+받을 수 있으며 결괏값도 정수의 리스트만 가능하다. 다른 타입의 리스트를 다루려면
+새로운 \code{map} 함수를 만들어야 한다. 하지만 \code{map} 메서드는 무슨 타입의
+리스트든 처리할 수 있다.
+
+\begin{verbatim}
+case class Student(name: String, height: Int)
+
+def heights(l: List[Student]): List[Int] = l.map(_.height)
+\end{verbatim}
+
+이 밖에도 표준 라이브러리에는 리스트를 위한 다양한 메서드가 정의되어
+있다.\footnote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/List.html}}
+
+\section{\code{for} 반복문}
+
+스칼라는 \code{for} 반복문을 제공한다. 스칼라의 \code{for} 반복문은 식으로서
+하나의 값으로 계산된다. \code{while}은 수정할 수 있는 변수나 객체와 함께
+사용해야만 의미 있지만, \code{for}는 함수형 프로그래밍의 방법으로 이해하기 쉬운
+코드를 작성하는 데 큰 도움을 준다.
+
+\code{for} 식은 다음과 같이 쓴다.
+
+\begin{verbatim}
+for ([name] <- [expression])
+  yield [expression]
+\end{verbatim}
+
+첫 번째 식의 결과는 리스트 같은 컬렉션이어야 한다. \code{for} 식의 결과는 매
+반복에서 두 번째 식을 계산한 결과를 모아 놓은 컬렉션이다. 즉, \code{for} 식은
+\code{map} 메서드와 같은 일을 한다.
+
+\begin{verbatim}
+val l = for (n <- List(0, 1, 2)) yield n * n
+assert(l == List(0, 1, 4))
+\end{verbatim}
+
+\code{for} 식은 식이 필요한 어느 곳에서든 사용될 수 있다.
+
+\begin{verbatim}
+def square(l: List[Int]): List[Int] =
+  for (n <- l)
+    yield n * n
+\end{verbatim}
+
+스칼라에서 \code{for}는 그저 \term{문법 설탕}{syntactic sugar}이다. \code{for}의
+동작이 따로 정의되어 있는 것이 아니라, 컴파일러가 \code{for}를 사용한 코드를
+컬렉션의 메서드와 익명 함수를 사용하는 코드로 변환한다. 컴파일러는 위 함수를
+다음과 같이 \code{map}을 사용하는 함수로 변환한다.
+
+\begin{verbatim}
+def square(l: List[Int]): List[Int] =
+  l.map(n => n * n)
+\end{verbatim}
+
+이는 \code{for} 식이 강력한 이유다. 꼭 리스트가 아니더라도 \code{map} 메서드를
+정의하고 있다면 어느 타입이든 \code{for}를 사용할 수 있다.
+
+\code{for} 식은 \code{filter}도 대신할 수 있다.
+
+\begin{verbatim}
+def positive(l: List[Int]): List[Int] =
+  for (n <- l if n > 0)
+    yield n
+\end{verbatim}
+
+주어진 조건을 만족하지 않는 원소는 반복 과정에서 생략된다.
+
+더 나아가, \code{map}과 \code{filter}를 함께 사용하는 코드 역시 \code{for}를
+통해 간결하게 표현할 수 있다. 학생의 리스트를 인자로 받아 키가 170보다 큰 학생의
+이름을 담은 리스트를 내놓는 함수를 만들어 보자. \code{map}과 \code{filter}를
+사용한다면 다음과 같이 구현할 수 있다.
+
+\begin{verbatim}
+def tall(l: List[Student]): List[String] =
+  l.filter(_.height > 170).map(_.name)
+\end{verbatim}
+
+\code{for}를 사용하면 다음과 같다.
+
+\begin{verbatim}
+def tall(l: List[Student]): List[String] =
+  for (s <- l if s.height > 170)
+    yield s.name
+\end{verbatim}
+
+\section{예제}
+
+\begin{exercise}
+\labex{functions-incby}
+
+정수 리스트와 정수 하나를 인자로 받아 리스트의 각 원소를 주어진 정수만큼
+증가시키는 함수 \code{incBy}를 \code{map} 메서드를 사용해 구현하라.
+
+\begin{verbatim}
+def incBy(l: List[Int], n: Int): List[Int] = ???
+\end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{functions-gt}
+
+정수 리스트와 정수 하나를 인자로 받아 주어진 정수보다 큰 원소만 남기는 함수
+\code{gt}를 \code{filter} 메서드를 사용해 구현하라.
+
+\begin{verbatim}
+def gt(l: List[Int], n: Int): List[Int] = ???
+\end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{functions-append}
+
+정수 리스트와 정수 하나를 인자로 받아 리스트의 끝에 정수를 붙이는 함수
+\code{append}를 \code{foldRight} 메서드를 사용해 구현하라.
+
+\begin{verbatim}
+def append(l: List[Int], n: Int): List[Int] = ???
+\end{verbatim}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{functions-reverse}
+
+정수 리스트를 인자로 받아 순서가 거꾸로된 리스트를 만드는 함수 \code{reverse}를
+\code{foldLeft} 메서드를 사용해 구현하라.
+
+\begin{verbatim}
+def reverse(l: List[Int]): List[Int] = ???
+\end{verbatim}
+
+\end{exercise}
