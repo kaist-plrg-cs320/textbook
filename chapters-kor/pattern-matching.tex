@@ -1,0 +1,1077 @@
+\chapter{패턴 대조}
+\labch{pattern-matching}
+
+이 장에서는 스칼라의 \term{패턴 대조}{pattern matching}를 살펴본다. 패턴 대조는
+함수형 프로그래밍의 핵심 개념 중 하나로, 복잡하지만 정해진 구조를 갖는 데이터를
+다루는 것을 돕는다. 이미 앞에서 리스트를 다룰 때 간단한 형태의 패턴 대조를
+사용했다. 이 장에서는 패턴 대조의 장점을 알아본 뒤 스칼라에서 사용할 수 있는
+다양한 패턴을 소개한다. 또한, 함수형 프로그래밍에서 자주 사용되는 타입인
+\term{옵션}{option} 타입을 살펴본다.
+
+\section{대수적 타입}
+
+한 타입에 다양한 형태의 값이 속하는 경우가 많다.
+
+가령, 자연수는
+
+\begin{itemize}
+\item 0이거나
+\item 어떤 자연수의 다음 수다.
+\end{itemize}
+
+리스트는
+
+\begin{itemize}
+\item 빈 리스트거나
+\item 원소와 어떤 리스트의 순서쌍이다.
+\end{itemize}
+
+\term{이진 나무}{binary tree}는
+
+\begin{itemize}
+\item 빈 나무거나
+\item \term{뿌리}{root} 원소와 두 자식 나무로 구성된 나무다.
+\end{itemize}
+
+\term{산술식}{arithmetic expression}은
+
+\begin{itemize}
+\item 수거나
+\item 두 산술식의 합이거나
+\item 두 산술식의 차다.
+\end{itemize}
+
+\term{람다 대수}{lambda calculus}의 식은
+
+\begin{itemize}
+\item 변수거나
+\item 매개변수와 식으로 구성된 익명 함수거나
+\item 두 식으로 구성된 함수 호출이다.
+\end{itemize}
+
+이처럼 전산학에서 하나의 타입은 대개 여러 형태의 값들을 포함한다. 이런 타입은
+\term{대수적 타입}{algebraic data type, ADT}으로 표현된다. 대수적 타입이라는
+이름이 붙은 이유는 한 타입이 \term{곱 타입}{product type}의 \term{합 타입}{sum
+type}으로 정의되기 때문이다. 곱 타입의 각 원소는 특정한 타입들의 값을 나열한
+것이다. 튜플 타입이 대표적인 곱 타입이다. 합 타입은 \term{이름 붙은 합집합
+타입}{tagged union type}이라고도 불리는데, 하나의 합 타입은 마치 여러 타입의
+합집합을 만든 것처럼 여러 타입의 값들을 포함한다. 단, 단순히 합집합만 만드는
+것이 아니라 각 값이 어느 타입에서 온 것인지 구분할 수 있도록 이름을 붙인다.
+이렇게 합 타입의 구성 요소가 되는 각 타입에 이름을 붙인 것을
+\term{이형}{variant}이라고 부른다.
+
+예를 들어 산술식은 다음과 같은 세 개의 이형으로 구성된다.
+
+\begin{itemize}
+\item 수거나
+\item 두 산술식의 합이거나
+\item 두 산술식의 차다.
+\end{itemize}
+
+이를 바탕으로 산술식의 타입인 \code{AE}를 합 타입으로 정의할 수 있다. \code{AE}는 다음 세 이형의 합이다.
+
+\begin{itemize}
+\item \code{Num}이라고 이름 붙인 \code{Int} 타입
+\item \code{Add}라고 이름 붙인 \code{AE * AE} 타입
+\item \code{Sub}라고 이름 붙인 \code{AE * AE} 타입
+\end{itemize}
+
+여기서 \code{AE * AE}는 \code{AE}와 \code{AE}의 곱 타입이다.
+
+대수적 타입은 함수형 언어에서 쉽게 찾을 수 있다. 대부분의 함수형 언어는
+프로그래머가 새로운 대수적 타입을 정의할 수 있도록 한다. 다음 오캐멀 코드는
+산술식 타입을 정의한다.
+
+\begin{verbatim}
+type ae =
+| Num of int
+| Add of ae * ae
+| Sub of ae * ae
+\end{verbatim}
+
+스칼라는 대수적 타입만을 정의하는 직접적인 방법을 제공하는 대신, 일반적인 타입을
+정의하는 기능으로서 \term{트레잇}{trait}과 클래스를 제공한다. 프로그래머는
+트레잇과 클래스를 사용해 대수적 타입을 정의할 수 있다.
+
+새로운 타입은 트레잇으로 정의한다. 그 방법은 다음과 같다.
+
+\begin{verbatim}
+trait [name]
+\end{verbatim}
+
+위 코드는 이름이 \code{[name]}인 타입을 정의한다. 즉, 다음 코드는 산술식의
+타입인 \code{AE}를 정의한다.
+
+\begin{verbatim}
+sealed trait AE
+\end{verbatim}
+
+여기서 \code{sealed}는 \code{AE}가 정의된 파일 안에서만 \code{AE}를
+\term{상속}{inheritance}하는 클래스를 정의할 수 있도록 만든다. \code{sealed}를
+붙여야 하는 이유는 뒤에서 이야기하겠다.
+
+타입을 트레잇으로 정의하고 나면 원래 존재하던 다른 타입과 같은 방법으로 사용할 수 있다. 가령 산술식을 위한 항등 함수를 다음과 같이 정의할 수 있다.
+
+\begin{verbatim}
+def identity(ae: AE): AE = ae
+\end{verbatim}
+
+하지만 트레잇은 그 자체로는 그 타입에 속하는 값을 만들 방법을 제공하지 않는다.
+다시 말해 아직 \code{AE} 타입의 값을 만들 수 없다는 것이다. 이 문제를 해결하려면
+\code{AE}의 이형들을 \code{AE}를 상속하는 케이스 클래스로서 정의해야 한다.
+
+\begin{verbatim}
+case class Num(value: Int) extends AE
+case class Add(left: AE, right: AE) extends AE
+case class Sub(left: AE, right: AE) extends AE
+\end{verbatim}
+
+\refch{introduction-to-scala}에서 본 것처럼 케이스 클래스의 값을 쉽게 만들 수 있다.
+
+\begin{verbatim}
+val n = Num(10)
+val m = Num(5)
+val e1 = Add(n, m)
+val e2 = Sub(e1, Num(3))
+\end{verbatim}
+
+트레잇과 마찬가지로 클래스는 새로운 타입을 정의한다. 각 클래스의 이름이 곧 정의한 타입의 이름이다. 클래스의 값은 그 클래스에 해당하는 타입에 속한다.
+
+\begin{verbatim}
+val n: Num = Num(10)
+val m: Num = Num(5)
+val e1: Add = Add(n, m)
+val e2: Sub = Sub(e1, Num(3))
+\end{verbatim}
+
+더 나아가, 각 클래스가 \code{AE}를 상속했으므로 \code{Num}, \code{Add},
+\code{Sub}이 \code{AE}의 \term{서브타입}{subtype}이다. 이는 어떤 값이
+\code{Num}, \code{Add}, \code{Sub} 중 한 타입에 속하면 자동으로 \code{AE}
+타입에도 속한다는 뜻이다.
+
+\begin{verbatim}
+val n: AE = Num(10)
+val m: AE = Num(5)
+val e1: AE = Add(n, m)
+val e2: AE = Sub(e1, Num(3))
+\end{verbatim}
+
+각 객체의 필드에는 필드 이름을 통해 접근할 수 있다.
+
+\begin{verbatim}
+val n: Num = Num(10)
+n.value
+\end{verbatim}
+
+그러나 객체의 타입이 \code{AE}일 때는 필드에 접근할 수 없다.
+
+\begin{verbatim}
+val m: AE = Num(10)
+m.value
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+  ^
+error: value value is not a member of AE
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+\code{m}이 \code{AE} 타입의 값이므로, 반드시 \code{Num} 타입의 값이라는 보장이
+없기 때문이다. \code{m}이 \code{Add}나 \code{Sub} 타입의 값일 수도 있으며,
+\code{Add}와 \code{Sub}에는 \code{value}라는 필드가 없다. 따라서 컴파일러는
+\code{m}이 \code{value}라는 필드를 가지고 있지 않을 수도 있다고 판단하여
+\code{m.value}를 실행해서는 안 되는 식으로 간주해 버린다.
+
+그렇기에 대수적 타입에 속하는 값을 다룰 때는 필드에 직접 접근하는 것보다 패턴
+대조를 사용하는 편이 좋다. 다음 함수는 주어진 산술식을 계산하여 해당 산술식이
+나타내는 정수를 내놓는다.
+
+\begin{verbatim}
+def eval(e: AE): Int = e match {
+  case Num(n) => n
+  case Add(l, r) => eval(l) + eval(r)
+  case Sub(l, r) => eval(l) - eval(r)
+}
+
+assert(eval(Sub(Add(Num(3), Num(7)), Num(5))) == 5)
+\end{verbatim}
+
+만약 \code{e}가 \code{Num(n)}이면 \code{eval}은 바로 \code{n}을 결과로 낸다.
+\code{e}가 \code{Add(l, r)}이면 \code{l}과 \code{r}이 어떤 산술식이므로 재귀
+호출을 통해 \code{l}과 \code{r}을 각각 계산한 뒤 합을 구한다. \code{e}가
+\code{Sub(l, r)}일 때는 비슷하지만 합 대신 차를 구한다.
+
+리스트는 대수적 타입의 또 다른 좋은 예시다. 스칼라 표준 라이브러리는 다음과 같이
+리스트를 대수적 타입으로 정의한다.
+
+\begin{verbatim}
+sealed trait List[A]
+case object Nil extends List[Nothing]
+case class ::[A](head: A, tail: List[A]) extends List[A]
+\end{verbatim}
+
+위 코드는 실제 코드에서 중요한 부분만 간추린 것으로, 리스트를 정의하는 핵심
+아이디어를 잘 드러낸다. 리스트는 빈 리스트이거나 비어 있지 않은 리스트이며, 비어
+있지 않은 리스트는 머리 원소와 꼬리 리스트로 구성된다. 모든 빈 리스트는
+동일하므로 빈 리스트는 \code{class} 대신 \code{object} 키워드를 사용해 정의된다.
+이 코드는 \code{Nil}이라는 값을 정의하고 그 값이 \code{List} 타입에 속하게
+만든다. 한편, 비어 있지 않은 리스트를 나타내는 클래스의 이름인 \code{::}이 다소
+이상해 보일 수 있다. 이 이름은 패턴 대조를 사용할 때 코드를 보기 좋게 만들기
+위한 것이다. 스칼라에서는 패턴을 작성할 때 클래스 이름을 \term{중위
+연산자}{infix operator}처럼 사용하는 것을 허용한다. 즉, \code{case ::(h, t)
+=>}라고 적어도 되고 \code{case h :: t =>}라고 적어도 된다. 이처럼 클래스 이름이
+\code{::}인 덕분에 \code{case h :: t =>}라는 직관적인 코드를 작성할 수 있다.
+
+\section{장점}
+
+\subsection{간결함}
+
+패턴 대조가 없다면 대수적 타입을 다루는 것이 매우 복잡한 작업이 되어 버린다.
+\term{동적 타입 검사}{dynamic type test}를 통해 주어진 값이 무슨 이형에 속하는지
+확인하고 \term{타입 변환}{type casting}을 통해 필드에 접근해야 한다.
+
+다음은 패턴 대조를 사용하지 않고 \code{eval}을 구현한 것이다.
+
+\begin{verbatim}
+def eval(e: AE): Int =
+  if (e.isInstanceOf[Num])
+    e.asInstanceOf[Num].value
+  else if (e.isInstanceOf[Add]) {
+    val e0 = e.asInstanceOf[Add]
+    eval(e0.left) + eval(e0.right)
+  } else {
+    val e0 = e.asInstanceOf[Sub]
+    eval(e0.left) - eval(e0.right)
+  }
+\end{verbatim}
+
+\code{e.isInstanceOf[Num]}은 \code{e}가 \code{Num} 클래스에 속하는지 확인한다.
+만약 그렇다면 \code{eval}은 \code{e}의 \code{value} 필드에 저장되어 있는 값을
+내놓아야 한다. 하지만 \code{e}의 타입이 \code{AE}이므로 \code{value} 필드에 바로
+접근할 수 없다. 물론 우리는 \code{e.isInstanceOf[Num]}의 결과가
+\code{true}이므로 \code{e}의 진짜 타입은 \code{Num}이라는 사실을 안다. 그러니
+타입 변환을 통해 이 사실을 컴파일러에게 알려 줘야 한다.
+\code{e.asInstanceOf[Num]}은 \code{e}가 나타내는 값은 바꾸지 않은 채
+컴파일러에게 \code{e}의 타입이 \code{Num}이라는 정보를 제공한다. 그러면
+컴파일러는 \code{e.asInstanceOf[Num]}을 \code{Num} 타입의 식으로 간주하여
+\code{value} 필드에 접근하는 것을 허용한다. \code{Add}와 \code{Sub} 이형을
+위해서도 동일한 동적 타입 검사 및 타입 변환 과정이 필요하다.
+
+실제로 하는 일은 간단한 데 비해 코드가 너무 길고 복잡하다. 실제로 의미 있는
+계산을 하는 부분은 짧고 동적 타입 검사와 타입 변환을 위한 코드가 대부분이다. 또,
+이런 코드는 실수의 가능성을 키운다. 가령 실수로 다음과 같은 코드를 작성할 수
+있다.
+
+\begin{verbatim}
+else if (e.isInstanceOf[Add]) {
+  val e0 = e.asInstanceOf[Sub]
+  eval(e0.left) + eval(e0.right)
+}
+\end{verbatim}
+
+\code{e}의 타입이 \code{Add}인지 확인한 것과 달리, \code{e}의 타입을
+\code{Sub}으로 변환하고 있다. 이런 코드는 실행 시간 오류를 발생시킨다. 다행히도
+\code{eval}은 간단한 함수기 때문에 이런 실수를 했는지 확인하는 것이 어렵지 않다.
+하지만 타입이 복잡해지고 계산이 복잡해지면 실수를 저지르고도 이를 모르고
+넘어가기 쉽다.
+
+반면, 패턴 대조를 사용하면 이런 문제가 전혀 없다. 명시적으로 동적 타입 검사와
+타입 변환을 위한 코드를 작성할 필요가 없기에 코드가 훨씬 간결해진다. 실수를 할
+가능성조차 없애 주는 것은 덤이다.
+
+\subsection{완전성 검사}
+
+패턴 대조는 패턴의 \term{완전성}{exhaustivity}을 검사한다. 만약 주어진 값이 어떤
+패턴에도 일치하지 않으면 실행 시간 오류가 발생한다.
+
+\begin{verbatim}
+def eval(e: AE): Int = e match {
+  case Add(l, r) => eval(l) + eval(r)
+  case Sub(l, r) => eval(l) - eval(r)
+}
+\end{verbatim}
+
+위 코드는 \code{Num} 패턴을 빠트렸다.
+
+\begin{verbatim}
+eval(Num(3))
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+scala.MatchError: Num(3) (of class Num)
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{실행 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+따라서 \code{Num} 타입의 인자를 넣으면 실행 시간 오류가 발생한다.
+
+다행히 패턴을 빠트리는 실수를 쉽게 막을 수 있다. 스칼라 컴파일러는 패턴이
+완전한지 확인하고 그렇지 않다면 \term{경고}{warning} 문구를 띄운다.
+
+\begin{verbatim}
+def eval(e: AE): Int = e match {
+  case Add(l, r) => eval(l) + eval(r)
+  case Sub(l, r) => eval(l) - eval(r)
+}
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+                       ^
+warning: match may not be exhaustive.
+It would fail on the following input: Num(_)
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 경고}
+\end{flushright}
+\end{mdframed}
+
+컴파일러가 패턴이 완전하지 않다고 경고한 것을 볼 수 있다. 단순히 완전하지
+않다고만 이야기하는 것이 아니라 무슨 패턴이 없는지 알려 줘서 디버깅을 돕기까지
+한다. 프로그램이 복잡할수록 완전성 검사의 이점이 잘 드러난다. 완전성 검사 덕분에
+실행 시간 오류를 일으키지 않는 프로그램을 작성하기 쉬워지므로 완전성 검사는 패턴
+대조의 중요한 장점이다.
+
+완전성 검사를 하려면 트레잇을 정의할 때 \code{sealed}를 붙이는 것이 필수다.
+\code{sealed}를 붙이지 않은 트레잇은 아무 파일에서나 상속할 수 있다. 컴파일은
+파일 단위로 이루어지므로 \code{sealed}가 붙지 않은 트레잇에 속하는 모든 이형을
+컴파일러가 알아낼 방법이 없다. 따라서 완전성을 검사할 수 없게 된다.
+\code{sealed}를 붙이는 것만으로 이 문제를 해결할 수 있다. 트레잇을 정의하는
+파일에 모든 이형이 정의되어야 하므로 해당 파일만 보면 모든 이형을 찾을 수 있는
+것이다. 그러므로 대수적 타입을 정의할 때는 반드시 잊지 말고 \code{sealed}를
+붙이는 편이 좋다.
+
+\subsection{도달 가능성 검사}
+
+명령형 언어가 제공하는 \code{switch-case}와 마찬가지로 패턴 대조는 위에서 아래로
+가면서 주어진 값과 패턴을 차례로 비교해 값과 일치하는 첫 번째 패턴을 찾는다.
+만약 같은 패턴이 두 번 등장한다면 실행 중에 두 번째 패턴에 도달하는 일은 절대
+없을 것이다. 이런 코드를 작성하는 것을 방지하기 위해 컴파일러는 \term{도달할 수
+없는}{unreachable} 패턴을 발견하면 프로그래머에게 경고한다.
+
+\begin{verbatim}
+def eval(e: AE): Int = e match {
+  case Num(n) => 0
+  case Add(l, r) => eval(l) + eval(r)
+  case Num(n) => n
+  case Sub(l, r) => eval(l) - eval(r)
+}
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+  case Num(n) => n
+                 ^
+warning: unreachable code
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 경고}
+\end{flushright}
+\end{mdframed}
+
+코드가 짧고 간단하다면 눈으로 보는 것만으로도 도달할 수 없는 패턴이 있는지 쉽게
+알 수 있다. 하지만 복잡한 코드에서는 패턴을 잘못 작성하여 도달할 수 없는 패턴을
+만들 가능성이 크다. 컴파일러의 \term{도달 가능성}{reachability} 검사는 이런
+문제를 예방해 준다.
+
+\section{스칼라가 제공하는 패턴}
+
+\subsection{상수 패턴과 와일드카드 패턴}
+
+명령형 언어에서는 \code{switch-case}를 사용해 주어진 값을 여러 경우로 나누어
+처리한다. 패턴 대조는 \code{switch-case}의 일반적인 형태다. 원래
+\code{switch-case}로 하던 일을 패턴 대조로도 할 수 있다. 다음은 자바에서
+\code{switch-case}를 사용한 예시 코드다.
+
+\begin{verbatim}
+String grade(int score) {
+  switch (score / 10) {
+    case 10: return "A";
+    case 9: return "A";
+    case 8: return "B";
+    case 7: return "C";
+    case 6: return "D";
+    default: return "F";
+  }
+}
+\end{verbatim}
+
+같은 작업을 스칼라의 \term{상수 패턴}{constant pattern}과 \term{와일드카드
+패턴}{wildcard pattern}을 사용해서 수행할 수 있다. 상수 패턴은 정수나 문자열
+같은 \term{리터럴}{literal}이다. 주어진 값이 해당 상수 패턴이 나타내는 값과
+같다면 값이 패턴과 일치한다. 와일드카드 패턴은 언더스코어로 적으며, 모든 값과
+일치한다. 즉, \code{switch-case}의 \code{default}와 같은 역할을 한다. 다음
+함수는 앞서 본 함수를 패턴 대조를 사용해 다시 구현한 것이다.
+
+\begin{verbatim}
+def grade(score: Int): String =
+  (score / 10) match {
+    case 10 => "A"
+    case 9 => "A"
+    case 8 => "B"
+    case 7 => "C"
+    case 6 => "D"
+    case _ => "F"
+  }
+
+assert(grade(85) == "B")
+\end{verbatim}
+
+\subsection{또는 패턴}
+
+\code{switch-case}를 사용하는 경우, 명시적으로 \code{break}를 통해
+\code{switch-case}를 빠져나가지 않으면 자동으로 다음 케이스에 해당하는 코드가
+이어서 실행된다. 가령 앞서 본 \code{grade} 함수는 주어진 값이 10인 경우나 9인
+경우나 하는 일이 동일하므로 다음처럼 구현할 수 있다.
+
+\begin{verbatim}
+String grade(int score) {
+  switch (score / 10) {
+    case 10:
+    case 9: return "A";
+    case 8: return "B";
+    case 7: return "C";
+    case 6: return "D";
+    default: return "F";
+  }
+}
+\end{verbatim}
+
+반면 패턴 대조를 사용할 때는 그런 일이 없다. 언제나 일치한 패턴에 해당하는
+코드만 실행된다. 만약 같은 작업을 여러 케이스에서 수행하고 싶다면 \term{또는
+패턴}{or pattern}을 사용해야 한다. 또는 패턴은 여러 패턴을 \code{|}로 구분하여
+나열해 \code{[pattern] | [pattern] | ...} 형태로 적는다. \code{A | B}는
+\code{A}나 \code{B} 중 적어도 하나에 일치하는 모든 값과 일치한다.
+
+\begin{verbatim}
+def grade(score: Int): String =
+  (score / 10) match {
+    case 10 | 9 => "A"
+    case 8 => "B"
+    case 7 => "C"
+    case 6 => "D"
+    case _ => "F"
+  }
+
+assert(grade(100) == "A")
+\end{verbatim}
+
+\subsection{중첩된 패턴}
+
+\term{중첩된 패턴}{nested pattern}은 패턴 안에 패턴을 넣은 것을 말한다. 다음의
+\code{optimizeAdd} 함수는 0을 더하는 산술식을 없앰으로써 주어진 산술식을
+\term{최적화}{optimization}한다.
+
+\begin{verbatim}
+def optimizeAdd(e: AE): AE = e match {
+  case Num(_) => e
+  case Add(Num(0), r) => optimizeAdd(r)
+  case Add(l, Num(0)) => optimizeAdd(l)
+  case Add(l, r) => Add(optimizeAdd(l), optimizeAdd(r))
+  case Sub(l, r) => Sub(optimizeAdd(l), optimizeAdd(r))
+}
+\end{verbatim}
+
+중첩된 패턴을 사용하면 복잡한 구조를 가진 값을 쉽게 다룰 수 있다.
+
+\subsection{변수를 정의하는 패턴}
+
+\code{AE}에 이형 하나를 추가해 보자.
+
+\begin{verbatim}
+case class Abs(e: AE) extends AE
+\end{verbatim}
+
+\code{Abs}는 절댓값을 나타낸다. 어떤 값의 절댓값의 절댓값을 계산하는 식은 그
+값의 절댓값을 계산하는 식으로 최적화할 수 있다.
+
+\begin{verbatim}
+def optimizeAbs(e: AE): AE = e match {
+  case Num(_) => e
+  case Add(l, r) => Add(optimizeAbs(l), optimizeAbs(r))
+  case Sub(l, r) => Sub(optimizeAbs(l), optimizeAbs(r))
+  case Abs(Abs(e0)) => optimizeAbs(Abs(e0))
+  case Abs(e0) => Abs(optimizeAbs(e0))
+}
+\end{verbatim}
+
+이 구현의 아쉬운 점은 \code{Abs(e0)}에 해당하는 값을 바로 사용하지 못하고
+\code{e0}에 해당하는 값으로부터 다시 \code{Abs(e0)}를 만든다는 것이다.
+\code{@}를 사용하면 특정 패턴과 일치하는 값을 변수에 저장함으로써 이 문제를
+해결할 수 있다. \code{[variable] @ [pattern]}은 해당 패턴과 일치하는 값을 해당
+변수에 저장한다.
+
+\begin{verbatim}
+def optimizeAbs(e: AE): AE = e match {
+  case Num(_) => e
+  case Add(l, r) => Add(optimizeAbs(l), optimizeAbs(r))
+  case Sub(l, r) => Sub(optimizeAbs(l), optimizeAbs(r))
+  case Abs(e0 @ Abs(_)) => optimizeAbs(e0)
+  case Abs(e0) => Abs(optimizeAbs(e0))
+}
+\end{verbatim}
+
+\subsection{타입 패턴}
+
+\code{optimizeAbs}에서 첫 번째 패턴인 \verb!Num(_)!은 주어진 값이 \code{Num}
+타입에 속하는지만 확인한다. 타입 패턴을 사용해도 같은 일을 할 수 있다. 타입
+패턴은 \code{[name]: [type]} 형태로 적는다. 만약 주어진 값이 해당 타입에 속하면,
+값이 패턴과 일치하며 해당 이름의 변수가 그 값을 나타낸다. 변수를 정의하고 싶지
+않은 경우에는 와일드카드 패턴을 사용하여 이름 대신 언더스코어를 적으면 된다.
+
+\begin{verbatim}
+def optimizeAbs(e: AE): AE = e match {
+  case _: Num => e
+  case Add(l, r) => Add(optimizeAbs(l), optimizeAbs(r))
+  case Sub(l, r) => Sub(optimizeAbs(l), optimizeAbs(r))
+  case Abs(e0 @ Abs(_)) => optimizeAbs(e0)
+  case Abs(e0) => Abs(optimizeAbs(e0))
+}
+\end{verbatim}
+
+타입 패턴은 동적 타입 검사를 하는 코드를 작성할 때 유용하다. 다음 함수는 아무
+값이나 인자로 받아 그 값이 문자열인지 아닌지 확인한다. 스칼라에서 \code{Any}는
+모든 값이 속한 타입이다.
+
+\begin{verbatim}
+def show(x: Any): String = x match {
+  case s: String => s + " is a string"
+  case _ => "not a string"
+}
+
+assert(show("1") == "1 is a string")
+assert(show(1) == "not a string")
+\end{verbatim}
+
+타입 패턴은 \term{다형 타입}{polymorphic type}의 \term{타입 인자}{type
+argument}를 검사하지 않는다. 따라서 타입 패턴을 다형 타입과 함께 사용할 때는
+특별히 주의를 기울일 필요가 있다.
+
+\begin{verbatim}
+def show(x: Any): String = x match {
+  case _: List[String] => "a list of strings"
+  case _ => "not a list of strings"
+}
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+          ^
+warning: non-variable type argument String in type pattern
+List[String] is unchecked since it is eliminated by erasure
+\end{verbatim}
+\vspace{-1.5em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 경고}
+\end{flushright}
+\end{mdframed}
+
+\begin{verbatim}
+val l: List[Int] = List(1, 2, 3)
+assert(show(l) == "a list of strings")  // weird result
+\end{verbatim}
+
+인자로 주어진 값의 타입이 \code{List[Int]}이지만 \code{List[String]} 타입을
+요구하는 첫 번째 패턴에 일치한다. 경고 문구를 보면 알 수 있듯이, 자바 가상
+기계가 타입 인자를 실행 중에 가지고 있지 않기 때문이다.
+
+\subsection{튜플 패턴}
+
+튜플 패턴은 \code{([pattern], ..., [pattern])} 형태로 쓴다. 이 패턴에는 각
+원소가 각 내부 패턴과 일치하는 튜플 값이 일치한다.
+
+다음 함수는 두 리스트가 같은지 확인하기 위해 튜플 패턴을 사용한다.
+
+\begin{verbatim}
+def equal(l0: List[Int], l1: List[Int]): Boolean =
+  (l0, l1) match {
+    case (h0 :: t0, h1 :: t1) =>
+      h0 == h1 && equal(t0, t1)
+    case (Nil, Nil) => true
+    case _ => false
+  }
+\end{verbatim}
+
+\subsection{조건이 붙은 패턴}
+
+\term{이진 탐색 나무}{binary search tree}는
+
+\begin{itemize}
+\item 빈 나무거나
+\item 뿌리 원소인 정숫값과 두 자식 나무로 구성된 나무다.
+\end{itemize}
+
+\begin{verbatim}
+sealed trait Tree
+case object Empty extends Tree
+case class Node(root: Int, left: Tree, right: Tree) extends Tree
+\end{verbatim}
+
+다음 함수 \code{add}는 주어진 나무에 주어진 정수를 추가한다. 만약 정수가 이미 그
+나무의 원소라면 아무 일도 일어나지 않는다.
+
+\begin{verbatim}
+def add(t: Tree, n: Int): Tree =
+  t match {
+    case Empty => Node(n, Empty, Empty)
+    case Node(m, t0, t1) =>
+      if (n < m)
+        Node(m, add(t0, n), t1)
+      else if (n > m)
+        Node(m, t0, add(t1, n))
+      else
+        t
+  }
+\end{verbatim}
+
+두 번째 케이스에 대응되는 식은 조건식을 사용한다. 조건식을 사용하는 대신 패턴에
+조건을 붙일 수 있다. 어떤 값이 \code{[pattern] if [expression]} 형태의 패턴에
+일치하려면 값이 해당 패턴에 일치하면서 동시에 주어진 식을 \code{true}로 만들어야
+한다. 다음처럼 패턴에 조건을 붙여서 \code{add}를 구현할 수 있다.
+
+\begin{verbatim}
+def add(t: Tree, n: Int): Tree =
+  t match {
+    case Empty => Node(n, Empty, Empty)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, add(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, add(t1, n))
+    case _ => t
+  }
+\end{verbatim}
+
+패턴에 조건을 붙이면 패턴이 완전하지 않을 수 있기에 유의해야 한다.
+
+\begin{verbatim}
+def add(t: Tree, n: Int): Tree =
+  t match {
+    case Empty => Node(n, Empty, Empty)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, add(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, add(t1, n))
+  }
+\end{verbatim}
+
+위 코드의 패턴은 완전하지 않지만 컴파일러가 아무런 경고도 띄우지 않는다.
+
+\subsection{백틱 패턴}
+
+다음 함수 \code{remove}는 주어진 나무에서 주어진 정수를 제거한다. 만약 정수가 그
+나무의 원소가 아니면 아무 일도 일어나지 않는다. \code{removeMin}은
+\code{remove}를 구현하는 데 사용되는 보조 함수다. 이 함수는 주어진 나무에서 가장
+작은 원소를 제거하고 제거된 원소를 알려 준다.
+
+\begin{verbatim}
+def removeMin(t: Tree): (Int, Tree) = {
+  t match {
+    case Node(n, Empty, t1) =>
+      (n, t1)
+    case Node(n, t0: Node, t1) =>
+      val (min, t2) = removeMin(t0)
+      (min, Node(n, t2, t1))
+  }
+}
+
+def remove(t: Tree, n: Int): Tree = {
+  t match {
+    case Empty =>
+      Empty
+    case Node(m, t0, Empty) if n == m =>
+      t0
+    case Node(m, t0, t1: Node) if n == m =>
+      val res = removeMin(t1)
+      val min = res._1
+      val t2 = res._2
+      Node(min, t0, t2)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, remove(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, remove(t1, n))
+  }
+}
+\end{verbatim}
+
+위 코드에서 \code{case Node(m, t0, Empty) if n == m} 대신 \verb!Node(`n`, t0, Empty)!
+라고 쓸 수 있다. \term{백틱}{backtick} 없이 그냥 \code{Node(n, t0,
+Empty)}라고 쓴 패턴은 새로운 변수 \code{n}을 정의하고 \code{n}이 뿌리 원소를
+나타내도록 만든다. 뿌리 원소가 \code{n}과 같은 값인지 확인하는 패턴이 아닌
+것이다. 새로운 변수를 정의하는 대신 기존의 변수 \code{n}과 뿌리 원소를
+비교하려면 백틱을 사용해야 한다.
+
+\begin{verbatim}
+def remove(t: BinTree, n: Int): BinTree = {
+  t match {
+    case Empty =>
+      Empty
+    case Node(`n`, t0, Empty) =>
+      t0
+    case Node(`n`, t0, t1: Node) =>
+      val res = removeMin(t1)
+      val min = res._1
+      val t2 = res._2
+      Node(min, t0, t2)
+    case Node(m, t0, t1) if n < m =>
+      Node(m, remove(t0, n), t1)
+    case Node(m, t0, t1) if n > m =>
+      Node(m, t0, remove(t1, n))
+  }
+}
+\end{verbatim}
+
+\section{패턴 대조의 활용}
+
+\subsection{변수 정의}
+
+변수를 정의할 때 패턴 대조를 사용할 수 있다.
+
+\begin{verbatim}
+val (n, m) = (1, 2)
+assert(n == 1 && m == 2)
+
+val (a, b, c) = ("a", "b", "c")
+assert(a == "a" && b == "b" && c == "c")
+
+val h :: t = List(1, 2, 3, 4)
+assert(h == 1 && t == List(2, 3, 4))
+
+val Add(l, r) = Add(Num(1), Num(2))
+assert(l == Num(1) && r == Num(2))
+\end{verbatim}
+
+패턴 대조는 변수를 간결하게 정의하는 것을 돕지만 만약 작성한 패턴이 우변의 식이
+나타내는 값과 일치하지 않으면 실행 시간 오류가 발생한다. 따라서 패턴 대조가
+성공한다는 보장이 있을 때만 패턴 대조를 사용해 변수를 정의하는 것이 좋다. 가령
+튜플 패턴은 같은 길이의 튜플 값과 언제나 일치하므로 변수를 정의할 때 튜플 패턴을
+사용하는 일이 흔하다.
+
+\subsection{익명 함수}
+
+다음 함수 \code{toSum}은 두 정수의 순서쌍들로 구성된 리스트를 받아 각 순서쌍의
+두 정수의 합으로 구성된 리스트를 결과로 낸다.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  l.map(p => p match {
+    case (n, m) => n + m
+  })
+
+val l = List((0, 1), (2, 3), (3, 4))
+assert(toSum(l) == List(1, 5, 7))
+\end{verbatim}
+
+\code{map}의 인자로 사용된 익명 함수는 매개변수 \code{p}를 곧바로 패턴 대조의
+대상으로 삼는다. 스칼라에서는 \verb!x => x match { ... }! 형태의 익명 함수를
+\verb!{ ... }! 형태로 짧게 적을 수 있다. 즉, 중괄호 안에 케이스를 나열한 것을
+익명 함수로서 사용할 수 있는 셈이다.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  l.map({ case (n, m) => n + m })
+\end{verbatim}
+
+\subsection{\code{for} 반복문}
+
+\code{toSum}을 구현할 때 \code{map} 메서드 대신 \code{for} 식을 사용할 수 있다.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  for (p <- l)
+    yield p match { case (n, m) => n + m }
+\end{verbatim}
+
+\code{for} 식에서 바로 패턴 대조를 사용해도 된다.
+
+\begin{verbatim}
+def toSum(l: List[(Int, Int)]): List[Int] =
+  for ((n, m) <- l)
+    yield n + m
+\end{verbatim}
+
+코드가 매우 간결하면서도 이해하기 쉽다.
+
+\section{옵션}
+
+옵션 타입은 널리 사용되는 대수적 타입이다. 값이 존재할 수도 있고 아닐 수도
+있다는 사실을 표현한다. 이 절은 옵션 타입을 소개하고 사용 방법을 설명한다.
+
+리스트의 \code{n}번 째 원소를 내놓는 함수 \code{get}을 생각해 보자. 만약
+\code{n}이 음수거나 리스트의 길이보다 크거나 같으면 문제가 생긴다. 명령형
+언어에서는 대개 \term{예외}{exception}를 발생시킴으로써 이를 해결한다.
+스칼라에서는 \code{throw [expression]} 형태의 식을 사용해 예외를 발생시킨다.
+편의상 다음과 같이 예외를 발생시키는 \code{error} 함수를 정의하고 앞으로 계속
+사용하겠다.
+
+\begin{verbatim}
+def error(msg: String) = throw new Exception(msg)
+
+def get(l: List[Int], n: Int): Int =
+  if (n < 0)
+    error("index out of bounds")
+  else l match {
+    case Nil =>
+      error("index out of bounds")
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        get(t, n - 1)
+  }
+\end{verbatim}
+
+예외를 발생시키는 것은 간단하고 효과적인 해결책이지만 두 가지 문제가 있다.
+첫째로, 예외는 \term{예외 처리기}{exception handler}를 통해 처리해 주어야 한다.
+
+\begin{verbatim}
+try {
+  get(List(1, 2), 2)
+} catch {
+  case e: Exception =>
+    // prints "index out of bounds"
+    println(e.getMessage)
+}
+\end{verbatim}
+
+만약 예외가 처리되지 않으면 실행 시간 오류가 발생한다.
+
+\begin{verbatim}
+get(List(1, 2), 2)
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+java.lang.Exception: index out of bounds
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{실행 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+스칼라 컴파일러는 예외가 처리되는지 확인하지 않는다. 다시 말해 예외가 처리되지
+않아 실행 시간 오류가 발생할 수 있어도 컴파일 시간 오류를 통해 미리 알 수 없다는
+것이다.
+
+두 번째 문제는 예외 처리가 지역적이지 않다는 점이다. 예외가 발생하면 실행 흐름이
+갑작스럽게 가장 가까운 예외 처리기로 이동한다. 이런 비지역적인 실행 흐름의
+이동은 많은 경우에 코드를 이해하기 어렵게 만든다. 그러니 \code{get}을 예외 없이
+구현하는 편이 바람직하다.
+
+한 가지 가능한 시도는 \code{null}을 사용하는 것이다. \code{null}은 어떤 객체도
+가리키지 않는 값이다. 예외를 발생시키는 대신 \code{null}을 결과로 내놓는 방법을
+시도해 볼 수 있다.
+
+\begin{verbatim}
+def get(l: List[Int], n: Int): Int =
+  if (n < 0)
+    null
+  else l match {
+    case Nil => null
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        get(t, n - 1)
+  }
+\end{verbatim}
+\vspace{-1em}
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{verbatim}
+    null
+    ^
+error: an expression of type Null is ineligible
+for implicit conversion
+
+    case Nil => null
+                ^
+error: an expression of type Null is ineligible
+for implicit conversion
+\end{verbatim}
+\vspace{-2em}
+\begin{flushright}
+\scriptsize\textsf{컴파일 시간 오류}
+\end{flushright}
+\end{mdframed}
+
+안타깝게도 스칼라에서 \code{null}은 \code{Int} 타입에 속하지 않는다. 그래서
+컴파일 시간 오류가 발생한다. 설사 \code{null}이 \code{Int} 타입에 속한다
+하더라도 \code{null}을 사용하는 것은 사실 좋은 해결책이 아니다. \code{null}을
+단순히 저장하거나 전달하는 것이 아니라, \code{null}을 의미 있는 계산에
+사용하려고 하면 잘 알려진 \code{NullPointerException}이 발생한다. 컴파일러는
+\code{NullPointerException}이 발생할 수 있는지 확인하지 않는다. 이런 면에서
+\code{null}을 사용하는 것은 예외를 사용하는 것보다 크게 나은 점이 없다.
+\code{null}을 사용하면 오류를 유발하기 매우 쉽기 때문에 \code{null}이라는 개념은
+지속적으로 크게 비판받아 왔다. \code{null}의 발명자인 \term{토니 호어}{Tony
+Hoare}조차 \code{null}을 만든 것이 끔찍한 실수였다고 후회했다.
+
+\begin{quote}
+I call it my billion-dollar mistake. It was the invention of the null reference
+in 1965.\footnote{\url{https://en.wikipedia.org/wiki/Null\_pointer\#History}}
+\end{quote}
+
+또 다른 시도는 -1과 같이 실패를 의미하는 특별한 값을 사용하는 것이다.
+
+\begin{verbatim}
+def get(l: List[Int], n: Int): Int =
+  if (n < 0)
+    -1
+  else l match {
+    case Nil =>
+      -1
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        get(t, n - 1)
+  }
+\end{verbatim}
+
+이 방법은 누가 봐도 문제가 있다. 함수를 호출한 쪽에서 다음 두 상황을 구별할 수 없다.
+
+\begin{itemize}
+\item 리스트가 –1을 가지고 있다.
+\item 주어진 위치가 올바르지 않다.
+\end{itemize}
+
+이처럼 실패를 나타내는 특별한 값을 정해서 사용하는 것은 어떤 경우에는 통할지 몰라도 모든 경우에 통하지는 않는다.
+
+특별한 값을 \code{get}이 미리 정해 놓는 것이 문제라면, \code{get}을 호출하는 쪽에서 기본값을 정하게 할 수도 있다.
+
+\begin{verbatim}
+def getOrElse(l: List[Int], n: Int, default: Int): Int =
+  if (n < 0)
+    default
+  else l match {
+    case Nil =>
+      default
+    case h :: t =>
+      if (n == 0)
+        h
+      else
+        getOrElse(t, n - 1, default)
+}
+\end{verbatim}
+
+만약 \code{get}을 호출하는 목적에 부합하는 기본값이 존재한다면 이것만으로도
+그럭저럭 괜찮다. 하지만 위치가 올바른지 확인하는 것 그 자체가 중요하다면 이
+방법이나 이전 방법이나 비슷하게 별로다. 호출한 쪽에서 결과를 보고 리스트의
+원소인지 기본값인지 구분할 수가 없다.
+
+함수형 언어는 이처럼 계산이 실패할 수 있는 상황을 안전하게 표현하기 위해 옵션
+타입을 제공한다. 옵션이라는 이름에서 느껴지듯이, 값의 존재 여부가 옵션인 상황을
+표현한다. 스칼라 표준 라이브러리는 옵션 타입을 다음과 같이 정의한다.
+
+\begin{verbatim}
+sealed trait Option[A]
+case object None extends Option[Nothing]
+case class Some[A](value: A) extends Option[A]
+\end{verbatim}
+
+\code{T} 타입의 값을 가질 수도 있는 옵션 값은 \code{Option[T]} 타입에 속한다.
+옵션 값은 \code{None}이거나 \code{Some}이다. \code{None}은 아무 값도 없는
+상태로, \code{null}과 비슷하다. 계산이 실패한 상황을 나타낸다. \code{Nil}과
+마찬가지로, 모든 \code{None}이 똑같기 때문에 \code{case object}로 정의되었다.
+\code{Some}은 어떤 값이 존재하는 상태로, \code{null}이 아닌 객체와 비슷하며 계산이 성공한 상황을 나타낸다.
+
+다음 코드는 결과로 옵션을 내놓는 \code{getOption} 함수를 정의한다.
+
+\begin{verbatim}
+def getOption(l: List[Int], n: Int): Option[Int] =
+  if (n < 0)
+    None
+  else l match {
+    case Nil =>
+      None
+    case h :: t =>
+      if (n == 0)
+        Some(h)
+      else
+        getOption(t, n - 1)
+  }
+
+assert(getOption(List(1, 2), 0) == Some(1))
+assert(getOption(List(1, 2), 2) == None)
+\end{verbatim}
+
+주어진 위치가 올바르지 않으면 결괏값이 \code{None}이다. 호출한 쪽에서
+\code{None}을 보면 계산이 실패했음을 바로 알 수 있다. 주어진 위치가 올바르면
+원소를 \code{Some} 안에 넣어 결괏값을 만든다.
+
+스칼라 표준 라이브러리는 옵션을 많은 곳에서 사용한다. 옵션을 내놓는 여러
+메서드를 찾을 수 있다. 예를 들어 리스트의 \code{headOption} 메서드는 리스트가
+비어 있으면 \code{None}을 내놓고 그렇지 않으면 머리를 \code{Some}에 넣어 내놓는다.
+
+\begin{verbatim}
+assert(List().headOption == None)
+assert(List(1).headOption == Some(1))
+\end{verbatim}
+
+또, 맵의 \code{get} 메서드는 주어진 열쇠가 맵에 없으면 \code{None}을 내놓고
+그렇지 않으면 열쇠에 대응되는 값을 \code{Some}에 넣어 내놓는다.
+
+\begin{verbatim}
+val m = Map(1 -> "one", 2 -> "two")
+assert(m.get(0) == None)
+assert(m.get(1) == Some("one"))
+\end{verbatim}
+
+패턴 대조를 사용해 주어진 옵션을 \code{None}인 경우와 \code{Some}인 경우로
+나누어 처리할 수 있다. 또한, 리스트를 사용한 비슷한 작업을 쉽게 처리할 수 있도록
+리스트가 여러 메서드를 제공하는 것처럼, 옵션 역시 여러 메서드를 제공한다. 그중
+가장 중요한 둘은 \code{map}과 \code{flatMap}이다.
+
+\code{map} 메서드는 이전 계산이 성공한 경우에만 계산을 이어서 하고 싶은 경우에
+유용하다. \code{map}은 함수 하나를 인자로 받는다. \code{opt.map(f)}는
+\code{opt}가 \code{None}이면 결과가 \code{None}이고 \code{opt}가
+\code{Some(v)}이면 결과가 \code{Some(f(v))}이다.
+
+\code{map} 메서드가 유용한 상황을 알아보기 위해 학생을 담고 있는 맵을 생각해
+보자. 학생의 이름이 열쇠고 학생 객체가 연결된 값이다. 하고 싶은 일은 특정 이름을
+가진 학생의 키를 알아내는 것이다. 이 작업을 \code{map} 메서드를 사용해 다음과 같이 구현할 수 있다.
+
+\begin{verbatim}
+def getHeight(
+  m: Map[String, Student],
+  name: String
+): Option[Int] =
+  m.get(name).map(_.height)
+\end{verbatim}
+
+만약 \code{m.get(name)}이 \code{None}이면 \verb!m.get(name).map(_.height)! 역시
+\code{None}이다. 그렇지 않은 경우에는 \code{m.get(name)}이
+\code{Some(student)}일 것이고, \verb!m.get(name).map(_.height)!는
+\code{Some(student.height)}가 된다.
+
+이처럼 계산이 두 단계로 이루어지는 데 첫 단계가 실패할 수 있을 때 \code{map}이 유용하다.
+
+\code{flatMap}은 \code{map}과 비슷하면서도 약간 다르다. \code{flatMap}은 계산이
+두 단계이면서 각 단계가 모두 실패할 수 있을 때 사용한다. \code{flatMap} 역시
+함수 하나를 인자로 받는데, 그 함수는 옵션을 내놓는 함수여야 한다.
+\code{opt.flatMap(f)}는 \code{opt}가 \code{None}이면 결과가 \code{None}이고
+\code{opt}가 \code{Some(f)}이면 결과가 \code{f(v)}이다.
+
+이름의 리스트와 앞 예시에서 사용한 맵이 있을 때, 리스트에서 가장 먼저 나오는
+이름을 가진 학생을 찾아보자. \code{flatMap}을 사용하면 쉽게 구현할 수 있다.
+
+\begin{verbatim}
+def getStudent(
+  l: List[String],
+  m: Map[String, Student]
+): Option[Student] =
+  l.headOption.flatMap(m.get)
+\end{verbatim}
+
+표준 라이브러리는 그 밖에도 옵션을 다루기 위한 여러 메서드를
+제공한다.\footnote{\url{https://www.scala-lang.org/api/current/scala/Option.html}}

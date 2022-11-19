@@ -1,11 +1,11 @@
 \chapter{Pattern Matching}
 \labch{pattern-matching}
 
-This section explains pattern matching of Scala.
+This chapter explains pattern matching of Scala.
 Pattern matching is one of the key features of functional programming.
 It helps programmers handle complex, but structured data.
 We have already used a simple form of pattern matching for lists.
-This section discusses the benefits
+This chapter discusses the benefits
 of pattern matching and various patterns available in Scala.
 In addition, it will introduce the option type, which is widely-used in
 functional programming.
@@ -182,7 +182,7 @@ val m: AE = Num(10)
 m.value
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
   ^
 error: value value is not a member of AE
@@ -224,14 +224,13 @@ The list type is another good example of an ADT. The Scala standard library defi
 lists similar to the following code:
 
 \begin{verbatim}
-sealed trait List[+A]
+sealed trait List[A]
 case object Nil extends List[Nothing]
 case class ::[A](head: A, tail: List[A]) extends List[A]
 \end{verbatim}
 
 This code omits some details but clearly shows the high-level idea to define
-lists.\footnote{We will not see what \code{[+A]} and \code{Nothing} are here.
-You can understand the overall ADT structure without knowing those concepts.}
+lists.
 A list is either the empty
 list or a nonempty list, which is a pair of its head and tail. \code{Nil} is
 defined as a case object, not a case class, since there is only one empty list.
@@ -319,7 +318,7 @@ The function lacks the \code{Num} pattern.
 eval(Num(3))
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
 scala.MatchError: Num(3) (of class Num)
 \end{verbatim}
@@ -341,7 +340,7 @@ def eval(e: AE): Int = e match {
 }
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=yellow!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
                        ^
 warning: match may not be exhaustive.
@@ -384,7 +383,7 @@ def eval(e: AE): Int = e match {
 }
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=yellow!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
   case Num(n) => n
                  ^
@@ -561,8 +560,7 @@ def optimizeAbs(e: AE): AE = e match {
 
 Type patterns are useful for dynamic type checking. The following function takes
 any value as an argument and check whether it is a string or
-not.\footnote{Every type is a subtype of \code{Any}, i.e. every value belongs to
-\code{Any}.}
+not. In Scala, every value belongs to \code{Any}.
 
 \begin{verbatim}
 def show(x: Any): String = x match {
@@ -584,7 +582,7 @@ def show(x: Any): String = x match {
 }
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=yellow!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
           ^
 warning: non-variable type argument String in type pattern
@@ -879,7 +877,7 @@ error and terminate the execution.
 get(List(1, 2), 2)
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
 java.lang.Exception: index out of bounds
 \end{verbatim}
@@ -917,7 +915,7 @@ def get(l: List[Int], n: Int): Int =
   }
 \end{verbatim}
 \vspace{-1em}
-\begin{mdframed}[hidealllines=true,backgroundcolor=red!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
+\begin{mdframed}[hidealllines=true,backgroundcolor=gray!10,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt]
 \begin{verbatim}
     null
     ^
@@ -931,7 +929,7 @@ for implicit conversion
 \end{verbatim}
 \vspace{-2em}
 \begin{flushright}
-\scriptsize\textsf{Run-time error}
+\scriptsize\textsf{Compile-time error}
 \end{flushright}
 \end{mdframed}
 
@@ -1000,12 +998,10 @@ the default value.
 
 Functional languages provide the option type to handle erroneous situations
 safely. As the name implies, it represents an optional existence of a value.
-The Scala standard library defines the option type like below.\footnote{
-We will not see what \code{[+A]} and \code{Nothing} are here.
-You can understand the overall ADT structure without knowing those concepts.}
+The Scala standard library defines the option type like below.
 
 \begin{verbatim}
-sealed trait Option[+A]
+sealed trait Option[A]
 case object None extends Option[Nothing]
 case class Some[A](value: A) extends Option[A]
 \end{verbatim}
