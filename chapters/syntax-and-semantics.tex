@@ -138,8 +138,7 @@ example, the following definition makes \code{<digit>} denote
 $\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$:
 
 \begin{verbatim}
-<digit> ::= "0" | "1" | "2" | "3" | "4"
-          | "5" | "6" | "7" | "8" | "9"
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 \end{verbatim}
 
 From now on, we are going to define the concrete syntax of a tiny language named
@@ -193,8 +192,8 @@ strings, e.g. \code{"110"} by concatenating \code{"1"} and \code{"10"},
 \code{"1110"} by concatenating \code{"1"} and \code{"110"}, and so on. In the
 end, we can conclude that \code{<nat>} denotes the set of every string that
 consists of the characters from \code{'0'} to \code{'9'}, i.e. every string that
-represents a decimal natural number.\footnote{This book considers zero as a
-natural number.}
+represents a decimal natural number, where zero is considered as a
+natural number.
 
 Finding the set denoted by \code{<number>} is easier. Since \code{<nat>} is one
 way to construct an element of \code{<number>}, the set denoted by \code{<nat>}
@@ -450,8 +449,8 @@ focus on the structures of programs.
 
 As abstract syntax treats programs as trees, defining the abstract syntax of a
 language is to define the set of every tree that represents a program. Let us
-define the abstract syntax of \Lang. In \Lang, every natural number is a
-program. A natural number program has only one component: the natural number
+define the abstract syntax of \Lang. In \Lang, every integer is a
+program. An integer program has only one component: the integer number
 itself. Therefore, the following fact is true, where $E$ denotes the set of
 every program:
 
@@ -1148,7 +1147,7 @@ By subtracting $1$ from $3$, we get $2$.
   { (3-1)+2\Rightarrow{\color{white}4} }
 \]
 
-We use Rule \textsc{Num} agian and get $2\Rightarrow2$.
+We use Rule \textsc{Num} again and get $2\Rightarrow2$.
 
 \[
   \inferrule
@@ -1215,15 +1214,14 @@ modifying both syntax and semantics of \Lang. First, we fix the concrete syntax
 to add integer negation.
 
 \begin{verbatim}
-<expr> ::= <number> | <expr> "+" <expr>
-         | <expr> "-" <expr> | "-" "(" <expr> ")"
+<expr> ::= <number> | <expr> "+" <expr> | <expr> "-" <expr> | "-(" <expr> ")"
 \end{verbatim}
 
 Similarly, we fix the abstract syntax, too.
 
 \[e\ ::=\ n\ |\ e+e\ |\ e-e\ |\ -e\]
 
-The parser should be changed accordingly. For example, \code{-(03+4)} is parsed
+The parser should be changed accordingly. For example, \code{"-(03+4)"} is parsed
 to $-(3+4)$.
 
 Finally, we add a new rule to the semantics to handle the $-e$ case.
@@ -1248,9 +1246,9 @@ It requires considerable amount of work as we need to fix every component of the
 
 Another way to add integer negation to \Lang is to add it as syntactic sugar. It
 is enough to modify the concrete syntax and the parser. The change in the
-concrete syntax is the same as before. Now, we fix the parser to parse \code{"-"
-"(" expr ")"} to $0-e$ when \code{expr} is parsed to $e$. For example,
-\code{-(03+4)} is parsed to $0-(3+4)$. Since $0\isub n=\isub n$ for any integer
+concrete syntax is the same as before. Now, we fix the parser to parse \code{"-("
+expr ")"} to $0-e$ when \code{expr} is parsed to $e$. For example,
+\code{"-(03+4)"} is parsed to $0-(3+4)$. Since $0\isub n=\isub n$ for any integer
 $n$, we are done. It is the power of syntactic sugar. Language designers can
 easily add new features by syntactically transforming them to existing features.
 The procedure removing syntactic sugar by transformation is called
@@ -1379,86 +1377,5 @@ Describe whether each of the following is \code{<coffee>} and why.
   \item \code{steamed-milk on espresso on chocolate-syrup}
   \item \code{cocoa-powder on milk-foam on steamed-milk on espresso}
 \end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
-\labex{syntax-and-semantics-pair}
-
-This exercise extends \Lang with pairs. Consider the following language:
-\[
-\begin{array}{rrl}
-  e & ::= & \cdots\ |\ (e,e)\ |\ e\textsf{.1}\ |\ e\textsf{.2} \\
-  v & ::= & \cdots\ |\ (v,v)
-\end{array}
-\]
-The semantics is as follows:
-\begin{itemize}
-  \item The evaluation of $(e_1,e_2)$
-    yields $(v_1,v_2)$, where $e_i$ evaluates to $v_i$.
-  \item The evaluation of $e\textsf{.1}$ yields the first value of
-    a pair $v$, where $e$ evalutes to $v$.
-  \item The evaluation of $e\textsf{.2}$ yields the second value of
-    a pair $v$, where $e$ evalutes to $v$.
-\end{itemize}
-
-\begin{enumerate}
-  \item Write the operational semantics of the form \fbox{$e\Rightarrow v$}.
-  \item Write the evaluation derivation of $(8,(320,42)\textsf{.1})\textsf{.2}$.
-\end{enumerate}
-
-\end{exercise}
-
-\begin{exercise}
-\labex{syntax-and-semantics-record}
-
-This exercise extends \Lang with records. A record is a value that maps labels to values.
-Consider the following language:
-\[
-\begin{array}{rrl}
-  e & ::= & \cdots\ |\ \{l:e,\cdots,l:e\}\ |\ e.l\\
-  v & ::= & \cdots\ |\ \langle l:v,\cdots,l:v\rangle \\
-\end{array}
-\]
-where $l$ ranges over labels.
-
-The semantics is as follows:
-\begin{itemize}
-  \item The evaluation of $\{l_1:e_1,\cdots,l_n:e_n\}$
-    yields $\langle l_1:v_1,\cdots,l_n:v_n\rangle$,
-    where $e_i$ evaluates to $v_i$.
-  \item The evaluation of $e.l$ yields the value of a field $l$
-    in a record $v$, where $e$ evaluates to $v$.
-\end{itemize}
-
-Write the operational semantics of the form \fbox{$e\Rightarrow v$}.
-
-\end{exercise}
-
-\begin{exercise}
-\labex{syntax-and-semantics-stlist}
-
-This exercise extends \Lang with JavaScript-like
-sequencing.\footnote{\url{https://tc39.es/ecma262/\#sec-block-runtime-semantics-evaluation}}
-Consider the following language:
-\[
-  \begin{array}{rrl}
-    e & ::= & \cdots\ |\ \textsf{()}\ |\ e;\cdots;e \\
-    v & ::= & \cdots\ |\ \textsf{()} \\
-  \end{array}
-\]
-The semantics is as follows:
-\begin{itemize}
-  \item
-The value of $\textsf{()}$ is $\textsf{()}$.
-  \item
-The value of $e_1;\cdots;e_n$ is $\textsf{()}$
-if every $e_i$ evaluates to $\textsf{()}$.
-  \item
-The value of $e_1;\cdots;e_n$
-is the value of the last expression whose value is not $\textsf{()}$
-if there is such an expression.
-\end{itemize}
-Write the operational semantics of the form \fbox{${e}\Rightarrow{v}$}.
 
 \end{exercise}

@@ -1,0 +1,1293 @@
+\chapter{문법과 의미}
+\labch{syntax-and-semantics}
+
+\renewcommand{\Lang}{\code{AE}}
+
+이 장은 \term{문법}{syntax}과 \term{의미}{semantics}를 다룬다.
+
+프로그래밍 언어의 문법은 언어의 겉모습을 결정한다. 문법은 \term{구체적
+문법}{concrete syntax}과 \term{요약 문법}{abstract syntax}으로 다시 나눌 수
+있다. 구체적 문법은 프로그램을 문자열로 취급하는 반면, 요약 문법은 프로그램의
+구조를 \term{나무}{tree} 형태로 표현한다. 그리고 \term{파싱}{parsing}이 구체적
+문법과 요약 문법 사이를 이어 준다. 파싱을 통해 문자열이 나무로 바뀌는 것이다. 이
+장에서 구체적 문법, 요약 문법, 파싱에 대해 알아본다.
+
+프로그래밍 언어의 의미는 그 언어로 작성된 각 프로그램의 동작을 결정한다. 이
+장에서 언어의 의미를 정의하는 방법을 알아본다. 더 나아가 \term{문법
+설탕}{syntactic sugar}이 무엇인지도 알아본다.
+
+\section{구체적 문법}
+
+프로그램을 작성하는 것은 곧 문자열을 쓰는 것이다. 이때 어떤 문자열은
+프로그램이고, 어떤 문자열은 프로그램이 아니다. 예를 들어 다음 코드는 스칼라
+프로그램이다.
+
+\begin{verbatim}
+println()
+\end{verbatim}
+
+한편 다음 코드는 스칼라 프로그램이 아니다.
+
+\begin{verbatim}
+println(
+\end{verbatim}
+
+\term{구체적 문법}{concrete syntax}은 특정 문자열이 프로그램인지 아닌지 정한다. 스칼라의 구체적 문법에
+따라 \code{println()}은 프로그램이지만 닫는 괄호가 빠진 \code{println(}은
+프로그램이 아닌 것이다. 구체적 문법을 모르면 특정 문자열이 프로그램인지 아닌지
+알 수 없다. 그러니 구체적 문법은 프로그래밍 언어의 필수 요소다. 이 절에서 구체적
+문법을 엄밀하게 정의하는 방법을 알아본다.
+
+프로그램이 문자열로 표현되므로 가장 먼저 할 일은 문자열을 정의하는 것이다.
+문자열은 유한한 개수의 \term{문자}{character}를 나열한 것이다. 문자의 정의는 언어마다
+다르다. 어떤 언어에서는 \term{아스키}{ASCII} 코드로 표현되는 것들만이 문자다. 어떤
+언어에서는 \term{유니코드}{Unicode}로 표현되는 모든 것이 문자다. 우리는 모든 언어에 관해
+일반적으로 이야기하고 싶으므로, 문자의 집합을 특정한 집합으로 고정하지 않겠다.
+대신 문자의 집합이 주어진다고 가정한다. 그 집합에 정확히 어떤 문자들이
+속하는지는 중요하지 않다. $C$는 문자의 집합을 나타낸다.
+
+\[C = \text{모든 문자의 집합} = \{ c\ |\ c\text{는 문자} \}\]
+
+이제 문자는 $C$의 원소다.
+
+문자를 정의했으니 이를 바탕으로 문자열을 정의할 수 있다. $S$는 문자열의
+집합이다.
+
+\[S = \text{모든 문자열의 집합} = \{ \code{"}c_1\cdots c_n\code{"}\ |\
+c_1,\cdots,c_n\in C \}\]
+
+문자열은 $S$의 원소로, 0개 이상의 문자를 나열한 것이다. 예를 들어,
+$\code{'a'},\code{'b'}\in C$이면 $\code{"aba"}\in S$이다.
+
+모든 문자열이 프로그램인 것은 아니므로 프로그램의 정의는 문자열의 정의와 달라야
+한다. 앞서 본 것처럼 \code{"println()"}과 \code{"println("} 모두 문자열이지만
+하나는 프로그램이고 하나는 프로그램이 아니다.
+
+구체적 문법을 정의한다는 것은 무슨 문자열이 프로그램인지 정의하는 것이다. 다시
+말해, 구체적 문법을 정의하는 것은 프로그램의 집합을 정의하는 것이다. $P$는
+프로그램의 집합이다.
+
+\[P = \text{모든 프로그램의 집합} = \{ p\ |\ p\text{는 프로그램} \}\]
+
+프로그램은 $P$의 원소다. $P$에는 한 가지 조건이 붙는다. 모든 프로그램은
+문자열이므로 $P$가 $S$의 \term{부분 집합}{subset}이어야 한다는 것이다.
+
+\[P\subseteq S\]
+
+각 언어의 구체적 문법은 $S$의 부분 집합인 $P$를 정의한다. 언어마다 $P$가 서로
+다르다. 예를 들어, $P$가 스칼라의 구체적 문법에 의해 정의되었을 때
+$\code{"println()"} \in P$이고 $\code{"println("}\not\in P$라고 말해도 된다.
+$P$가 다른 언어의 구체적 문법에 의해 정의되었다면 \code{"println()"}이 $P$의
+원소가 아닐 수 있다.
+
+언어의 구체적 문법을 정의하려면 집합 $P$를 정의해야 한다. 문제는 $P$가 대개
+\term{무한 집합}{inifinte set}이라는 점이다. 각 언어로 작성될 수 있는 프로그램의
+개수는 무한하다. 무한 집합의 모든 원소를 나열할 수 없기에 무한 집합을 정의하기는
+어렵다. 구체적 문법을 정의하려면 무한 집합을 정의할 방법이 필요하다.
+
+구체적 문법을 정의하는 가장 일반적인 방법은 \term{배커스-나우르
+표기법}{Backus-Naur form}\terme{BNF}이다. BNF를 사용하여 직관적으로 문자열로 이루어진
+집합을 정의할 수 있다. BNF는 정의한 집합의 각 원소를 만드는 방법을 알려 준다.
+BNF를 사용해 구체적 문법을 정의하기에 앞서 BNF를 사용하는 데 필요한 개념을 먼저
+알아보자.
+
+BNF에서는 \term{터미널}{terminal}, \term{논터미널}{nonterminal},
+\term{식}{expression}, 이렇게 세 가지 개념을 사용한다. 각 터미널은 문자열이다.
+가령 \code{"0"}과 \code{"ab"}는 터미널이다. 논터미널은 \code{<} \code{>} 사이에
+이름을 적어 표기하며 각 논터미널은 문자열의 집합을 나타낸다. 예를 들어
+\code{<digit>}은 논터미널이며 집합
+$\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$를
+나타내도록 만들 수 있다. 식은 한 개 이상의 터미널 혹은 논터미널을 나열한 것이다.
+다음은 식의 예시다.
+
+\begin{itemize}
+  \item \code{"abc"} (터미널 하나) 
+  \item \code{"0" "1"} (터미널 여럿) 
+  \item \code{<digit>} (논터미널 하나)
+  \item \code{<digit> <number>} (논터미널 여럿)
+  \item \code{"-" <number>} (터미널 하나와 논터미널 하나)
+\end{itemize}
+
+각 식은 문자열의 집합을 나타내며, 그 집합은 식을 구성하는 각 부품이 나타내는
+문자열을 이어 붙여 만든 문자열로 이루어진다. 가령 식 \code{"0" "1"}에서
+\code{"0"}은 \code{"0"}을 나타내고 \code{"1"}은 \code{"1"}을 나타내므로 식이
+나타내는 집합은 $\{\code{"01"}\}$이다. 또, 만약 \code{<digit>}이 집합
+$\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$를
+나타낸다면 \code{"0" <digit>}이라는 식은
+$\{\code{"00"},\code{"01"},\code{"02"},\code{"03"},\code{"04"},\code{"05"},\code{"06"},\code{"07"},\code{"08"},\code{"09"}\}$를
+나타낸다.
+
+이제 어떻게 해야 각 논터미널이 의미하는 집합을 정해 줄 수 있는지 보자. BNF는
+다음 형태를 통해 논터미널의 뜻을 정의할 수 있도록 한다.
+
+\begin{verbatim}
+[nonterminal] ::= [expression] | [expression] | …
+\end{verbatim}
+
+우변의 세로줄은 여러 식을 구분하는 역할을 한다. 우변의 식들이 좌변의 논터미널의
+뜻을 결정한다. 식이 나타내는 문자열 집합을 모두 합한 것이 곧 논터미널이 나타내는
+집합이다. 예를 들면 다음과 같이 써서 \code{<digit>}이 집합
+$\{\code{"0"},\code{"1"},\code{"2"},\code{"3"},\code{"4"},\code{"5"},\code{"6"},\code{"7"},\code{"8"},\code{"9"}\}$를
+나타내도록 만들 수 있다.
+
+\begin{verbatim}
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+\end{verbatim}
+
+BNF의 구체적인 사용 예시를 보기 위해 작은 언어인 \Lang의 구체적 문법을 정의해
+보겠다. \Lang는 \term{산술식}{arithmetic expression}을 뜻한다. 이 언어는 십진법으로
+표현된 정수를 더하고 빼는 기능만 제공한다.
+
+\Lang~프로그램은 십진수를 표현할 수 있어야 한다. 즉, 다음 문자열은 \Lang~프로그램이다.
+
+\begin{itemize}
+  \item \code{"0"}
+  \item \code{"1"}
+  \item \code{"-10"}
+  \item \code{"42"}
+\end{itemize}
+
+더 나아가, 프로그램이 덧셈과 뺄셈을 표현할 수 있어야 한다. 그러니 다음 문자열
+역시 프로그램이다.
+
+\begin{itemize}
+  \item \code{"0+1"}
+  \item \code{"-2-1"}
+  \item \code{"1+-3+42"}
+  \item \code{"4-3+2-1"}
+\end{itemize}
+
+우선 십진수를 표현하는 모든 문자열의 집합을 BNF로 정의하자. 다음과 같이 정의할 수 있다.
+
+\begin{verbatim}
+<digit>  ::= "0" | "1" | "2" | "3" | "4"
+           | "5" | "6" | "7" | "8" | "9"
+<nat>    ::= <digit> | <digit> <nat>
+<number> ::= <nat> | "-" <nat>
+\end{verbatim}
+
+이렇게 정의하면 \code{<digit>}이 $\{$\code{"0"}, \code{"1"}, \code{"2"},
+\code{"3"}, \code{"4"}, \code{"5"}, \code{"6"}, \code{"7"}, \code{"8"},
+\code{"9"}$\}$를 나타낸다는 사실은 이미 보았다. \code{<digit>}이 \code{<nat>}의
+원소를 만드는 한 가지 방법이므로, \code{<digit>}이 나타내는 각 문자열은 곧
+\code{<nat>}이 나타내는 문자열이기도 하다. 그러니 $\{$\code{"0"}, \code{"1"},
+\code{"2"}, \code{"3"}, \code{"4"}, \code{"5"}, \code{"6"}, \code{"7"},
+\code{"8"}, \code{"9"}$\}$는 \code{<nat>}이 나타내는 집합의 일부다. 동시에
+\code{<digit> <nat>} 역시 \code{<nat>}의 원소를 만드는 방법이다. 즉,
+\code{<digit>}과 \code{<nat>}에서 문자열을 하나씩 골라서 이어 붙임으로써
+\code{<nat>}의 새 원소를 만들 수 있다. 가령 \code{<digit>}에 \code{"1"}이 속하고
+\code{<nat>}에 \code{"0"}이 속하니 \code{"10"}도 \code{<nat>}에 속한다. 이
+과정을 반복하면 무수히 많은 문자열이 탄생한다. \code{"1"}과 \code{"10"}을 이으면
+\code{"110"}이 나오고, \code{"1"}과 \code{"110"}을 이으면 \code{"1110"}이
+나온다. 최종적으로는 \code{<nat>}이 \code{'0'}부터 \code{'9'}까지의 문자로
+이루어진 모든 문자열의 집합을 나타냄을 알 수 있다. 다시 말해 \code{0}을 자연수에
+포함할 때 \code{<nat>}은 십진 자연수를 나타내는 모든 문자열을 포함한다.
+
+\code{<number>}가 나타내는 집합은 쉽게 알 수 있다. \code{<nat>}이
+\code{<number>}의 원소를 만드는 한 가지 방법이므로 \code{<nat>}이 나타내는
+집합이 \code{<number>}가 나타내는 집합의 일부다. 식 \code{"-" <nat>}은
+\code{<number>}의 원소를 만드는 다른 방법이다. 이는 \code{"-"}와 \code{<nat>}의
+원소를 이어 붙여 만든 문자열 역시 \code{<number>}에 속함을 뜻한다. 그러니
+\code{<number>}는 십진 정수를 나타내는 모든 문자열을 포함한다.
+
+이제 덧셈과 뺄셈만 추가하면 구체적 문법의 정의가 끝난다.
+
+...
+
+전과 같은 방법으로 \code{<expr>}가 나타내는 집합이 무엇인지 알아낼 수 있다. 바로
+십진 정수 및 그 덧셈과 뺄셈으로 이루어진 모든 산술식을 나타내는 문자열의
+집합이다. 따라서 \code{<expr>}가 \Lang의 $P$를 정의한다고 말할 수 있으며,
+\Lang의 구체적 문법이 드디어 정의되었다.
+
+\section{요약 문법}
+
+문법을 구체적 문법만으로 정의하는 것은 언어 사용자와 설계자 모두의 관점에서
+문제를 일으킨다. 개발자는 대개 여러 언어를 배우며, 구체적 문법은 언어마다 큰
+차이가 있다. 두 정수를 인자로 받아 그 합을 계산하는 함수를 생각해 보자. 네 개의
+서로 다른 언어로 다음과 같이 함수를 작성할 수 있다.
+
+\begin{itemize}
+  \item 파이썬
+
+\begin{verbatim}
+def add(n, m):
+    return n + m
+\end{verbatim}
+
+  \item 자바스크립트
+
+\begin{verbatim}
+function add(n, m) {
+    return n + m;
+}
+\end{verbatim}
+
+  \item 래킷
+
+\begin{verbatim}
+(define (add n m) (+ n m))
+\end{verbatim}
+
+  \item 오캐멀
+
+\begin{verbatim}
+let add n m = n + m
+\end{verbatim}
+\end{itemize}
+
+같은 함수를 정의하는 데도 코드가 매우 다르게 생겼다. 함수를 정의할 때 사용하는
+키워드가 파이썬에서는 \code{def}, 자바스크립트에서는 \code{function}, 래킷에서는
+\code{define}, 오캐멀에서는 \code{let}이다. 또, 파이썬과 자바스크립트는
+매개변수를 쓸 때 괄호와 쉼표를 요구하지만 래킷과 오캐멀은 그렇지 않다.
+자바스크립트는 다른 세 언어와 달리 함수 몸통을 중괄호 안에 넣는다. 래킷은
+\code{+}를 \term{전위 연산자}{prefix operator}로 취급하지만 나머지는 \code{+}를
+중위 연산자로 취급한다. 이런 차이는 모두 구체적 문법의 차이다. 개발자들은 종종
+서로 다른 구체적 문법 때문에 여러 언어를 배우는 데 어려움을 겪는다.
+
+하지만 사실 각 언어로 구현한 함수의 구조는 완전히 같다. 어느 언어에서든 함수
+정의는 함수 이름, 매개변수, 몸통 식으로 이루어진다. 위 예시에서 정의한 함수는
+이름이 \code{add}이고 매개변수가 \code{n}과 \code{m}이고 몸통이 \code{n}과
+\code{m}을 더하는 식이다. 어느 언어에서든 덧셈식은 두 \term{피연산자}{operand}로
+구성되며, 몸통은 \code{n}과 \code{m}을 덧셈의 피연산자로 사용한다.
+
+그러니 개발자는 여러 언어를 쉽게 배우기 위해 프로그램을 나타내는 문자열 그
+자체보다는 프로그램의 구조에 집중해야 한다. 언어가 바뀔 때 문자열이 크게
+달라지는 것과 달리 구조는 변하지 않는다.
+
+한편 언어 설계자는 구체적 문법이 무시하고 싶은 정보까지 구체적으로 다루기 때문에
+불편을 느낀다. 예를 들어 \code{"2+1"}과 \code{"02+001"} 모두 \Lang~프로그램이다.
+두 프로그램은 문자열로서는 서로 다르지만 $2+1$이라는 같은 산술식을 표현한다.
+\Lang의 설계자들이 산술식을 계산하는 과정을 구현할 때 $2+1$과 $2-1$의 차이는
+중요해도 \code{"2+1"}과 \code{"02+001"}의 차이는 중요하지 않다. 설계자는
+프로그램의 구조에 집중하고 싶지 문자열 그 자체에 집중하고 싶지는 않은 것이다.
+
+이처럼 개발자와 언어 설계자 모두에게 구체적 문법은 문제를 일으킨다. 사람들은
+구조에만 집중하고 싶어 하지만 구체적 문법은 문자열만 열심히 표현하고 구조는 잘
+요약하여 표현하지는 못한다. 물론 구체적 문법이라는 개념을 없앨 수는 없다. 누구나
+프로그램은 문자열로 작성하며, 이 과정에서 구체적 문법이 반드시 필요하다.
+그러면서도 우리는 문자열의 차이에 영향받지 않고 프로그램의 구조를 기술할 방법이
+필요하다. 이를 위해 탄생한 개념이 요약 문법이다. 구체적 문법과 요약 문법은
+서로를 보완하여 함께 언어의 문법을 정의한다.
+
+\term{요약 문법}{abstract syntax}은 프로그램의 구조를 나무로 표현한다. 각 프로그램은 여러 부품으로
+이루어지며, 각 부품은 또 다시 여러 부품으로 이루어진다. 나무를 사용해 이런
+구조를 엄밀하게 표현할 수 있다. 각 부품은 하나의 나무로, 그 뿌리는 해당 부품의
+종류를 나타내고 자식 나무는 구성 부품을 나타낸다.
+
+함수 \code{add}를 나무로 표현해 보자. 함수 정의는 이름 \code{add}, 첫 매개변수
+\code{n}, 둘째 매개변수 \code{m}, 몸통 식, 이렇게 총 네 개의 부품으로 구성된다.
+따라서 다음 나무를 그릴 수 있다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\tiny FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_w] {}
+  };
+\end{tikzpicture}
+\end{center}
+
+나무의 뿌리는 \term{심벌}{symbol} FunDef로, 이 나무가 함수 정의를 표현한다는
+사실을 알려 준다. 나무는 \code{add}, \code{n}, \code{m}, 몸통 식을 자식으로
+가지며, 아직 몸통 식에 해당하는 나무는 그리지 않았다.
+
+몸통 식은 덧셈식으로, 덧셈의 피연산자를 부품으로 가진다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+    level 2/.style={sibling distance=1.2cm}
+]
+  \node [arn_u] {\tiny FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_w] {}
+    }
+    child{
+      node [arn_w] {}
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+덧셈식을 나타내는 나무이므로 뿌리가 Add라는 심벌이다. 피연산자가 두 개이므로
+자식이 둘이다.
+
+첫 연산자는 \code{n}이다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+    level 2/.style={sibling distance=1.2cm}
+]
+  \node [arn_u] {\tiny FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_u] {\small Name}
+      child{
+        node [arn_u] {\code{n}}
+      }
+    }
+    child{
+      node [arn_w] {}
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+뿌리는 Name이라는 심벌로, 이 식이 그냥 어떤 이름이라는 사실을 나타낸다. 나무의
+유일한 자식은 이름 \code{n}이다.
+
+둘째 피연산자도 비슷하게 표현할 수 있다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+    level 2/.style={sibling distance=1.2cm}
+]
+  \node [arn_u] {\tiny FunDef}
+  child{
+    node [arn_u] {\code{add}}
+  }
+  child{
+    node [arn_u] {\code{n}}
+  }
+  child{
+    node [arn_u] {\code{m}}
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_u] {\small Name}
+      child{
+        node [arn_u] {\code{n}}
+      }
+    }
+    child{
+      node [arn_u] {\small Name}
+      child{
+        node [arn_u] {\code{m}}
+      }
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+위 나무는 함수 정의의 구조를 표현한다. 무슨 언어로 작성된 코드인지는 상관없다.
+파이썬 함수 정의의 구조일 수도 있고, 자바스크립트 함수 정의의 구조일 수도 있다.
+이렇게 프로그램을 나무로 표현함으로써 문자열에 있는 중요하지 않은 정보는
+무시하고 프로그램의 구조에 집중할 수 있다.
+
+요약 문법이 프로그램을 나무로 표현하므로 언어의 요약 문법을 정의하는 것은
+프로그램을 나타내는 모든 나무의 집합을 정의하는 것이다. \Lang의 요약 문법을
+정의해 보자. 각 정수는 \Lang~프로그램이며, 정수 프로그램은 그 정수를 부품으로
+가진다. 따라서, $E$가 모든 프로그램의 집합을 나타낸다고 할 때, 다음 문장이
+참이다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2,-0.6) {$\text{만약 }n\in\mathbb{Z}\text{이면,}$};
+  \node [arn_u] at (0,0) {\small Num}
+  child{
+    node [arn_u] {$n$}
+  };
+  \node at (1,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+두 산술식의 합 역시 프로그램이다. 덧셈을 하는 프로그램은 피연산자 둘을 부품으로
+가진다. 각 피연산자는 산술식이며, 곧 프로그램이기도 하다. 그러니 다음 문장 역시
+참이다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{만약 }e_1,e_2\in E\text{이면,}$};
+  \node [arn_u] at (0,0) {\small Add}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+뺄셈도 비슷하다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{만약 }e_1,e_2\in E\text{이면,}$};
+  \node [arn_u] at (0,0) {\small Sub}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+위 사실들을 종합하면, \Lang의 요약 문법은 다음 조건을 모두 만족하는 가장 작은 집합 $E$라고 정의할 수 있다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2,-0.6) {$\text{만약 }n\in\mathbb{Z}\text{이면,}$};
+  \node [arn_u] at (0,0) {\small Num}
+  child{
+    node [arn_u] {$n$}
+  };
+  \node at (1,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{만약 }e_1,e_2\in E\text{이면,}$};
+  \node [arn_u] at (0,0) {\small Add}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.3,-0.6) {$\text{만약 }e_1,e_2\in E\text{이면,}$};
+  \node [arn_u] at (0,0) {\small Sub}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+  \node at (1.2,-0.6) {$\in E$.};
+\end{tikzpicture}
+\end{center}
+
+가령 다음 나무는 \Lang~프로그램이다.
+
+요약 문법에 따라 정의된 집합에 속하는 나무를 \term{요약 문법 나무}{abstract
+syntax tree}\terme{AST}라 부른다.
+
+요약 문법은 대수적 타입을 사용해 스칼라로 쉽게 구현할 수 있다. 다음 코드는
+\Lang의 요약 문법을 구현한다.
+
+\begin{verbatim}
+sealed trait AE
+case class Num(value: Int) extends AE
+case class Add(left: AE, right: AE) extends AE
+case class Sub(left: AE, right: AE) extends AE
+\end{verbatim}
+
+\code{Num($n$)}은 다음 나무를 나타낸다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\small Num}
+  child{
+    node [arn_u] {$n$}
+  };
+\end{tikzpicture}
+\end{center}
+
+\code{Add($e_1$, $e_2$)}는 다음 나무를 나타낸다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\small Add}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+\end{tikzpicture}
+\end{center}
+
+\code{Sub($e_1$, $e_2$)}는 다음 나무를 나타낸다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] {\small Sub}
+  child{
+    node [arn_nc] {$e_1$}
+  }
+  child{
+    node [arn_nc] {$e_2$}
+  };
+\end{tikzpicture}
+\end{center}
+
+예를 들어 앞서 본 AST는 스칼라 코드로 \code{Add(Sub(Num(5), Num(1)),
+Num(3))}이라 쓸 수 있다.
+
+요약 문법이 프로그램을 나무로 표현하기는 해도, 프로그램을 표현할 때마다 나무를
+그리기는 귀찮다. 그래서 대개의 경우 코드와 비슷한 표기를 사용해 나무를 나타낸다.
+가령 맥락상 AST를 뜻하는 것이 분명하다면 뿌리가 Num이고 자식이 $n$인 나무를
+그리는 대신 그냥 $n$이라고 쓸 수 있다. 비슷하게, 덧셈과 뺄셈을 나타내는 나무를
+그리는 대신 그냥 $\eadd{e_1}{e_2}$와 $\esub{e_1}{e_2}$라고 쓸 수 있다. 여기서
+$+$와 $-$는 수학적인 덧셈과 뺄셈을 나타내는 기호가 아니라는 사실에 주의해야
+한다. 그저 표기의 일부일 뿐으로 그 자체로는 아무런 뜻도 없다.
+
+위 표기법을 사용해 \Lang의 요약 문법을 다시 정의할 수 있다. $E$는 다음 조건을
+모두 만족하는 가장 작은 집합이다.
+
+\begin{itemize}
+  \item 만약 $n\in\mathbb{Z}$이면, $n\in E$.
+  \item 만약 $e_1,e_2\in E$이면, $e_1+e_2\in E$.
+  \item 만약 $e_1,e_2\in E$이면, $e_1-e_2\in E$.
+\end{itemize}
+
+비록 표기법은 나무처럼 생기지 않지만, 여전히 나무를 나타내고 있다.
+
+표기법은 그저 임의로 정한 약속일 뿐이므로 다른 표기법을 정의하고 사용하는 것도
+가능하다. 예를 들면 덧셈을 나타내는 AST를 $\eadd{e_1}{e_2}$ 대신 $\embox{ADD}\
+e_1\ e_2$라고 쓰기로 약속할 수도 있다. 이처럼 표기법은 마음대로 정할 수 있다.
+하지만 일단 한번 표기법을 정했으면 다른 사람들이 헷갈리지 않도록 그 표기법만
+사용해야 한다.
+
+요약 문법의 정의를 더 간결하게 만들기 위해 BNF를 사용할 수도 있다. 다음은
+\Lang의 요약 문법을 BNF로 정의한 것이다.
+
+\[e\ ::=\ n\ |\ e+e\ |\ e-e\]
+
+요약 문법의 특정 원소를 나타내는 심벌을 \term{메타변수}{metavariable}라 부른다.
+각 심벌이 일종의 변수지만, 정의하려는 언어에서 개발자들이 사용하는 변수가 아니라
+한 단계 위, 즉 언어 설계자가 언어를 정의하는 단계에서 사용하는 변수라는 뜻으로
+메타변수라 부르는 것이다. 위 요약 문법 정의에서 $e$는 프로그램을 나타내는
+메타변수고 $n$은 정수를 나타내는 메타변수다.
+
+AST를 표기법을 사용해 간단히 적을 때 필요에 따라 괄호를 사용할 수 있다. 만약
+그냥 $3-1+2$라고만 쓰면 다음 두 나무 중 무엇을 뜻하는 것인지 모호할 수 있다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.8cm},
+    level 2/.style={sibling distance=1.2cm},
+]
+  \node [arn_u] at (-3,0) {\small Add}
+  child{
+    node [arn_u] {\small Sub}
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$3$}
+      }
+    }
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$1$}
+      }
+    }
+  }
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$2$}
+    }
+  };
+  \node at (0,-2) {or};
+  \node [arn_u] at (3,0) {\small Sub}
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$3$}
+    }
+  }
+  child{
+    node [arn_u] {\small Add}
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$1$}
+      }
+    }
+    child{
+      node [arn_u] {\small Num}
+      child{
+        node [arn_u] {$2$}
+      }
+    }
+  };
+\end{tikzpicture}
+\end{center}
+
+왼쪽 나무를 나타내고 싶다면 $(3-1)+2$라 쓰는 편이 명확하고, 오른쪽 나무를
+나타내고 싶다면 $3-(1+2)$라고 쓰는 편이 명확하다.
+
+\section{파싱}
+
+구체적 문법이 프로그램을 문자열로 간주하는 반면, 요약 문법은 프로그램을 나무로
+간주한다. 이 차이를 해소하는 것이 파싱이다. \term{파싱}{parsing}은 구체적 문법을 따르는 문자열을
+AST로 바꾸는 과정이다. 파싱을 수행하는 프로그램을 \term{파서}{parser}라 부른다. 파서를
+$S$(모든 문자열의 집합)에서 $E$(모든 AST의 집합)로 가는 \term{부분 함수}{partial
+function}로 생각할 수 있다.
+
+\[\embox{parse}: S\pto E\]
+
+\begin{kaobox}[frametitle=부분 함수]
+  집합 $A$에서 집합 $B$로 가는 부분 함수는 $A$의 부분 집합 $S$에서 $B$로 가는
+  함수다. $S$를 부분 함수의 정의역domain이라 부른다. $A\rightarrow B$는 $A$에서
+  $B$로 가는 함수의 집합이고, $A\mapsto B$는 $A$에서 $B$로 가는 부분 함수의
+  집합이다.
+
+  $f$가 $A$에서 $B$로 가는 부분 함수라 하자. 그러면 $f(a)$가 정의되지 않은 $A$의
+  원소 $a$가 존재할 수 있다. 개발자의 시각에서 $f$는 $A$에서
+  \code{Option[$B$]}로 가는 함수로, 결괏값이 정의되지 않으면 \code{None}이
+  나오고, 결괏값이 $b$이면 \code{Some($b$)}가 나온다.
+\end{kaobox}
+
+주어진 입력이 $P$(모든 프로그램의 집합)에 속하지 않으면 $\embox{parse}$의 결과는
+정의되지 않는다. 그래서 $\embox{parse}$가 부분 함수다. 만약 입력이 $P$에 속하면
+$\embox{parse}$는 그 문자열에 대응되는 AST를 만든다.
+
+\Lang의 파서를 생각해 보자. 다음 문자열은 \Lang~프로그램이 아니므로
+$\embox{parse}$의 결과가 정의되지 않는다.
+
+\begin{itemize}
+  \item \code{1+}
+  \item \code{2*4}
+  \item \code{0++3}
+\end{itemize}
+
+반면 다음은 $\embox{parse}$가 성공한 예시다.
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.2cm,
+    level 1/.style={sibling distance=1.2cm},
+]
+  \node at (-2.5,-1.2) {$\embox{parse}(\code{"-1+002"})=$};
+  \node [arn_u] at (0,0) {\small Add}
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$-1$}
+    }
+  }
+  child{
+    node [arn_u] {\small Num}
+    child{
+      node [arn_u] {$2$}
+    }
+  };
+  \node at (1.8,-1.2) {$=-1+2$};
+\end{tikzpicture}
+\end{center}
+
+이 책은 파서를 구현하는 방법을 다루지 않는다.
+
+\section{의미}
+
+문법은 언어의 필수 요소로 어떤 문자열이 프로그램이고 프로그램이 어떤 구조를
+가지는지 알려 준다. 하지만 프로그램이 어떻게 실행되는지는 알려 주지 않는다.
+개발자가 프로그램을 작성하는 이유는 실행하기 위함이다. 작성한 프로그램을
+실행했을 때 무슨 일이 일어날지 알아야 한다. \term{의미}{semantics}는 언어의 또 다른 필수 요소로
+프로그램의 동작을 정의한다.
+
+\Lang의 의미를 정의해 보자. 프로그램의 구조가 그 동작을 결정하는 것이
+자연스러우니, 의미는 요약 문법에 기반하여 정의한다. 어떤 프로그램의 의미란 그
+프로그램을 실행했을 때 무슨 일이 일어나는지를 말하며, \Lang의 의미는 각
+\Lang~프로그램의 의미를 결정한다. \Lang~프로그램은 실행했을 때 한 가지 일만
+한다. 바로 해당 산술식을 계산한 결과를 알려 주는 것이다. 예를 들면, 의미를
+올바르게 정의한 경우 $0+1$은 $1$을 결과로 낸다. 이때 $0+1$의 $+$는 그 자체로는
+덧셈을 뜻하지 않으며 언어의 의미를 정의하기 전까지는 $0+1$의 결과가 무엇인지
+말할 수 없다. \Lang을 합리적인 언어로 만들기 위해서는 의미를 잘 정의하여 $0+1$의
+결과가 $1$이 되게끔 해 줘야 한다.
+
+무수히 많은 프로그램이 존재하기 때문에 각 프로그램의 의미를 따로따로 정의할 수는
+없다. 그렇기 때문에 요약 문법이 정의한 프로그램의 구조를 활용하여 의미를
+정의한다. 요약 문법에 따라 프로그램을 $n$, $\eadd{e_1}{e_2}$,
+$\esub{e_1}{e_2}$의 세 종류로 나눌 수 있다. 특정 종류에 속한 모든 프로그램의
+의미를 한 번에 정의함으로써 무한히 많은 프로그램의 의미를 모두 정의할 것이다.
+
+가장 간단한 경우는 $n$이다. $n$은 정수 하나로 구성된 식이다. 정수를 계산하면 그
+정수가 그대로 나온다. 이러한 의미를 다음 규칙으로 표현할 수 있다.
+
+\semanticrule{Num}{
+  $n$의 결과는 $n$이다.
+}
+
+규칙 Num을 사용해 다음 사실을 알아낼 수 있다.
+
+\begin{itemize}
+  \item $1$의 결과는 $1$이다.
+  \item $5$의 결과는 $5$이다.
+\end{itemize}
+
+다음은 $\eadd{e_1}{e_2}$ 차례다. $e_1$이 산술식이므로 계산하면 어떤 정수가
+나온다. 그 정수를 $n_1$이라 하자. 마찬가지로 $e_2$ 역시 계산하면 어떤 정수가
+나온다. 그 정수는 $n_2$라 하자. 이 장에서 수학적 덧셈을 나타낼 때는 $+$ 대신
+$\iadd$라 쓰겠다. 요약 문법에서 사용한 아무 뜻도 없는 기호인 $+$와 수학적 덧셈을
+분명하게 구분하려는 것이다. 문법과 의미 두 개념 모두에 익숙해지고 나면 둘 다
+$+$라고만 써도 맥락상 무엇을 뜻하는 것인지 쉽게 알 수 있다. 그러니 다음 장부터는
+수학적 덧셈도 $+$라 쓸 것이다. 다음 규칙은 $\eadd{e_1}{e_2}$의 의미를 정의한다.
+
+\semanticrule{Add}{
+만약 $e_1$의 결과는 $n_1$이고, $e_2$의 결과는 $n_2$이면,\\
+$e_1+e_2$의 결과는 $n_1\iadd n_2$이다.
+}
+
+$\esub{e_1}{e_2}$의 의미도 비슷하게 정의할 수 있다. 앞서 $\iadd$를 사용한
+것처럼, 이 장에서 수학적 뺄셈을 나타낼 때는 $\isub$이라 쓰겠다. 다음 규칙은
+$\esub{e_1}{e_2}$의 의미를 정의한다.
+
+\semanticrule{Sub}{
+만약 $e_1$의 결과는 $n_1$이고, $e_2$의 결과는 $n_2$이면,\\
+$e_1-e_2$의 결과는 $n_1\isub n_2$이다.
+}
+
+
+이 세 규칙이 모여 다 함께 \Lang의 의미를 정의한다. 이제 우리는 모든 \Lang
+프로그램의 동작을 알 수 있다. $(3-1)+2$를 생각해 보자. 다음 과정에 따라
+$(3-1)+2$를 계산하여 $4$를 얻는다.
+
+\begin{enumerate}
+  \item (규칙 Num에 의해) $3$의 결과는 $3$이다.
+  \item (규칙 Num에 의해) $1$의 결과는 $1$이다.
+  \item (규칙 Sub에 의해) 만약 $3$의 결과는 $3$이고, $1$의 결과는
+    $1$이면, $3-1$의 결과는 $2$이다.
+  \item (1, 2, 3에 의해) $3-1$의 결과는 $2$이다.
+  \item (규칙 Num에 의해) $2$의 결과는 $2$이다.
+  \item (규칙 Add에 의해) 만약 $3-1$의 결과는 $2$이고, $2$의 결과는 $2$이면,
+    $(3-1)+2$의 결과는 $4$이다.
+  \item (4, 5, 6에 의해) $(3-1)+2$의 결과는 $4$이다.
+\end{enumerate}
+
+이제 \Lang의 의미를 더 수학적인 방법으로 정의해 보자. 의미는 각 프로그램의 실행
+결과를 정의한다. 이 경우 결과는 정수 하나다. 의미가 프로그램을 받아 정수를
+내놓는다고 볼 수 있는 것이다. 따라서 의미를 프로그램에서 정수로 가는 함수로
+생각하는 편이 자연스럽다.
+
+\[\embox{eval}:E\rightarrow \mathbb{Z}\]
+
+$E$의 원소 $e$가 주어졌을 때 유일한 정수 $\embox{eval}(e)$가 존재한다.
+\Lang에서 이는 사실이다. 모든 산술식을 계산하여 정수를 얻을 수 있다.
+
+하지만 다른 언어까지 고려하면 의미를 함수로 정의하는 것이 좋은 선택이 아니다.
+어떤 프로그램은 아무 결과도 내지 않는다. \term{실행이 끝나지
+않는}{nonterminating} 프로그램이 그런 예시다. 실행 시간 오류를 일으키는
+프로그램도 여기에 속한다. 다음 장에서 실행 시간 오류를 일으키는 프로그램을 보게
+될 것이다. 또한, 결과가 유일하지 않은 프로그램도 존재한다. 그런 프로그램은
+\term{비결정적}{nondeterministic} 프로그램이라 부른다. 예를 들어 여러
+\term{스레드}{thread}를 사용하는 동시성 프로그램의 동작은 실행 중에 스레드가
+실행되는 순서에 따라 달라진다. 스레드의 실행 순서가 바뀌면 결과도 바뀔 수 있다.
+결과가 없는 프로그램이나 비결정적 프로그램이 있기 때문에 의미를 함수로 정의할 수
+없다. 함수보다는 \term{관계}{relation}로 의미를 정의해야 한다. \Lang의 의미는
+함수로 정의해도 문제가 없지만, 이 장에서 논의한 내용을 다른 언어에도 쉽게 적용할
+수 있도록 의미를 관계로 정의하겠다.
+
+\Lang의 의미를 $E$와 $\mathbb{Z}$ 사이의 \term{이항관계}{binary relation}인
+$\Rightarrow$로 정의하겠다.
+
+\begin{kaobox}[frametitle=이항관계]
+  집합 $A$와 $B$ 사이의 이항관계는 $A\times B$의 부분 집합이다. 이때 $A\times B$는
+  $\{(a,b)\ |\ a\in A\land b\in B\}$이다.
+
+  $R$을 $A$와 $B$ 사이의 이항관계라 하자. 그러면 $R \subseteq A\times B$이다.
+  $a\in A$이고 $b\in B$일 때, $(a,b)\in R$이면 $a\ R\ b$라 쓴다. 예를 들어 $<$는
+  $\mathbb{Z}$와 $\mathbb{Z}$ 사이의 이항관계이고 $(1,2)\in<$ 대신 $1<2$라 쓸 수
+  있다.
+\end{kaobox}
+
+\[\Rightarrow\subseteq E\times\mathbb{Z}\]
+
+$(e,n)\in\Rightarrow$, 즉 $e\Rightarrow n$은 $e$를 계산한 결과가 $n$임을 뜻한다.
+
+의미를 수학적으로 다시 정의해 보자.
+
+\semanticrule{Num}{
+$n\Rightarrow n$.
+}
+
+\vspace{-1em}
+
+\semanticrule{Add}{
+만약 $e_1\Rightarrow n_1$이고, $e_2\Rightarrow n_2$이면,\\
+$e_1+e_2\Rightarrow n_1\iadd n_2$.
+}
+
+\vspace{-1em}
+
+\semanticrule{Sub}{
+만약 $e_1\Rightarrow n_1$이고, $e_2\Rightarrow n_2$이면,\\
+$e_1-e_2\Rightarrow n_1\isub n_2$.
+}
+
+이제 \term{추론 규칙}{inference rule}을 사용해 위 규칙을 다시 적어 보겠다.
+추론 규칙은 기존 \term{명제}{proposition}로부터 새로운 명제를 증명할 수 있게 해 주는
+규칙이다. 추론 규칙은 다음 형태로 작성한다.
+
+\[
+  \inferrule
+  { \text{전제}_1 \\ \text{전제}_2 \\ \cdots \\ \text{전제}_n }
+  { \text{결론} }
+\]
+
+추론 규칙은 가로줄, 줄 위의 명제, 줄 아래의 명제로 구성된다. 줄 위의 명제는
+\term{전제}{premise}라 부르고, 줄 아래의 명제는 \term{결론}{conclusion}이라
+부른다. 규칙이 뜻하는 바는 모든 전제가 참일 때 결론도 참이라는 것이다. 한 추론
+규칙의 전제는 한 개일 수도, 여러 개일 수도 있다. 전제가 아예 없는 것도 가능하다.
+전제가 없는 추론 규칙의 결론은 항상 참인 명제다. 전제가 없으면 추론 규칙의
+가로줄을 생략할 수 있다.
+
+\Lang의 의미를 추론 규칙으로 정의하자.
+
+\[
+  n\Rightarrow n
+  \quad\textsc{[Num]}
+\]
+
+\[
+  \inferrule
+  { e_1\Rightarrow n_1 \\ e_2\Rightarrow n_2 }
+  { e_1+e_2\Rightarrow n_1\iadd n_2 }
+  \quad\textsc{[Add]}
+\]
+
+\[
+  \inferrule
+  { e_1\Rightarrow n_1 \\ e_2\Rightarrow n_2 }
+  { e_1-e_2\Rightarrow n_1\isub n_2 }
+  \quad\textsc{[Sub]}
+\]
+
+보다시피 자연어로 규칙을 적는 것보다 훨씬 명확하고 간결하게 의미를 표현할 수
+있다.
+
+추론 규칙을 사용해 $(3-1)+2\Rightarrow4$를 증명할 수 있다. 추론 규칙을 사용해
+명제를 증명할 때는 \term{증명 나무}{proof tree}를 그린다. 증명 나무의 뿌리는
+증명하려는 명제이고, 자식은 결론을 뒷받침하는 증거다. 전산학에서 보통 나무의
+뿌리를 위쪽에 놓는 것과 달리, 증명 나무는 진짜 나무처럼 뿌리를 밑에 둔다. 자식은
+그 위에 온다.
+
+다음은 $3\Rightarrow 3$을 증명하는 증명 나무다.
+
+\[3\Rightarrow3\]
+
+규칙 Num에 전제가 없기 때문에 증명 나무에 뿌리밖에 없다.
+
+비슷한 방법으로 $1\Rightarrow 1$을 증명할 수 있다.
+
+\[1\Rightarrow1\]
+
+규칙 Sub와 위의 나무를 바탕으로 $3-1\Rightarrow2$를 증명하는 증명 나무를 아래와
+같이 그릴 수 있다.
+
+\[
+  \inferrule
+  { 3\Rightarrow3 \\ 1\Rightarrow1 }
+  { 3-1\Rightarrow2 }
+\]
+
+규칙 Num을 다시 사용하여 $2\Rightarrow2$를 증명할 수 있다.
+
+\[2\Rightarrow2\]
+
+그러고 나면 $(3-1)+2\Rightarrow4$의 증명 나무를 완성할 수 있다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow4 }
+\]
+
+위 예시에서는 증명 나무가 무엇인지 보여 주려고 증명 나무를 \term{잎}{leaf}부터
+그렸다. 하지만 실제로 새로운 명제를 증명하기 위해 증명 나무를 그릴 때는 증명할
+명제를 뿌리에 놓고 거기부터 시작하는 편이 자연스럽다. 증명 나무를 그리려면, 우선
+계산할 프로그램을 쓰고 그 위에 가로줄을 그린다. 결과는 아직 모르니 쓰지 않는다.
+
+\[
+  \inferrule
+  {
+    \color{white}
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    \color{white}
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+그러고 나서 적용 가능한 추론 규칙을 찾는다. 이 경우 프로그램이 덧셈식이므로 규칙
+Add를 적용할 수 있다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { \color{white}3\Rightarrow3 \\ \color{white}1\Rightarrow1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+이제 $3-1$과 $2$를 각각 계산해야 한다. $3-1$부터 보자. $3-1$은 뺄셈식이므로 규칙
+Sub를 적용한다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow\color{white}3 \\ 1\Rightarrow\color{white}1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+규칙 Num을 통해 $3\Rightarrow3$을 알아낸다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow\color{white}1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+비슷하게 $1\Rightarrow1$을 알아낸다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow\color{white}2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+머릿속으로 $3$에서 $1$을 빼서 $2$를 얻는다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow\color{white}2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+규칙 Num을 다시 사용해 $2\Rightarrow2$를 알아낸다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow{\color{white}4} }
+\]
+
+마지막으로 $2$와 $2$의 합을 계산하고 나면 증명 나무를 완성할 수 있다.
+
+\[
+  \inferrule
+  {
+    \inferrule
+    { 3\Rightarrow3 \\ 1\Rightarrow1 }
+    { 3-1\Rightarrow2 }
+    \\
+    2\Rightarrow2
+  }
+  { (3-1)+2\Rightarrow4 }
+\]
+
+이처럼 증명 나무를 그리는 과정은 차례대로 올바른 추론 규칙을 찾아 기계적으로
+적용하는 것이다. 정의한 언어의 의미를 무시한 채 자신의 직관으로 증명 나무를
+그려서는 안 된다. 프로그램의 결과를 증명하는 증명 나무를 때로는 \term{결과 유도
+과정}{evaluation derivation}이라 부른다. 결과가 어떤 계산 과정을 통해 유도되었는지
+드러내기 때문이다.
+
+지금까지 의미를 정의한 방법을 \term{큰 보폭 과정 의미}{big-step operational
+semantics}라 부른다. ``과정''은 정의한 의미가 계산 과정을 상세히 보여 준다는
+뜻이고, ``큰 걸음''은 프로그램에서 실행 결과까지 큰 보폭으로 한 걸음만에
+도달한다는 뜻이다. 의미를 정의하는 다른 방법도 있다. \term{결과
+의미}{denotational semantics}는 계산 과정 없이 결과만을 드러내고, \term{작은
+보폭 과정 의미}{small-step operational semantics}는 프로그램에서 실행 결과까지
+작은 보폭으로 여러 걸음에 걸쳐 도달한다. 이 책에서는 거의 항상 큰 보폭 과정
+의미를 사용하지만, 뒤에서 작은 보폭 과정 의미를 사용하는 경우도 있을 것이다.
+
+\term{인터프리터}{interpreter}는 프로그램을 입력받아 해당 프로그램을 실행하는
+프로그램이다. \Lang의 의미에 따라 인터프리터를 구현하는 것은 어렵지 않다.
+인터프리터는 AST를 인자로 받아 정수를 결과로 내는 함수 하나로 이루어진다.
+
+\begin{verbatim}
+def interp(e: AE): Int = e match {
+  case Num(n) => n
+  case Add(l, r) => interp(l) + interp(r)
+  case Sub(l, r) => interp(l) - interp(r)
+}
+\end{verbatim}
+
+\section{문법 설탕}
+
+\term{문법 설탕}{syntactic sugar}은 언어의 의미를 바꾸지 않은 채 문법적 코드
+\term{변환}{transformation} 규칙만 정의해 언어에 새로운 기능을 추가한다. 문법
+설탕은 언어 설계자가 적은 노력만으로 유용한 기능을 언어에 넣을 수 있게 해 주다
+보니 현실 세계 언어에서 널리 사용된다.
+
+정수의 \term{부호 바꾸기}{negation} 연산을 \Lang에 추가하고 싶다고 하자. 한 가지
+방법은 문법과 의미를 모두 바꾸는 것이다. 우선 구체적 문법에 부호 바꾸기 연산을
+추가한다.
+
+\begin{verbatim}
+<expr> ::= <number> | <expr> "+" <expr> | <expr> "-" <expr> | "-(" <expr> ")"
+\end{verbatim}
+
+그 다음에는 요약 문법도 고친다.
+
+\[e\ ::=\ n\ |\ e+e\ |\ e-e\ |\ -e\]
+
+파서도 올바르게 바꾸어야 한다. 가령 \code{"-(03+4)"}는 이제 $-(3+4)$로 파싱된다.
+
+마지막으로 $-e$를 처리할 수 있도록 의미에 새로운 규칙을 추가한다.
+
+\semanticrule{Neg}{
+만약 $e$의 결과는 $n$이면,\\
+$-e$의 결과는 $\isub n$이다.
+}
+
+여기서 $\isub$은 수학적 부호 바꾸기를 나타낸다.
+
+같은 규칙을 추론 규칙으로도 쓸 수 있다.
+
+\[
+  \inferrule
+  { e\Rightarrow n}
+  { -e\Rightarrow\isub n }
+  \quad\textsc{Neg}
+\]
+
+이런 방식으로 기능을 언어에 추가하면 언어의 모든 요소, 즉 구체적 문법, 요약
+문법, 의미를 모두 고쳐야 하기 때문에 많은 노력이 필요하다.
+
+\Lang에 정수 부호 바꾸기 연산을 추가하는 다른 방법은 문법 설탕을 사용하는
+것이다. 이 방법을 사용하면 구체적 문법과 파서만 고쳐도 된다. 구체적 문법은 전과
+똑같이 바꾼다. 한편, 파서는 이제 \code{expr}가 $e$로 파싱될 때 \code{"-(" expr
+")"}를 $0-e$로 파싱한다. 예를 들면 \code{"-(03+4)"}를 $0-(3+4)$로 파싱하는 것이다.
+$n$의 값에 상관없이 $0\isub n=\isub n$이 참이니 이는 올바르다. 문법 설탕을
+사용하면 언어에 기능을 이렇게나 쉽게 추가할 수 있다. 언어 설계자가 새로운 기능을
+문법적인 방법을 통해 기존 기능으로 변환함으로써 언어에 기능을 추가한 것이다.
+문법 설탕으로 존재하는 기능을 파싱 중에 다른 기능으로 변환하는 과정을 \term{설탕
+제거}{desugaring}라 부른다.
+
+현실 세계 연어에서 여러 문법 설탕을 찾을 수 있다. 예를 들어 Scala의 \code{for}
+반복문은 문법 설탕이다.
+
+\begin{quote}
+  A for comprehension \code{for ($p$ <- $e$) yield $e'$} is translated to
+  \code{$e$.map \{ case $p$ =>
+  $e'$ \}}.\footnote{\url{https://www.scala-lang.org/files/archive/spec/2.13/06-expressions.html\#for-comprehensions-and-for-loops}}
+\end{quote}
+
+또한, C, 스칼라, 래킷 등의 언어에 있는 \term{매크로}{macro}는 개발자가 직접
+정의한 문법 설탕으로 볼 수 있다.
+
+\section{예제}
+
+\begin{exercise}
+\labex{syntax-and-semantics-expr}
+
+다음과 같은 구체적 문법이 있다.
+
+\begin{verbatim}
+<expr> ::= <num>
+         | "{" "+" <expr> <expr> "}"
+         | "{" "*" <expr> <expr> "}"
+         | "{" "let" "{" <id> <expr> "}" <expr> "}"
+         | <id>
+\end{verbatim}
+
+다음의 각 문자열이 \code{expr}인지 쓰고 이유를 설명하라.
+\code{<id>}는 한 개 이상의 로마자(\code{a-z}, \code{A-Z})로 구성되고,
+\code{<num>}은 한 개 이상의 숫자(\code{0-9})로 구성된다.
+터미널 사이에 공백을 자유롭게 넣을 수 있다고 가정하자.
+
+\begin{enumerate}
+  \item \verb!{let {x 5} {+ 8 {* x 2 3}}}!
+  \item \verb!{with {x 0} {with {x 7}}}!
+  \item \verb!{let {3 5} {+ 8 {- x 2}}}!
+  \item \verb!{let {3 y} {+ 8 {* x 2}}}!
+  \item \verb!{let {x y} {+ 8 {* x 2}}}!
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{syntax-and-semantics-icecream}
+
+다음과 같은 구체적 문법이 있다.
+
+\begin{verbatim}
+<ice-cream> ::= "sprinkles" "on" <ice-cream>
+              | "cherry" "on" <ice-cream>
+              | "scoop" "of" <flavor> "on" <ice-cream>
+              | "sugar-cone"
+              | "waffle-cone"
+<flavor>    ::= "vanilla"
+              | "lettuce"
+\end{verbatim}
+
+터미널 사이에 공백을 자유롭게 넣을 수 있다고 가정하자.
+다음의 각 문자열이 \code{<ice-cream>}인지 쓰고 이유를 설명하라.
+
+\begin{enumerate}
+  \item \code{sprinkles}
+  \item \code{sugar-cone}
+  \item \code{vanilla}
+  \item \code{scoop of vanilla on waffle-cone}
+  \item \code{sprinkles on lettuce on waffle-cone}
+  \item \code{scoop of vanilla on sprinkles on waffle-cone}
+  \item \code{cherry on scoop of lettuce on scoop of vanilla on sugar-cone}
+\end{enumerate}
+
+\end{exercise}
+
+\begin{exercise}
+\labex{syntax-and-semantics-coffee}
+
+다음과 같은 구체적 문법이 있다.
+
+\newcommand{\BNF}[1]{\code{<#1>}}
+\newcommand{\coffee}{\mbox{\BNF{coffee}}}
+\newcommand{\milk}{\mbox{\BNF{milk}}}
+\newcommand{\flavor}{\mbox{\BNF{flavor}}}
+
+\[
+\begin{array}{ccc}
+  \code{espresso} \in \coffee
+  &&
+  \inferrule
+  { e_1 \in \milk \\ e_2 \in \coffee }
+  { e_1\ \code{"on"}\ e_2 \in \coffee }
+  \\[2em]
+  \inferrule
+  { e_1 \in \coffee \\ e_2 \in \milk }
+  { e_1\ \code{"on"}\ e_2 \in \coffee }
+  &&
+  \inferrule
+  { e_1 \in \flavor \\ e_2 \in \coffee }
+  { e_1\ \code{"on"}\ e_2 \in \coffee }
+  \\[2em]
+  \code{"milk-foam"} \in \milk
+  &&
+  \code{"steamed-milk"} \in \milk
+  \\[2em]
+  \code{"caramel"} \in \flavor
+  &&
+  \code{"cinnamon"} \in \flavor
+  \\[2em]
+  \code{"cocoa-powder"} \in \flavor
+  &&
+  \code{"chocolate-syrup"} \in \flavor
+\end{array}
+\]
+
+터미널 사이에 공백을 자유롭게 넣을 수 있다고 가정하자.
+다음의 각 문자열이 $\coffee$인지 쓰고 이유를 설명하라.
+
+\begin{enumerate}
+  \item \code{caramel latte macchiato}
+  \item \code{espresso}
+  \item \code{steamed-milk on caramel on milk-foam on espresso}
+  \item \code{chocolate-syrup on cocoa-powder on cinnamon on milk-foam on steamed-milk on espresso}
+  \item \code{steamed-milk on espresso on chocolate-syrup}
+  \item \code{cocoa-powder on milk-foam on steamed-milk on espresso}
+\end{enumerate}
+
+\end{exercise}

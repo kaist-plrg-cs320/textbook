@@ -90,7 +90,8 @@
   arn_nc/.style = {treenode, circle, black, draw=white, text width=0.8cm, line width=0.25mm},
 }
 
-\newcommand{\term}[2]{#1{\scriptsize#2}}
+\newcommand{\term}[2]{#1\index{#1}{\scriptsize#2}\index{#2}}
+\newcommand{\terme}[1]{{\scriptsize,~}{\scriptsize#1}\index{#1}}
 \renewcommand{\refch}[1]{\hyperref[ch:#1]{\ref{ch:#1}\chaptername}}
 \renewcommand{\refsec}[1]{\hyperref[sec:#1]{\ref{sec:#1}\sectionname}}
 \renewcommand{\exercisename}{예제}
@@ -117,7 +118,7 @@
 \newcommand{\labex}[1]{\labthm{#1}}
 \newcommand{\pto}{\mathrel{\ooalign{\hfil$\mapstochar$\hfil\cr$\to$\cr}}}
 \newcommand{\finto}{\stackrel{\mbox{\tiny fin}}{\pto}}
-\newcommand{\embox}[1]{\mbox{\emph{#1}}}
+\newcommand{\embox}[1]{\mbox{$\mathit{#1}$}}
 \newcommand{\dom}[1]{\embox{Domain}(#1)}
 \newcommand{\iadd}{+_{{}_{\mathbb{Z}}}}
 \newcommand{\isub}{-_{{}_{\mathbb{Z}}}}
@@ -211,13 +212,13 @@
 
 \newcommand{\semanticrule}[2]{
 \vspace{1em}
-\textbf{Rule \textsc{#1}}\\
+\textbf{규칙 #1}\\
 #2
 \vspace{1em}
 }
 \newcommand{\typerule}[2]{
 \vspace{1em}
-\textbf{Rule \textsc{#1}}\\
+\textbf{규칙 #1}\\
 #2
 \vspace{1em}
 }
@@ -390,11 +391,11 @@
 \input{chapters-kor/functions.tex}
 \input{chapters-kor/pattern-matching.tex}
 
-% \pagelayout{wide} % No margins
-% \addpart{Untyped Languages}
-% \pagelayout{margin} % Restore margins
+\pagelayout{wide} % No margins
+\addpart{타입 없는 언어}
+\pagelayout{margin} % Restore margins
 
-% \input{chapters-kor/syntax-and-semantics.tex}
+\input{chapters-kor/syntax-and-semantics.tex}
 % \input{chapters-kor/identifiers.tex}
 % \input{chapters-kor/first-order-functions.tex}
 % \input{chapters-kor/first-class-functions.tex}
