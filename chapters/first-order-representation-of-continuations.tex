@@ -505,9 +505,10 @@ The conclusion, $v_1\mapsto[\square+(e_2,\sigma)]::\kappa\Downarrow v_2$, denote
 that the result of \code{continue(AddSecondK($e_2$, $\sigma$, $\kappa$), $v_1$)}
 is $v_2$. The result of \code{continue(AddSecondK($e_2$, $\sigma$, $\kappa$),
 $v_1$)} is the same as that of \code{interp($e_2$, $\sigma$, DoAddK($v_1$,
-$\kappa$))}. Note that $[v_1+\square]$ denotes \code{DoAddK($v_1$, $\kappa$)}.
+$\kappa$))}. Note that $[v_1+\square]::\kappa$ denotes \code{DoAddK($v_1$, $\kappa$)}.
 $\sigma,\kappa'\vdash e_2\Rightarrow v_2$ denotes that the result of
-\code{interp($e_2$, $\sigma$, $\kappa'$)} is $v_2$ where $\kappa'$ is $[v_1+\square]$.
+\code{interp($e_2$, $\sigma$, $\kappa'$)} is $v_2$ where $\kappa'$ is
+$[v_1+\square]::\kappa$.
 
 \[
   \inferrule
@@ -534,7 +535,7 @@ $n_1+n_2\mapsto\kappa\Downarrow v$ denotes that the result of
 \]
 
 This rule is similar to the rule when the continuation is
-$[\square+(e_2,\sigma)]$.
+$[\square+(e_2,\sigma)]::\kappa$.
 
 \[
   \inferrule

@@ -360,7 +360,7 @@ Exhaustivity checking is beneficial for complex programs. It helps programmers m
 error-free programs and thus is a crucial strength of pattern matching.
 
 For exhaustivity checking, the \code{sealed} modifier of traits is necessary.
-Wihtout \code{sealed}, a trait can be extended outside the file that defines it.
+Without \code{sealed}, a trait can be extended outside the file that defines it.
 The unit of compilation is a single file, so it is impossible to find
 all the variants by scanning a single file when a trait is not sealed.
 Exhaustivity checking during pattern matching will be impossible.

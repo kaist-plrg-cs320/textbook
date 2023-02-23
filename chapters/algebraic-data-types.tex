@@ -597,7 +597,7 @@ $\tau_1$ and $\tau_2$ lack free type identifiers, then $\tarrow{\tau_1}{\tau_2}$
 also does.
 
 \typerule{Wf-IdT}{
-  If $t$ in the domain of $\Gamma$,\\
+  If $t$ is in the domain of $\Gamma$,\\
   then \wftdn{t}.
 }
 
@@ -954,7 +954,7 @@ environment. The definition gives the parameter type of each variant. The
 function type-checks \code{e1} and \code{e2} under the type environments with the
 type of \code{x1} and with the type of \code{x2}, respectively.
 The types must be the same, and if it is the case, the common
-type is the type of the whole pattern mathcing expression.
+type is the type of the whole pattern matching expression.
 
 \begin{verbatim}
 case Fun(x, t, b) =>

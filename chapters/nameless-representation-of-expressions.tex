@@ -433,7 +433,8 @@ environment of the closure needs a change. Let a value $v$ correspond to the
 index 0. The value is not the value of the argument, so it cannot correspond to
 the index 0 anymore. As $\lambda$ from the closure exists between the use and the
 definition, the index should increase by one. By the same principle, every index
-in the environment increases by one. Since $\uparrow\sigma'$ denotes the context
+in the environment increases by one. Since $\uparrow\sigma'$ denotes the
+environment
 same as $\sigma'$ but whose indices are one larger, the body of the closure
 is evaluated under $(\uparrow\sigma')[0\mapsto v_2]$.
 

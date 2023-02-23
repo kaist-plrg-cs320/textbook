@@ -103,81 +103,6 @@ def reverse(l: List[Int]): List[Int] =
   \item Yes
 \end{enumerate}
 
-\textbf{\refex{syntax-and-semantics-pair}}
-\begin{enumerate}
-  \item
-    \[
-      \inferrule
-      { {e_1}\Rightarrow{v_1}\\{e_2}\Rightarrow{v_2} }
-      { {(e_1,e_2)}\Rightarrow{(v_1,v_2)} }
-    \]
-
-    \[
-      \inferrule
-      { {e}\Rightarrow{(v_1,v_2)} }
-      { {e\textsf{.1}}\Rightarrow{v_1} }
-    \]
-
-    \[
-      \inferrule
-      { {e}\Rightarrow{(v_1,v_2)} }
-      { {e\textsf{.2}}\Rightarrow{v_2} }
-    \]
-  \item
-    \[
-      \inferrule
-      {
-        \inferrule
-        {
-          {8}\Rightarrow{8} \\
-          \inferrule
-          {
-            \inferrule
-            { {320}\Rightarrow{320} \\ {42}\Rightarrow{42} }
-            { {(320,42)}\Rightarrow{(320,42)} }
-          }
-          { {(320,42)\textsf{.1}}\Rightarrow{320} }
-        }
-        { {(8,(320,42)\textsf{.1})}\Rightarrow{(8,320)} }
-      }
-      { {(8,(320,42)\textsf{.1})\textsf{.2}}\Rightarrow{320} }
-    \]
-\end{enumerate}
-
-\textbf{\refex{syntax-and-semantics-record}}
-\[
-  \inferrule
-  { {e_1}\Rightarrow{v_1} \\\cdots\\ {e_n}\Rightarrow{v_n} }
-  { {\{l_1:e_1,\cdots,l_n:e_n\}}\Rightarrow{\langle l_1:v_1,\cdots,l_n:v_n\rangle} }
-\]
-
-\[
-  \inferrule
-  { {e}\Rightarrow{\langle\cdots,l:v,\cdots\rangle} }
-  { {e.l}\Rightarrow{v} }
-\]
-
-\textbf{\refex{syntax-and-semantics-stlist}}
-\[
-  {\textsf{()}}\Rightarrow{\textsf{()}}
-\]
-
-\[
-  \inferrule
-  { {e_1}\Rightarrow{\textsf{()}}\\ \cdots\\ {e_n}\Rightarrow{\textsf{()}} }
-  { {e_1;\cdots;e_n}\Rightarrow{\textsf{()}} }
-\]
-
-\[
-  \inferrule
-  {
-    {e_1}\Rightarrow{v_1}\quad\cdots\quad{e_m}\Rightarrow{v_m}\quad
-    v_m\not=\textsf{()}\quad
-    {e_{m+1}}\Rightarrow{\textsf{()}}\quad\cdots\quad{e_n}\Rightarrow{\textsf{()}}
-  }
-  { {e_1;\cdots;e_n}\Rightarrow{v_m} }
-\]
-
 \textbf{\refex{identifiers-arrow}}
 
 \begin{itemize}
@@ -307,6 +232,81 @@ $\eapp{1}{1}$
 $\efun{\cx}{\cy}$
 \\
 
+\textbf{\refex{syntax-and-semantics-pair}}
+\begin{enumerate}
+  \item
+    \[
+      \inferrule
+      { \evald{e_1}{v_1}\\\evald{e_2}{v_2} }
+      { \evald{(e_1,e_2)}{(v_1,v_2)} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e}{(v_1,v_2)} }
+      { \evald{e\textsf{.1}}{v_1} }
+    \]
+
+    \[
+      \inferrule
+      { \evald{e}{(v_1,v_2)} }
+      { \evald{e\textsf{.2}}{v_2} }
+    \]
+  \item
+    \[
+      \inferrule
+      {
+        \inferrule
+        {
+          \evale{8}{8} \\
+          \inferrule
+          {
+            \inferrule
+            { \evale{320}{320} \\ \evale{42}{42} }
+            { \evale{(320,42)}{(320,42)} }
+          }
+          { \evale{(320,42)\textsf{.1}}{320} }
+        }
+        { \evale{(8,(320,42)\textsf{.1})}{(8,320)} }
+      }
+      { \evale{(8,(320,42)\textsf{.1})\textsf{.2}}{320} }
+    \]
+\end{enumerate}
+
+\textbf{\refex{syntax-and-semantics-record}}
+\[
+  \inferrule
+  { \evald{e_1}{v_1} \\\cdots\\ \evald{e_n}{v_n} }
+  { \evald{\{l_1:e_1,\cdots,l_n:e_n\}}{\langle l_1:v_1,\cdots,l_n:v_n\rangle} }
+\]
+
+\[
+  \inferrule
+  { \evald{e}{\langle\cdots,l:v,\cdots\rangle} }
+  { \evald{e.l}{v} }
+\]
+
+\textbf{\refex{syntax-and-semantics-stlist}}
+\[
+  \evald{\textsf{()}}{\textsf{()}}
+\]
+
+\[
+  \inferrule
+  { \evald{e_1}{\textsf{()}}\\ \cdots\\ \evald{e_n}{\textsf{()}} }
+  { \evald{e_1;\cdots;e_n}{\textsf{()}} }
+\]
+
+\[
+  \inferrule
+  {
+    \evald{e_1}{v_1}\quad\cdots\quad\evald{e_m}{v_m}\quad
+    v_m\not=\textsf{()}\quad
+    \evald{e_{m+1}}{\textsf{()}}\quad\cdots\quad\evald{e_n}{\textsf{()}}
+  }
+  { \evald{e_1;\cdots;e_n}{v_m} }
+\]
+
 \textbf{\refex{first-class-functions-fv}}
 \[
   \inferrule
@@ -382,7 +382,7 @@ $\efun{\cx}{\cy}$
       \tiny
       \inferrule
       {
-        \eval{\sigma,\alpha}{e_0}{\clov{x_1\cdots x_m}{e}{\sigma}}\\
+        \eval{\sigma,\alpha}{e_0}{\clov{x_1\cdots x_m}{e}{\sigma'}}\\
         \eval{\sigma,\alpha}{e_1}{v_1}\quad\cdots\quad\eval{\sigma,\alpha}{e_n}{v_n}\\
         \eval{\sigma'[x_1\mapsto v_1,\cdots,x_{\min(m,n)}\mapsto v_{\min(m,n)},
         x_{\min(m,n)+1}\mapsto\textsf{undefined},\cdots,x_m\mapsto\textsf{undefined}],
@@ -855,25 +855,26 @@ $
 \begin{array}{@{}c|c|c|c@{}}
   \text{expr} & \text{env} & \text{sto} & \text{res} \\\hline
   \eapp{(\efun{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}})}{\eref{7}}
-  & \emptyset & \emptyset & (8,[a_0\mapsto8]) \\
+  & \emptyset & \emptyset & (8,[a_1\mapsto8]) \\
   \efun{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}}
   & \emptyset & \emptyset &
   (\clov{\cx}{\eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx}}{\emptyset},\emptyset) \\
-  \eref{7} & \emptyset & \emptyset & (a_0,[a_0\mapsto7]) \\
+  \eref{7} & \emptyset & \emptyset & (a_1,[a_1\mapsto7]) \\
+  7 & \emptyset & \emptyset & (7,\emptyset) \\
   \eapp{(\efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}})}{\cx} &
-  [\cx\mapsto a_0] & [a_0\mapsto7] & (8,[a_0\mapsto8]) \\
+  [\cx\mapsto a_1] & [a_1\mapsto7] & (8,[a_1\mapsto8]) \\
   \efun{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}} &
-  [\cx\mapsto a_0] & [a_0\mapsto7] &
-  (\clov{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}}{[\cx\mapsto a_0]},[a_0\mapsto7]) \\
-  \cx & [\cx\mapsto a_0] & [a_0\mapsto7] & (a_0,[a_0\mapsto7]) \\
-  \eseq{\eset{\cx}{8}}{\ederef{\cy}} & [\cx\mapsto a_0,\cy\mapsto a_0]
-  & [a_0\mapsto7] & (8,[a_0\mapsto8]) \\
-  \eset{\cx}{8} & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto7]
-  & (8,[a_0\mapsto8]) \\
-  8 & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto7] & (8,[a_0\mapsto7]) \\
-  \ederef{\cy} & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto8]
-  & (8,[a_0\mapsto8]) \\
-  \cy & [\cx\mapsto a_0,\cy\mapsto a_0] & [a_0\mapsto8] & (a_0,[a_0\mapsto8]) \\
+  [\cx\mapsto a_1] & [a_1\mapsto7] &
+  (\clov{\cy}{\eseq{\eset{\cx}{8}}{\ederef{\cy}}}{[\cx\mapsto a_1]},[a_1\mapsto7]) \\
+  \cx & [\cx\mapsto a_1] & [a_1\mapsto7] & (a_1,[a_1\mapsto7]) \\
+  \eseq{\eset{\cx}{8}}{\ederef{\cy}} & [\cx\mapsto a_1,\cy\mapsto a_1]
+  & [a_1\mapsto7] & (8,[a_1\mapsto8]) \\
+  \eset{\cx}{8} & [\cx\mapsto a_1,\cy\mapsto a_1] & [a_1\mapsto7]
+  & (8,[a_1\mapsto8]) \\
+  8 & [\cx\mapsto a_1,\cy\mapsto a_1] & [a_1\mapsto7] & (8,[a_1\mapsto7]) \\
+  \ederef{\cy} & [\cx\mapsto a_1,\cy\mapsto a_1] & [a_1\mapsto8]
+  & (8,[a_1\mapsto8]) \\
+  \cy & [\cx\mapsto a_1,\cy\mapsto a_1] & [a_1\mapsto8] & (a_1,[a_1\mapsto8]) \\
 \end{array}
 $
 \\
@@ -1140,7 +1141,7 @@ $
   \item CBV: error, CBN: error
   \item CBV: error, CBN: 10
   \item CBV: error, CBN: error
-  \item CBV: error, CBN: error
+  \item CBV: error, CBN: $\exprv{\eadd{1}{\efun{\cx}{\cx}}}{\emptyset}$
   \item CBV: error, CBN: 3
   \item CBV: error, CBN: error
   \item CBV: error, CBN: 8
@@ -1285,7 +1286,7 @@ $\begin{array}{@{}l}
 
 \textbf{\refex{first-class-continuations-reduction}}
 
-$\sigma=[\cx\mapsto\langle\emptyset\vdash8::(+)::\square\ ||\ \blacksquare\rangle]$
+$\sigma=[\cx\mapsto\langle\emptyset\vdash8::(+)::\square,\blacksquare\rangle]$
 \\
 $
 \begin{array}{lrcr}
@@ -1301,9 +1302,9 @@ $
 \rightarrow & \sigma\vdash\cx::\sigma\vdash2::(@)::(+)
   ::\emptyset\vdash8::(+)::\square &||& 42::\blacksquare \\
 \rightarrow & \sigma\vdash2::(@)::(+)::\emptyset\vdash8::(+)::\square
-  &||& \langle\emptyset\vdash8::(+)::\square\ ||\ \blacksquare\rangle::42::\blacksquare \\
+  &||& \langle\emptyset\vdash8::(+)::\square,\blacksquare\rangle::42::\blacksquare \\
 \rightarrow & (@)::(+)::\emptyset\vdash8::(+)::\square
-  &||& 2::\langle\emptyset\vdash8::(+)::\square\ ||\ \blacksquare\rangle::42::\blacksquare \\
+  &||& 2::\langle\emptyset\vdash8::(+)::\square,\blacksquare\rangle::42::\blacksquare \\
 \rightarrow & \emptyset\vdash8::(+)::\square &||& 2::\blacksquare \\
 \rightarrow & (+)::\square &||& 8::2::\blacksquare \\
 \rightarrow & \square &||& 10::\blacksquare \\
@@ -1466,7 +1467,7 @@ $\eadd{1}{\cx}$
             \inferrule
             {
               \inferrule
-              { \cx\in\Gamma_2}
+              { \cx\in\dom{\Gamma_2} }
               { \typeof{\Gamma_2}{\cx}{\eref{\tnum}} }
               \\
               \typeof{\Gamma_2}{8}{\tnum}
@@ -2289,7 +2290,7 @@ case If0(c, t, f) =>
   \inferrule
   {
     \Gamma(t_1)=x_1@\tau_1+\cdots+x_n@\tau_n \\
-    \Gamma(t_2)=x_1@\tau_1+\cdots+x_n@\tau_n+x_{n+1}@\tau_{n+1}+\cdots+x_{n+m}@\tau_{n+m} \\
+    \Gamma(t_2)=x_1@\tau_1'+\cdots+x_n@\tau_n'+x_{n+1}@\tau_{n+1}'+\cdots+x_{n+m}@\tau_{n+m}' \\
     \Gamma\vdash\subt{\tau_1}{\tau_1'} \\
     \cdots \\
     \Gamma\vdash\subt{\tau_n}{\tau_n'}
