@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % kaobook
 % LaTeX Template
-% Version 1.2 (4/1/2020)
+% Version 1.3 (December 9, 2021)
 %
 % This template originates from:
 % https://www.LaTeXTemplates.com
@@ -25,8 +25,9 @@
 %----------------------------------------------------------------------------------------
 
 \documentclass[
+  a4paper,
 	fontsize=10pt, % Base font size
-	twoside=false, % Use different layouts for even and odd pages (in particular, if twoside=true, the margin column will be always on the outside)
+	twoside=true, % Use different layouts for even and odd pages (in particular, if twoside=true, the margin column will be always on the outside)
 	%open=any, % If twoside=true, uncomment this to force new chapters to start on any page, not only on right (odd) pages
 	%chapterprefix=true, % Uncomment to use the word "Chapter" before chapter numbers everywhere they appear
 	%chapterentrydots=true, % Uncomment to output dots from the chapter name to the page number in the table of contents
@@ -34,6 +35,18 @@
 	%draft=true, % If uncommented, rulers will be added in the header and footer
 	%overfullrule=true, % If uncommented, overly long lines will be marked by a black box; useful for correcting spacing problems
 ]{kaobook}
+
+\renewcommand{\marginlayout}{%
+  \newgeometry{
+    top=27.4\vscale,
+    bottom=27.4\vscale,
+    inner=24.8\hscale,
+    textwidth=147\hscale,
+    marginparsep=6.2\hscale,
+    marginparwidth=0\hscale,
+  }%
+  \recalchead
+}
 
 % Set the language
 \usepackage[english]{babel} % Load characters and hyphenation
@@ -45,12 +58,14 @@
 %\usepackage{showlabels} % Uncomment to output the content of \label commands to the document where they are used
 
 % Load the bibliography package
-\usepackage[style=alphabetic]{styles/kaobiblio}
+\usepackage[style=alphabetic]{kaobiblio}
 \addbibresource{main.bib} % Bibliography file
 
-% Load mathematical packages for theorems and related environments. NOTE: choose only one between 'mdftheorems' and 'plaintheorems'.
-\usepackage{styles/mdftheorems}
-%\usepackage{styles/plaintheorems}
+% Load mathematical packages for theorems and related environments
+\usepackage[framed=true]{kaotheorems}
+
+% Load the package for hyperreferences
+\usepackage{kaorefs}
 
 \usepackage{mathpartir}
 \usepackage{dirtree}
@@ -64,8 +79,6 @@
 \usepackage{graphicx}
 \usepackage{amsthm}
 
-\newtheorem{exercise}{Exercise}[chapter]
-
 \graphicspath{ {./images/} }
 
 \usetikzlibrary{arrows}
@@ -78,7 +91,7 @@
 
 \newcommand{\shorteq}{\code{=}}
 
-\newcommand{\lang}{}
+\newcommand{\Lang}{}
 \newcommand{\plang}{}
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\cx}{\code{x}}
@@ -210,7 +223,7 @@
 
 \makeglossaries % Make LaTeX produce the files required to compile the glossary
 
-\makenomenclature % Make LaTeX produce the files required to compile the nomenclature
+% \makenomenclature % Make LaTeX produce the files required to compile the nomenclature
 
 % Reset sidenote counter at chapters
 %\counterwithin*{sidenote}{chapter}
@@ -265,7 +278,7 @@
 
 \lowertitleback{
   % \textbf{License}\\
-	\copyright2022 Jaemin Hong and Sukyoung Ryu
+	\copyright2023 Jaemin Hong and Sukyoung Ryu
 
   \medskip
 
@@ -296,11 +309,7 @@
 
 % Note that \maketitle outputs the pages before here
 
-% If twoside=false, \uppertitleback and \lowertitleback are not printed
-% To overcome this issue, we set twoside=semi just before printing the title pages, and set it back to false just after the title pages
-\KOMAoptions{twoside=semi}
 \maketitle
-\KOMAoptions{twoside=false}
 
 %----------------------------------------------------------------------------------------
 %	PREFACE
@@ -318,7 +327,7 @@
 % Define the style for the TOC, LOF, and LOT
 %\setstretch{1} % Uncomment to modify line spacing in the ToC
 %\hypersetup{linkcolor=blue} % Uncomment to set the colour of links in the ToC
-\setlength{\textheight}{23cm} % Manually adjust the height of the ToC pages
+\setlength{\textheight}{230\hscale} % Manually adjust the height of the ToC pages
 
 % Turn on compatibility mode for the etoc package
 \etocstandarddisplaystyle % "toc display" as if etoc was not loaded

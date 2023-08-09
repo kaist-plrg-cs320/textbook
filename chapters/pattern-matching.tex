@@ -1,4 +1,4 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Pattern Matching}
 \labch{pattern-matching}
 
@@ -231,7 +231,7 @@ case class ::[A](head: A, tail: List[A]) extends List[A]
 \end{verbatim}
 
 This code omits some details but clearly shows the high-level idea to define
-lists.\sidenote{We will not see what \code{[+A]} and \code{Nothing} are here.
+lists.\footnote{We will not see what \code{[+A]} and \code{Nothing} are here.
 You can understand the overall ADT structure without knowing those concepts.}
 A list is either the empty
 list or a nonempty list, which is a pair of its head and tail. \code{Nil} is
@@ -562,7 +562,7 @@ def optimizeAbs(e: AE): AE = e match {
 
 Type patterns are useful for dynamic type checking. The following function takes
 any value as an argument and check whether it is a string or
-not.\sidenote{Every type is a subtype of \code{Any}, i.e. every value belongs to
+not.\footnote{Every type is a subtype of \code{Any}, i.e. every value belongs to
 \code{Any}.}
 
 \begin{verbatim}
@@ -949,7 +949,7 @@ error-prone. Even Tony Hoare, the inventor of \code{null}, said that inventing
 
 \begin{quote}
 I call it my billion-dollar mistake. It was the invention of the null reference
-in 1965.\sidenote{\url{https://en.wikipedia.org/wiki/Null\_pointer\#History}}
+in 1965.\footnote{\url{https://en.wikipedia.org/wiki/Null\_pointer\#History}}
 \end{quote}
 
 The second attempt is to use a particular error-indicating value, e.g. \code{-1}.
@@ -1001,7 +1001,7 @@ the default value.
 
 Functional languages provide the option type to handle erroneous situations
 safely. As the name implies, it represents an optional existence of a value.
-The Scala standard library defines the option type like below.\sidenote{
+The Scala standard library defines the option type like below.\footnote{
 We will not see what \code{[+A]} and \code{Nothing} are here.
 You can understand the overall ADT structure without knowing those concepts.}
 
@@ -1114,4 +1114,4 @@ def getStudent(
 \end{verbatim}
 
 The standard library provides many other useful methods for
-options.\sidenote{\url{https://www.scala-lang.org/api/current/scala/Option.html}}
+options.\footnote{\url{https://www.scala-lang.org/api/current/scala/Option.html}}

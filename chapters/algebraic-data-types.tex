@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Algebraic Data Types}
 \labch{algebraic-data-types}
 
 \renewcommand{\plang}{\textsf{TFAE}\xspace}
-\renewcommand{\lang}{\textsf{TVFAE}\xspace}
+\renewcommand{\Lang}{\textsf{TVFAE}\xspace}
 
 Algebraic Data Types (ADTs) are ubiquitous in functional programming. \refch{pattern-matching} explains
 the concept of an ADT and how programmers can use ADTs in Scala. ADTs are useful
@@ -14,7 +14,7 @@ which all the compilers, interpreters, and static analyzers need, can be easily
 implemented as ADTs as well.
 
 Nonrecursive ADTs can be considered as syntactic sugar in
-\plang.\sidenote{Here, \plang means the extended version
+\plang.\footnote{Here, \plang means the extended version
 defined in \refsec{extension}.}
 Let us see how they can be desugared with an example. Consider the
 following Scala code:
@@ -165,7 +165,7 @@ as a part of itself. Therefore, there is no such $\tau$. We can conclude that we
 cannot desugar lists in \plang. In general, recursive ADTs cannot be expressed
 in \plang.
 
-This chapter defines \lang by extending \plang\sidenote{For the rest of the
+This chapter defines \Lang by extending \plang\footnote{For the rest of the
 chapter, local variable definitions and types are not parts of \plang. However,
 we may keep using them in examples.} with ADTs, each of which can be
 either nonrecursive or recursive. It allows programmers to represent ADTs
@@ -238,7 +238,7 @@ $
 \etdef{\code{List}}{\code{Nil}}{\tnum}{\code{Cons}}{(\tnum\times\code{List})}
 {\cdots}$
 
-Note that \code{Nil} has one parameter since every variant of \lang must have a
+Note that \code{Nil} has one parameter since every variant of \Lang must have a
 parameter. \code{Nil} can have any value because the value is not used at all anyway.
 
 Recursive data types are typically used with recursive functions. If we add
@@ -362,7 +362,7 @@ $x_4$ to $v'$. The result of $e_2$ is the result of the whole pattern matching
 expression.
 
 In addition, we should define a new rule for function application. In \plang,
-closures are the only values that can be applied to values. However, \lang has
+closures are the only values that can be applied to values. However, \Lang has
 constructors, which also can be applied to values. We need a rule to handle
 such cases.
 
@@ -433,7 +433,7 @@ $
 
 \section{Interpreter}
 
-The following code implements expressions of \lang:
+The following code implements expressions of \Lang:
 
 \begin{verbatim}
 sealed trait Expr
@@ -453,7 +453,7 @@ $\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}$, and
 \code{Match($e$, $x_1$, $x_3$, $e_1$, $x_2$, $x_4$, $e_2$)} represents
 $\ematch{e}{x_1}{x_3}{e_1}{x_2}{x_4}{e_2}$.
 
-The following code implements values of \lang:
+The following code implements values of \Lang:
 
 \begin{verbatim}
 sealed trait Value
@@ -507,7 +507,7 @@ contains the value denoted by the argument.
 
 To define the static semantics, the definition of a type environment should be
 revised first. In \plang, type environments store the types of variables. They
-are finite partial functions from identifiers to types. In \lang, type environments
+are finite partial functions from identifiers to types. In \Lang, type environments
 have more things to do. They have to store the information about user-defined types.
 The type checking process uses the information. Let $\Gamma$ be the type
 environment when $\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}$ is
@@ -529,7 +529,7 @@ of $A$.
 
 \subsection{Well-Formed Types}
 
-An arbitrary type identifier can be a type in \lang. For example, $\code{Fruit}$ is a
+An arbitrary type identifier can be a type in \Lang. For example, $\code{Fruit}$ is a
 type. It is true regardless of whether the type $\code{Fruit}$ is bound by a type
 definition. Programmers can write $\efunt{\cx}{\code{Fruit}}{\cx}$ without defining
 \code{Fruit}. Such a function does not make sense at all since \code{Fruit} is a
@@ -673,7 +673,7 @@ well-formed even when $t$ occurs in them. Finally, $e$ is type-checked under
 $\Gamma'$. The type of $e$ is the type of the whole type-defining expression.
 Note that the type of $e$ does not need well-formedness checking since it is the
 result of type checking, not a user-written type annotation. The same principle
-can be applied to all the other typing rules in \lang.
+can be applied to all the other typing rules in \Lang.
 
 \typerule{Typ-Match}{
   \begin{tabular}{@{\hskip0pt}l@{\hskip-10pt}l}
@@ -703,7 +703,7 @@ can be applied to all the other typing rules in \lang.
 
 Rule~\textsc{Typ-Match} defines the type of a pattern matching expression.
 First, the type of $e$, which is the target, is computed. Since pattern matching
-in \lang can be used for only user-defined types, the type of the target must be
+in \Lang can be used for only user-defined types, the type of the target must be
 $t$, which is a type identifier. In addition, its definition must be
 found in the type environment. Since $x_1$ and $x_2$ in the cases denote the names
 of variants, the names of $t$'s variants must be $x_1$ and $x_2$. Note that
@@ -836,7 +836,7 @@ $
 
 \section{Type Checker}
 
-First, we extend the definition of a type since \lang has a new sort of a type.
+First, we extend the definition of a type since \Lang has a new sort of a type.
 
 \begin{verbatim}
 sealed trait Type
@@ -846,7 +846,7 @@ case class IdT(t: String) extends Type
 
 \code{IdT($t$)} represents $t$.
 
-In \lang, type environments store type definitions and the types of variables.
+In \Lang, type environments store type definitions and the types of variables.
 Thus, they cannot be represented by simple maps any longer. Now, they are
 represented by \code{TEnv} instances, each of which contains two maps.
 
@@ -867,10 +867,10 @@ case class TEnv(
 \end{verbatim}
 
 \code{TEnv} has two fields: \code{vars} and \code{tbinds}.
-The field \code{vars}, which is a map from strings to \lang types, contains
+The field \code{vars}, which is a map from strings to \Lang types, contains
 the types of variables. The field \code{tbinds}, which is a map from strings to
 maps, contains type definitions. Each map in \code{tbinds} maps strings, which
-are the names of variants, to \lang types, which are the parameter types
+are the names of variants, to \Lang types, which are the parameter types
 of variants. For example, \code{tbinds} containing the $\code{Fruit}$ type is
 as follows:
 
@@ -972,9 +972,9 @@ case Id(x) => env.vars(x)
 The \code{Id} case also has a small change. Due to the new definition of a type
 environment, a way to find the type of a variable is a bit different.
 
-\section{Type Soundness of \lang}
+\section{Type Soundness of \Lang}
 
-Actually, \lang is not type sound. If an expression defines multiple types of
+Actually, \Lang is not type sound. If an expression defines multiple types of
 the same name, the expression can be well-typed and incur a run-time error at the
 same time. Consider the following expression:
 
@@ -1139,7 +1139,7 @@ $\Gamma'$.
   \item
     Explain why the new typing rule is problematic.
   \item
-    Write a \lang expression that
+    Write a \Lang expression that
     \begin{itemize}
       \item is accepted by the original type system, but
       \item is rejected by the new type system.
@@ -1161,7 +1161,7 @@ Suppose that Rule~\textsc{Typ-TypeDef} has been changed as the following:
   { \typeofd{\etdef{t}{x_1}{\tau_1}{x_2}{\tau_2}{e}}{\tau} }
 \]
 It lacks the well-formedness check of $\tau_1$.
-Write a \lang expression that
+Write a \Lang expression that
 \begin{itemize}
   \item is rejected by the original type system, but
   \item is accepted by the new type system, and
@@ -1198,7 +1198,7 @@ Otherwise, revise the typing rules to make it \code{Fruit}.
 \begin{exercise}
 \labex{algebraic-data-types-mult}
 
-This exercise extends \lang to have
+This exercise extends \Lang to have
   \begin{itemize}
       \item functions with multiple parameters
       \item types with more than two variants
@@ -1242,15 +1242,15 @@ This exercise extends \lang to have
 
 It is known that every \plang expression terminates. On the other
 hand, \textsf{TRFAE} expressions can run forever by using \textsf{def}. Then, how
-about \lang? Is it possible to write a non-terminating \lang
+about \Lang? Is it possible to write a non-terminating \Lang
 expression? The answer is yes, and this exercise asks you to construct such an
 expression.
 
-For simplicity, we extend \lang to allow a type of a single variant:
+For simplicity, we extend \Lang to allow a type of a single variant:
 
 $e\ ::=\ \cdots\ |\ \textsf{type}\ t=x@\tau;e\ |\ e\ \textsf{match}\ x(x)\rightarrow e$
 
-The following \lang expression passes type checking and runs forever:
+The following \Lang expression passes type checking and runs forever:
 
 $\begin{array}{@{}l@{}}
   \textsf{type}\ \cX=\code{toX}@(\tarrow{\cX}{\cX}); \\

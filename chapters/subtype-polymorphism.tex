@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Subtype Polymorphism}
 \labch{subtype-polymorphism}
 
 \renewcommand{\plang}{\textsf{TFAE}\xspace}
-\renewcommand{\lang}{\textsf{STFAE}\xspace}
+\renewcommand{\Lang}{\textsf{STFAE}\xspace}
 
 This chapter introduces subtype polymorphism. Subtype polymorphism is often
 found in object-oriented languages, but some functional languages also support
@@ -12,7 +12,7 @@ Caml, is a functional language that provides subtype polymorphism. Understanding
 subtype polymorphism is important in many real-world languages.
 
 This chapter
-defines \lang by extending \plang with subtype polymorphism. To illustrate the
+defines \Lang by extending \plang with subtype polymorphism. To illustrate the
 need of subtype polymorphism, we start with adding records to \plang. We can add
 subtype polymorphism to \plang without adding records together, but examples with
 records can clearly show the benefits of subtype polymorphism.
@@ -572,7 +572,7 @@ generalizing this observation, we define the following subtyping rule:
   \quad\textsc{[Sub-Depth]}
 \]
 
-The rule states that strengthening\sidenote{If we strengthen a type, a subtype
+The rule states that strengthening\footnote{If we strengthen a type, a subtype
 is obtained in the sense that a subtype imposes a stronger condition on its
 value than the original type.} the type of each field in a record type
 results in a subtype of the record type.
@@ -688,7 +688,7 @@ single rule.
 
 \section{Top and Bottom Types}
 
-Now, we add two types to \lang.
+Now, we add two types to \Lang.
 
 \[ \tau \ ::= \ \cdots \ |\ \ttop \ |\ \tbot \]
 
@@ -712,12 +712,12 @@ Then, the type of the following expression is $\{\ca:\tnum\}$:
 
 $\eifz{0}{\{\ca=1\}}{\{\ca=1,\cb=2\}}$
 
-However, the following expression is ill-typed in \lang when the top type does
+However, the following expression is ill-typed in \Lang when the top type does
 not exist:
 
 $\eifz{0}{\{\ca=1\}}{1}$
 
-By extending \lang with the top type, the type of the above expression can be
+By extending \Lang with the top type, the type of the above expression can be
 $\ttop$.
 
 $\tbot$ is the \textit{bottom type}\index{bottom type}, which is the dual of
@@ -747,7 +747,7 @@ is the bottom type.
 \begin{exercise}
 \labex{subtype-polymorphism-welltyped}
 
-Write whether each expression is well-typed in \lang without the top type,
+Write whether each expression is well-typed in \Lang without the top type,
 If so, draw the type derivation. Otherwise, explain why.
 \begin{enumerate}
 \item $\eifz{1}{\{ \}}{2}$
@@ -774,7 +774,7 @@ causes a run-time error.
 \begin{exercise}
 \labex{subtype-polymorphism-subtyper}
 
-Complete the following implementation of an \lang subtype checker:
+Complete the following implementation of an \Lang subtype checker:
 
 \begin{verbatim}
 sealed trait Type
@@ -810,7 +810,7 @@ The specification of \code{subtype} is as follows:
 \begin{exercise}
 \labex{subtype-polymorphism-typer}
 
-Complete the following implementation of a \lang type checker:
+Complete the following implementation of a \Lang type checker:
 
 \begin{verbatim}
 sealed trait Type
@@ -968,7 +968,7 @@ Consider \plang with lists in \refex{type-systems-list}.
 \begin{exercise}
 \labex{subtype-polymorphism-vcc}
 
-This exercise extends \lang with first-class continuations.
+This exercise extends \Lang with first-class continuations.
 
     \vspace{0.5em}
     $e\ ::=\ \cdots\ |\ (\textsf{vcc}\ x\ \textsf{in}\ e){:}\tau$

@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Recursion}
 \labch{recursion}
 
 \renewcommand{\plang}{\textsf{FAE}\xspace}
-\renewcommand{\lang}{\textsf{RFAE}\xspace}
+\renewcommand{\Lang}{\textsf{RFAE}\xspace}
 
 \newcommand{\sumbody}{\eifz{\cx}{0}{(\eadd{\cx}{\eapp{\code{sum}}{(\esub{\cx}{1})}})}}
 \newcommand{\sumbodyf}{\eifz{\cx}{0}{(\eadd{\cx}{\eapp{\code{f}}{(\esub{\cx}{1})}})}}
@@ -11,7 +11,7 @@
 
 Recursive functions are widely used in programming. We have discussed importance of
 recursion in \refsec{recursion}. This chapter explains the semantics of
-recursive functions by defining \lang, which extends \plang with recursive
+recursive functions by defining \Lang, which extends \plang with recursive
 functions. In addition, we will see that recursive functions also are just syntactic
 sugar: we can express recursive functions with first-class functions.
 
@@ -29,12 +29,12 @@ println(sum(10))
 
 The function \code{sum} takes an integer \code{n} as an argument, and returns
 the sum of the integers between \code{0} to \code{n} (including \code{n}).
-\sidenote{We ignore the case when the input is negative.}
+\footnote{We ignore the case when the input is negative.}
 Therefore, the program prints \code{55}.
 
 How can we implement an equivalent program in \plang? One naïve approach could
-be the following expression:\sidenote{\plang does not provide conditional
-expressions (\textsf{if0}), which is defined by \lang, but we use it since
+be the following expression:\footnote{\plang does not provide conditional
+expressions (\textsf{if0}), which is defined by \Lang, but we use it since
 we can easily add them to \plang.}
 
 \[\ebind{
@@ -53,11 +53,11 @@ functions in \plang.
 
 \section{Syntax}
 
-We define \lang by extending \plang with recursive functions. To demonstrate the
+We define \Lang by extending \plang with recursive functions. To demonstrate the
 usefulness of recursion with examples, we add conditional expressions as well.
 
-The following is the abstract syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+The following is the abstract syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \[
   e\ ::=\ \cdots\ |\ \eifz{e}{e}{e}\ |\ \erec{x}{x}{e}{e}
@@ -80,7 +80,7 @@ The following is the abstract syntax of \lang:
     recursive.
 \end{itemize}
 
-In \lang, we can implement a function computing the sum of consecutive integers
+In \Lang, we can implement a function computing the sum of consecutive integers
 like below.
 
 \[\erec{\code{sum}}{\cx}{\sumbody}{\eapp{\code{sum}}{10}}\]
@@ -278,8 +278,8 @@ Suppose the following facts:
 
 \section{Interpreter}
 
-The following Scala code implements the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+The following Scala code implements the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
@@ -493,7 +493,7 @@ Consider the following functions:
     one free occurrence in a given expression
 \end{itemize}
 Complete the following implementation of \code{bindings} and \code{frees} for
-\lang:
+\Lang:
 \begin{verbatim}
 def bindings(e: Expr): Set[String] = e match {
   case Num(n) => ???
@@ -559,7 +559,7 @@ Map("f" -> CloV("x", Add(Num(13), Id("x")), Map()))
 
 \begin{enumerate}
   \item Explain how the new semantics is different from the original semantics.
-  \item Write an \lang expression such that
+  \item Write an \Lang expression such that
   \begin{itemize}
     \item the evaluation with the original semantics results in an integer, but
     \item the evaluation with the above semantics incurs a run-time error.
@@ -603,7 +603,7 @@ Write the operational semantics of the form \fbox{$\evald{e}{v}$}.
 
   The following sentences are a simplified version of the Racket programming
   language reference about
-  conditionals.\sidenote{\url{https://docs.racket-lang.org/reference/if.html}}
+  conditionals.\footnote{\url{https://docs.racket-lang.org/reference/if.html}}
 
 \newcommand{\eand}[2]{\textsf{and}\ #1\ #2}
 \newcommand{\eor}[2]{\textsf{or}\ #1\ #2}
@@ -635,7 +635,7 @@ Write the operational semantics of the form \fbox{$\evald{e}{v}$}.
 
 \end{itemize}
 
-Now, we extend \lang with Racket-like booleans.
+Now, we extend \Lang with Racket-like booleans.
 
 \begin{enumerate}
   \item

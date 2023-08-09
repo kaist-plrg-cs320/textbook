@@ -1,8 +1,8 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Continuations}
 \labch{continuations}
 
-\renewcommand{\lang}{\textsf{FAE}\xspace}
+\renewcommand{\Lang}{\textsf{FAE}\xspace}
 
 Many real-world languages support \textit{control diverters}, which alter
 \textit{control flows} of programs.\index{control diverter}\index{control flow}
@@ -105,10 +105,8 @@ call \code{numOfWords} except one erroneous case, where both cache and file are
 not found. It is not a big flaw in the current implementation of
 \code{numOfWordsInFile}.
 However, if we write a function with a large number of conditions, we would
-prefer \code{return} (\reffig{return}) to call \code{numOfWords} multiple
-times (\reffig{multiple}).
+prefer using \code{return} like below:
 
-\begin{figure}[t]
 \begin{verbatim}
 def numOfWordsInFile(name: String, word: String): Int = {
   val content =
@@ -126,11 +124,9 @@ def numOfWordsInFile(name: String, word: String): Int = {
   numOfWords(content, word)
 }
 \end{verbatim}
-\caption{\code{numOfWordsInFile} with \code{return}}
-\labfig{return}
-\end{figure}
 
-\begin{figure}[t]
+The implementation without \code{return} would be like below:
+
 \begin{verbatim}
 def numOfWordsInFile(name: String, word: String): Int = {
   if (A)
@@ -146,9 +142,6 @@ def numOfWordsInFile(name: String, word: String): Int = {
     -1
 }
 \end{verbatim}
-\caption{\code{numOfWordsInFile} without \code{return}}
-\labfig{multiple}
-\end{figure}
 
 Like mutation, control diverters make languages impure. In pure languages, the
 order of evaluation does not matter. Each expression only produces a result;
@@ -172,7 +165,7 @@ add control diverters to languages based on the notion of a continuation.
 
 Evaluating an expression requires one or more steps of computation.
 Consider $(1+2)+(3+4)$. Evaluation of this expression consists of the following
-seven steps of computation:\sidenote{Assume that we use the left-to-right order
+seven steps of computation:\footnote{Assume that we use the left-to-right order
 for subexpression evaluation in this chapter.}
 
 \begin{enumerate}
@@ -190,7 +183,7 @@ for subexpression evaluation in this chapter.}
 
 We can split $N$ steps of computation into two parts: the former $n$ steps and the
 remaining $N-n$ steps. We call the expression evaluated by the former $n$ steps
-a \textit{redex}\index{redex}\sidenote{The term redex stands for a
+a \textit{redex}\index{redex}\footnote{The term redex stands for a
 \textbf{red}ucible \textbf{ex}pression. However, we introduce the notion of a
 redex without explaining what ``reduction'' or ``reducible'' is. The notion can
 be understood without knowing what reduction is, so we do not care about the
@@ -577,8 +570,8 @@ contribute to the implementation of an interpreter in the next chapter.
 
 \section{Interpreter in CPS}
 
-Let us implement an interpreter of \lang in CPS. As explained already, there is
-no reason to implement an interperter of \lang in CPS. However, CPS is an appropriate
+Let us implement an interpreter of \Lang in CPS. As explained already, there is
+no reason to implement an interperter of \Lang in CPS. However, CPS is an appropriate
 implementation strategy for the interpreter of the next chapter, and this
 section is preparation for the next chapter.
 
@@ -811,7 +804,7 @@ The code does not directly call \code{k}. Instead of calling \code{k}, it passes
 
 \section{Small-Step Operational Semantics}
 
-This section defines semantics that explicitly shows continuations for \lang.
+This section defines semantics that explicitly shows continuations for \Lang.
 Previous chapters define semantics in a big-step style. Big-step semantics is
 intuitive, and its inference rules give nice clues to interpreter implementers.
 A single rule usually corresponds to a single case of pattern matching in
@@ -871,8 +864,8 @@ sequence of multiple reduction steps, every step of computation can be
 identified. The order between the steps naturally arises. By splitting the steps
 into two parts, we can formally describe a redex and a continuation.
 
-Now, let us define states of \lang.
-A state of \lang is a pair of a computation stack and a value stack.
+Now, let us define states of \Lang.
+A state of \Lang is a pair of a computation stack and a value stack.
 The following defines computation and value stacks:
 
 \[
@@ -896,7 +889,7 @@ of computation, and $s$ includes values used by those steps.
 
 A computation stack is a stack containing remaining steps of computation.
 The white square, $\mtk$, denotes the empty computation stack, which
-implies that there is nothing more to do.\sidenote{Note that $\mtk$ has no
+implies that there is nothing more to do.\footnote{Note that $\mtk$ has no
 relation to $\square$ used to represent continuations intuitively. In the
 continuation $\square+1$, $\square$ means a hole, which should be filled by
 the result of a redex. On the other hand, in the small-step semantics,

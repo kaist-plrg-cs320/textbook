@@ -1,13 +1,13 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Type Systems}
 \labch{type-systems}
 
 \renewcommand{\plang}{\textsf{FAE}\xspace}
-\renewcommand{\lang}{\textsf{TFAE}\xspace}
+\renewcommand{\Lang}{\textsf{TFAE}\xspace}
 
 This chapter is the first chapter about typed languages. This chapter explains
 the motivation of type checking and introduces a simple type
-system by defining \lang, a typed variant of \plang.
+system by defining \Lang, a typed variant of \plang.
 
 \section{Run-Time Errors}
 
@@ -115,7 +115,7 @@ More precisly, we want a program $P$ that satisfies the following conditions:
   \item For any program $I$ given as an input, $P$ outputs $\textsf{OK}$ or
     $\textsf{NOT OK}$ in a finite time.
   \item If $I$ never incurs run-time errors,
-    $P(I)=\textsf{OK}$.\sidenote{$P(I)$ denotes the output of $P$ when $I$ is
+    $P(I)=\textsf{OK}$.\footnote{$P(I)$ denotes the output of $P$ when $I$ is
     an input.}
   \item If $I$ can incur a run-time error, $P(I)=\textsf{NOT OK}$.
 \end{itemize}
@@ -126,13 +126,13 @@ which implies that $P$ never detects run-time errors by mistake, i.e., there is
 no false positive---a \textit{false positive}\index{false positive}
 is to incorrectly say that there is a run-time error ($\textsf{NOT OK}$).
 If $P(I)$ is $\textsf{NOT OK}$, $I$ must be able to incur a run-time
-error.\sidenote{It is the contrapositive of the second property.}
+error.\footnote{It is the contrapositive of the second property.}
 The third property is called \textit{soundness},\index{soundness}
 which implies that $P$ never misses run-time errors, i.e., there is no false
 negative---a \textit{false negative}\index{false negative}
 is to incorrectly say that there is no run-time error ($\textsf{OK}$).
 If $P(I)$ is $\textsf{OK}$, $I$ must be free from run-time
-errors.\sidenote{It is the contrapositive of the third property.}
+errors.\footnote{It is the contrapositive of the third property.}
 $P$ can liberate programmers from the burden of detecting run-time errors.
 If $P$ says $\textsf{OK}$, then the programmers do not need to worry about run-time
 errors at all. If $P$ says $\textsf{NOT OK}$, then the program is certainly wrong, and
@@ -234,7 +234,7 @@ same type, and values with different ability or structures belong to different
 types. There are various values in each programming language, and each value has its
 own ability and structure. For instance, integers can be used for addition and
 subtraction, while functions can be applied to values. Thus, it is natural to
-classify values according to their characteristics. In \lang, the easiest way to
+classify values according to their characteristics. In \Lang, the easiest way to
 categorize values is to split them into numbers and functions. For example, $1$,
 $42$, $0$, and $-1$ are numbers and belong to the type $\tnum$.
 On the other hand, $\lambda \cx.\cx$, $\lambda \cx.\cx+\cx$, and $\lambda \cx.\cx\ 1$
@@ -274,7 +274,7 @@ such examples in \plang. Type errors are all of possible run-time errors in
 \plang. However, in many real-world languages, which provide various features
 \plang excludes, we can find run-time errors irrelevant to types. One of the
 most famous examples is \code{NullPointerException} of Java. In Java,
-\code{null} is a value that belongs to any type.\sidenote{In fact, Java
+\code{null} is a value that belongs to any type.\footnote{In fact, Java
 classifies types into primitive types and reference types, and \code{null} is a
 value of any reference type.} Thus, \code{null} is a value of the \code{String}
 type. Java strings provide various methods, including \code{length}, which
@@ -454,13 +454,13 @@ checkers. Also, programs that are very small and used only a few times are where
 dynamically typed languages should be used. In such applications, the advantages
 of statically typed languages are worthless.
 
-\section{\lang}
+\section{\Lang}
 
-This section defines \lang, a statically typed version of \plang.
+This section defines \Lang, a statically typed version of \plang.
 
 \subsection{Syntax}
 
-The syntax of \lang is as follows:
+The syntax of \Lang is as follows:
 
 \[
 e\ ::=\ n
@@ -521,7 +521,7 @@ systems, a single value or a single expression can have multiple types.
 
 \subsection{Dynamic Semantics}
 
-The dynamic semantics of \lang is similar to that of \plang. The only difference is
+The dynamic semantics of \Lang is similar to that of \plang. The only difference is
 type annotations in lambda abstractions. Since type annotations are used only
 for type checking and do not have any role at run time, they are simply ignored
 when closures are constructed.
@@ -539,7 +539,7 @@ when closures are constructed.
 
 \subsection{Interpreter}
 
-An interpreter of \lang is similar to that of \plang. Since lambda abstractions
+An interpreter of \Lang is similar to that of \plang. Since lambda abstractions
 have type annotations, the \code{Fun} case class needs a change.
 
 \begin{verbatim}
@@ -571,7 +571,7 @@ Type annotations are ignored.
 
 \subsection{Static Semantics}
 
-Now, we define the static semantics of \lang. One naïve approach is to define
+Now, we define the static semantics of \Lang. One naïve approach is to define
 the static semantics as a relation over expressions and types because static
 semantics defines the type of each expression. However, this approach does not
 work. Recall that the dynamic semantics is a
@@ -673,7 +673,7 @@ type system to detect free identifier errors.
 
 \typerule{Typ-Fun}{
   If
-  \typeofn{\Gamma[x:\tau_1]}{e}{\tau_2},\sidenote{
+  \typeofn{\Gamma[x:\tau_1]}{e}{\tau_2},\footnote{
     Since $\mapsto$ looks similar to arrows in types, we use $:$ instead of
     $\mapsto$ to prevent confusion.} \\
   then
@@ -797,14 +797,14 @@ expression even though it evaluates to a value without any type error.
 
 \subsection{Type Checker}
 
-To implement a type checker of \lang, we first define the \code{TEnv} type,
+To implement a type checker of \Lang, we first define the \code{TEnv} type,
 which is the type of a type environment.
 
 \begin{verbatim}
 type TEnv = Map[String, Type]
 \end{verbatim}
 
-\code{TEnv} is a map from strings to \lang types.
+\code{TEnv} is a map from strings to \Lang types.
 
 The following \code{mustSame} function compares given two types:
 
@@ -860,15 +860,15 @@ is the return type of the function position.
 
 % \section{Type Erasure}
 
-% According to the dynamic semantics of \lang, parameter type annotations in lambda
+% According to the dynamic semantics of \Lang, parameter type annotations in lambda
 % abstractions take no role at run time. They are necessary only for static type
 % checking. Therefore, it is possible to erase type annotations in order to make
 % code used at run time, while type annotations exist at compile time. Type
 % erasure denotes such semantics, which removes type annotations from code used at
 % run time.
 
-% The following shows how to make an \plang counterpart of a \lang expression via type
-% erasure. $\embox{erase}$ is a function from a \lang expression to an \plang
+% The following shows how to make an \plang counterpart of a \Lang expression via type
+% erasure. $\embox{erase}$ is a function from a \Lang expression to an \plang
 % expression.
 
 % \[
@@ -912,7 +912,7 @@ is the return type of the function position.
 % }
 % \end{verbatim}
 
-% Since the classes represeting \lang expressions have the same names as the
+% Since the classes represeting \Lang expressions have the same names as the
 % classes represeting \plang expressions, the \code{\plang} singleton object contains the
 % classes for
 % \plang expressions.
@@ -951,10 +951,10 @@ is the return type of the function position.
 % }
 % \end{verbatim}
 
-% \code{erase} allows a \lang expression to be transformed to an \plang expression so
+% \code{erase} allows a \Lang expression to be transformed to an \plang expression so
 % that it is possible to reuse the existing \code{interp} function for \plang instead
 % of
-% defining a new \code{interp} function for \lang. Parameter type annotations do not
+% defining a new \code{interp} function for \Lang. Parameter type annotations do not
 % affect the result of evaluation. The above \code{run} function is the same as the
 % previous \code{run} function except that its return type is \code{\plang.Value}, not
 % \code{Value}. Even though the class is different, the result represents exactly
@@ -1025,7 +1025,7 @@ errors is valuable but can increase false positives. Thus, type system designers
 always consider the tradeoff between enlarging the set of type errors and reducing false
 positives.
 
-Now, let us consider two simple extensions of \lang: local variable definitions
+Now, let us consider two simple extensions of \Lang: local variable definitions
 and pairs.
 
 \subsection{Local Variable Definitions}
@@ -1069,7 +1069,7 @@ Pairs are the second kind of extension. In \plang, we can desugar pairs to
 functions:
 \begin{itemize}
   \item $(e_1,e_2)$, which creates a new pair, is desugared to $\efun{\cf}{\cf\ e_1\
-    e_2}$.\sidenote{Strictly speaking, the correct desugaring is
+    e_2}$.\footnote{Strictly speaking, the correct desugaring is
     $(\efun{\cx}{\efun{\cy}{\efun{\cf}{\cf\ \cx\ \cy}}})\ e_1\ e_2$ in eager
     languages like \plang, but we use the simpler one here.}
   \item $e\textsf{.1}$, which acquires the first element of a pair,
@@ -1077,13 +1077,13 @@ functions:
   \item $e\textsf{.2}$, which acquires the second element of a pair,
     is desugared to $e\ \efun{\cx}{\efun{\cy}{\cy}}$.
 \end{itemize}
-However, such expressions are ill-typed in \lang.
+However, such expressions are ill-typed in \Lang.
 When the type of $e_1$ is $\tnum$ and the type of $e_2$ is $\tarrow{\tnum}{\tnum}$,
 $\efun{\cf}{\cf\ e_1\ e_2}$ is a function that returns $\tnum$ in some cases and
 $\tarrow{\tnum}{\tnum}$ in some other cases. There is no way to represent the
-type of such a function. Thus, programs using pairs cannot be written in \lang.
+type of such a function. Thus, programs using pairs cannot be written in \Lang.
 
-To overcome the limitation, we extend \lang to support pairs.
+To overcome the limitation, we extend \Lang to support pairs.
 We add pair types as follows:
 
 \[ \tau \ ::= \ \cdots\ | \ \tau\times\tau \]
@@ -1150,14 +1150,14 @@ is not sound any longer:
   { \typeofd{e_1}{\tnum} }
   { \typeofd{\eadd{e_1}{e_2}}{\tnum} }
 \]
-Write a \lang expression that passes type checking but incurs a run-time error.
+Write a \Lang expression that passes type checking but incurs a run-time error.
 
 \end{exercise}
 
 \begin{exercise}
 \labex{type-systems-list}
 
-This exercise extends \lang with lists.
+This exercise extends \Lang with lists.
   \[
     \begin{array}{r@{~~}r@{~~}l}
       e & ::= & \cdots
@@ -1175,7 +1175,7 @@ Write the typing rules of the added expressions.
 \begin{exercise}
 \labex{type-systems-box}
 
-This exercise extends \lang with boxes.
+This exercise extends \Lang with boxes.
   \[
     \begin{array}{r@{~~}r@{~~}l}
       e & ::= & \cdots
@@ -1207,7 +1207,7 @@ This exercise extends \lang with boxes.
 \begin{exercise}
 \labex{type-systems-var}
 
-This exercise extends \lang with mutable variables.
+This exercise extends \Lang with mutable variables.
   \[ e\ ::=\ \cdots\ |\ \eset{x}{e} \]
     The dynamic semantic of mutable variables is the same as \textsf{MFAE}.
 \begin{enumerate}

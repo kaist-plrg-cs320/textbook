@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{First-Class Continuations}
 \labch{first-class-continuations}
 
 \renewcommand{\plang}{\textsf{FAE}\xspace}
-\renewcommand{\lang}{\textsf{KFAE}\xspace}
+\renewcommand{\Lang}{\textsf{KFAE}\xspace}
 
 The previous chapter defines the small-step semantics of \plang and implements
 the interpreter of \plang in CPS. Conceptually,
@@ -31,16 +31,16 @@ current continuation to the called one. It changes the control flow of the
 execution. First-class continuations allow programmers to express
 computations with complex control flows concisely.
 
-This chapter defines \lang by extending \plang with first-class continuations.
-It defines the small-step semantics of \lang and implements an interpreter of
-\lang in CPS. While implementing the interpreter, you will see why CPS is required.
+This chapter defines \Lang by extending \plang with first-class continuations.
+It defines the small-step semantics of \Lang and implements an interpreter of
+\Lang in CPS. While implementing the interpreter, you will see why CPS is required.
 In addition, this chapter shows utilization of first-class continuations in
 programming.
 
 \section{Syntax}
 
-The syntax of \lang is as follows:
-\sidenote{We omit the common part to \plang.}
+The syntax of \Lang is as follows:
+\footnote{We omit the common part to \plang.}
 
 \[
   e\ ::=\ \cdots\ |\ \evcc{x}{e}
@@ -59,7 +59,7 @@ better to understand the high-level idea with some examples.
 Consider $1+(\evcc{\cx}{(\cx\ 2)+3})$. The
 continuation of $(\evcc{\cx}{(\cx\ 2)+3})$ is to add the result to
 $1$. Intuitively, we can use $\underline{1}+\square$ to represent the
-continuation.\sidenote{Like before, the line below $1$ denotes that $1$ is an
+continuation.\footnote{Like before, the line below $1$ denotes that $1$ is an
 integer value, not an expression.}
 The continuation is the value of $\cx$. After binding $\cx$, $\cx\ 2$ is
 evaluated. The continuation of $\cx\ 2$ is $\underline{1}+(\square+3)$.
@@ -116,7 +116,7 @@ Applying $\cz$ to $3$ ignores the continuation again, and $(\cx\ (1+3))\
 Since $1+3$ evaluates to $4$, $\cx$ is applied to $4$. Then, $4$ fills the hole of
 $\square$ and becomes the final result.
 
-Now, we define the semantics of \lang. First, since continuations are values,
+Now, we define the semantics of \Lang. First, since continuations are values,
 values must be extended.
 
 \[
@@ -130,7 +130,7 @@ The previous chapter shows that applying a continuation $k\ ||\ s$ to a value
 $v$ changes the state to $k\ ||\ v::s$. Therefore, applying $\contv{k}{s}$
 to $v$ reduces the state to $k\ ||\ v::s$.
 
-Since \lang has a new sort of an expression, $\evcc{x}{e}$, we need to define
+Since \Lang has a new sort of an expression, $\evcc{x}{e}$, we need to define
 the reduction rule for $\evcc{x}{e}$.
 
 \[
@@ -146,7 +146,7 @@ This continuation can be represented by a value $\contv{k}{s}$. Therefore,
 reduction changes the top of the
 computation stack to $\sigma[x\mapsto\contv{k}{s}]\vdash e$.
 
-Adding Rule \textsc{Red-Vcc} is not enough to define the semantics of \lang.
+Adding Rule \textsc{Red-Vcc} is not enough to define the semantics of \Lang.
 Due to the existence of first-class continuations, function application
 expressions must be able to handle not only closures but also first-class
 continuations. To define the reduction rule, recall the reduction rule that
@@ -266,8 +266,8 @@ $
 
 \section{Interpreter}
 
-The following Scala code implements the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+The following Scala code implements the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
@@ -278,7 +278,7 @@ case class Vcc(x: String, b: Expr) extends Expr
 \code{Vcc($x$, $e$)} represents $\evcc{x}{e}$.
 
 In addition, we add a new variant of \code{Value} to represent first-class
-continuations.\sidenote{We omit the common part to \plang.}
+continuations.\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Value
@@ -336,18 +336,18 @@ never adds $\sigma\vdash e$ to the computation stack.
 
 Imperative languages provide control diverters, such as \code{return},
 \code{break}, and \code{continue}, to allow programmers to change control
-flows. However, \lang supports only first-class continuations.
+flows. However, \Lang supports only first-class continuations.
 
 In fact, first-class continuations are the most general form of control flow
 manipulation. Continuations represent control flows of programs because the
 continuation at some point of execution is the remaining computation.
 Changing the current continuation is equivalent to changing the control flow by
 making the program compute different things.
-In \lang, programmers can change the current
+In \Lang, programmers can change the current
 continuation freely by calling continuations. Therefore, first-class
 continuations allow arbitrary changes of control flows.
 Expressions like \code{return} change control flows in a fixed way according
-to their semantics. On the other hand, programmers using \lang can make first-class
+to their semantics. On the other hand, programmers using \Lang can make first-class
 continuations with $\textsf{vcc}$ and call them at any points. The expressivity of
 first-class continuations surpasses that of other control diverters.
 
@@ -361,13 +361,13 @@ preventing the language from being complicated.
 \subsection{Return}
 
 A \code{return} expression makes a function immediately return.
-Instead of adding \code{return} to \lang, we can desugar \code{return} to
+Instead of adding \code{return} to \Lang, we can desugar \code{return} to
 $\textsf{vcc}$ and a continuation application.
 
 If a programmer writes
 $\code{return}\ e$ in the body of a function, $\code{return}\ e$
 can be desugared to $\code{r}\ e$, where $\code{r}$ is just an identifier.
-\sidenote{Assume that the rest of the expression does not use $\code{r}$ at all.}
+\footnote{Assume that the rest of the expression does not use $\code{r}$ at all.}
 Then, $\code{r}\ e$ is just an application expression.
 
 Since $\code{r}$ is a free
@@ -408,19 +408,19 @@ immediately terminates the loop, and a \code{continue} expression makes the
 loop skip the current iteration and directly move on to the beginning of the
 next iteration.
 
-Since \lang lacks loops, we need to add loops first.
+Since \Lang lacks loops, we need to add loops first.
 Suppose that $\textsf{while0}\ e_1\ e_2$ evaluates $e_2$ repeatedly while $e_1$
 evaluates to $\textsf{0}$. When the evaluation terminates, we define the result
 to be $0$, which is just an arbitrarily chosen value.
 
-Now, we can add \code{break} and \code{continue} to \lang as syntactic
+Now, we can add \code{break} and \code{continue} to \Lang as syntactic
 sugar. They can occur only inside loops.
 
 When a loop terminates, the continuation of the loop is applied to $0$, which is
 the result of the loop. Since \code{break} terminates the loop, it
 applies the continuation of the loop to $0$. Thus, when \code{b} denotes the
 continuation of the loop, \code{break} can be desugared to $\code{b}\ 0$.
-\sidenote{Assume that the rest of the expression does not use $\code{b}$ at all.}
+\footnote{Assume that the rest of the expression does not use $\code{b}$ at all.}
 To make \code{b} the continuation of a loop, \textsf{vcc} that binds \code{b}
 should enclose the loop. Therefore, every loop containing \code{break} must be
 desugared. An expression $\textsf{while0}\ e_1\ e_2$ is desugared to
@@ -447,7 +447,7 @@ because the condition is evaluated after the evaluation of the
 body. Therefore, an expression $\textsf{while0}\ e_1\ e_2$ is desugared to
 $\textsf{while0}\ e_1\ (\evcc{\code{c}}{e_2})$ when $e_2$ contains
 \code{continue}, and \code{continue} is desugared to $\code{c}\ 0$.
-\sidenote{Assume that the rest of the expression does not use $\code{c}$ at all.}
+\footnote{Assume that the rest of the expression does not use $\code{c}$ at all.}
 
 For example, consider the following expression:
 
@@ -492,7 +492,7 @@ What is the result of each of the following expressions?
 \begin{exercise}
 \labex{first-class-continuations-print}
 
-The following is an \code{interp} for \lang that prints a given
+The following is an \code{interp} for \Lang that prints a given
 expression each time it is called:
 
 \begin{verbatim}
@@ -518,7 +518,7 @@ Write the reduction steps of $(\evcc{\cx}{42+(\cx\ 2)})+8$.
 \begin{exercise}
 \labex{first-class-continuations-var}
 
-This exercise extends \lang with mutable variables.
+This exercise extends \Lang with mutable variables.
 Complete the following interpreter implementation:
 
 \begin{verbatim}

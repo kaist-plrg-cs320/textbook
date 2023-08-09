@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{First-Order Functions}
 \labch{first-order-functions}
 
 \renewcommand{\plang}{\textsf{VAE}\xspace}
-\renewcommand{\lang}{\textsf{F1VAE}\xspace}
+\renewcommand{\Lang}{\textsf{F1VAE}\xspace}
 
 A function is one of the most important concepts in programming languages.
 It is the key feature of functional languages, as the term functional
@@ -26,9 +26,9 @@ returns twice of the argument. The program can call the function whenever we wan
 \code{6}, which is twice of \code{3}. Similarly, \code{twice(5)} results in
 \code{10}. Therefore, the program prints \code{16}.
 
-This chapter defines \lang by adding first-order functions to \plang.
-Every function in \lang is top-level. It means that a function definition cannot
-be a part of an expression. We assume that a \lang program is a single expression
+This chapter defines \Lang by adding first-order functions to \plang.
+Every function in \Lang is top-level. It means that a function definition cannot
+be a part of an expression. We assume that a \Lang program is a single expression
 that is evaluated under an environment and a list of function definitions. This
 design prevents us from exploring interesting topics like closures but enables us
 to focus on the semantics of function calls. The next chapter will introduce
@@ -58,15 +58,15 @@ to a function with multiple parameters.
 
 Using a function is to call the function. If we never call a function, the
 function is useless. We need to add a new kind of expression to the language:
-the function call expression. The following is the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+the function call expression. The following is the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \[ e\ ::=\ \cdots\ |\ \eappfo{x}{e} \]
 
 $x(e)$ is the function call expression. It calls a function named $x$. $e$
 determines the value of the argument of the call. Here, $x$ is a bound
 occurrence. A function call always has only one argument since every function in
-\lang has only one parameter.
+\Lang has only one parameter.
 
 \section{Semantics}
 
@@ -224,8 +224,8 @@ We can fix the inference rules in a similar way.
 
 \section{Interpreter}
 
-The following Scala code expresses the abstract syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+The following Scala code expresses the abstract syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 case class FunDef(f: String, x: String, b: Expr)
@@ -277,7 +277,7 @@ For example, consider the following code:
   \fundef{\code{f}}{\cx}{\eadd{\cx}{\cy}}
 \]
 
-Since every function is top-level, while variables are local in \lang, \code{y}
+Since every function is top-level, while variables are local in \Lang, \code{y}
 does not belong to the scope of any binding occurrence of \code{y}. No variable
 can be defined before the function. Therefore,
 \code{y} is a free variable, and calling the function \code{f} must incur a
@@ -308,7 +308,7 @@ includes not only $\eappfo{\code{f}}{0}$, which is normal, but also the body of
 scope, the scope of a binding identifier is not fixed; it becomes extended at
 run time due to function calls.
 
-To adopt dynamic scope to \lang, we need to change the function call semantics
+To adopt dynamic scope to \Lang, we need to change the function call semantics
 as follows:
 
 \semanticrule{Call-Dyn}{
@@ -358,7 +358,7 @@ scope.
 \begin{exercise}
 \labex{first-order-functions-eval}
 
-With the following list of function definitions in \lang:
+With the following list of function definitions in \Lang:
 
 $
 \begin{array}{l}

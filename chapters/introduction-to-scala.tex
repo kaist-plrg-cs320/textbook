@@ -1,4 +1,4 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Introduction to Scala}
 \labch{introduction-to-scala}
 
@@ -146,29 +146,29 @@ this book uses functional programming and Scala.
 Before moving on to the next section,
 let us see how people use functional programming in industry.
 
-Akka\sidenote{\url{https://akka.io/}} is a concurrent,
+Akka\footnote{\url{https://akka.io/}} is a concurrent,
 distributed computing library written in Scala. Many companies have been using Akka.
-Apache Spark,\sidenote{\url{https://spark.apache.org/}} a well-known library for data
+Apache Spark,\footnote{\url{https://spark.apache.org/}} a well-known library for data
 processing, also is written in Scala.
-Play\sidenote{\url{https://www.playframework.com/}}
+Play\footnote{\url{https://www.playframework.com/}}
 is a widely-used web framework based on Akka.
 
-Facebook has developed Infer,\sidenote{\url{https://fbinfer.com/}} a static analyzer for Java,
+Facebook has developed Infer,\footnote{\url{https://fbinfer.com/}} a static analyzer for Java,
 C, C++, and Objective-C, in OCaml. Facebook and other companies including Amazon
 and Mozila use Infer to find bugs statically in their programs. Facebook has
-developed also Flow,\sidenote{\url{https://flow.org/}} a static type checker for JavaScript.
-Jane Street\sidenote{\url{https://www.janestreet.com/}} is a financial company well-known in
+developed also Flow,\footnote{\url{https://flow.org/}} a static type checker for JavaScript.
+Jane Street\footnote{\url{https://www.janestreet.com/}} is a financial company well-known in
 the programming language community and has developed its own software in OCaml.
-According to the OCaml website,\sidenote{\url{http://ocaml.org/learn/companies.html}}
+According to the OCaml website,\footnote{\url{http://ocaml.org/learn/companies.html}}
 various companies including Docker use OCaml.
 
-Haskell Wiki\sidenote{\url{http://wiki.haskell.org/Haskell_in_industry}} describes that Google,
+Haskell Wiki\footnote{\url{http://wiki.haskell.org/Haskell_in_industry}} describes that Google,
 Facebook, Microsoft, Nvidia, and many other companies use Haskell.
 
 Erlang is a functional language for concurrent and parallel computing. Elixir
 operates on the Erlang virtual machine and is used for the same purpose as Erlang.
 An article from Code
-Sync\sidenote{\url{https://codesync.global/media/successful-companies-using-elixir-and-erlang/}}
+Sync\footnote{\url{https://codesync.global/media/successful-companies-using-elixir-and-erlang/}}
 said that various companies including WhatsApp, Pinterest, and Goldman Sachs
 use Erlang and Elixir.
 
@@ -178,14 +178,14 @@ As Scala programs are compiled to Java bytecode, which runs on the Java Virtual
 Machine (\acrshort{jvmLabel}), you must
 install Java before installing Scala. Java has various versions. Scala 2.13,
 which is used in this book, needs JDK 8 or higher. JDK 8 is the most recommended
-one. The Scala website\sidenote{\url{https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html}}
+one. The Scala website\footnote{\url{https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html}}
 discusses compatibility issues regarding the other versions.
 
-The Oracle website\sidenote{\url{https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html}}
+The Oracle website\footnote{\url{https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html}}
 provides an installation file for JDK 8.
 
 You can download an installation file for Scala 2.13 from the Scala
-website.\sidenote{\url{https://www.scala-lang.org/download/}} Note that you need a
+website.\footnote{\url{https://www.scala-lang.org/download/}} Note that you need a
 file in the ``Other resources'' section at the bottom of the page.
 On macOS, you may use Homebrew instead. By installing Scala, you can use the
 Scala REPL, interpreter, and compiler. \refsec{scala-repl},
@@ -194,7 +194,7 @@ their usages respectively.
 
 Another thing to install is SBT. SBT is a build tool for Scala. An installation
 file for SBT is available at the SBT
-website.\sidenote{\url{https://www.scala-sbt.org/download.html}}
+website.\footnote{\url{https://www.scala-sbt.org/download.html}}
 \refsec{sbt} will discuss the usage of SBT.
 
 \section{REPL}
@@ -266,7 +266,7 @@ val res6: String = hell
 \end{verbatim}
 
 Strings in Scala provide the same methods as those in
-Java.\sidenote{\url{https://docs.oracle.com/javase/8/docs/api/java/lang/String.html}}
+Java.\footnote{\url{https://docs.oracle.com/javase/8/docs/api/java/lang/String.html}}
 
 The \code{println} function prints a given message into the console.
 
@@ -420,7 +420,7 @@ def quadruple(x: Int): Int
 
 Inside \code{quadruple}, the variable \code{y} is defined and used for the
 computation of
-the return value.\sidenote{Vertical bars (\code{|}) at the beginning of lines are
+the return value.\footnote{Vertical bars (\code{|}) at the beginning of lines are
 not part of code. They have been automatically inserted by REPL.}
 
 Multiple expressions inside curly braces are collectively treated as a single
@@ -516,7 +516,7 @@ val res13: List[Int] = List(1, 2, 3)
 
 \code{List(…)} is more convenient than \code{::} for creating a new list from
 scratch. However, \code{::} is more flexible since it can prepend a new element
-in front of an existing list.\sidenote{It does not mutate the existing list to
+in front of an existing list.\footnote{It does not mutate the existing list to
 prepend the new element. It creates a new list with the element and the list.}
 
 \begin{verbatim}
@@ -528,7 +528,7 @@ val res14: List[Int] = List(0, 1, 2, 3)
 \end{verbatim}
 
 The \code{length} method computes the length of a list; parentheses are used
-to fetch the element at a specific index.\sidenote{The first index is \code{0}.}
+to fetch the element at a specific index.\footnote{The first index is \code{0}.}
 
 \begin{verbatim}
 scala> l.length
@@ -540,7 +540,7 @@ val res16: Int = 1
 
 In functional programming, accessing an arbitrary element of a list by an index
 is rare. We use pattern matching in most cases. The syntax of pattern matching
-for a list is as follows:\sidenote{The order between the cases can vary, which
+for a list is as follows:\footnote{The order between the cases can vary, which
 means that the \code{::} case may come first.}
 
 \begin{verbatim}
@@ -554,8 +554,8 @@ The expression in front of \code{match} is the target of pattern matching.
 If it is an empty list, it matches \code{case Nil}. The expression
 of the \code{Nil} case will be evaluated.
 Otherwise, it is a nonempty list and matches \code{case [name] :: [name]}. The first
-name denotes the head\sidenote{the first element} of the list, and the second
-name denotes the tail\sidenote{a list consisting of all the elements except the
+name denotes the head\footnote{the first element} of the list, and the second
+name denotes the tail\footnote{a list consisting of all the elements except the
 head} of the list. The expression of the \code{::} case will be evaluated.
 
 The following function takes a list of integers as an argument and returns the
@@ -597,7 +597,7 @@ scala> (1, true)
 val res19: (Int, Boolean) = (1,true)
 \end{verbatim}
 
-To fetch the \code{i}-th element of a tuple, we can use \verb+._i+.\sidenote{The
+To fetch the \code{i}-th element of a tuple, we can use \verb+._i+.\footnote{The
 first index is 1.}
 
 \begin{verbatim}
@@ -669,7 +669,7 @@ val res21: String = two
 \end{verbatim}
 
 Maps provide various
-methods.\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/Map.html}}
+methods.\footnote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/Map.html}}
 
 \subsection{Classes and Objects}
 
@@ -960,4 +960,4 @@ sbt:hello> exit
 [info] shutting down sbt server
 \end{verbatim}
 
-To learn SBT more, refer to the SBT website.\sidenote{\url{https://www.scala-sbt.org/learn.html}}
+To learn SBT more, refer to the SBT website.\footnote{\url{https://www.scala-sbt.org/learn.html}}

@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Boxes}
 \labch{boxes}
 
 \renewcommand{\plang}{\textsf{FAE}\xspace}
-\renewcommand{\lang}{\textsf{BFAE}\xspace}
+\renewcommand{\Lang}{\textsf{BFAE}\xspace}
 
 Mutation is a widely-used feature. It is an important concept in imperative
 languages. Even functional languages support mutation. Few languages are purely
@@ -15,10 +15,10 @@ allows local reasoning, mutation has a global effect on execution and enables
 uncontrolled interference between distinct parts of a program. Mutation should
 be used with extreme care of programmers.
 
-This chapter introduces mutation by defining \lang, which extends \plang with
+This chapter introduces mutation by defining \Lang, which extends \plang with
 boxes. A \textit{box}\index{box} is a cell in memory that contains a single value. The value
 contained in a box can be modified anytime after the creation of the box.
-Boxes in \lang are higher-order. Each box can contain any value, which can be
+Boxes in \Lang are higher-order. Each box can contain any value, which can be
 a box or a closure, rather than only an integer.
 A box itself is rarely found in real-world languages: it is almost the same as
 a reference in OCaml (\code{ref}). However, it is a good abstraction of more
@@ -69,9 +69,9 @@ other interesting things based on the change. To do so, we need to combine
 multiple expressions to form a single expression. Such an expression
 is the sequencing expression.
 
-We can define the syntax of \lang based on the observations.
-The following is the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+We can define the syntax of \Lang based on the observations.
+The following is the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \[
   e\ ::=\ \cdots\ |\ \eref{e}\ |\ \ederef{e}\ |\ \eset{e}{e}\ |\ \eseq{e}{e}
@@ -97,7 +97,7 @@ The following is the syntax of \lang:
 
     It is a sequencing expression. $e_1$ is the first expression to be
     evaluated; $e_2$ is the second. Many real-world languages allow sequencing
-    of an arbitrary number of expressions. For brevity, \lang allows only
+    of an arbitrary number of expressions. For brevity, \Lang allows only
     sequencing of two expressions. Sequencing of multiple expressions can be
     easily expresssed by nested sequencing. For example, $e_1;e_2;e_3$ can be
     expresssed as $(e_1;e_2);e_3$.
@@ -105,7 +105,7 @@ The following is the syntax of \lang:
 
 \section{Semantics}
 
-Defining mutable memory is crucial to define the semantics of \lang.
+Defining mutable memory is crucial to define the semantics of \Lang.
 We call the memory of a program a \textit{store}\index{store}. A store records the values of boxes.
 Each box is distinguished from another box by its address, i.e. every box has
 its own address, which differs from the addresses of any other boxes.
@@ -124,11 +124,11 @@ be the set of every store.
 
 The semantics does not require a concrete notion of a box. Since every
 box is uniquely identified by an address, the semantics can consider each
-address as a box. Thus, we treat an address as a value of \lang, instead of
+address as a box. Thus, we treat an address as a value of \Lang, instead of
 introducing a new semantic element denoting boxes. For example, an expression
 creating a box evaluates to an address. We need to revise the definition of a
 value to include addresses.
-\sidenote{We omit the common part to \plang.}
+\footnote{We omit the common part to \plang.}
 
 \[ v\ ::=\ \cdots\ |\ a \]
 
@@ -184,11 +184,11 @@ The former store is input, and the latter store is output.
 
 $\sevald{1}{e}{v}{2}$ is true if and only if \sevaldn{1}{e}{v}{2}.
 We call this way of defining semantics a \textit{store-passing
-style}\index{store-passing style}. The style allows defining \lang, featuring
+style}\index{store-passing style}. The style allows defining \Lang, featuring
 mutability, without any mutable concepts at the meta-level.
 
 Now, let us define the semantics of each expression. We can easily reuse Rule
-\textsc{Num}, Rule \textsc{Id}, and Rule \textsc{Fun} of \lang by adding stores.
+\textsc{Num}, Rule \textsc{Id}, and Rule \textsc{Fun} of \Lang by adding stores.
 They maintain the contents of given stores.
 
 \semanticrule{Num}{
@@ -244,9 +244,9 @@ value.
 The order among the premises in a semantics rule does not specify the order of
 evaluation. So far, we have not specified the order of evaluation in the
 semantics as the order does not matter if there are no side
-effects.\sidenote{Side effects are any observable behaviors of expressions except the
+effects.\footnote{Side effects are any observable behaviors of expressions except the
 results. Mutation and exceptions are side effects.}
- However, \lang supports mutation, and we should specify
+ However, \Lang supports mutation, and we should specify
 the order in the semantics. This goal can be naturally achieved by passing
 stores. If we define the semantic to use the store that comes out from the
 evaluation of the left operand as input of the evaluation of the right operand,
@@ -285,7 +285,7 @@ The final result is the same as the result of $e_2$.
 
 Rule \textsc{Add}, Rule \textsc{Sub}, and Rule \textsc{App} are similar to
 Rule \textsc{Seq}. They cannot modify stores, but their subexpressions can. The
-evaluation order is the same as the sequencing expression. \lang chooses
+evaluation order is the same as the sequencing expression. \Lang chooses
 the left-to-right order for every expression, but other languages
 may use a different order.
 
@@ -468,12 +468,12 @@ of the whole expression. This semantics follows the semantics of many real-world
 imperative languages. For example, \code{x = 1} in C changes the value of
 \code{x} to \code{1} and results in \code{1}. On the other hand, functional
 languages usually use unit as the results of expressions for mutation. We can
-easily adopt the semantics in \lang by adding unit to the language.
+easily adopt the semantics in \Lang by adding unit to the language.
 
 \section{Interpreter}
 
-The following Scala code implements the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+The following Scala code implements the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
@@ -496,7 +496,7 @@ type Addr = Int
 \end{verbatim}
 
 In addition, we add a new variant of \code{Value} to represent boxes.
-\sidenote{We omit the common part to \plang.}
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Value
@@ -612,7 +612,7 @@ which the calls to \code{interp} occur during evaluation.
 \labex{mutable-boxes-desugar}
 
 This exercise asks you to implement the \code{desugar} function, which
-takes a \lang expression as an argument and returns an expression of the same
+takes a \Lang expression as an argument and returns an expression of the same
 behavior without \textsf{;} (sequencing).
 
 \begin{verbatim}

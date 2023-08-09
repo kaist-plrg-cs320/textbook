@@ -1,10 +1,10 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Garbage Collection}
 \labch{garbage-collection}
 
-\renewcommand{\lang}{\textsf{BFAE}\xspace}
+\renewcommand{\Lang}{\textsf{BFAE}\xspace}
 
-Consider the following \lang expression:
+Consider the following \Lang expression:
 
 $
 \begin{array}{@{}l@{}}
@@ -62,7 +62,7 @@ local variables include function parameters. The stack follows the
 \acrshort{lifoLabel} (last in, first out) manner, just like the stack
 data-structure. When a function is called, a \textit{stack frame}\index{stack
 frame} for the function is created and pushed onto the stack, so the stack
-grows.\sidenote{Sometimes, it is not true. For example, tail call optimization
+grows.\footnote{Sometimes, it is not true. For example, tail call optimization
 prevents the stack from growing when a function is called. However, we ignore
 such cases.} The function stores the values of its local variables in its stack
 frame. When the function returns, the stack frame is popped off because there is
@@ -221,7 +221,7 @@ When \code{g} returns, the object denoted by \code{a} is copied.
 
 In the previous example, the return value is an integer, which occupies only
 four bytes. On the other hand, in this example, the return value is an object,
-whose size is sixteen bytes.\sidenote{It can be more than sixteen bytes. For
+whose size is sixteen bytes.\footnote{It can be more than sixteen bytes. For
 example, an object can have a type tag, which indicates the class it belongs to,
 and a method table, which consists of pointers to its methods.} Therefore,
 copying requires more time. If the object has more fields, copying will take
@@ -305,9 +305,9 @@ Each language has its own mechanism to choose among the stack and the heap when
 putting values on the memory. Low-level languages like C, C++, and Rust allow
 programmers to choose by themselves. Values go to the stack by default, and
 programmers can choose the heap by using designated keywords
-(\code{malloc}\sidenote{\url{https://en.cppreference.com/w/c/memory/malloc}} in C,
-\code{new}\sidenote{\url{https://en.cppreference.com/w/cpp/language/new}} in C++,
-and \code{Box::new}\sidenote{\url{https://doc.rust-lang.org/std/boxed/index.html}} in Rust).
+(\code{malloc}\footnote{\url{https://en.cppreference.com/w/c/memory/malloc}} in C,
+\code{new}\footnote{\url{https://en.cppreference.com/w/cpp/language/new}} in C++,
+and \code{Box::new}\footnote{\url{https://doc.rust-lang.org/std/boxed/index.html}} in Rust).
 
 On the other hand, high-level languages like Java and Scala have a predefined
 rule and do not give a choice to programmers. They place all the primitive
@@ -395,9 +395,9 @@ memory management}.
 Manual memory management is memory management done by programmers. Programmers
 can make their programs send deallocation requests to the memory manager by
 using designated keywords
-(\code{free}\sidenote{\url{https://en.cppreference.com/w/c/memory/free}} in C,
-\code{delete}\sidenote{\url{https://en.cppreference.com/w/cpp/language/delete}} in C++,
-and \code{drop}\sidenote{\url{https://doc.rust-lang.org/std/mem/fn.drop.html}} in Rust).
+(\code{free}\footnote{\url{https://en.cppreference.com/w/c/memory/free}} in C,
+\code{delete}\footnote{\url{https://en.cppreference.com/w/cpp/language/delete}} in C++,
+and \code{drop}\footnote{\url{https://doc.rust-lang.org/std/mem/fn.drop.html}} in Rust).
 
 While Scala does not support manual memory management, assume that Scala has
 \code{free}, just like C. Consider the following code:
@@ -623,7 +623,7 @@ The problem of the program is using a dangling pointer.
 Such an incident is called
 \textit{use-after-free}\index{use-after-free} (\acrshort{uafLabel}).
 When UAF happens, a program may corrupt on-heap data by overwriting
-it.\sidenote{In fact, UAF is considered as an \textit{undefined
+it.\footnote{In fact, UAF is considered as an \textit{undefined
 behavior}\index{undefined behavior} in most languages. It means that programs
 with UAF can exhibit any behaviors. Therefore, corrupting on-heap data is just
 one possible consequence of UAF. Other bad things can happen as well.}
@@ -631,7 +631,7 @@ one possible consequence of UAF. Other bad things can happen as well.}
 UAF has caused a large number of critical problems in the real world. UAF is the
 source of many unpleasant bugs and severe security vulnerabilities.  One example
 is a vulnerability caused by UAF in Acrobat Reader
-DC.\sidenote{\url{https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-9715}}
+DC.\footnote{\url{https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-9715}}
 An attacker can make a special PDF file that triggers UAF of the PDF reader. By
 carefully crafting the file, the attacker can lead the PDF reader to run
 arbitrary code he or she wants. A proof-of-concept video at
@@ -751,7 +751,7 @@ stack stores the values of local variables. Therefore, programs can access any
 values on the stack by reading local variables. However, objects on the heap do
 not directly correspond to specific program constructs. To access them, programs
 need to read their addresses from somewhere. It implies that programs can access
-objects only when they are reachable from the stack\sidenote{More precisely,
+objects only when they are reachable from the stack\footnote{More precisely,
 objects reachable from the stack and \textit{registers}\index{register} are
 accessible. Registers are small memory storage inside the CPU. They also are
 used to store the values of local variables. Sometimes, the stack and registers
@@ -878,9 +878,9 @@ Reference counting requires only reference counts attached to objects
 and modification of them at the creation and deletion of pointers. It is
 easy to implement; it can be implemented even as a library, without any
 language-level support. For example,
-\verb!shared_ptr!\sidenote{\url{https://en.cppreference.com/w/cpp/memory/shared_ptr}}
+\verb!shared_ptr!\footnote{\url{https://en.cppreference.com/w/cpp/memory/shared_ptr}}
 in C++ and
-\code{Rc}\sidenote{\url{https://doc.rust-lang.org/std/rc/struct.Rc.html}} in
+\code{Rc}\footnote{\url{https://doc.rust-lang.org/std/rc/struct.Rc.html}} in
 Rust are well-known library implementations of reference counting.
 
 \paragraph{Immediate Reclamation}
@@ -958,11 +958,11 @@ crucial limitation. For example, Python and Swift use reference counting. Each
 of them has its own solution to overcome the limitation of reference counting.
 Python provides a secondary GC algorithm, which can properly handle cycles,
 while having reference counting as the primary
-one.\sidenote{\url{https://docs.python.org/3/library/gc.html}} Swift allows
+one.\footnote{\url{https://docs.python.org/3/library/gc.html}} Swift allows
 programmers to create \textit{weak references}\index{weak reference}, which are
 pointers that do not increase reference counts, in addition to usual pointers,
 i.e., \textit{strong references}\index{strong
-reference}.\sidenote{\url{https://docs.swift.org/swift-book/LanguageGuide/AutomaticReferenceCounting.html}}
+reference}.\footnote{\url{https://docs.swift.org/swift-book/LanguageGuide/AutomaticReferenceCounting.html}}
 Programmers can use weak references when they want to create cycles without
 memory leaks.
 

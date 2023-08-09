@@ -1,8 +1,8 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Nameless Representation of Expressions}
 \labch{nameless-representation-of-expressions}
 
-\renewcommand{\lang}{\textsf{FAE}\xspace}
+\renewcommand{\Lang}{\textsf{FAE}\xspace}
 
 In previous chapters, languages distinguish different variables by naming them
 with different identifiers. For
@@ -23,7 +23,7 @@ substitution is often used instead of environments to define the semantics of
 languages. For instance, defining the semantics of function applications with
 substitutions is as follows: evaluating $(\lambda \cx.\cx + \cx)\ 1$
 is the same as evaluating $1+1$, which is obtained by substituting $\cx$ with
-$1$ in the function body $\cx+\cx$.\sidenote{Since the main purpose of mentioning
+$1$ in the function body $\cx+\cx$.\footnote{Since the main purpose of mentioning
 substitutions is explaining the problem of naming, we do not formally
 define substitutions. To find more about substitution, see \refex{first-class-functions-subst}.}
 In fact, it is difficult to define the semantics correctly
@@ -90,7 +90,7 @@ For these reasons, names are often problematic in programming languages.
 Multiple solutions have been proposed to resolve the issue. This chapter introduces
 de Bruijn indices, which are one of those solutions. \textit{De Bruijn indices}
 \index{de Bruijn index} represent variables with indices, not names.
-This chapter shows how de Bruijn indices can be used in \lang. Note that \lang
+This chapter shows how de Bruijn indices can be used in \Lang. Note that \Lang
 is just one possible use case of de Bruijn indices.
 De Bruijn indices can be used anywhere names lead to a problem.
 
@@ -169,7 +169,7 @@ First, we define indices as follows:
 where the metavariable $i$ ranges over indices.
 
 Then, we can define nameless expressions as follows:
-\sidenote{This chapter uses $e$ to denote both named expressions and nameless
+\footnote{This chapter uses $e$ to denote both named expressions and nameless
 expressions. Strictly speaking, two different metavariables should be introduced
 to denote each sort of an expression separately. However, for brevity, we abuse
 the notation and use $e$ for both sorts of an expression.}
@@ -439,20 +439,20 @@ same as $\sigma'$ but whose indices are one larger, the body of the closure
 is evaluated under $(\uparrow\sigma')[0\mapsto v_2]$.
 
 The rules for integers and addition are omitted because they are the same as those
-of \lang.
+of \Lang.
 
 This new semantics for nameless expressions is equivalent to the previous
 semantics for named expressions.
 Let $e$ be a named expression. The result of evaluating $e$ is the same as
 evaluating $e'$ where $e'$ is the nameless expression obtained by transforming $e$.
-\sidenote{Assume that the equality of closures is defined properly.}
+\footnote{Assume that the equality of closures is defined properly.}
 Mathematically, the following proposition is true:
 
 $\forall e.\forall v.(\emptyset\vdash e\Rightarrow
 v)\leftrightarrow(\emptyset\vdash[e]\emptyset\Rightarrow v)$.
 
 Let us implement an interpreter of nameless expressions in Scala.
-Below is the definitions of values and environments.\sidenote{At this point, we
+Below is the definitions of values and environments.\footnote{At this point, we
 do not consider named expressions, so we omit the \code{Nameless} singleton
 object.}
 

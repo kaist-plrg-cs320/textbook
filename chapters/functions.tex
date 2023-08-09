@@ -1,4 +1,4 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Functions}
 \labch{functions}
 
@@ -271,7 +271,7 @@ g1(f(_))
 \end{verbatim}
 
 As intended, \verb!f(_)! becomes \code{x => f(x)}, whose type is \code{Int =>
-Int}.\sidenote{Actually, there is no need to write
+Int}.\footnote{Actually, there is no need to write
 \code{g(f(\_))} because it is equal to \code{g(f)}.}
 
 \begin{verbatim}
@@ -707,7 +707,7 @@ def heights(l: List[Student]): List[Int] = l.map(_.height)
 \end{verbatim}
 
 The standard library provides many other useful methods for
-lists.\sidenote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/List.html}}
+lists.\footnote{\url{https://www.scala-lang.org/api/current/scala/collection/immutable/List.html}}
 
 \section{For Loops}
 

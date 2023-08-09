@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Identifiers}
 \labch{identifiers}
 
 \renewcommand{\plang}{\textsf{AE}\xspace}
-\renewcommand{\lang}{\textsf{VAE}\xspace}
+\renewcommand{\Lang}{\textsf{VAE}\xspace}
 
 Variables are one of the basic concepts of programming languages. A
 \textit{variable}\index{variable} relates a name to a value. We use the
@@ -34,10 +34,10 @@ there are various kinds of identifiers:
 This chapter introduces identifiers. Identifiers in programs can split into
 three groups: binding occurrences, bound occurrences, and free identifiers.
 We will see what they are. This chapter discusses identifiers based on the use
-of variables in programs. We will define \lang by extending \plang of
-\refch{syntax-and-semantics} with variables. Variables of \lang are immutable.
+of variables in programs. We will define \Lang by extending \plang of
+\refch{syntax-and-semantics} with variables. Variables of \Lang are immutable.
 We will deal with mutable variables in \refch{mutable-variables}.
-In \lang, the names of variables are
+In \Lang, the names of variables are
 the only identifiers. However, as you have seen already, real-world programming
 languages have many kinds of identifiers.
 
@@ -174,11 +174,11 @@ line 1.
 
 \section{Syntax}
 
-Let us define the abstract syntax of \lang. We do not consider concrete
+Let us define the abstract syntax of \Lang. We do not consider concrete
 syntax anymore. Therefore, the term syntax will be used to mean abstract
 syntax. Also, from now on, we use the term
 \textit{expressions}\index{expression} rather than
-programs when we discuss languages like \lang. For example, we say that
+programs when we discuss languages like \Lang. For example, we say that
 $1+2$ is an expression of \plang, and $1$ and $2$ are the subexpressions of
 $1+2$.
 
@@ -200,7 +200,7 @@ are \code{x}, \code{3}, and \code{println(x)}, respectively, in the example. The
 second kind is expressions using a variable, i.e. a bound occurrence. In the
 example, \code{x} at the second line is such an expression. It uses the variable \code{x} to denote
 the value \code{3}. Based on this observation, we can define the syntax of
-\lang.
+\Lang.
 
 First, we need to add a new syntactic element: identifiers. The metavariable
 $x$ ranges over identifiers. Let $\embox{Id}$ be the set of every
@@ -210,7 +210,7 @@ identifier.
 
 We do not care what $\embox{Id}$ really is.
 
-The syntax of \lang is as follows:\sidenote{We omit the common part
+The syntax of \Lang is as follows:\footnote{We omit the common part
 to \plang.}
 
 \[e\ ::=\ \cdots\ |\ \ebind{x}{e}{e}\ |\ x\]
@@ -232,11 +232,11 @@ to \plang.}
 
 \section{Semantics}
 
-To define the semantics of \lang, we need an additional semantic element that
+To define the semantics of \Lang, we need an additional semantic element that
 stores the values denoted by variables. Without such an element, we cannot know the
 value of each variable. We call the element an
 \textit{environment}\index{environment}. An environment is a finite partial
-function.\sidenote{A finite partial function is a partial function whose domain
+function.\footnote{A finite partial function is a partial function whose domain
 is a finite set.} The metavariable $\sigma$ ranges over environments.
 
 \[\embox{Env}=\embox{Id}\finto\mathbb{Z}\]
@@ -250,7 +250,7 @@ $\sigma$, then $\sigma(\cy)$ is undefined.
 In addition, it is finite since every program
 defines only finitely many identifiers.
 
-Every expression in \lang can evaluate to an integer only under some
+Every expression in \Lang can evaluate to an integer only under some
 environment. The reason is obvious: without environments, there is no way to
 find the values of variables, and thus environments are essential to evaluation.
 
@@ -269,7 +269,7 @@ result is $\sigma(x)$. Otherwise, $x$ is not in the domain and is a free
 identifier. In that case, we cannot evaluate $x$. The evaluation terminates
 immediately. It can be interpreted as a run-time error.
 
-Formally, the semantics of \lang is a
+Formally, the semantics of \Lang is a
 ternary relation over $\embox{Env}$, $E$, and $\mathbb{Z}$ since it must take
 environments into account.
 
@@ -281,7 +281,7 @@ We write $\sigma\vdash e\Rightarrow n$ instead of $(\sigma,e,n)\in\Rightarrow$.
 Intuitively, $\sigma$ and $e$ are inputs, and $n$ is the corresponding output.
 
 Rule \textsc{Id} can be formulated as the following inference rule:
-\sidenote{$\dom{\sigma}$ denotes the domain of $\sigma$.}
+\footnote{$\dom{\sigma}$ denotes the domain of $\sigma$.}
 
 \[
   \inferrule
@@ -414,7 +414,7 @@ $x_i$ is mapped to $n_i$.
 
 \section{Interpreter}
 
-The following Scala code implements the abstract syntax of \lang:
+The following Scala code implements the abstract syntax of \Lang:
 
 \begin{verbatim}
 sealed trait Expr
@@ -479,7 +479,7 @@ For each of the following expression:
 \labex{identifiers-shadowing-impl}
 
 This exercise asks you to implement the \code{shadowing} function, which
-takes a \lang expression as an argument and returns the set of every
+takes a \Lang expression as an argument and returns the set of every
 identifier that becomes shadowed at least once in the expression. For
 example, \code{shadowing($e$)} equals \code{Set("x")} where $e$ denotes
 $\ebind{\cx}{\cy}{\ebind{\cx}{1}{\cz}}$.  The \code{shadowing} function

@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{First-Class Functions}
 \labch{first-class-functions}
 
 \renewcommand{\plang}{\textsf{VAE}\xspace}
-\renewcommand{\lang}{\textsf{FVAE}\xspace}
+\renewcommand{\Lang}{\textsf{FVAE}\xspace}
 
 \textit{First-class functions}\index{first-class function} are functions that
 can be used as values. They are much more expressive than first-order functions,
@@ -12,8 +12,8 @@ of first-class functions. We need to introduce the notion of a closure to make
 first-class functions work properly. We will see what closures are and why they
 are necessary.
 
-This chapter defines \lang by extending \plang with first-class functions.
-The only way to create a function in \lang is to make an \textit{anonymous
+This chapter defines \Lang by extending \plang with first-class functions.
+The only way to create a function in \Lang is to make an \textit{anonymous
 function}\index{anonymous function}, which is a function without a name.
 However, we can add named functions as syntactic sugar. In addition,
 we will see that even variable definitions can be considered as syntactic sugar.
@@ -52,9 +52,9 @@ makeAdder(3)(5)
 function call, and its result is a function. Therefore, we can call the
 resulting function again. \code{makeAdder(3)(5)} is an expression that calls
 \code{makeAdder(3)}. It designates a function by an expression, rather than just
-a name. We can conclude that the syntax of a function call in \lang should be
+a name. We can conclude that the syntax of a function call in \Lang should be
 more general than \textsf{F1VAE} because of the presence of first-class
-functions. In \lang, a function call consists of two expressions: one determines
+functions. In \Lang, a function call consists of two expressions: one determines
 the function to be called and the other determines the value of the argument.
 
 We have used the term function call so far. In the context of functional
@@ -67,8 +67,8 @@ talking about first-class functions. For example, we usually say
 is called with the argument \code{5}.''
 
 From the above observation on anonymous functions and function applications,
-we can define the syntax of \lang. The following is the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+we can define the syntax of \Lang. The following is the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \[ e\ ::=\ \cdots\ |\ \efun{x}{e}\ |\ \eapp{e}{e} \]
 
@@ -80,7 +80,7 @@ we can define the syntax of \lang. The following is the syntax of \lang:
     It denotes a function whose parameter is $x$ and body is $e$. $x$ is a
     binding occurrence, and its scope is $e$.
     A function has zero or more parameters in many real-world languages,
-    but we restrict a function in \lang to have one and only one parameter for
+    but we restrict a function in \Lang to have one and only one parameter for
     simplicity as before.
 
   \item $\eapp{e_1}{e_2}$
@@ -103,8 +103,8 @@ abstractions and function applications:
 
 \section{Semantics}
 
-Integers are the only values in \plang. It is not true in \lang. Since
-first-class functions are values, a value of \lang is either an integer or a
+Integers are the only values in \plang. It is not true in \Lang. Since
+first-class functions are values, a value of \Lang is either an integer or a
 function. Thus, we define a new kind of semantic element,
 \textit{value}\index{value}. The
 metavariable $v$ ranges over values. Also, let $V$ be the set of every value.
@@ -158,7 +158,7 @@ the denotation of identifiers in the bodies of functions must be determined when
 the functions are defined, not used. Therefore, each closure captures the surrounding
 environment when it is created.
 
-Now, let us define the semantics of \lang. Most things are the same as the
+Now, let us define the semantics of \Lang. Most things are the same as the
 semantics of \plang, but we should be aware of that values now include not only
 integers but also closures.
 
@@ -166,7 +166,7 @@ An environment is a finite partial function from identifiers to values.
 
 \[ \embox{Env}=\embox{Id}\finto V \]
 
-The semantics of \lang is a ternary relation over $\embox{Env}$, $E$, and $V$.
+The semantics of \Lang is a ternary relation over $\embox{Env}$, $E$, and $V$.
 
 \[\Rightarrow\subseteq\embox{Env}\times E\times V\]
 
@@ -214,7 +214,7 @@ argument to the environment of the closure.
 \]
 
 We can reuse Rule \textsc{Num}, Rule \textsc{Add}, Rule \textsc{Sub}, and Rule \textsc{Id} of
-\plang. However, it is important to note that \lang has more
+\plang. However, it is important to note that \Lang has more
 cases that evaluation can fail than \plang. For example, consider Rule \textsc{Add}.
 
 \semanticrule{Add}{
@@ -244,7 +244,7 @@ is a closure, not an integer.
 
 We need to revise Rule \textsc{Val} of \plang a bit.
 Since every value is an integer in \plang, a variable of \plang can denote only
-an integer. In \lang, a variable should be able to denote a general value, not
+an integer. In \Lang, a variable should be able to denote a general value, not
 only an integer.
 
 \semanticrule{Val}{
@@ -327,8 +327,8 @@ Suppose that $\sigma_1=[\cx\mapsto1]$ and $\sigma_2=[\cx\mapsto1,\cy\mapsto2]$.
 
 \section{Interpreter}
 
-The following Scala code implements the syntax of \lang:
-\sidenote{We omit the common part to \plang.}
+The following Scala code implements the syntax of \Lang:
+\footnote{We omit the common part to \plang.}
 
 \begin{verbatim}
 sealed trait Expr
@@ -340,7 +340,7 @@ case class App(f: Expr, a: Expr) extends Expr
 \code{Fun($x$, $e$)} represents $\efun{x}{e}$; \code{App($e_1$, $e_2$)}
 represents $\eapp{e_1}{e_2}$.
 
-A value of \lang is either an integer or a closure. Thus, we represent a value
+A value of \Lang is either an integer or a closure. Thus, we represent a value
 as an ADT.
 
 \begin{verbatim}
@@ -408,7 +408,7 @@ not an integer, to make the execution succeed.
 \section{Syntactic Sugar}
 \labsec{fae}
 
-We can add named local functions to \lang with the following change in the
+We can add named local functions to \Lang with the following change in the
 syntax:
 
 \[
@@ -419,9 +419,9 @@ $\erec{x_1}{x_2}{e_1}{e_2}$ defines a function whose name is $x_1$, parameter is
 $x_2$, and body is $e_1$. The scope of $x_1$ is $e_2$, and thus the function
 does not allow recursion.
 
-Instead of changing the semantics, \lang can provide named local functions as
+Instead of changing the semantics, \Lang can provide named local functions as
 syntactic sugar. Let $s$ be a string transformed into $\erec{x_1}{x_2}{e_1}{e_2}$
-by the parser of \lang with named local functions embedded in the semantics.
+by the parser of \Lang with named local functions embedded in the semantics.
 To treat named local functions as syntactic sugar, the parser should transform
 $s$ into $\ebind{x_1}{\efun{x_2}{e_1}}{e_2}$.
 
@@ -432,9 +432,9 @@ $\eapp{(\efun{x}{e_2})}{e_1}$. The evaluation of $\eapp{(\efun{x}{e_2})}{e_1}$
 evaluates $e_1$ first. Then, $e_2$ is evaluated under the environment that $x$ denotes
 the result of $e_1$. This semantics is exactly the same as that of
 $\ebind{x}{e_1}{e_2}$. Therefore, we can say that variable definitions are just
-syntactic sugar in \lang.
+syntactic sugar in \Lang.
 
-Hereafter, we remove variable definitions from \lang and call the language
+Hereafter, we remove variable definitions from \Lang and call the language
 \textsf{FAE}. However, we may still use variable definitions in examples. It is
 completely fine because they are considered as syntactic sugar.
 
@@ -496,7 +496,7 @@ when we use each of the following for \code{???}.
 \begin{exercise}
 \labex{first-class-functions-rewrite}
 
-Rewrite the following \lang expression to an \textsf{FAE} expression by
+Rewrite the following \Lang expression to an \textsf{FAE} expression by
 desugaring \textsf{val}:
 
 \[
@@ -509,7 +509,7 @@ desugaring \textsf{val}:
 \labex{first-class-functions-rewrite-impl}
 
 This exercise asks you to implement the \code{desugar} function, which
-takes an \lang expression as an argument and returns an \textsf{FAE} by
+takes an \Lang expression as an argument and returns an \textsf{FAE} by
 desugaring \textsf{val}.
 
 Complete the following implementation:
@@ -529,7 +529,7 @@ def desugar(e: Expr): Expr = e match {
 \begin{exercise}
 \labex{first-class-functions-pair}
 
-We can extend \lang with pairs:
+We can extend \Lang with pairs:
 \begin{verbatim}
 case class Pair(f: Expr, s: Expr) extends Expr
 case class Fst(e: Expr) extends Expr
@@ -584,7 +584,7 @@ Consider the following semantics without closures:
   \item
     Explain why the above semantics, which lacks closures, is problematic.
   \item
-    Write an \lang expression such that
+    Write an \Lang expression such that
     \begin{itemize}
         \item the evaluation in the original semantics with closures results
           in an integer, but
@@ -599,7 +599,7 @@ Consider the following semantics without closures:
 \labex{first-class-functions-terminate}
 
 Suppose that we say that an expression $e$ terminates properly if and only
-if $\evale{e}{v}$ for some $v$. Write an \lang expression $e$ such
+if $\evale{e}{v}$ for some $v$. Write an \Lang expression $e$ such
 that only one of $e$ and $\efun{\cx}{\eapp{e}{\cx}}$ terminates properly.
 
 \end{exercise}
@@ -607,7 +607,7 @@ that only one of $e$ and $\efun{\cx}{\eapp{e}{\cx}}$ terminates properly.
 \begin{exercise}
 \labex{first-class-functions-free}
 
-Write an \lang expression that has a free identifier but
+Write an \Lang expression that has a free identifier but
 evaluates to a value without incurring any run-time errors.
 
 \end{exercise}
@@ -615,7 +615,7 @@ evaluates to a value without incurring any run-time errors.
 \begin{exercise}
 \labex{syntax-and-semantics-pair}
 
-This exercise extends \lang with pairs. Consider the following language:
+This exercise extends \Lang with pairs. Consider the following language:
 \[
 \begin{array}{rrl}
   e & ::= & \cdots\ |\ (e,e)\ |\ e\textsf{.1}\ |\ e\textsf{.2} \\
@@ -642,7 +642,7 @@ The semantics is as follows:
 \begin{exercise}
 \labex{syntax-and-semantics-record}
 
-This exercise extends \lang with records. A record is a value that maps labels to values.
+This exercise extends \Lang with records. A record is a value that maps labels to values.
 Consider the following language:
 \[
 \begin{array}{rrl}
@@ -668,8 +668,8 @@ The semantics is as follows:
 \begin{exercise}
 \labex{syntax-and-semantics-stlist}
 
-This exercise extends \lang with JavaScript-like
-sequencing.\sidenote{\url{https://tc39.es/ecma262/\#sec-block-runtime-semantics-evaluation}}
+This exercise extends \Lang with JavaScript-like
+sequencing.\footnote{\url{https://tc39.es/ecma262/\#sec-block-runtime-semantics-evaluation}}
 Consider the following language:
 \[
   \begin{array}{rrl}
@@ -696,9 +696,9 @@ if there is such an expression.
 \begin{exercise}
 \labex{first-class-functions-fv}
 
-This exercise modifies \lang to check body expressions when evaluating
+This exercise modifies \Lang to check body expressions when evaluating
 function expressions.
-Consider we extend the value of \lang to include a special value $\uparrow$
+Consider we extend the value of \Lang to include a special value $\uparrow$
 to represent an error during function body checking.
 Write the operational semantics of the form
 \fbox{$\evald{e}{v}$} for a function expression
@@ -718,7 +718,7 @@ For example, $\embox{fv}(\efun{\cx}{\eapp{\cy}{\cx}}) = \{ \cy \}$.
 \begin{exercise}
 \labex{first-class-functions-mult}
 
-This exercise extends \lang to support multiple parameters.
+This exercise extends \Lang to support multiple parameters.
 Consider the following language:
 \[
 \begin{array}{rrl}
@@ -806,7 +806,7 @@ evaluate to $5$.
 \begin{exercise}
 \labex{first-class-functions-subst}
 
-This exercise replaces the environment-based semantics of \lang with
+This exercise replaces the environment-based semantics of \Lang with
 substitution-based semantics.
 Consider the following implementation:
 \begin{verbatim}
@@ -857,15 +857,15 @@ In this implementation, a value is either an integer or a lambda abstraction:
 
 \begin{enumerate}
 \item What is the result of evaluating the expression under the empty
-  environment in substitution-based \lang?
+  environment in substitution-based \Lang?
 \item What is the result of evaluating the expression under the empty
-  environment in environment-based \lang?
+  environment in environment-based \Lang?
 \item Why are the results different?
 \end{enumerate}
 
   \item Fix the \code{Fun} case of the funtion \code{subst} in the
-    implementation to make substitution-based \lang equivalent to
-    environment-based \lang.  You may use the following helper functions
+    implementation to make substitution-based \Lang equivalent to
+    environment-based \Lang.  You may use the following helper functions
     without defining them:
 
 \begin{verbatim}
@@ -886,7 +886,7 @@ def fresh(xs: Set[String]): String
 \begin{exercise}
 \labex{first-class-functions-js-record}
 
-This exercise extends \lang with JavaScript-like records, field accesses,
+This exercise extends \Lang with JavaScript-like records, field accesses,
   and method calls:
 
 \[
@@ -960,7 +960,7 @@ The operational semantics of $v$ is as follows: $\evald{v}{v}$
 \begin{exercise}
 \labex{first-class-functions-exc}
 
-This exercise extends \lang with exceptions.
+This exercise extends \Lang with exceptions.
 
 $
   \begin{array}{lrrl}

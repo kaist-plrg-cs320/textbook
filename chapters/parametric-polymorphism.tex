@@ -1,9 +1,9 @@
-\setchapterpreamble[u]{\margintoc}
+
 \chapter{Parametric Polymorphism}
 \labch{parametric-polymorphism}
 
 \renewcommand{\plang}{\textsf{TFAE}\xspace}
-\renewcommand{\lang}{\textsf{PTFAE}\xspace}
+\renewcommand{\Lang}{\textsf{PTFAE}\xspace}
 
 A function in \plang is more restrictive than a function in \textsf{FAE}. Consider
 $\efun{\cx}{\cx}$ in \textsf{FAE}. It is an identity function, which takes a value as an
@@ -21,7 +21,7 @@ each type in \plang.
 
 Because of this restrictiveness, programmers have to define more functions in
 \plang than in \textsf{FAE} to implement the same program. For example, the
-following \textsf{FAE} expression does not incur run-time errors:\sidenote{Suppose
+following \textsf{FAE} expression does not incur run-time errors:\footnote{Suppose
 that we extends \textsf{FAE} with booleans.}
 
 $
@@ -48,7 +48,7 @@ $
 The expression is ill-typed because $\cf\ \textsf{true}$ on the last line
 applies a function of $\tarrow{\tnum}{\tnum}$ to a value that does not belong to
 $\tnum$. To make an equivalent and well-typed expression, we should define
-one more function like below.\sidenote{Suppose that the type of a boolean is
+one more function like below.\footnote{Suppose that the type of a boolean is
 \tbool.}
 
 $
@@ -162,12 +162,12 @@ subtype polymorphism. In the context of object-oriented programming, parametric
 polymorphism is often called \textit{generics}\index{generics} since it allows
 generic programming.
 
-This chapter defines \lang by extending \plang with parametric polymorphism.
-\lang is known as System F in the programming language community. System F was
+This chapter defines \Lang by extending \plang with parametric polymorphism.
+\Lang is known as System F in the programming language community. System F was
 first discovered by Girard in the context of logic in
 1972~\cite{girard1972interpretation}. Later, Reynolds independently discovered
 the equivalent system in the context of computer science in
-1974~\cite{reynolds1974towards}. System F, or \lang, is the most foundational
+1974~\cite{reynolds1974towards}. System F, or \Lang, is the most foundational
 formulation of parametric polymorphism, and its metatheory and variants are
 widely studied even in these days.
 
@@ -224,7 +224,7 @@ function and the environment of when the function is defined. Similarly, a type
 abstraction value contains the definition of a type abstraction and the
 environment of when the type abstraction is defined.
 
-Now, we define the dynamic semantics of \lang. We should define the rules for
+Now, we define the dynamic semantics of \Lang. We should define the rules for
 the added expressions.
 
 \semanticrule{TyAbs}{
@@ -264,7 +264,7 @@ as Rule~\textsc{Fun}.
 To evaluate a type application expression, its only subexpression is evaluated.
 The result must be a type abstraction value. $e'[\alpha\leftarrow\tau]$ denotes
 an expression obtained by substituting every free occurrence of $\alpha$ with $\tau$
-in $e'$.\sidenote{We do not discuss substitution in detail here. Interested readers can
+in $e'$.\footnote{We do not discuss substitution in detail here. Interested readers can
 refer to \refex{first-class-functions-subst}, which introduces
 substition of an identifier with a value in an expression. The same principle
 applies to substition of a type identifier with a type in an expression.}
@@ -276,7 +276,7 @@ application expression.
 
 One may wonder why Rule~\textsc{TyApp} needs substitution because types do not
 have any roles at run time. We can omit substitution in the dynamic semantics of
-\lang. However, if we extend the language to support any form of dynamic type
+\Lang. However, if we extend the language to support any form of dynamic type
 testing, substitution is mandatory. In addition, if we want to prove type
 soundness, we should prove that every expression of a certain type evaluates to a
 value of the same type when the evaluation terminates. This property is called
@@ -375,7 +375,7 @@ where $\sigma_1=[\cx\mapsto1]$.
 % case class TApp(f: Expr, t: Type) extends Expr
 % \end{verbatim}
 
-% Now, consider an interpreter for \lang.
+% Now, consider an interpreter for \Lang.
 
 % \begin{verbatim}
 % sealed trait Value
@@ -409,7 +409,7 @@ where $\sigma_1=[\cx\mapsto1]$.
 Like in \textsf{TVFAE}, the definition of a type environment needs to be
 revised. Type environments should be able to store type identifiers in
 addition to the types of variables. Unlike type definitions in \textsf{TVFAE},
-type identifiers in \lang do not have any further information. However, the type
+type identifiers in \Lang do not have any further information. However, the type
 checking procedure needs to know whether a certain type identifier is free or
 not to determine the well-formedness of types. Thus, type environments store
 type identifiers to record their existence.
@@ -424,7 +424,7 @@ $\Gamma[\alpha:\cdot]$.
 
 \subsection{Well-Formed Types}
 
-The well-formedness checking of \lang is similar to that of \textsf{TVFAE}.
+The well-formedness checking of \Lang is similar to that of \textsf{TVFAE}.
 The following three rules are the same as those of \textsf{TVFAE}:
 
 \typerule{Wf-NumT}{
@@ -471,7 +471,7 @@ The following three rules are the same as those of \textsf{TVFAE}:
 \]
 
 One remaining sort of a type is a universally quantified type, which is new in
-\lang.
+\Lang.
 
 \typerule{Wf-ForallT}{
   If
@@ -495,7 +495,7 @@ is ill-formed under the same type environment.
 
 \subsection{Typing Rules}
 
-Now, let us define the typing rules of \lang.
+Now, let us define the typing rules of \Lang.
 
 \typerule{Typ-TyAbs}{
   If
@@ -599,7 +599,7 @@ is $\tnum$:
   {\typeofe{\etapp{(\etfun{\alpha}{\efunt{\cx}{\alpha}{\cx}})}{\tnum}\ 1}{\tnum}}
 \]
 
-The current type system of \lang has two problems. First, multiple type
+The current type system of \Lang has two problems. First, multiple type
 parameters of the same name breaks the type soundness, as multiple type
 definitions of the same name does in \textsf{TVFAE}. Second, syntactic
 comparison of types makes the type checking too restrictive. For example, if
@@ -623,7 +623,7 @@ names.
 
 De Bruijn indices seem to be the best solution, but, still, other solutions can
 be used. The three solutions described in \refch{algebraic-data-types} can be
-applied to \lang in the same manner to resolve the first issue. The second issue
+applied to \Lang in the same manner to resolve the first issue. The second issue
 can be fixed by renaming type parameters before the comparison. For example, simple syntactic
 transformation can transform $\tforall{\alpha}{\tarrow{\alpha}{\alpha}}$
 into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
@@ -648,7 +648,7 @@ into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
 
 % \section{Type Checker}
 
-% The following Scala code implements the abstract syntax of \lang:
+% The following Scala code implements the abstract syntax of \Lang:
 
 % \begin{verbatim}
 % sealed trait Type
@@ -657,7 +657,7 @@ into $\tforall{\beta}{\tarrow{\beta}{\beta}}$.
 % case class IdT(a: String) extends Type
 % \end{verbatim}
 
-% An \code{Expr} instance represents a \lang expression; a \code{TFun} instance
+% An \code{Expr} instance represents a \Lang expression; a \code{TFun} instance
 % represents a type function; a \code{TApp} instance represents a type application;
 % a
 % \code{ForallT} instance represents a universal type; a \code{IdT} instance
@@ -788,7 +788,7 @@ Draw the type derivation of each of the following expressions:
 \begin{exercise}
 \labex{parametric-polymorphism-nameless}
 
-In \lang, types have type variables.
+In \Lang, types have type variables.
 \refch{nameless-representation-of-expressions} shows how we can replace
 symbols in expressions with numbers. Similarly, we can replace symbols in
 types with numbers.  For example, \code{ForallT("a", ArrowT(VarT("a"),
@@ -828,7 +828,7 @@ def transform(t: Type, ctx: Ctx): Nameless.Type =
 \begin{exercise}
 \labex{parametric-polymorphism-adt}
 
-This exercise extends \lang with polymorphic recursive type definitions.
+This exercise extends \Lang with polymorphic recursive type definitions.
 
 \vspace{1em}
 $
