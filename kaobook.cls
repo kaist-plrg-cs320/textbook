@@ -205,9 +205,9 @@
 			}
 		\else%
 			\smash{\makebox[0pt][l]{%
-				\parbox[b]{\textwidth}{\flushright{##3}}%
-				\makebox[\marginparsep][c]{\rule[-2\vscale]{1pt}{27.4\vscale+\f@size mm}}%
-				\parbox[b]{\marginparwidth}{##2}%
+				\parbox[b]{\textwidth-33.9\hscale}{\flushright{##3}}%
+				\makebox[6.2\hscale][c]{\rule[-2\vscale]{1pt}{27.4\vscale+\f@size mm}}%
+				\parbox[b]{27.7\hscale}{##2}%
 			}}%
 		\fi%
 	}%

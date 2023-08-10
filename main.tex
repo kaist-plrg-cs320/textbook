@@ -27,7 +27,7 @@
 \documentclass[
   a4paper,
 	fontsize=10pt, % Base font size
-	twoside=true, % Use different layouts for even and odd pages (in particular, if twoside=true, the margin column will be always on the outside)
+	twoside=false, % Use different layouts for even and odd pages (in particular, if twoside=true, the margin column will be always on the outside)
 	%open=any, % If twoside=true, uncomment this to force new chapters to start on any page, not only on right (odd) pages
 	%chapterprefix=true, % Uncomment to use the word "Chapter" before chapter numbers everywhere they appear
 	%chapterentrydots=true, % Uncomment to output dots from the chapter name to the page number in the table of contents
@@ -352,20 +352,22 @@
 \mainmatter % Denotes the start of the main document content, resets page numbering and uses arabic numbers
 \setchapterstyle{kao} % Choose the default chapter heading style
 
+\pagelayout{wide} % No margins
+
 \input{chapters/introduction.tex}
 
-\pagelayout{wide} % No margins
+% \pagelayout{wide} % No margins
 \addpart{Scala}
-\pagelayout{margin} % Restore margins
+% \pagelayout{margin} % Restore margins
 
 \input{chapters/introduction-to-scala.tex}
 \input{chapters/immutability.tex}
 \input{chapters/functions.tex}
 \input{chapters/pattern-matching.tex}
 
-\pagelayout{wide} % No margins
+% \pagelayout{wide} % No margins
 \addpart{Untyped Languages}
-\pagelayout{margin} % Restore margins
+% \pagelayout{margin} % Restore margins
 
 \input{chapters/syntax-and-semantics.tex}
 \input{chapters/identifiers.tex}
@@ -381,9 +383,9 @@
 \input{chapters/first-order-representation-of-continuations.tex}
 \input{chapters/nameless-representation-of-expressions.tex}
 
-\pagelayout{wide} % No margins
+% \pagelayout{wide} % No margins
 \addpart{Typed Languages}
-\pagelayout{margin} % Restore margins
+% \pagelayout{margin} % Restore margins
 
 \input{chapters/type-systems.tex}
 \input{chapters/typing-recursive-functions.tex}
@@ -394,9 +396,9 @@
 
 \appendix % From here onwards, chapters are numbered with letters, as is the appendix convention
 
-\pagelayout{wide} % No margins
+% \pagelayout{wide} % No margins
 \addpart{Appendix}
-\pagelayout{margin} % Restore margins
+% \pagelayout{margin} % Restore margins
 
 \input{chapters/solutions.tex}
 
