@@ -84,7 +84,7 @@ identifier to a particular entity. The program has three binding occurrences:
 \end{itemize}
 
 Every binding occurrence has its own scope. The \textit{scope}\index{scope} of a binding
-occurrence means a code region where the indentifier defined by the binding
+occurrence means a code region where the identifier defined by the binding
 occurrence is alive, i.e. usable. The scope of each identifier in the program is as follows:
 
 \begin{itemize}
@@ -166,7 +166,7 @@ In this case, shadowing happens. \textit{Shadowing}\index{shadowing} means that
 the innermost binding occurrence \textbf{shadow}s, i.e. temporarily invalidates,
 the outer binding occurrences of the same name. Therefore, \code{x} at line 2
 shadows \code{x} at line 1.
-\code{x} at line 3 belongs to the scope of both binding occurrences simultaenously.
+\code{x} at line 3 belongs to the scope of both binding occurrences simultaneously.
 It denotes the value of an argument given to \code{g}, not \code{f}, because of
 shadowing. On the other hand, \code{x} at line 4 denotes the value of an
 argument given to \code{f} since it belongs to the scope of only \code{x} at

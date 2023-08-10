@@ -701,7 +701,7 @@ element of a given tree and a tree obtained by removing the element from the
 tree.
 
 \begin{verbatim}
-def removeMin(t: Tree): (Int, Tree) = {
+def removeMin(t: Node): (Int, Tree) = {
   t match {
     case Node(n, Empty, t1) =>
       (n, t1)

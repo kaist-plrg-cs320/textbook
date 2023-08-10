@@ -1695,7 +1695,7 @@ $\textsf{Color}$
         \code{Banana}:\tarrow{(\tarrow{(\code{Fruit})}{\tnum},\code{Fruit})}{\code{Fruit}},
         \code{Cherry}:\tarrow{(\tnum)}{\code{Fruit}}
         ]$\\
-    $\Gamma'=\Gamma[\cf:\tarrow{(\code{Fruit})}{\tnum},\cx:\tnum]$\\
+    $\Gamma'=\Gamma[\cf:\tarrow{(\code{Fruit})}{\tnum},\cx:\code{Fruit}]$\\
     $e'={\code{Apple}()\ \textsf{match}\ \code{Apple}()\rightarrow
           42,\code{Banana}(\cf,\cx)\rightarrow\cf(\cx),\code{Cherry}(\cx)\rightarrow\cx}$\\
     $e={\textsf{type}\
@@ -1761,9 +1761,7 @@ $\textsf{Color}$
         { \code{Fruit}\in\dom{\Gamma} }
         { \wftd{\code{Fruit}} }
         \quad
-        \inferrule
-        { \code{Fruit}\in\dom{\Gamma} }
-        { \wftd{\code{Fruit}} }
+        \wftd{\tnum}
         \quad
         T
       }
@@ -2537,7 +2535,7 @@ case Match(e, e1, x, e2) =>
           {
             \inferrule
             {
-              x\in\dom{\Gamma_2} \\
+              \cx\in\dom{\Gamma_2} \\
               \tforall{\alpha}{\tarrow{\alpha}{\alpha}}\succ\tarrow{\tnum}{\tnum}
             }
             { \typeof{\Gamma_2}{\cx}{\tarrow{\tnum}{\tnum}} }
@@ -2549,7 +2547,7 @@ case Match(e, e1, x, e2) =>
           {
             \inferrule
             {
-              x\in\dom{\Gamma_2} \\
+              \cx\in\dom{\Gamma_2} \\
               \tforall{\alpha}{\tarrow{\alpha}{\alpha}}\succ\tarrow{\tbool}{\tbool}
             }
             { \typeof{\Gamma_2}{\cx}{\tarrow{\tbool}{\tbool}} }

@@ -109,14 +109,14 @@ Defining mutable memory is crucial to define the semantics of \Lang.
 We call the memory of a program a \textit{store}\index{store}. A store records the values of boxes.
 Each box is distinguished from another box by its address, i.e. every box has
 its own address, which differs from the addresses of any other boxes.
-The metavarible $a$ ranges over addresses. Let $\embox{Addr}$ be the set of every
+The metavariable $a$ ranges over addresses. Let $\embox{Addr}$ be the set of every
 possible address. We do not care about what $\embox{Addr}$ really is.
 
 \[ a \in \embox{Addr} \]
 
 A store is a finite partial function from addresses to values.
 If the store maps an address $a$ to a value $v$, the value of the box whose
-address is $a$ is $v$. The metavarible $M$ ranges over stores. Let $\embox{Sto}$
+address is $a$ is $v$. The metavariable $M$ ranges over stores. Let $\embox{Sto}$
 be the set of every store.
 
 \[ \embox{Sto} = \embox{Addr}\finto V \]

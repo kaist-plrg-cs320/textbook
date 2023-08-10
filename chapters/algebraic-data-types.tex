@@ -102,7 +102,7 @@ def radius(f: Fruit): Int = f match {
 \plang does not have pattern matching, but we can exploit the fact that the
 first value of a given pair indicates which fruit it is. We use a conditional
 expression to perform a certain operation when the fruit is an apple, i.e. the
-first value is $0$, and another opertaion when the fruit is a banana,
+first value is $0$, and another operation when the fruit is a banana,
 i.e. the first value is nonzero. The following expression defines the
 $\code{radius}$ function:
 
@@ -112,7 +112,7 @@ $\ebind{\code{radius}}{\efunt{\cx}{(\tnum\times(\tnum\times(\tnum\times\tnum)))}
 This example shows that we can desugar ADTs and pattern matching to pairs,
 functions, and conditional expressions in \plang. The ADT of the example has
 only two variants, which have one or two parameters. ADTs can have any number of
-variants, and vairants can have any number of parameters. The same strategy can be
+variants, and variants can have any number of parameters. The same strategy can be
 used to desugar ADTs with more variants and variants with more parameters.
 
 Although nonrecursive ADTs can be desugared in \plang, there are a few flaws.

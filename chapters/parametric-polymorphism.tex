@@ -86,7 +86,7 @@ Each function parameterizes an expression with a value
 (or an expression in the case of lazy languages). Consider $\efun{\cx}{\cx+\cx}$.
 In this function, $\cx$ is the parameter. The body, $\cx+\cx$ is parameterized by $\cx$.
 This function is the most general form of adding a value to the same value. By
-applying the function, we can express any expresion that adds a value to the
+applying the function, we can express any expression that adds a value to the
 same value. For example, $1+1$ is equivalent to $(\efun{\cx}{\cx+\cx})\ 1$, and
 $42+42$ is equivalent to $(\efun{\cx}{\cx+\cx})\ 42$. A function abstracts an
 expression by replacing some portion of the expression with a parameter. By

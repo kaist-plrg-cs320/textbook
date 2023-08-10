@@ -136,14 +136,14 @@ does not contain $l$, $e.l$ incurs a run-time error.
 
 \subsection{Static Semantics}
 
-Since records are a new sort of a value, exsiting types cannot include records.
+Since records are a new sort of a value, existing types cannot include records.
 We need to add new types that records can belong to.
 
 \[ \tau \ ::= \ \cdots \ |\ \{l:\tau,\cdots,l:\tau\} \]
 
 A type $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$ is a record type that includes
 records whose fields follow the designated names and types. In other words, if a
-record value has fields named $l_1$ from $l_n$ and the value of a field $l_i$ is
+record value has fields named $l_1$ to $l_n$ and the value of a field $l_i$ is
 a value of $\tau_i$, then the value belongs to
 $\{l_1:\tau_1,\cdots,l_n:\tau_n\}$. For example, the type of the value $\{\ca=3,\cb=7\}$ is
 $\{\ca:\tnum,\cb:\tnum\}$. In addition, the type of the expression
@@ -286,7 +286,7 @@ For example, $\{\ca:\tnum,\cb:\tnum\}$ is a subtype of ${\{\ca:\tnum\}}$ and
 $\{\ca:\tnum\}$ is a supertype of ${\{\ca:\tnum,\cb:\tnum\}}$.
 This is the notion of subtyping.
 
-Roughly speaking, subtyping is an ``A is a B'' relation betwen types. As an example,
+Roughly speaking, subtyping is an ``A is a B'' relation between types. As an example,
 consider \code{Animal} and \code{Cat}, which denote the type of every animal
 and the type of every cat, respectively. We know that a cat is an animal. Then,
 we can say that \code{Cat} is a subtype of \code{Animal}. On the other hand, can
